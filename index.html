@@ -4556,11 +4556,25 @@ function getAllCalEvents() {
     events.push({
       date: ev.date, type: "ics",
       title: ev.title, source: src?.name || "Calendrier",
-      time: ev.time, color: src?.color || "#aee0c8",
+      time: ev.time, color: ev.color || src?.color || "#aee0c8",
       sourceId: ev.sourceId,
     });
   }
   return events;
+}
+const GCAL_COLORS = {
+  tomato: "#d50000", flamingo: "#e67c73", tangerine: "#f4511e", banana: "#f6bf26",
+  sage: "#33b679", basil: "#0f9d58", peacock: "#039be5", blueberry: "#3f51b5",
+  lavender: "#7986cb", grape: "#8e24aa", graphite: "#616161",
+  // noms alternatifs parfois utilisés
+  red: "#d50000", pink: "#e67c73", orange: "#f4511e", yellow: "#f6bf26",
+  green: "#33b679", teal: "#009688", cyan: "#039be5", blue: "#3f51b5",
+  purple: "#7986cb", violet: "#8e24aa", gray: "#616161", grey: "#616161",
+};
+function gcalColorToHex(name) {
+  if (!name) return null;
+  if (name.startsWith("#")) return name;
+  return GCAL_COLORS[name.toLowerCase()] || null;
 }
 function hexToRgba(hex, alpha) {
   const m = (hex || "").match(/^#?([0-9a-f]{6}|[0-9a-f]{3})$/i);
@@ -4809,6 +4823,7 @@ async function saveGoogleCal() {
       title: p.title || "(Sans titre)", date: p.date, time: p.time || "",
       location: p.location || "", description: p.description || "",
       sourceId: srcId, rrule: p.rrule || null,
+      color: gcalColorToHex(p.color) || null,
     })));
     saveState();
     result.style.background = "var(--mint-soft)";
@@ -4864,6 +4879,7 @@ async function syncGoogleCal(silent = false) {
       title: p.title || "(Sans titre)", date: p.date, time: p.time || "",
       location: p.location || "", description: p.description || "",
       sourceId: srcId, rrule: p.rrule || null,
+      color: gcalColorToHex(p.color) || null,
     }));
     state.calEvents.push(...newEvts);
     saveState();
@@ -4925,6 +4941,7 @@ function parseICS(text) {
       else if (key === "DESCRIPTION") cur.description = val.replace(/\\n/g, " ").replace(/\\,/g, ",");
       else if (key === "LOCATION") cur.location = val;
       else if (key === "RRULE") cur.rrule = val;
+      else if (key === "COLOR") cur.color = val.trim().toLowerCase();
     } else if (!inEvent) {
       // Métadonnées calendrier
       if (line.startsWith("X-WR-CALNAME:")) calendarName = line.slice("X-WR-CALNAME:".length).trim();
