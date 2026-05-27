@@ -2327,7 +2327,7 @@ function onViewChange(view) {
   if (view === "activities") renderActivityChart();
   if (view === "health") { renderBodyChart(currentBodyMetric); renderWellbeingChart(); renderStepsChart(); }
   if (view === "money") { renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); }
-  if (view === "calendar") renderCalendar();
+  if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
 }
 
@@ -4817,26 +4817,49 @@ function disconnectGoogleCal() {
   renderCalendar();
   showToast("Google Agenda déconnecté");
 }
-async function syncGoogleCal() {
+async function syncGoogleCal(silent = false) {
   const url = state.googleCal?.url;
   if (!url) return;
-  showToast("🔄 Synchronisation Google Agenda…");
+  if (!silent) showToast("🔄 Synchronisation Google Agenda…");
+  // Proxies CORS testés en cascade
+  const proxies = [
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://thingproxy.freeboard.io/fetch/${u}`,
+  ];
+  let text = null;
+  for (const proxy of proxies) {
+    try {
+      const r = await fetch(proxy(url), { signal: AbortSignal.timeout(10000) });
+      if (r.ok) { text = await r.text(); break; }
+    } catch (_) { /* essaie le proxy suivant */ }
+  }
+  if (!text) {
+    showToast("❌ Sync impossible — vérifie l'URL ou réessaie plus tard");
+    return;
+  }
   try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const text = await response.text();
     const parsed = parseICS(text);
     state.googleCal.lastSync = new Date().toISOString();
-    state.calEvents = parsed.map(p => ({
-      id: "gcal" + Date.now() + Math.random().toString(36).slice(2, 6),
+    // Garde les événements importés manuellement (.ics), remplace seulement les gcal
+    state.calEvents = state.calEvents.filter(e => e.sourceId && e.sourceId !== "src-gcal");
+    const srcId = "src-gcal";
+    if (!state.calSources.find(s => s.id === srcId)) {
+      state.calSources.push({ id: srcId, name: "Google Agenda", color: "#aee0c8", importedAt: new Date().toISOString() });
+    }
+    const newEvts = parsed.map(p => ({
+      id: "gcal-" + (p.uid || (Date.now() + Math.random().toString(36).slice(2, 6))),
       title: p.title || "(Sans titre)", date: p.date, time: p.time || "",
       location: p.location || "", description: p.description || "",
+      sourceId: srcId, rrule: p.rrule || null,
     }));
+    state.calEvents.push(...newEvts);
     saveState();
     renderCalendar();
-    showToast(`✨ ${parsed.length} événements synchronisés`);
+    renderGcalStatus();
+    if (!silent) showToast(`✨ ${newEvts.length} événements Google Agenda synchronisés !`);
   } catch (err) {
-    showToast("❌ Sync échouée — utilise « Importer ICS » à la place");
+    showToast("❌ Erreur de lecture ICS : " + err.message);
   }
 }
 function renderGcalStatus() {
@@ -6291,6 +6314,15 @@ setupJournal();
 populateTxCategories();
 renderAll();
 checkSeedBanner();
+// Synchro Google Agenda automatique au démarrage (si URL configurée et dernière sync > 30 min)
+function autoSyncCalIfNeeded() {
+  const url = state.googleCal?.url;
+  if (!url) return;
+  const last = state.googleCal?.lastSync ? new Date(state.googleCal.lastSync) : null;
+  const minutesSinceLast = last ? (Date.now() - last.getTime()) / 60000 : Infinity;
+  if (minutesSinceLast > 30) syncGoogleCal(true); // silencieux
+}
+setTimeout(autoSyncCalIfNeeded, 2000); // attends 2s après le chargement
 
 /* =====================================================
    FIREBASE SYNC — synchronisation multi-appareils
