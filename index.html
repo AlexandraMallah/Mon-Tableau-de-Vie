@@ -4796,7 +4796,9 @@ async function saveGoogleCal() {
   try {
     if (!text) throw new Error("Tous les proxies ont échoué. Vérifie l'URL et réessaie.");
     const parsed = parseICS(text);
-    if (!parsed.events.length) throw new Error("Aucun événement trouvé — vérifie que l'URL est bien l'adresse secrète iCal.");
+    const preview = text.slice(0, 80).replace(/\n/g, "↵");
+    if (!parsed.events.length) throw new Error(`Aucun événement trouvé (reçu ${text.length} octets : « ${preview}… »)`);
+
     state.googleCal = { url, lastSync: new Date().toISOString() };
     state.calEvents = state.calEvents.filter(e => e.sourceId && e.sourceId !== "src-gcal");
     const srcId = "src-gcal";
