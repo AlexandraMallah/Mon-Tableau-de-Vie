@@ -4796,13 +4796,13 @@ async function saveGoogleCal() {
   try {
     if (!text) throw new Error("Tous les proxies ont échoué. Vérifie l'URL et réessaie.");
     const parsed = parseICS(text);
-    if (!parsed.length) throw new Error("Aucun événement trouvé — vérifie que l'URL est bien l'adresse secrète iCal.");
+    if (!parsed.events.length) throw new Error("Aucun événement trouvé — vérifie que l'URL est bien l'adresse secrète iCal.");
     state.googleCal = { url, lastSync: new Date().toISOString() };
     state.calEvents = state.calEvents.filter(e => e.sourceId && e.sourceId !== "src-gcal");
     const srcId = "src-gcal";
     if (!state.calSources.find(s => s.id === srcId))
       state.calSources.push({ id: srcId, name: "Google Agenda", color: "#aee0c8", importedAt: new Date().toISOString() });
-    state.calEvents.push(...parsed.map(p => ({
+    state.calEvents.push(...parsed.events.map(p => ({
       id: "gcal-" + (p.uid || (Date.now() + Math.random().toString(36).slice(2,6))),
       title: p.title || "(Sans titre)", date: p.date, time: p.time || "",
       location: p.location || "", description: p.description || "",
@@ -4810,7 +4810,7 @@ async function saveGoogleCal() {
     })));
     saveState();
     result.style.background = "var(--mint-soft)";
-    result.innerHTML = `✅ Connexion réussie ! ${parsed.length} événements synchronisés 🎉`;
+    result.innerHTML = `✅ Connexion réussie ! ${parsed.events.length} événements synchronisés 🎉`;
     setTimeout(() => { closeGoogleCalModal(); renderCalendar(); renderGcalStatus(); showToast("✨ Google Agenda synchronisé !"); }, 1200);
   } catch (err) {
     result.style.background = "var(--rose-soft)";
@@ -4857,7 +4857,7 @@ async function syncGoogleCal(silent = false) {
     if (!state.calSources.find(s => s.id === srcId)) {
       state.calSources.push({ id: srcId, name: "Google Agenda", color: "#aee0c8", importedAt: new Date().toISOString() });
     }
-    const newEvts = parsed.map(p => ({
+    const newEvts = parsed.events.map(p => ({
       id: "gcal-" + (p.uid || (Date.now() + Math.random().toString(36).slice(2, 6))),
       title: p.title || "(Sans titre)", date: p.date, time: p.time || "",
       location: p.location || "", description: p.description || "",
