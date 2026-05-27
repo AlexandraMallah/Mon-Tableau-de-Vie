@@ -992,8 +992,8 @@
       <button class="btn-icon" onclick="importData()">↙ Importer</button>
       <button class="btn-icon" onclick="openSettings()">⚙ Personnaliser</button>
       <button class="btn-icon" id="syncSignInBtn" onclick="signInWithGoogle()" style="background:linear-gradient(135deg,#e8f0fe,#d2e3fc);color:#1a73e8;font-weight:600;display:none;">☁️ Connexion</button>
-      <div id="syncUserAvatar" style="display:none;align-items:center;gap:6px;background:#faf8fd;border:1px solid var(--line);border-radius:20px;padding:4px 10px;cursor:pointer;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
-      <span id="syncStatusPill" style="font-size:12px;padding:4px 10px;border-radius:20px;background:#faf8fd;border:1px solid var(--line);display:none;"></span>
+      <div id="syncUserAvatar" style="display:none;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 12px;cursor:pointer;box-shadow:var(--shadow);font-size:13px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
+      <span id="syncStatusPill" style="font-size:13px;padding:8px 12px;border-radius:14px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:none;"></span>
       <button class="btn-icon" onclick="confirmReseed()" title="Recharger les données depuis le CV" style="background:linear-gradient(135deg,var(--peach-soft),var(--butter-soft));font-weight:600;">🔄 Recharger</button>
     </div>
   </header>
@@ -6396,8 +6396,8 @@ function _fbUpdateUI(user) {
     av.style.display  = "flex";
     av.title = user.email || "";
     const imgHtml = user.photoURL
-      ? `<img src="${user.photoURL}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;">`
-      : `<div style="width:26px;height:26px;border-radius:50%;background:var(--lavender);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">${(user.displayName||user.email||"?")[0].toUpperCase()}</div>`;
+      ? `<img src="${user.photoURL}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`
+      : `<div style="width:22px;height:22px;border-radius:50%;background:var(--lavender);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--ink);">${(user.displayName||user.email||"?")[0].toUpperCase()}</div>`;
     const firstName = (user.displayName || "").split(" ")[0] || user.email.split("@")[0];
     av.innerHTML = imgHtml + `<span style="font-size:11px;color:var(--ink-soft);max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${firstName}</span>`;
   } else {
