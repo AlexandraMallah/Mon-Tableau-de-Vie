@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v39</title>
+<title>Mon Tableau de Vie · v40</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2569,8 +2569,9 @@ function migrate(s) {
     }
   }
   // Admin : init avec donnees pre-remplies si absent
-  if (!s.admin || !s.admin.missions) {
+  if (!s.admin || !s.admin._seeded) {
     s.admin = {
+      _seeded: true,
       missions: [
         { id:"m01", date:"2026-02-09", lieu:"Estampuis",        train:33,   repas:null, taxi:null, km:null, essence:null, remb:50,    dateRemb:"2026-03-05", statut:"Rembourse" },
         { id:"m02", date:"2026-02-10", lieu:"Estampuis",        train:null, repas:20.5, taxi:null, km:104,  essence:null, remb:null,  dateRemb:null,         statut:null },
@@ -3192,6 +3193,7 @@ function admRenderConges() {
   var periodes = (state.admin && state.admin.congesPeriodes) || [];
   var cfg      = (state.admin && state.admin.congesConfig)   || { droitsCA:27, droitsRTT:20 };
 
+  /* --- calcul des totaux --- */
   var prisCA = 0, planCA = 0, prisRTT = 0, planRTT = 0;
   for (var i = 0; i < periodes.length; i++) {
     var p = periodes[i];
@@ -3204,23 +3206,112 @@ function admRenderConges() {
   var restCA  = cfg.droitsCA  - prisCA  - planCA;
   var restRTT = cfg.droitsRTT - prisRTT - planRTT;
 
-  function makeBar(pris, plan, total) {
-    if (!total) return '<div class="adm-bar"></div>';
-    var pPris = Math.min(100, Math.round(pris / total * 100));
-    var pPlan = Math.min(100 - pPris, Math.round(plan / total * 100));
-    return '<div class="adm-bar">'
-      + '<div class="adm-bar-pris" style="width:' + pPris + '%;"></div>'
-      + '<div class="adm-bar-plan" style="width:' + pPlan + '%;"></div>'
-      + "</div>";
+  /* --- jours feries dans le contrat (janv 2026 - fev 2027) --- */
+  var FERIES = {
+    "2026-04-06":1,"2026-05-01":1,"2026-05-08":1,"2026-05-14":1,"2026-05-25":1,
+    "2026-07-14":1,"2026-08-15":1,"2026-11-01":1,"2026-11-11":1,"2026-12-25":1,
+    "2027-01-01":1
+  };
+
+  /* --- couleur d'un jour donne --- */
+  function admDayType(ds) {
+    var d = new Date(ds + "T00:00:00");
+    var dow = d.getDay();
+    if (dow === 0 || dow === 6) return "we";
+    if (FERIES[ds]) return "fe";
+    for (var k = 0; k < periodes.length; k++) {
+      var pp = periodes[k];
+      if (ds >= pp.debut && ds <= pp.fin) {
+        if (pp.type === "CA"  && pp.statut === "Pris")     return "ca-pris";
+        if (pp.type === "CA"  && pp.statut === "Planifie") return "ca-plan";
+        if (pp.type === "RTT" && pp.statut === "Pris")     return "rtt-pris";
+        if (pp.type === "RTT" && pp.statut === "Planifie") return "rtt-plan";
+      }
+    }
+    return "ok";
+  }
+  function admDayStyle(t) {
+    if (t === "we")      return "background:#f0f0f0;color:#bbb;";
+    if (t === "fe")      return "background:#fef3c7;color:#b45309;font-weight:700;";
+    if (t === "ca-pris") return "background:#bfdbfe;color:#1d4ed8;font-weight:700;";
+    if (t === "ca-plan") return "background:#ede9fe;color:#7c3aed;font-weight:700;";
+    if (t === "rtt-pris")return "background:#a7f3d0;color:#047857;font-weight:700;";
+    if (t === "rtt-plan")return "background:#d1fae5;color:#059669;font-weight:700;";
+    return "color:var(--ink);";
   }
 
+  /* --- rendu d'un mois --- */
+  function admRenderMonth(yr, mo) {
+    var mNames = ["","Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
+    var firstDow  = new Date(yr, mo - 1, 1).getDay();
+    var offset    = (firstDow + 6) % 7;
+    var daysInMo  = new Date(yr, mo, 0).getDate();
+    var h = '<div style="border:1px solid var(--line);border-radius:10px;padding:8px;background:white;width:178px;flex-shrink:0;">';
+    h += '<div style="text-align:center;font-size:11px;font-weight:700;color:var(--ink);margin-bottom:6px;">' + mNames[mo] + ' ' + yr + '</div>';
+    h += '<div style="display:grid;grid-template-columns:repeat(7,22px);gap:2px;">';
+    var dh = ['L','M','M','J','V','S','D'];
+    for (var x = 0; x < 7; x++) {
+      h += '<div style="text-align:center;font-size:9px;color:var(--ink-soft);padding:2px 0;">' + dh[x] + '</div>';
+    }
+    for (var e = 0; e < offset; e++) h += '<div></div>';
+    for (var dd = 1; dd <= daysInMo; dd++) {
+      var ds = yr + '-' + String(mo).padStart(2,'0') + '-' + String(dd).padStart(2,'0');
+      var t  = admDayType(ds);
+      var st = admDayStyle(t);
+      h += '<div style="text-align:center;font-size:9px;padding:2px 1px;border-radius:3px;' + st + '">' + dd + '</div>';
+    }
+    h += '</div></div>';
+    return h;
+  }
+
+  /* --- tableau de synthese CA / RTT --- */
+  var restCAcol  = restCA  < 0 ? "color:#dc2626;" : "color:#16a34a;";
+  var restRTTcol = restRTT < 0 ? "color:#dc2626;" : "color:#16a34a;";
+  var summary = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">'
+    + '<div style="background:#eff6ff;border-radius:10px;padding:14px;">'
+    + '<div style="font-weight:700;color:#1d4ed8;font-size:13px;margin-bottom:10px;">Conges Annuels (CA)</div>'
+    + '<table style="width:100%;font-size:13px;border-collapse:collapse;"><tbody>'
+    + '<tr><td style="padding:3px 0;">Droits</td><td style="text-align:right;font-weight:700;">' + cfg.droitsCA + ' j</td></tr>'
+    + '<tr><td style="padding:3px 0;color:#1d4ed8;">Pris</td><td style="text-align:right;color:#1d4ed8;">&minus; ' + prisCA + ' j</td></tr>'
+    + '<tr><td style="padding:3px 0;color:#7c3aed;">Planifies</td><td style="text-align:right;color:#7c3aed;">&minus; ' + planCA + ' j</td></tr>'
+    + '<tr style="border-top:1px solid #bfdbfe;"><td style="font-weight:700;padding-top:6px;">Restants</td><td style="text-align:right;font-weight:700;padding-top:6px;' + restCAcol + '">' + restCA + ' j</td></tr>'
+    + '</tbody></table></div>'
+    + '<div style="background:#ecfdf5;border-radius:10px;padding:14px;">'
+    + '<div style="font-weight:700;color:#047857;font-size:13px;margin-bottom:10px;">RTT</div>'
+    + '<table style="width:100%;font-size:13px;border-collapse:collapse;"><tbody>'
+    + '<tr><td style="padding:3px 0;">Droits</td><td style="text-align:right;font-weight:700;">' + cfg.droitsRTT + ' j</td></tr>'
+    + '<tr><td style="padding:3px 0;color:#047857;">Pris</td><td style="text-align:right;color:#047857;">&minus; ' + prisRTT + ' j</td></tr>'
+    + '<tr><td style="padding:3px 0;color:#059669;">Planifies</td><td style="text-align:right;color:#059669;">&minus; ' + planRTT + ' j</td></tr>'
+    + '<tr style="border-top:1px solid #a7f3d0;"><td style="font-weight:700;padding-top:6px;">Restants</td><td style="text-align:right;font-weight:700;padding-top:6px;' + restRTTcol + '">' + restRTT + ' j</td></tr>'
+    + '</tbody></table></div>'
+    + '</div>';
+
+  /* --- legende --- */
+  var legend = '<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--ink-soft);margin-bottom:12px;">'
+    + '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#bfdbfe;vertical-align:middle;margin-right:3px;"></span>CA pris</span>'
+    + '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#ede9fe;vertical-align:middle;margin-right:3px;"></span>CA planifie</span>'
+    + '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#a7f3d0;vertical-align:middle;margin-right:3px;"></span>RTT pris</span>'
+    + '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#d1fae5;vertical-align:middle;margin-right:3px;"></span>RTT planifie</span>'
+    + '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#fef3c7;vertical-align:middle;margin-right:3px;"></span>Jour ferie</span>'
+    + '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#f0f0f0;vertical-align:middle;margin-right:3px;"></span>Week-end</span>'
+    + '</div>';
+
+  /* --- calendriers mensusels (janv 2026 - fev 2027) --- */
+  var calMonths = [[2026,1],[2026,2],[2026,3],[2026,4],[2026,5],[2026,6],[2026,7],[2026,8],[2026,9],[2026,10],[2026,11],[2026,12],[2027,1],[2027,2]];
+  var calHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">';
+  for (var mi = 0; mi < calMonths.length; mi++) {
+    calHTML += admRenderMonth(calMonths[mi][0], calMonths[mi][1]);
+  }
+  calHTML += '</div>';
+
+  /* --- tableau des periodes --- */
   var sorted = periodes.slice().sort(function(a,b){ return a.debut.localeCompare(b.debut); });
   var pRows = "";
   for (var i = 0; i < sorted.length; i++) {
     var p = sorted[i];
-    var typeCls = p.type === "CA" ? "adm-pill adm-pill-took" : "adm-pill adm-pill-plan";
-    var statutLabel = p.statut === "Planifie" ? "Planifié" : p.statut;
-    var statutCls = p.statut === "Pris" ? "adm-pill adm-pill-ok" : "adm-pill adm-pill-plan";
+    var typeCls     = p.type === "CA" ? "adm-pill adm-pill-took" : "adm-pill adm-pill-plan";
+    var statutLabel = p.statut === "Planifie" ? "Planifie" : p.statut;
+    var statutCls   = p.statut === "Pris" ? "adm-pill adm-pill-ok" : "adm-pill adm-pill-plan";
     pRows += "<tr>"
       + "<td>" + admFormatDate(p.debut) + "</td>"
       + "<td>" + admFormatDate(p.fin) + "</td>"
@@ -3231,23 +3322,13 @@ function admRenderConges() {
       + "</tr>";
   }
 
-  var restCAcol  = restCA  < 0 ? "color:#dc2626;" : "color:#16a34a;";
-  var restRTTcol = restRTT < 0 ? "color:#dc2626;" : "color:#16a34a;";
-
-  el.innerHTML = '<div class="adm-kpis">'
-    + '<div class="adm-kpi"><div class="kpi-label">Droits CA</div><div class="kpi-val">' + cfg.droitsCA + ' j</div><div class="kpi-sub">13 mois</div></div>'
-    + '<div class="adm-kpi"><div class="kpi-label">Droits RTT</div><div class="kpi-val">' + cfg.droitsRTT + " j</div></div>"
-    + '<div class="adm-kpi"><div class="kpi-label">CA restants</div><div class="kpi-val" style="' + restCAcol + '">' + restCA + ' j</div><div class="kpi-sub">' + prisCA + " pris &middot; " + planCA + " planif.</div></div>"
-    + '<div class="adm-kpi"><div class="kpi-label">RTT restants</div><div class="kpi-val" style="' + restRTTcol + '">' + restRTT + ' j</div><div class="kpi-sub">' + prisRTT + " pris &middot; " + planRTT + " planif.</div></div>"
-    + "</div>"
-    + '<div class="adm-bar-row"><div class="adm-bar-lbl">CA ' + (prisCA+planCA) + "/" + cfg.droitsCA + " j</div>" + makeBar(prisCA, planCA, cfg.droitsCA) + '<div class="adm-bar-ct">' + prisCA + " pris &middot; " + planCA + " planif.</div></div>"
-    + '<div class="adm-bar-row"><div class="adm-bar-lbl">RTT ' + (prisRTT+planRTT) + "/" + cfg.droitsRTT + " j</div>" + makeBar(prisRTT, planRTT, cfg.droitsRTT) + '<div class="adm-bar-ct">' + prisRTT + " pris &middot; " + planRTT + " planif.</div></div>"
-    + '<div style="display:flex;gap:14px;font-size:11px;color:var(--ink-soft);margin:4px 0 16px 98px;"><span style="color:#7aa9d6;">&#9632; Pris</span><span style="color:#c9b6f0;">&#9632; Planifié</span></div>'
+  el.innerHTML = summary + legend + calHTML
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
-    + '<div style="font-size:13px;font-weight:700;">Périodes (' + periodes.length + ")</div>"
+    + '<div style="font-size:13px;font-weight:700;">Periodes (' + periodes.length + ")</div>"
     + '<button class="btn-primary" onclick="admOpenConge()" style="font-size:12px;padding:5px 14px;">+ Ajouter</button></div>'
-    + '<div class="adm-table-wrap"><table class="adm-table"><thead><tr><th>Début</th><th>Fin</th><th>Jours</th><th>Type</th><th>Statut</th><th></th></tr></thead>'
-    + "<tbody>" + pRows + "</tbody></table></div>";
+    + '<div class="adm-table-wrap"><table class="adm-table"><thead><tr>'
+    + "<th>Debut</th><th>Fin</th><th>Jours</th><th>Type</th><th>Statut</th><th></th>"
+    + "</tr></thead><tbody>" + pRows + "</tbody></table></div>";
 }
 
 /* -- Mission CRUD -- */
