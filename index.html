@@ -7,7 +7,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
-<title>Mon Tableau de Vie · v28</title>
+<title>Mon Tableau de Vie · v29</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2299,6 +2299,20 @@ function migrate(s) {
       }
     }
   }
+  // Migration : convertir les valeurs d'eau stockées en "ml×100" (ancienne step=100)
+  // vers des verres réels (step=1). Ex: 100→1, 200→2, 400→4
+  if (s.history) {
+    for (const dateKey in s.history) {
+      const day = s.history[dateKey];
+      if (!day?.habits) continue;
+      const v = Number(day.habits["h-eau"]) || 0;
+      if (v > 20) {
+        const glasses = Math.max(1, Math.round(v / 100));
+        day.habits["h-eau"] = glasses;
+        day.water = glasses;
+      }
+    }
+  }
   return s;
 }
 function saveState() {
@@ -2494,13 +2508,15 @@ function renderHabits() {
       const num = Number(value) || 0;
       const pct = Math.min(100, Math.round((num / (h.target || 1)) * 100));
       const barColor = isDone ? "var(--mint)" : (num >= 7000 && /pas/i.test(h.name)) ? "var(--peach)" : "var(--rose)";
-      const inputStep = (h.target || 1) <= 30 ? 1 : 100;
+      const isSmall = (h.target || 1) <= 30;
+      const inputStep = isSmall ? 1 : 100;
+      const inputMax = isSmall ? (h.target * 5) : "";
       return `
         <div class="habit habit-numeric ${isDone ? "done" : ""}">
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
               <span style="font-size:14.5px;">${escapeHtml(h.name)}</span>
-              <input type="number" value="${num || ''}" onchange="setHabitValue('${h.id}', this.value)" placeholder="0" min="0" step="${inputStep}"
+              <input type="number" value="${num || ''}" onchange="setHabitValue('${h.id}', this.value)" placeholder="0" min="0" step="${inputStep}" ${inputMax ? `max="${inputMax}"` : ""}
                 style="width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:right;background:white;" />
               <span style="font-size:11px;color:var(--ink-soft);">/ ${h.target}${h.unit ? " " + h.unit : ""}</span>
             </div>
