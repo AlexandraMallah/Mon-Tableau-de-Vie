@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v38</title>
+<title>Mon Tableau de Vie · v39</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1297,6 +1297,14 @@
             <div style="display:flex;align-items:center;gap:8px;">
               <input type="number" id="timeCandidatures" step="0.25" min="0" placeholder="0" style="flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:18px;font-weight:600;color:#8a5a2b;background:white;" onchange="saveTimeWork()" />
               <span style="font-size:14px;color:var(--ink-soft);">h</span>
+            </div>
+          </div>
+          <div style="background:linear-gradient(135deg,var(--bg-2),white);padding:14px;border-radius:14px;grid-column:1/-1;">
+            <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:6px;">🔧 Autre</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="number" id="timeAutre" step="0.25" min="0" placeholder="0" style="width:120px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:18px;font-weight:600;color:#64748b;background:white;" onchange="saveTimeWork()" />
+              <span style="font-size:14px;color:var(--ink-soft);">h</span>
+              <input type="text" id="timeAutreNote" placeholder="Préciser (ex : soutenance blanche, jury, réunion syndicat…)" maxlength="120" style="flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" oninput="saveTimeWork()" />
             </div>
           </div>
         </div>
@@ -6033,10 +6041,11 @@ document.getElementById("icsFile")?.addEventListener("change", e => {
 
 /* ========= TEMPS DE TRAVAIL ========= */
 const TIME_CATS = [
-  { key: "postdoc", label: "Postdoc", emoji: "📘", color: "#7aa9d6", bg: "var(--sky-soft)" },
+  { key: "postdoc",      label: "Postdoc",      emoji: "📘", color: "#7aa9d6", bg: "var(--sky-soft)" },
   { key: "valorisation", label: "Valorisation", emoji: "📝", color: "#d699ab", bg: "var(--pink-soft)" },
   { key: "enseignement", label: "Enseignement", emoji: "📚", color: "#a690d4", bg: "var(--lavender-soft)" },
   { key: "candidatures", label: "Candidatures", emoji: "📋", color: "#d6a78a", bg: "var(--peach-soft)" },
+  { key: "autre",        label: "Autre",        emoji: "🔧", color: "#94a3b8", bg: "var(--bg-2)" },
 ];
 let timeBarChart, timeDonutChart;
 
@@ -6058,6 +6067,13 @@ function saveTimeWork() {
     if (v > 0) day.workTime[c.key] = v;
     else delete day.workTime[c.key];
   }
+  // Note de l'activité "Autre"
+  const noteEl = document.getElementById("timeAutreNote");
+  if (noteEl) {
+    const note = noteEl.value.trim();
+    if (note) day.workTime.autreNote = note;
+    else delete day.workTime.autreNote;
+  }
   saveState();
   renderTimeView();
 }
@@ -6067,6 +6083,9 @@ function fillTimeForm(dateKey) {
   document.getElementById("timeValorisation").value = wt.valorisation || "";
   document.getElementById("timeEnseignement").value = wt.enseignement || "";
   document.getElementById("timeCandidatures").value = wt.candidatures || "";
+  document.getElementById("timeAutre").value = wt.autre || "";
+  const noteEl = document.getElementById("timeAutreNote");
+  if (noteEl) noteEl.value = wt.autreNote || "";
 }
 function resetTimeDateToToday() {
   const i = document.getElementById("timeWorkDate");
@@ -6092,7 +6111,8 @@ function renderTimeView() {
   renderTimeDonutChart();
 }
 function _sumWorkTime(dates) {
-  const totals = { postdoc: 0, valorisation: 0, enseignement: 0, candidatures: 0 };
+  const totals = {};
+  for (const c of TIME_CATS) totals[c.key] = 0;
   for (const d of dates) {
     const wt = getWorkTime(todayKey(d));
     for (const c of TIME_CATS) totals[c.key] += Number(wt[c.key]) || 0;
