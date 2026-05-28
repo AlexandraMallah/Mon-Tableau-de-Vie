@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v37</title>
+<title>Mon Tableau de Vie · v38</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1063,6 +1063,35 @@
     .ring-val { font-size: 18px; }
     .day-nav-label { font-size: 14px; min-width: 140px; }
   }
+
+  /* === Gestion administrative === */
+  .adm-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .adm-tab { padding:7px 18px; border-radius:999px; border:1.5px solid var(--line); background:white; color:var(--ink-soft); font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
+  .adm-tab.active { background:var(--lavender); color:white; border-color:var(--lavender); }
+  .adm-tab:hover:not(.active) { background:var(--bg-2); }
+  .adm-kpis { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:10px; margin-bottom:18px; }
+  .adm-kpi { background:var(--bg-1); border-radius:12px; padding:11px 14px; }
+  .adm-kpi .kpi-label { font-size:11px; color:var(--ink-soft); margin-bottom:3px; font-weight:600; letter-spacing:.03em; }
+  .adm-kpi .kpi-val { font-size:19px; font-weight:700; color:var(--ink); }
+  .adm-kpi .kpi-sub { font-size:11px; color:var(--ink-softer); margin-top:2px; }
+  .adm-table-wrap { overflow-x:auto; margin-bottom:18px; }
+  .adm-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .adm-table th { text-align:left; padding:7px 10px; color:var(--ink-soft); font-size:11px; font-weight:700; letter-spacing:.04em; border-bottom:2px solid var(--line); white-space:nowrap; }
+  .adm-table td { padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  .adm-table tr:last-child td { border-bottom:none; }
+  .adm-table tr:hover td { background:var(--bg-1); }
+  .adm-table .r { text-align:right; font-variant-numeric:tabular-nums; }
+  .adm-pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; white-space:nowrap; }
+  .adm-pill-ok   { background:#dcfce7; color:#16a34a; }
+  .adm-pill-wait { background:#fef3c7; color:#b45309; }
+  .adm-pill-took { background:#dbeafe; color:#1d4ed8; }
+  .adm-pill-plan { background:#ede9fe; color:#6d28d9; }
+  .adm-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .adm-bar-lbl { font-size:12px; font-weight:600; min-width:88px; }
+  .adm-bar { flex:1; height:13px; background:var(--line); border-radius:999px; overflow:hidden; display:flex; }
+  .adm-bar-pris { background:#7aa9d6; height:13px; }
+  .adm-bar-plan { background:#c9b6f0; height:13px; }
+  .adm-bar-ct { font-size:11px; min-width:90px; color:var(--ink-soft); }
 </style>
 </head>
 <body>
@@ -1310,6 +1339,17 @@
           <h2>📂 Autres projets de recherche</h2>
         </div>
         <div class="projects-grid" id="projectsGrid"></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <div class="card-row" style="margin-bottom:14px;">
+          <h2 style="margin:0;">🗂️ Gestion administrative</h2>
+        </div>
+        <div class="adm-tabs">
+          <button class="adm-tab active" data-admtab="budget" onclick="admSwitchTab('budget')">💰 Budget missions</button>
+          <button class="adm-tab" data-admtab="conges" onclick="admSwitchTab('conges')">🌴 Congés</button>
+        </div>
+        <div id="admBudgetPanel"><div id="admBudgetContent"></div></div>
+        <div id="admCongesPanel" style="display:none;"><div id="admCongesContent"></div></div>
       </div>
     </div>
 
@@ -2180,6 +2220,87 @@
   </div>
 </div>
 
+<!-- Modal mission / abonnement -->
+<div class="modal-bg" id="admMissionModal">
+  <div class="modal" style="max-width:500px;">
+    <h2 id="admMissionTitle">+ Nouvelle mission</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Date *</label>
+        <input type="date" id="admMDate" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" /></div>
+      <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Lieu *</label>
+        <input type="text" id="admMLieu" placeholder="ex : Estampuis" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" /></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;">
+      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Train (€)</label>
+        <input type="number" id="admMTrain" step="0.01" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
+      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Repas (€)</label>
+        <input type="number" id="admMRepas" step="0.01" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
+      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Taxi (€)</label>
+        <input type="number" id="admMTaxi" step="0.01" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Km parcourus</label>
+        <input type="number" id="admMKm" step="1" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
+      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Essence (€)</label>
+        <input type="number" id="admMEssence" step="0.01" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
+    </div>
+    <div style="background:var(--bg-1);border-radius:10px;padding:12px;margin-bottom:12px;">
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;font-weight:600;">Remboursement</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Montant (€)</label>
+          <input type="number" id="admMRemb" step="0.01" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
+        <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Date remb.</label>
+          <input type="date" id="admMDateRemb" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
+        <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Statut</label>
+          <select id="admMStatut" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;background:white;">
+            <option value="">--</option>
+            <option value="En attente">En attente</option>
+            <option value="Rembourse">Rembourse</option>
+          </select></div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="secondary" id="admMDeleteBtn" onclick="admDeleteMission()" style="display:none;color:#e55;">Supprimer</button>
+      <div class="spacer"></div>
+      <button class="secondary" onclick="admCloseMission()">Annuler</button>
+      <button class="primary" onclick="admSaveMission()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal conge -->
+<div class="modal-bg" id="admCongeModal">
+  <div class="modal" style="max-width:400px;">
+    <h2 id="admCongeTitle">+ Nouvelle periode</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Date debut *</label>
+        <input type="date" id="admCDebut" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" /></div>
+      <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Date fin *</label>
+        <input type="date" id="admCFin" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" /></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Jours ouvres</label>
+        <input type="number" id="admCJours" min="0" max="30" step="0.5" placeholder="5" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
+      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Type</label>
+        <select id="admCType" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;background:white;">
+          <option value="CA">CA</option>
+          <option value="RTT">RTT</option>
+        </select></div>
+      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Statut</label>
+        <select id="admCStatut" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;background:white;">
+          <option value="Planifie">Planifie</option>
+          <option value="Pris">Pris</option>
+        </select></div>
+    </div>
+    <div class="actions">
+      <button class="secondary" id="admCDeleteBtn" onclick="admDeleteConge()" style="display:none;color:#e55;">Supprimer</button>
+      <div class="spacer"></div>
+      <button class="secondary" onclick="admCloseConge()">Annuler</button>
+      <button class="primary" onclick="admSaveConge()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <input type="file" id="importFile" accept=".json" style="display:none;" />
 
 <script>
@@ -2286,6 +2407,7 @@ const DEFAULT_STATE = {
     communications: [],
   },
   contacts: [],
+  admin: { missions:[], abonnement:[], congesConfig:{ droitsCA:27, droitsRTT:20 }, congesPeriodes:[] },
 };
 
 function loadState() {
@@ -2437,6 +2559,48 @@ function migrate(s) {
         day.water = glasses;
       }
     }
+  }
+  // Admin : init avec donnees pre-remplies si absent
+  if (!s.admin || !s.admin.missions) {
+    s.admin = {
+      missions: [
+        { id:"m01", date:"2026-02-09", lieu:"Estampuis",        train:33,   repas:null, taxi:null, km:null, essence:null, remb:50,    dateRemb:"2026-03-05", statut:"Rembourse" },
+        { id:"m02", date:"2026-02-10", lieu:"Estampuis",        train:null, repas:20.5, taxi:null, km:104,  essence:null, remb:null,  dateRemb:null,         statut:null },
+        { id:"m03", date:"2026-02-11", lieu:"Estampuis",        train:26.5, repas:null, taxi:null, km:null, essence:null, remb:null,  dateRemb:null,         statut:null },
+        { id:"m04", date:"2026-04-08", lieu:"Estampuis",        train:30,   repas:null, taxi:null, km:null, essence:null, remb:70.95, dateRemb:"2026-05-12", statut:"Rembourse" },
+        { id:"m05", date:"2026-04-09", lieu:"Estampuis",        train:31,   repas:11.9, taxi:null, km:83,   essence:null, remb:66.5,  dateRemb:"2026-05-12", statut:"Rembourse" },
+        { id:"m06", date:"2026-04-20", lieu:"Villeneuve-d-Ascq",train:24.5, repas:null, taxi:null, km:null, essence:null, remb:59.79, dateRemb:"2026-05-12", statut:"Rembourse" },
+        { id:"m07", date:"2026-04-21", lieu:"Estampuis",        train:null, repas:20.8, taxi:null, km:107,  essence:71.07,remb:66.5,  dateRemb:"2026-05-12", statut:"Rembourse" },
+        { id:"m08", date:"2026-04-22", lieu:"Mouscron",         train:null, repas:16.7, taxi:null, km:111,  essence:null, remb:48.7,  dateRemb:"2026-05-12", statut:"Rembourse" },
+        { id:"m09", date:"2026-04-23", lieu:"Estampuis",        train:19.5, repas:6.9,  taxi:null, km:100,  essence:null, remb:66.5,  dateRemb:"2026-05-12", statut:"Rembourse" },
+        { id:"m10", date:"2026-04-26", lieu:"Comines",          train:28.5, repas:null, taxi:40,   km:null, essence:null, remb:66.5,  dateRemb:"2026-05-12", statut:"Rembourse" },
+        { id:"m11", date:"2026-04-27", lieu:"Comines",          train:21.5, repas:7,    taxi:null, km:127,  essence:42.84,remb:null,  dateRemb:null,         statut:null },
+        { id:"m12", date:"2026-05-12", lieu:"Roncq",            train:null, repas:null, taxi:null, km:null, essence:null, remb:null,  dateRemb:null,         statut:"En attente" },
+        { id:"m13", date:"2026-05-18", lieu:"Roncq",            train:null, repas:null, taxi:null, km:null, essence:null, remb:null,  dateRemb:null,         statut:"En attente" },
+        { id:"m14", date:"2026-05-21", lieu:"Rambouillet",      train:null, repas:null, taxi:null, km:null, essence:null, remb:null,  dateRemb:null,         statut:"En attente" },
+        { id:"m15", date:"2026-06-12", lieu:"Estampuis",        train:null, repas:null, taxi:null, km:null, essence:null, remb:null,  dateRemb:null,         statut:"En attente" },
+        { id:"m16", date:"2026-06-13", lieu:"Estampuis",        train:null, repas:null, taxi:null, km:null, essence:null, remb:null,  dateRemb:null,         statut:"En attente" }
+      ],
+      abonnement: [
+        { id:"a01", date:"2026-03-31", montant:22,  statut:"Rembourse" },
+        { id:"a02", date:"2026-04-12", montant:108, statut:"Rembourse" },
+        { id:"a03", date:"2026-04-30", montant:22,  statut:"Rembourse" }
+      ],
+      congesConfig: { droitsCA:27, droitsRTT:20 },
+      congesPeriodes: [
+        { id:"c01", debut:"2026-03-09", fin:"2026-03-13", jours:5, type:"CA",  statut:"Pris" },
+        { id:"c02", debut:"2026-08-03", fin:"2026-08-07", jours:5, type:"CA",  statut:"Planifie" },
+        { id:"c03", debut:"2026-08-10", fin:"2026-08-14", jours:5, type:"CA",  statut:"Planifie" },
+        { id:"c04", debut:"2026-08-17", fin:"2026-08-21", jours:5, type:"CA",  statut:"Planifie" },
+        { id:"c05", debut:"2026-08-24", fin:"2026-08-28", jours:5, type:"CA",  statut:"Planifie" },
+        { id:"c06", debut:"2026-08-31", fin:"2026-09-02", jours:3, type:"RTT", statut:"Planifie" }
+      ]
+    };
+  } else {
+    s.admin.missions      = s.admin.missions      || [];
+    s.admin.abonnement    = s.admin.abonnement    || [];
+    s.admin.congesConfig  = s.admin.congesConfig  || { droitsCA:27, droitsRTT:20 };
+    s.admin.congesPeriodes= s.admin.congesPeriodes|| [];
   }
   return s;
 }
@@ -2883,7 +3047,343 @@ function renderPostdocView() {
   _renderProjectCardFeatured("postdocProjectCard", isPostdocProject,
     "linear-gradient(135deg,var(--sky-soft) 0%, var(--mint-soft) 100%)",
     "linear-gradient(90deg,var(--sky),var(--mint))");
+  admRender();
 }
+
+/* ========= GESTION ADMINISTRATIVE ========= */
+var _admTab = "budget";
+var _admMissionId = null;
+var _admCongeId = null;
+
+function admSwitchTab(tab) {
+  _admTab = tab;
+  var btns = document.querySelectorAll(".adm-tab");
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].classList.toggle("active", btns[i].dataset.admtab === tab);
+  }
+  var bp = document.getElementById("admBudgetPanel");
+  var cp = document.getElementById("admCongesPanel");
+  if (bp) bp.style.display = (tab === "budget") ? "" : "none";
+  if (cp) cp.style.display = (tab === "conges")  ? "" : "none";
+}
+
+function admRender() {
+  try { admRenderBudget(); } catch(e) { console.error("admRenderBudget", e); }
+  try { admRenderConges(); } catch(e) { console.error("admRenderConges", e); }
+  var bp = document.getElementById("admBudgetPanel");
+  var cp = document.getElementById("admCongesPanel");
+  if (bp) bp.style.display = (_admTab === "budget") ? "" : "none";
+  if (cp) cp.style.display = (_admTab === "conges")  ? "" : "none";
+}
+
+function admFormatEur(v) {
+  if (v === null || v === undefined || v === "") return "-";
+  var n = Number(v);
+  if (isNaN(n)) return "-";
+  return n.toFixed(2).replace(".", ",") + " €";
+}
+
+function admFormatDate(d) {
+  if (!d) return "-";
+  var parts = d.split("-");
+  if (parts.length !== 3) return d;
+  return parts[2] + "/" + parts[1] + "/" + parts[0];
+}
+
+function admMissionTotal(m) {
+  return (m.train || 0) + (m.repas || 0) + (m.taxi || 0) + (m.essence || 0);
+}
+
+function admStatutPill(s, type) {
+  if (!s) return "";
+  var cls = "adm-pill";
+  if (s === "Rembourse" || s === "Pris") cls += " adm-pill-ok";
+  else if (s === "En attente") cls += " adm-pill-wait";
+  else if (s === "Planifie") cls += " adm-pill-plan";
+  var label = s;
+  if (s === "Rembourse") label = "Remboursé";
+  if (s === "Planifie")  label = "Planifié";
+  return '<span class="' + cls + '">' + label + "</span>";
+}
+
+function admRenderBudget() {
+  var el = document.getElementById("admBudgetContent");
+  if (!el) return;
+  var missions   = (state.admin && state.admin.missions)   || [];
+  var abonnement = (state.admin && state.admin.abonnement) || [];
+
+  var totalDep  = 0;
+  for (var i = 0; i < missions.length; i++) totalDep += admMissionTotal(missions[i]);
+  var totalRemb = 0;
+  for (var i = 0; i < missions.length; i++) totalRemb += (missions[i].remb || 0);
+  var totalAbo  = 0;
+  for (var i = 0; i < abonnement.length; i++) totalAbo += (abonnement[i].montant || 0);
+  var totalGen  = totalDep + totalAbo;
+  var reste     = totalGen - totalRemb;
+
+  var mRows = "";
+  var sorted = missions.slice().sort(function(a,b){ return a.date.localeCompare(b.date); });
+  for (var i = 0; i < sorted.length; i++) {
+    var m = sorted[i];
+    var tot = admMissionTotal(m);
+    mRows += "<tr>"
+      + "<td>" + admFormatDate(m.date) + "</td>"
+      + '<td style="font-weight:500;">' + escapeHtml(m.lieu || "") + "</td>"
+      + '<td class="r">' + (m.train   ? admFormatEur(m.train)   : "-") + "</td>"
+      + '<td class="r">' + (m.repas   ? admFormatEur(m.repas)   : "-") + "</td>"
+      + '<td class="r">' + (m.taxi    ? admFormatEur(m.taxi)    : "-") + "</td>"
+      + '<td class="r" style="color:var(--ink-soft);font-size:11px;">' + (m.km ? m.km + " km" : "-") + "</td>"
+      + '<td class="r">' + (m.essence ? admFormatEur(m.essence) : "-") + "</td>"
+      + '<td class="r" style="font-weight:700;">' + (tot > 0 ? admFormatEur(tot) : "-") + "</td>"
+      + '<td class="r" style="color:#16a34a;">' + (m.remb ? admFormatEur(m.remb) : "-") + "</td>"
+      + '<td style="font-size:11px;">' + admFormatDate(m.dateRemb) + "</td>"
+      + "<td>" + admStatutPill(m.statut) + "</td>"
+      + '<td><button onclick="admOpenMission(\'' + m.id + '\')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 6px;">&#9998;</button></td>'
+      + "</tr>";
+  }
+
+  var aRows = "";
+  for (var i = 0; i < abonnement.length; i++) {
+    var a = abonnement[i];
+    aRows += "<tr>"
+      + "<td>" + admFormatDate(a.date) + "</td>"
+      + '<td colspan="6">Abonnement Claude (IA)</td>'
+      + '<td class="r" style="font-weight:700;">' + admFormatEur(a.montant) + "</td>"
+      + '<td colspan="2"></td>'
+      + "<td>" + admStatutPill(a.statut) + "</td>"
+      + '<td><button onclick="admOpenAbo(\'' + a.id + '\')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 6px;">&#9998;</button></td>'
+      + "</tr>";
+  }
+
+  var resteStyle = reste > 0 ? "background:#fff7ed;" : "background:#dcfce7;";
+  var resteColor = reste > 0 ? "color:#b45309;" : "color:#16a34a;";
+
+  el.innerHTML = '<div class="adm-kpis">'
+    + '<div class="adm-kpi"><div class="kpi-label">Dépenses missions</div><div class="kpi-val" style="font-size:16px;">' + admFormatEur(totalDep) + "</div></div>"
+    + '<div class="adm-kpi"><div class="kpi-label">Abonnement Claude</div><div class="kpi-val" style="font-size:16px;">' + admFormatEur(totalAbo) + "</div></div>"
+    + '<div class="adm-kpi"><div class="kpi-label">Remboursé</div><div class="kpi-val" style="font-size:16px;color:#16a34a;">' + admFormatEur(totalRemb) + "</div></div>"
+    + '<div class="adm-kpi" style="' + resteStyle + '"><div class="kpi-label">Reste à rembourser</div><div class="kpi-val" style="font-size:16px;' + resteColor + '">' + admFormatEur(reste) + "</div></div>"
+    + "</div>"
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+    + '<div style="font-size:13px;font-weight:700;">Missions (' + missions.length + ")</div>"
+    + '<button class="btn-primary" onclick="admOpenMission()" style="font-size:12px;padding:5px 14px;">+ Ajouter</button></div>'
+    + '<div class="adm-table-wrap"><table class="adm-table"><thead><tr>'
+    + "<th>Date</th><th>Lieu</th><th>Train</th><th>Repas</th><th>Taxi</th><th>Km</th><th>Essence</th><th>Total</th><th>Remb.</th><th>Date remb.</th><th>Statut</th><th></th>"
+    + "</tr></thead><tbody>" + mRows + "</tbody></table></div>"
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:4px;">'
+    + '<div style="font-size:13px;font-weight:700;">Abonnement Claude (' + abonnement.length + ")</div>"
+    + '<button class="btn-primary" onclick="admOpenAbo()" style="font-size:12px;padding:5px 14px;">+ Ajouter</button></div>'
+    + '<div class="adm-table-wrap"><table class="adm-table"><thead><tr>'
+    + '<th>Date</th><th colspan="6">Description</th><th>Montant</th><th colspan="2"></th><th>Statut</th><th></th>'
+    + "</tr></thead><tbody>" + aRows + "</tbody></table></div>";
+}
+
+function admRenderConges() {
+  var el = document.getElementById("admCongesContent");
+  if (!el) return;
+  var periodes = (state.admin && state.admin.congesPeriodes) || [];
+  var cfg      = (state.admin && state.admin.congesConfig)   || { droitsCA:27, droitsRTT:20 };
+
+  var prisCA = 0, planCA = 0, prisRTT = 0, planRTT = 0;
+  for (var i = 0; i < periodes.length; i++) {
+    var p = periodes[i];
+    var j = p.jours || 0;
+    if (p.type === "CA"  && p.statut === "Pris")      prisCA  += j;
+    if (p.type === "CA"  && p.statut === "Planifie")  planCA  += j;
+    if (p.type === "RTT" && p.statut === "Pris")      prisRTT += j;
+    if (p.type === "RTT" && p.statut === "Planifie")  planRTT += j;
+  }
+  var restCA  = cfg.droitsCA  - prisCA  - planCA;
+  var restRTT = cfg.droitsRTT - prisRTT - planRTT;
+
+  function makeBar(pris, plan, total) {
+    if (!total) return '<div class="adm-bar"></div>';
+    var pPris = Math.min(100, Math.round(pris / total * 100));
+    var pPlan = Math.min(100 - pPris, Math.round(plan / total * 100));
+    return '<div class="adm-bar">'
+      + '<div class="adm-bar-pris" style="width:' + pPris + '%;"></div>'
+      + '<div class="adm-bar-plan" style="width:' + pPlan + '%;"></div>'
+      + "</div>";
+  }
+
+  var sorted = periodes.slice().sort(function(a,b){ return a.debut.localeCompare(b.debut); });
+  var pRows = "";
+  for (var i = 0; i < sorted.length; i++) {
+    var p = sorted[i];
+    var typeCls = p.type === "CA" ? "adm-pill adm-pill-took" : "adm-pill adm-pill-plan";
+    var statutLabel = p.statut === "Planifie" ? "Planifié" : p.statut;
+    var statutCls = p.statut === "Pris" ? "adm-pill adm-pill-ok" : "adm-pill adm-pill-plan";
+    pRows += "<tr>"
+      + "<td>" + admFormatDate(p.debut) + "</td>"
+      + "<td>" + admFormatDate(p.fin) + "</td>"
+      + '<td class="r" style="font-weight:700;">' + (p.jours || "-") + " j</td>"
+      + '<td><span class="' + typeCls + '">' + p.type + "</span></td>"
+      + '<td><span class="' + statutCls + '">' + statutLabel + "</span></td>"
+      + '<td><button onclick="admOpenConge(\'' + p.id + '\')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 6px;">&#9998;</button></td>'
+      + "</tr>";
+  }
+
+  var restCAcol  = restCA  < 0 ? "color:#dc2626;" : "color:#16a34a;";
+  var restRTTcol = restRTT < 0 ? "color:#dc2626;" : "color:#16a34a;";
+
+  el.innerHTML = '<div class="adm-kpis">'
+    + '<div class="adm-kpi"><div class="kpi-label">Droits CA</div><div class="kpi-val">' + cfg.droitsCA + ' j</div><div class="kpi-sub">13 mois</div></div>'
+    + '<div class="adm-kpi"><div class="kpi-label">Droits RTT</div><div class="kpi-val">' + cfg.droitsRTT + " j</div></div>"
+    + '<div class="adm-kpi"><div class="kpi-label">CA restants</div><div class="kpi-val" style="' + restCAcol + '">' + restCA + ' j</div><div class="kpi-sub">' + prisCA + " pris &middot; " + planCA + " planif.</div></div>"
+    + '<div class="adm-kpi"><div class="kpi-label">RTT restants</div><div class="kpi-val" style="' + restRTTcol + '">' + restRTT + ' j</div><div class="kpi-sub">' + prisRTT + " pris &middot; " + planRTT + " planif.</div></div>"
+    + "</div>"
+    + '<div class="adm-bar-row"><div class="adm-bar-lbl">CA ' + (prisCA+planCA) + "/" + cfg.droitsCA + " j</div>" + makeBar(prisCA, planCA, cfg.droitsCA) + '<div class="adm-bar-ct">' + prisCA + " pris &middot; " + planCA + " planif.</div></div>"
+    + '<div class="adm-bar-row"><div class="adm-bar-lbl">RTT ' + (prisRTT+planRTT) + "/" + cfg.droitsRTT + " j</div>" + makeBar(prisRTT, planRTT, cfg.droitsRTT) + '<div class="adm-bar-ct">' + prisRTT + " pris &middot; " + planRTT + " planif.</div></div>"
+    + '<div style="display:flex;gap:14px;font-size:11px;color:var(--ink-soft);margin:4px 0 16px 98px;"><span style="color:#7aa9d6;">&#9632; Pris</span><span style="color:#c9b6f0;">&#9632; Planifié</span></div>'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+    + '<div style="font-size:13px;font-weight:700;">Périodes (' + periodes.length + ")</div>"
+    + '<button class="btn-primary" onclick="admOpenConge()" style="font-size:12px;padding:5px 14px;">+ Ajouter</button></div>'
+    + '<div class="adm-table-wrap"><table class="adm-table"><thead><tr><th>Début</th><th>Fin</th><th>Jours</th><th>Type</th><th>Statut</th><th></th></tr></thead>'
+    + "<tbody>" + pRows + "</tbody></table></div>";
+}
+
+/* -- Mission CRUD -- */
+function admOpenMission(id) {
+  _admMissionId = id || null;
+  var m = id ? (state.admin.missions.filter(function(x){ return x.id === id; })[0] || {}) : {};
+  document.getElementById("admMissionTitle").textContent = id ? "Modifier la mission" : "+ Nouvelle mission";
+  document.getElementById("admMDate").value    = m.date     || "";
+  document.getElementById("admMLieu").value    = m.lieu     || "";
+  document.getElementById("admMTrain").value   = m.train    || "";
+  document.getElementById("admMRepas").value   = m.repas    || "";
+  document.getElementById("admMTaxi").value    = m.taxi     || "";
+  document.getElementById("admMKm").value      = m.km       || "";
+  document.getElementById("admMEssence").value = m.essence  || "";
+  document.getElementById("admMRemb").value    = m.remb     || "";
+  document.getElementById("admMDateRemb").value= m.dateRemb || "";
+  document.getElementById("admMStatut").value  = m.statut   || "";
+  document.getElementById("admMDeleteBtn").style.display = id ? "inline-flex" : "none";
+  document.getElementById("admMissionModal").classList.add("open");
+}
+function admCloseMission() { document.getElementById("admMissionModal").classList.remove("open"); }
+function admSaveMission() {
+  var date = document.getElementById("admMDate").value.trim();
+  var lieu = document.getElementById("admMLieu").value.trim();
+  if (!date || !lieu) { alert("Date et lieu obligatoires."); return; }
+  function n(v) { var x = parseFloat(v); return isNaN(x) ? null : x; }
+  var obj = {
+    id:      _admMissionId || ("m" + Date.now()),
+    date:    date,
+    lieu:    lieu,
+    train:   n(document.getElementById("admMTrain").value),
+    repas:   n(document.getElementById("admMRepas").value),
+    taxi:    n(document.getElementById("admMTaxi").value),
+    km:      n(document.getElementById("admMKm").value),
+    essence: n(document.getElementById("admMEssence").value),
+    remb:    n(document.getElementById("admMRemb").value),
+    dateRemb: document.getElementById("admMDateRemb").value || null,
+    statut:   document.getElementById("admMStatut").value   || null
+  };
+  var arr = state.admin.missions;
+  var idx = arr.findIndex ? arr.findIndex(function(x){ return x.id === obj.id; }) : -1;
+  for (var i = 0; i < arr.length; i++) { if (arr[i].id === obj.id) { idx = i; break; } }
+  if (idx >= 0) arr[idx] = obj; else arr.push(obj);
+  arr.sort(function(a,b){ return a.date.localeCompare(b.date); });
+  saveState(); admCloseMission(); admRenderBudget();
+}
+function admDeleteMission() {
+  if (!_admMissionId || !confirm("Supprimer cette mission ?")) return;
+  state.admin.missions = state.admin.missions.filter(function(x){ return x.id !== _admMissionId; });
+  saveState(); admCloseMission(); admRenderBudget();
+}
+
+/* -- Abonnement CRUD -- */
+var _admAboId = null;
+function admOpenAbo(id) {
+  _admAboId = id || null;
+  var a = id ? (state.admin.abonnement.filter(function(x){ return x.id === id; })[0] || {}) : {};
+  document.getElementById("admMissionTitle").textContent = id ? "Modifier l'abonnement" : "+ Nouvel abonnement";
+  document.getElementById("admMDate").value    = a.date    || "";
+  document.getElementById("admMLieu").value    = "Abonnement Claude (IA)";
+  document.getElementById("admMTrain").value   = "";
+  document.getElementById("admMRepas").value   = "";
+  document.getElementById("admMTaxi").value    = "";
+  document.getElementById("admMKm").value      = "";
+  document.getElementById("admMEssence").value = "";
+  document.getElementById("admMRemb").value    = a.montant || "";
+  document.getElementById("admMDateRemb").value= "";
+  document.getElementById("admMStatut").value  = a.statut  || "";
+  document.getElementById("admMDeleteBtn").style.display = id ? "inline-flex" : "none";
+  document.getElementById("admMissionModal").dataset.mode = "abo";
+  document.getElementById("admMissionModal").classList.add("open");
+}
+var _admSaveMissionOrig = admSaveMission;
+admSaveMission = function() {
+  var modal = document.getElementById("admMissionModal");
+  if (modal.dataset.mode === "abo") {
+    modal.dataset.mode = "";
+    var date    = document.getElementById("admMDate").value.trim();
+    var montant = parseFloat(document.getElementById("admMRemb").value) || 0;
+    var statut  = document.getElementById("admMStatut").value || null;
+    if (!date) { alert("Date obligatoire."); return; }
+    var obj = { id: _admAboId || ("a" + Date.now()), date:date, montant:montant, statut:statut };
+    var arr = state.admin.abonnement;
+    var found = false;
+    for (var i = 0; i < arr.length; i++) { if (arr[i].id === obj.id) { arr[i] = obj; found = true; break; } }
+    if (!found) arr.push(obj);
+    arr.sort(function(a,b){ return a.date.localeCompare(b.date); });
+    saveState(); admCloseMission(); admRenderBudget();
+    return;
+  }
+  _admSaveMissionOrig();
+};
+admDeleteMission = function() {
+  var modal = document.getElementById("admMissionModal");
+  if (modal.dataset.mode === "abo") {
+    modal.dataset.mode = "";
+    if (!_admAboId || !confirm("Supprimer ?")) return;
+    state.admin.abonnement = state.admin.abonnement.filter(function(x){ return x.id !== _admAboId; });
+    saveState(); admCloseMission(); admRenderBudget();
+    return;
+  }
+  if (!_admMissionId || !confirm("Supprimer cette mission ?")) return;
+  state.admin.missions = state.admin.missions.filter(function(x){ return x.id !== _admMissionId; });
+  saveState(); admCloseMission(); admRenderBudget();
+};
+
+/* -- Conges CRUD -- */
+function admOpenConge(id) {
+  _admCongeId = id || null;
+  var p = id ? (state.admin.congesPeriodes.filter(function(x){ return x.id === id; })[0] || {}) : {};
+  document.getElementById("admCongeTitle").textContent = id ? "Modifier la periode" : "+ Nouvelle periode";
+  document.getElementById("admCDebut").value  = p.debut  || "";
+  document.getElementById("admCFin").value    = p.fin    || "";
+  document.getElementById("admCJours").value  = p.jours  || "";
+  document.getElementById("admCType").value   = p.type   || "CA";
+  document.getElementById("admCStatut").value = p.statut || "Planifie";
+  document.getElementById("admCDeleteBtn").style.display = id ? "inline-flex" : "none";
+  document.getElementById("admCongeModal").classList.add("open");
+}
+function admCloseConge() { document.getElementById("admCongeModal").classList.remove("open"); }
+function admSaveConge() {
+  var debut = document.getElementById("admCDebut").value.trim();
+  var fin   = document.getElementById("admCFin").value.trim();
+  if (!debut || !fin) { alert("Dates obligatoires."); return; }
+  var jours = parseFloat(document.getElementById("admCJours").value) || null;
+  var obj = {
+    id:     _admCongeId || ("c" + Date.now()),
+    debut:  debut, fin:fin, jours:jours,
+    type:   document.getElementById("admCType").value,
+    statut: document.getElementById("admCStatut").value
+  };
+  var arr = state.admin.congesPeriodes;
+  var found = false;
+  for (var i = 0; i < arr.length; i++) { if (arr[i].id === obj.id) { arr[i] = obj; found = true; break; } }
+  if (!found) arr.push(obj);
+  saveState(); admCloseConge(); admRenderConges();
+}
+function admDeleteConge() {
+  if (!_admCongeId || !confirm("Supprimer cette periode ?")) return;
+  state.admin.congesPeriodes = state.admin.congesPeriodes.filter(function(x){ return x.id !== _admCongeId; });
+  saveState(); admCloseConge(); admRenderConges();
+}
+/* ========= FIN GESTION ADMINISTRATIVE ========= */
+
 function renderValorisationView() {
   _renderProjectCardFeatured("valorisationProjectCard", isValoProject,
     "linear-gradient(135deg,var(--pink-soft) 0%, var(--rose-soft) 100%)",
