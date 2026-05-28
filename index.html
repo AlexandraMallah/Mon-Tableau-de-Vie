@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v68</title>
+<title>Mon Tableau de Vie · v69</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -6593,12 +6593,26 @@ function renderTimeBarChart() {
   if (!canvas) return;
   const dates = lastDates(14);
   const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
-  const datasets = TIME_CATS.map(c => ({
+  // Calcul des données brutes d'abord pour savoir quel dataset est le plus haut/bas par colonne
+  const rawData = TIME_CATS.map(c => dates.map(d => Number(getWorkTime(todayKey(d))[c.key]) || 0));
+  const R = 7;
+  const datasets = TIME_CATS.map((c, di) => ({
     label: `${c.emoji} ${c.label}`,
-    data: dates.map(d => Number(getWorkTime(todayKey(d))[c.key]) || 0),
+    data: rawData[di],
     backgroundColor: c.color,
-    borderRadius: 4,
     borderSkipped: false,
+    // Pour les barres empilées : arrondir uniquement le dessus du segment le plus haut
+    // et le dessous du segment le plus bas, pour éviter les artefacts visuels
+    borderRadius: rawData[di].map((_, bi) => {
+      const nonZero = rawData.map((d, i) => ({ v: d[bi], i })).filter(x => x.v > 0);
+      if (!nonZero.length) return 0;
+      const topIdx = nonZero[nonZero.length - 1].i;
+      const botIdx = nonZero[0].i;
+      if (di === topIdx && di === botIdx) return R;
+      if (di === topIdx) return { topLeft: R, topRight: R, bottomLeft: 0, bottomRight: 0 };
+      if (di === botIdx) return { topLeft: 0, topRight: 0, bottomLeft: R, bottomRight: R };
+      return 0;
+    }),
   }));
   if (timeBarChart) timeBarChart.destroy();
   timeBarChart = new Chart(canvas, {
