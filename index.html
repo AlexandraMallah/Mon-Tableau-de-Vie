@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v62</title>
+<title>Mon Tableau de Vie · v63</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1363,12 +1363,6 @@
         </div>
         <div id="postdocProjectCard"></div>
       </div>
-      <div class="card">
-        <div class="card-row">
-          <h2>📂 Autres projets de recherche</h2>
-        </div>
-        <div class="projects-grid" id="projectsGrid"></div>
-      </div>
       <div class="card" style="margin-top:18px;">
         <div class="card-row" style="margin-bottom:14px;">
           <h2 style="margin:0;">🗂️ Gestion administrative</h2>
@@ -1384,6 +1378,12 @@
 
     <!-- Sub: Candidatures -->
     <div class="sub-view" data-sub="candidatures">
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-row">
+          <h2>📋 Candidatures <span class="count" id="candProjectCount"></span></h2>
+        </div>
+        <div id="candidaturesProjectCard"></div>
+      </div>
       <div id="candTasksCard" style="display:none;margin-bottom:14px;"></div>
       <div class="card">
         <div class="work-header">
@@ -3058,6 +3058,13 @@ function _renderProjectCardFeatured(targetId, projectFilter, gradientCss, defaul
       }).join("")
     : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:14px;">Aucune tâche en cours pour ce projet 🎉</p>`;
 
+  // Dernières tâches terminées (max 4, les plus récentes en tête)
+  const recentDone = doneTasks.slice(-4).reverse();
+  const doneHtml = recentDone.length ? recentDone.map(t => `
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);">
+      <span style="color:var(--green);font-size:14px;flex-shrink:0;">✓</span>
+      <span style="font-size:13px;color:var(--ink-soft);text-decoration:line-through;">${escapeHtml(t.name)}</span>
+    </div>`).join("") : "";
   target.innerHTML = `
     <div class="project-card" style="cursor:pointer;background:${gradientCss};" onclick="openProjectModal('${p.id}')">
       <div class="project-name" style="font-size:17px;">${escapeHtml(p.name)}</div>
@@ -3067,7 +3074,11 @@ function _renderProjectCardFeatured(targetId, projectFilter, gradientCss, defaul
         <span>Cliquer pour éditer</span>
       </div>
     </div>
-    <div style="margin-top:14px;font-size:13px;color:var(--ink);white-space:pre-wrap;background:#faf8fd;padding:14px;border-radius:12px;">${escapeHtml(p.notes || "")}</div>
+    ${p.notes ? `<div style="margin-top:14px;font-size:13px;color:var(--ink);white-space:pre-wrap;background:#faf8fd;padding:14px;border-radius:12px;">${escapeHtml(p.notes)}</div>` : ""}
+    ${doneHtml ? `<div style="margin-top:14px;">
+      <div style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">✅ Récemment terminé</div>
+      ${doneHtml}
+    </div>` : ""}
     <h2 style="margin:18px 0 10px;font-size:15px;">Tâches en cours</h2>
     <div class="task-list">${tasksHtml}</div>
   `;
@@ -3078,6 +3089,12 @@ function renderPostdocView() {
     "linear-gradient(135deg,var(--sky-soft) 0%, var(--mint-soft) 100%)",
     "linear-gradient(90deg,var(--sky),var(--mint))");
   admRender();
+}
+function isCandProject(p) { return p.id === "p-seed-candidatures" || /^candidatures?$/i.test(p.name); }
+function renderCandidaturesProjectCard() {
+  _renderProjectCardFeatured("candidaturesProjectCard", isCandProject,
+    "linear-gradient(135deg,var(--lavender-soft) 0%, var(--peach-soft) 100%)",
+    "linear-gradient(90deg,var(--lavender),var(--peach))");
 }
 
 /* ========= GESTION ADMINISTRATIVE ========= */
@@ -4257,6 +4274,7 @@ function deleteTaskFromModal() {
 
 /* ========= WORK :: CANDIDATURES (KANBAN) ========= */
 function renderCandidatures() {
+  renderCandidaturesProjectCard();
   // --- Tâches liées aux candidatures ---
   const candTasksEl = document.getElementById("candTasksCard");
   if (candTasksEl) {
