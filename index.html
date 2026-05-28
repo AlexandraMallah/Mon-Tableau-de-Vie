@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v55</title>
+<title>Mon Tableau de Vie · v56</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3826,11 +3826,24 @@ function renderDeadlineCalendar() {
   if (!el) return;
   const now = new Date(); now.setHours(0, 0, 0, 0);
   const todayStr = now.toISOString().slice(0, 10);
-  // Regrouper les tâches non terminées par deadline
+  // Regrouper les tâches non terminées + les événements calendrier par date
   const byDate = {};
   for (const t of state.work.postdocTasks) {
     if (!t.done && t.deadline) {
       (byDate[t.deadline] = byDate[t.deadline] || []).push(t);
+    }
+  }
+  // Ajouter les événements du calendrier manuel (calEvents)
+  for (const ev of (state.work.calEvents || [])) {
+    if (ev.date) {
+      // Éviter le doublon si un calEvent est déjà représenté par une tâche liée
+      const alreadyInTasks = (byDate[ev.date] || []).some(t => t.calEventId === ev.id);
+      if (!alreadyInTasks) {
+        (byDate[ev.date] = byDate[ev.date] || []).push({
+          id: ev.id, name: ev.title || ev.name || "Événement", kind: "event",
+          priority: ev.priority || "medium", _isCalEvent: true
+        });
+      }
     }
   }
   // Commencer le lundi de la semaine en cours
