@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v52</title>
+<title>Mon Tableau de Vie · v53</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2120,7 +2120,7 @@
     <div class="milestone-list" id="taskEditMilestones"></div>
     <div class="add-milestone-row">
       <input type="text" id="newMilestoneInput" placeholder="Nom du jalon…" style="flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;" onkeydown="if(event.key==='Enter')addMilestone()" />
-      <input type="number" id="newMilestoneWeight" min="0" max="100" step="1" placeholder="%" title="Poids de ce jalon (ex: 30 pour 30%)" style="width:60px;flex-shrink:0;padding:7px 8px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;text-align:center;" />
+      <input type="number" id="newMilestoneWeight" min="0" max="100" step="1" placeholder="%" title="Poids de ce jalon (ex: 30 pour 30%)" style="width:68px;flex-shrink:0;padding:7px 8px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;text-align:center;" />
       <button onclick="addMilestone()">+ Ajouter</button>
     </div>
     <div class="actions" style="margin-top:16px;">
@@ -4060,7 +4060,7 @@ function renderMilestones(milestones) {
     <div class="milestone-row ${m.done ? "done-m" : ""}" style="display:flex;align-items:center;gap:8px;">
       <div class="milestone-cb" style="flex-shrink:0;" onclick="toggleMilestone(${i})"></div>
       <span class="milestone-label" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.name ? escapeHtml(m.name) : '<em style="color:var(--ink-softer);font-size:12px;">sans nom</em>'}</span>
-      <input type="number" class="milestone-weight" style="width:52px;flex-shrink:0;" min="0" max="100" step="1"
+      <input type="number" class="milestone-weight" style="width:68px;flex-shrink:0;" min="0" max="100" step="1"
         value="${m.weight != null ? m.weight : ""}"
         placeholder="%"
         title="Poids de ce jalon"
