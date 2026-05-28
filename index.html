@@ -447,6 +447,11 @@
   .dcal-day.out-of-month { opacity: 0.25; }
   .dcal-dots { display: flex; gap: 2px; margin-top: 2px; flex-wrap: wrap; justify-content: center; }
   .dcal-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .ev-color-opt { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform 0.15s, border-color 0.15s; flex-shrink: 0; }
+  .ev-color-opt:hover { transform: scale(1.15); }
+  .ev-color-opt.selected { border-color: var(--ink); transform: scale(1.15); }
+  .cal-day-event-row.manual { border-left-color: #c9b6f0; background: #f3ecff22; }
+  .cal-event.manual { background: var(--lavender-soft); border-left: 2px solid var(--lavender); }
   .btn-primary {
     background: var(--lilac); color: white; border: none;
     padding: 9px 16px; border-radius: 12px; cursor: pointer;
@@ -1714,6 +1719,7 @@
           <button class="btn-soft" onclick="calNavToday()" style="font-size:12px;">Aujourd'hui</button>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn-icon" onclick="openManualEventModal()" style="background:linear-gradient(135deg,var(--lavender-soft),var(--pink-soft));">✚ Événement</button>
           <button class="btn-icon" onclick="openGoogleCalSetup()" title="Connecter Google Agenda via URL iCal" style="background:linear-gradient(135deg,var(--mint-soft),var(--sky-soft));">🔗 Google Agenda</button>
           <button class="btn-icon" onclick="document.getElementById('icsFile').click();" title="Importer un fichier .ics">📲 Importer ICS</button>
           <input type="file" id="icsFile" accept=".ics" style="display:none;" />
@@ -2055,6 +2061,47 @@
       <div class="spacer"></div>
       <button class="secondary" onclick="closeTaskEditModal()">Annuler</button>
       <button class="primary" onclick="saveTaskEdit()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manual Event Modal -->
+<div class="modal-bg" id="manualEventModal">
+  <div class="modal" style="max-width:460px;">
+    <h2 id="manualEventModalTitle">✚ Nouvel événement</h2>
+    <input type="hidden" id="manualEventId" />
+    <label>Titre</label>
+    <input type="text" id="manualEventName" placeholder="Réunion, anniversaire, rendez-vous…" />
+    <label>Date</label>
+    <input type="date" id="manualEventDate" />
+    <div class="grid-2">
+      <div>
+        <label>Heure début <span style="font-size:11px;color:var(--ink-softer);">(optionnel)</span></label>
+        <input type="time" id="manualEventStart" />
+      </div>
+      <div>
+        <label>Heure fin <span style="font-size:11px;color:var(--ink-softer);">(optionnel)</span></label>
+        <input type="time" id="manualEventEnd" />
+      </div>
+    </div>
+    <label>Couleur</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;" id="manualEventColorPicker">
+      <div class="ev-color-opt" data-color="#c9b6f0" style="background:#c9b6f0;" title="Lavande"></div>
+      <div class="ev-color-opt" data-color="#f5b6c9" style="background:#f5b6c9;" title="Rose"></div>
+      <div class="ev-color-opt" data-color="#aee0c8" style="background:#aee0c8;" title="Mint"></div>
+      <div class="ev-color-opt" data-color="#f7c9a3" style="background:#f7c9a3;" title="Pêche"></div>
+      <div class="ev-color-opt" data-color="#b4d4f1" style="background:#b4d4f1;" title="Ciel"></div>
+      <div class="ev-color-opt" data-color="#f5e6a8" style="background:#f5e6a8;" title="Beurre"></div>
+      <div class="ev-color-opt" data-color="#efb8c8" style="background:#efb8c8;" title="Rose poudré"></div>
+      <div class="ev-color-opt" data-color="#a8d8ea" style="background:#a8d8ea;" title="Bleu doux"></div>
+    </div>
+    <label style="margin-top:10px;">Description <span style="font-size:11px;color:var(--ink-softer);">(optionnel)</span></label>
+    <textarea id="manualEventDesc" placeholder="Notes, lieu, infos utiles…" style="min-height:70px;resize:vertical;" class="journal-input"></textarea>
+    <div class="actions" style="margin-top:16px;">
+      <button class="danger" id="manualEventDeleteBtn" onclick="deleteManualEvent()" style="display:none;">Supprimer</button>
+      <div class="spacer"></div>
+      <button class="secondary" onclick="closeManualEventModal()">Annuler</button>
+      <button class="primary" onclick="saveManualEvent()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -4938,14 +4985,20 @@ function getAllCalEvents() {
       source: "Ménage", time: "",
     });
   }
-  // ICS imported (avec couleur de leur source)
+  // ICS imported + événements manuels
   for (const ev of state.calEvents) {
     const src = state.calSources.find(s => s.id === ev.sourceId);
+    const isManual = ev.sourceId === "manual";
     events.push({
-      date: ev.date, type: "ics",
-      title: ev.title, source: src?.name || "Calendrier",
-      time: ev.time, color: ev.color || src?.color || "#aee0c8",
+      id: ev.id,
+      date: ev.date,
+      type: isManual ? "manual" : "ics",
+      title: ev.title,
+      source: isManual ? "Manuel" : (src?.name || "Calendrier"),
+      time: ev.time, endTime: ev.endTime,
+      color: ev.color || (isManual ? "#c9b6f0" : (src?.color || "#aee0c8")),
       sourceId: ev.sourceId,
+      description: ev.description || "",
     });
   }
   return events;
@@ -5119,16 +5172,30 @@ function showCalDayDetails(dateKey) {
   const listEl = document.getElementById("calDayList");
   if (titleEl) titleEl.textContent = "Événements du " + dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   if (!listEl) return;
+  const addBtn = `<button onclick="openManualEventModal('${dateKey}')" style="display:flex;align-items:center;gap:6px;background:var(--lavender-soft);border:1px dashed var(--lavender);color:var(--ink);border-radius:10px;padding:7px 14px;cursor:pointer;font-size:13px;font-family:inherit;margin-bottom:10px;">✚ Ajouter un événement ce jour</button>`;
   if (!events.length) {
-    listEl.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:14px;">Aucun événement ce jour-là.</p>`;
+    listEl.innerHTML = addBtn + `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:10px;">Aucun événement ce jour-là.</p>`;
     return;
   }
-  listEl.innerHTML = events.map(e => `
-    <div class="cal-day-event-row ${e.type}" ${(e.type === "ics" && e.color) ? `style="border-left-color:${e.color};"` : ""}>
-      <div class="cal-day-event-date">${e.time || "—"}</div>
-      <div class="cal-day-event-title">${escapeHtml(e.title)}</div>
-      <span class="cal-day-event-source">${e.source}</span>
-    </div>`).join("");
+  listEl.innerHTML = addBtn + events.map(e => {
+    const borderColor = e.color ? `border-left-color:${e.color};` : "";
+    const editBtn = e.type === "manual"
+      ? `<button onclick="openManualEventModal('${e.date}','${e.id}')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 6px;color:var(--ink-soft);" title="Modifier">✏️</button>`
+      : "";
+    const desc = e.description ? `<div style="font-size:12px;color:var(--ink-softer);margin-top:2px;">${escapeHtml(e.description)}</div>` : "";
+    const timeStr = e.time ? (e.endTime ? `${e.time} – ${e.endTime}` : e.time) : "—";
+    return `<div class="cal-day-event-row ${e.type}" style="${borderColor}display:flex;align-items:flex-start;gap:8px;">
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="cal-day-event-date">${timeStr}</div>
+          <div class="cal-day-event-title">${escapeHtml(e.title)}</div>
+          <span class="cal-day-event-source">${e.source}</span>
+        </div>
+        ${desc}
+      </div>
+      ${editBtn}
+    </div>`;
+  }).join("");
 }
 function renderCalUpcoming() {
   // Auto-display upcoming 7 days when no specific day clicked
@@ -5169,6 +5236,83 @@ function openGoogleCalSetup() {
   document.getElementById("gcalDisconnectBtn").style.display = state.googleCal?.url ? "" : "none";
   document.getElementById("gcalModal").classList.add("open");
 }
+/* ===== ÉVÉNEMENTS MANUELS ===== */
+let _manualEventColor = "#c9b6f0";
+function openManualEventModal(dateKey, eventId) {
+  const modal = document.getElementById("manualEventModal");
+  const delBtn = document.getElementById("manualEventDeleteBtn");
+  document.getElementById("manualEventId").value = eventId || "";
+  document.getElementById("manualEventModalTitle").textContent = eventId ? "✏️ Modifier l'événement" : "✚ Nouvel événement";
+  delBtn.style.display = eventId ? "" : "none";
+  if (eventId) {
+    const ev = state.calEvents.find(e => e.id === eventId);
+    if (!ev) return;
+    document.getElementById("manualEventName").value = ev.title || "";
+    document.getElementById("manualEventDate").value = ev.date || "";
+    document.getElementById("manualEventStart").value = ev.time || "";
+    document.getElementById("manualEventEnd").value = ev.endTime || "";
+    document.getElementById("manualEventDesc").value = ev.description || "";
+    _manualEventColor = ev.color || "#c9b6f0";
+  } else {
+    document.getElementById("manualEventName").value = "";
+    document.getElementById("manualEventDate").value = dateKey || todayKey();
+    document.getElementById("manualEventStart").value = "";
+    document.getElementById("manualEventEnd").value = "";
+    document.getElementById("manualEventDesc").value = "";
+    _manualEventColor = "#c9b6f0";
+  }
+  // Mettre à jour le sélecteur de couleur
+  document.querySelectorAll(".ev-color-opt").forEach(el => {
+    el.classList.toggle("selected", el.dataset.color === _manualEventColor);
+    el.onclick = () => {
+      _manualEventColor = el.dataset.color;
+      document.querySelectorAll(".ev-color-opt").forEach(e => e.classList.remove("selected"));
+      el.classList.add("selected");
+    };
+  });
+  modal.classList.add("open");
+  setTimeout(() => document.getElementById("manualEventName").focus(), 100);
+}
+function closeManualEventModal() {
+  document.getElementById("manualEventModal").classList.remove("open");
+}
+function saveManualEvent() {
+  const title = document.getElementById("manualEventName").value.trim();
+  const date = document.getElementById("manualEventDate").value;
+  if (!title) { document.getElementById("manualEventName").focus(); return; }
+  if (!date) { document.getElementById("manualEventDate").focus(); return; }
+  const id = document.getElementById("manualEventId").value;
+  const ev = {
+    id: id || ("manual-" + Date.now()),
+    sourceId: "manual",
+    title,
+    date,
+    time: document.getElementById("manualEventStart").value || null,
+    endTime: document.getElementById("manualEventEnd").value || null,
+    color: _manualEventColor,
+    description: document.getElementById("manualEventDesc").value.trim(),
+  };
+  if (id) {
+    const idx = state.calEvents.findIndex(e => e.id === id);
+    if (idx >= 0) state.calEvents[idx] = ev;
+  } else {
+    state.calEvents.push(ev);
+  }
+  saveState();
+  closeManualEventModal();
+  renderCalendar();
+  showToast(id ? "✏️ Événement modifié" : "✚ Événement ajouté !");
+}
+function deleteManualEvent() {
+  const id = document.getElementById("manualEventId").value;
+  if (!id || !confirm("Supprimer cet événement ?")) return;
+  state.calEvents = state.calEvents.filter(e => e.id !== id);
+  saveState();
+  closeManualEventModal();
+  renderCalendar();
+  showToast("🗑️ Événement supprimé");
+}
+
 function closeGoogleCalModal() {
   document.getElementById("gcalModal").classList.remove("open");
 }
@@ -6109,7 +6253,7 @@ document.getElementById("newActivityName").addEventListener("keydown", e => {
 });
 
 /* Modal backdrop close */
-["projectModal", "candModal", "articleModal", "commModal", "subModal", "taskEditModal"].forEach(id => {
+["projectModal", "candModal", "articleModal", "commModal", "subModal", "taskEditModal", "manualEventModal"].forEach(id => {
   document.getElementById(id).addEventListener("click", e => {
     if (e.target.id === id) document.getElementById(id).classList.remove("open");
   });
