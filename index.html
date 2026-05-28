@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v44</title>
+<title>Mon Tableau de Vie · v45</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -527,6 +527,13 @@
   .task-row:hover .task-edit-btn { opacity: 1; }
   .task-edit-btn:hover { background: var(--lavender-soft); }
   .task-del:hover { color: var(--red); }
+  .task-row.is-event { background: linear-gradient(to right, #f0f9ff 0%, white 60%); border-left-color: #7dd3fc !important; }
+  .task-row.is-event .task-name { color: #0369a1; }
+  .task-kind-badge { font-size: 10px; padding: 2px 7px; border-radius: 999px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+  .task-kind-badge.is-event { background: #e0f2fe; color: #0369a1; }
+  .kind-toggle { padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: white; font-size: 12px; cursor: pointer; color: var(--ink-soft); transition: all 0.18s; }
+  .kind-toggle.active { border-color: #7dd3fc; background: #e0f2fe; color: #0369a1; font-weight: 600; }
+  .kind-toggle.active.is-task { border-color: var(--lavender); background: var(--lavender-soft); color: var(--ink); }
   .task-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
   .task-progress-bar { height: 7px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 2px; }
   .task-progress-fill { height: 100%; border-radius: 4px; transition: width 0.4s, background 0.4s; }
@@ -1238,7 +1245,7 @@
           <div>
             <div class="task-list" id="taskList"></div>
             <div class="add-task-form">
-              <input type="text" id="newTaskName" placeholder="Nouvelle tâche…" />
+              <input type="text" id="newTaskName" placeholder="Nouvelle tâche…" onkeydown="if(event.key==='Enter')addTask()" />
               <select id="newTaskProject"></select>
               <select id="newTaskPriority">
                 <option value="urgent">🚨 Urgent</option>
@@ -1247,6 +1254,8 @@
                 <option value="low">Priorité faible</option>
               </select>
               <input type="date" id="newTaskDeadline" />
+              <button type="button" id="newKindTask" class="kind-toggle active is-task" onclick="setNewTaskKind('task')" title="À faire">📌</button>
+              <button type="button" id="newKindEvent" class="kind-toggle" onclick="setNewTaskKind('event')" title="Événement prévu">📅</button>
               <button class="btn-primary" onclick="addTask()">Ajouter</button>
             </div>
           </div>
@@ -2071,6 +2080,10 @@
   <div class="modal" style="max-width:480px;">
     <h2>Modifier la tâche</h2>
     <input type="hidden" id="taskEditId" />
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button type="button" id="kindToggleTask" class="kind-toggle active is-task" onclick="setModalKind('task')">📌 À faire</button>
+      <button type="button" id="kindToggleEvent" class="kind-toggle" onclick="setModalKind('event')">📅 Événement prévu</button>
+    </div>
     <label>Nom</label>
     <input type="text" id="taskEditName" placeholder="Nom de la tâche" />
     <div class="grid-2">
@@ -3771,11 +3784,14 @@ function renderTasks() {
     const progressColor = pct >= 100 ? '#4ade80' : `hsl(${Math.round(pct * 1.2)}, 72%, 52%)`;
     const progressHtml = pct > 0 ? `<div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%;background:${progressColor};"></div></div>` : "";
     const pctBadge = pct > 0 && !t.done ? `<span class="task-pct-badge" style="color:${progressColor};background:${progressColor}22;">${pct}%</span>` : "";
+    const isEvent = t.kind === "event";
+    const kindBadge = isEvent ? `<span class="task-kind-badge is-event">📅 Événement</span>` : "";
     return `
-      <div class="task-row prio-${t.priority} ${t.done ? "done" : ""}">
+      <div class="task-row prio-${t.priority} ${t.done ? "done" : ""} ${isEvent ? "is-event" : ""}">
         <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
         <div class="task-body">
           <div class="task-meta">
+            ${kindBadge}
             <span class="task-name">${escapeHtml(t.name)}</span>
             ${pctBadge}
             ${tagHtml}
@@ -3857,15 +3873,34 @@ function filterTasksByDeadline(dateKey) {
   // Scroll vers la liste
   document.getElementById("taskList")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+let _newTaskKind = "task";
+function setNewTaskKind(k) {
+  _newTaskKind = k;
+  const tBtn = document.getElementById("newKindTask");
+  const eBtn = document.getElementById("newKindEvent");
+  if (tBtn) { tBtn.classList.toggle("active", k === "task"); tBtn.classList.toggle("is-task", k === "task"); }
+  if (eBtn) { eBtn.classList.toggle("active", k === "event"); }
+}
+function setModalKind(k) {
+  const tBtn = document.getElementById("kindToggleTask");
+  const eBtn = document.getElementById("kindToggleEvent");
+  if (tBtn) { tBtn.classList.toggle("active", k === "task"); tBtn.classList.toggle("is-task", k === "task"); }
+  if (eBtn) { eBtn.classList.toggle("active", k === "event"); }
+}
+function getModalKind() {
+  const eBtn = document.getElementById("kindToggleEvent");
+  return (eBtn && eBtn.classList.contains("active")) ? "event" : "task";
+}
 function addTask() {
   const name = document.getElementById("newTaskName").value.trim();
   if (!name) return;
   const projectId = document.getElementById("newTaskProject").value;
   const priority = document.getElementById("newTaskPriority").value;
   const deadline = document.getElementById("newTaskDeadline").value;
-  state.work.postdocTasks.unshift({ id: "t" + Date.now(), name, projectId, priority, deadline, done: false, createdAt: new Date().toISOString() });
+  state.work.postdocTasks.unshift({ id: "t" + Date.now(), name, projectId, priority, deadline, kind: _newTaskKind, done: false, createdAt: new Date().toISOString() });
   document.getElementById("newTaskName").value = "";
   document.getElementById("newTaskDeadline").value = "";
+  setNewTaskKind("task"); // reset à "tâche" après ajout
   saveState();
   renderTasks();
   renderTaskBilan();
@@ -4065,6 +4100,7 @@ function openTaskEditModal(id) {
   updateModalPreview(pct);
   renderMilestones(t.milestones || []);
   document.getElementById("newMilestoneInput").value = "";
+  setModalKind(t.kind || "task");
   document.getElementById("taskEditModal").classList.add("open");
 }
 function closeTaskEditModal() {
@@ -4078,6 +4114,7 @@ function saveTaskEdit() {
   t.priority  = document.getElementById("taskEditPriority").value;
   t.projectId = document.getElementById("taskEditProject").value;
   t.deadline  = document.getElementById("taskEditDeadline").value || "";
+  t.kind      = getModalKind();
   // Sauvegarde progression manuelle (si pas de jalons)
   if (!t.milestones || !t.milestones.length) {
     t.progress = Number(document.getElementById("taskEditProgress").value) || 0;
