@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v67</title>
+<title>Mon Tableau de Vie · v68</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1307,28 +1307,28 @@
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px;">
           <div style="display:flex;align-items:center;gap:6px;background:var(--sky-soft);padding:7px 10px;border-radius:10px;">
             <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">📘 Postdoc</span>
-            <input type="number" id="timePostdoc" step="0.25" min="0" placeholder="0" style="width:0;flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#2c6391;background:white;text-align:center;" onchange="saveTimeWork()" />
+            <input type="number" id="timePostdoc" step="0.25" min="0" placeholder="0" style="width:0;flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#2b7ab0;background:white;text-align:center;" onchange="saveTimeWork()" />
             <span style="font-size:12px;color:var(--ink-soft);">h</span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;background:var(--pink-soft);padding:7px 10px;border-radius:10px;">
             <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">📝 Valo</span>
-            <input type="number" id="timeValorisation" step="0.25" min="0" placeholder="0" style="width:0;flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#9b4866;background:white;text-align:center;" onchange="saveTimeWork()" />
+            <input type="number" id="timeValorisation" step="0.25" min="0" placeholder="0" style="width:0;flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#c4547a;background:white;text-align:center;" onchange="saveTimeWork()" />
             <span style="font-size:12px;color:var(--ink-soft);">h</span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;background:var(--lavender-soft);padding:7px 10px;border-radius:10px;">
             <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">📚 Ens.</span>
-            <input type="number" id="timeEnseignement" step="0.25" min="0" placeholder="0" style="width:0;flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#6b4d99;background:white;text-align:center;" onchange="saveTimeWork()" />
+            <input type="number" id="timeEnseignement" step="0.25" min="0" placeholder="0" style="width:0;flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#7355b8;background:white;text-align:center;" onchange="saveTimeWork()" />
             <span style="font-size:12px;color:var(--ink-soft);">h</span>
           </div>
-          <div style="display:flex;align-items:center;gap:6px;background:var(--peach-soft);padding:7px 10px;border-radius:10px;">
+          <div style="display:flex;align-items:center;gap:6px;background:#e6f7f1;padding:7px 10px;border-radius:10px;">
             <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">📋 Cand.</span>
-            <input type="number" id="timeCandidatures" step="0.25" min="0" placeholder="0" style="width:0;flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#8a5a2b;background:white;text-align:center;" onchange="saveTimeWork()" />
+            <input type="number" id="timeCandidatures" step="0.25" min="0" placeholder="0" style="width:0;flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#3a8a6a;background:white;text-align:center;" onchange="saveTimeWork()" />
             <span style="font-size:12px;color:var(--ink-soft);">h</span>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;background:var(--bg-2);padding:7px 10px;border-radius:10px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;background:#fdf6d8;padding:7px 10px;border-radius:10px;margin-bottom:8px;">
           <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">🔧 Autre</span>
-          <input type="number" id="timeAutre" step="0.25" min="0" placeholder="0" style="width:64px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#64748b;background:white;text-align:center;" onchange="saveTimeWork()" />
+          <input type="number" id="timeAutre" step="0.25" min="0" placeholder="0" style="width:64px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#b8900a;background:white;text-align:center;" onchange="saveTimeWork()" />
           <span style="font-size:12px;color:var(--ink-soft);">h</span>
           <input type="text" id="timeAutreNote" placeholder="Préciser (ex : soutenance blanche, jury…)" maxlength="120" style="flex:1;padding:4px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" oninput="saveTimeNote()" />
         </div>
@@ -3633,11 +3633,12 @@ function renderTaskProgress() {
     if (t.done) tasksByProject[key].done++;
   }
   const colorFor = (p) => {
-    if (isPostdocProject(p)) return { fg: "#7aa9d6", bg: "var(--sky-soft)" };
-    if (isValoProject(p)) return { fg: "#d699ab", bg: "var(--pink-soft)" };
-    if (isTeachingProject(p)) return { fg: "#a690d4", bg: "var(--lavender-soft)" };
-    if (isAutreProject(p)) return { fg: "#94a3b8", bg: "var(--bg-2)" };
-    return { fg: "#d6a78a", bg: "var(--peach-soft)" };
+    if (isPostdocProject(p)) return { fg: "#6aaed6", bg: "var(--sky-soft)" };
+    if (isValoProject(p)) return { fg: "#e890a4", bg: "var(--pink-soft)" };
+    if (isTeachingProject(p)) return { fg: "#9d82d6", bg: "var(--lavender-soft)" };
+    if (isAutreProject(p)) return { fg: "#f5c842", bg: "#fdf6d8" };
+    if (isCandProject(p)) return { fg: "#72c4a2", bg: "#e6f7f1" };
+    return { fg: "#72c4a2", bg: "#e6f7f1" };
   };
   let html = "";
   for (const p of projects) {
