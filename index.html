@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v71</title>
+<title>Mon Tableau de Vie · v72</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -916,7 +916,7 @@
   .dom-emoji { font-size: 22px; flex-shrink: 0; width: 32px; text-align: center; }
   .dom-name { flex: 1; font-size: 14px; }
   .dom-meta { font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
-  .plant-notes-input { display:block; width:100%; font-size:12px; color:var(--ink-soft); font-style:italic; font-family:inherit; background:transparent; border:none; border-bottom:1px solid transparent; outline:none; resize:none; padding:2px 0; margin-top:3px; cursor:text; min-height:16px; max-height:80px; overflow:hidden; transition:border-color 0.15s; line-height:1.4; }
+  .plant-notes-input { display:block; width:100%; font-size:12px; color:var(--ink-soft); font-style:italic; font-family:inherit; background:transparent; border:none; border-bottom:1px solid transparent; outline:none; resize:none; padding:2px 0; margin-top:3px; cursor:text; min-height:16px; overflow:hidden; transition:border-color 0.15s; line-height:1.4; }
   .plant-notes-input:hover { border-bottom-color:var(--line); }
   .plant-notes-input:focus { border-bottom-color:var(--lavender); background:#faf8fd; border-radius:4px 4px 0 0; padding:2px 4px; cursor:auto; }
   .plant-notes-input::placeholder { color:var(--ink-softer); }
@@ -7125,6 +7125,7 @@ function renderPlants() {
           <div class="dom-meta">${frequencyLabel(p.wateringDays)}</div>
           <textarea class="plant-notes-input" placeholder="💡 Conseils d'arrosage…"
             onchange="updatePlantNotes('${p.id}', this.value)"
+            oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
             onkeydown="if(event.key==='Escape')this.blur()"
             rows="1">${escapeHtml(p.notes || "")}</textarea>
         </div>
@@ -7132,6 +7133,10 @@ function renderPlants() {
         <button class="dom-btn" onclick="waterPlant('${p.id}')">💧 Arroser</button>
         <button class="dom-del" onclick="deletePlant('${p.id}')" title="Supprimer">✕</button>
       </div>`).join("");
+  // Auto-resize des textareas de notes déjà remplies
+  target.querySelectorAll(".plant-notes-input").forEach(ta => {
+    if (ta.value) { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; }
+  });
 }
 function addPlant() {
   const name = document.getElementById("newPlantName").value.trim();
