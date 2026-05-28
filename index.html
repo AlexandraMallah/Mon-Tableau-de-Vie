@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v72</title>
+<title>Mon Tableau de Vie · v73</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1311,22 +1311,22 @@
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px;">
           <div style="display:flex;align-items:center;gap:6px;background:var(--sky-soft);padding:7px 10px;border-radius:10px;">
             <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">📘 Postdoc</span>
-            <input type="number" id="timePostdoc" step="0.25" min="0" placeholder="0" style="width:0;flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#2b7ab0;background:white;text-align:center;" onchange="saveTimeWork()" />
+            <input type="number" id="timePostdoc" step="0.25" min="0" placeholder="0" style="width:52px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#2b7ab0;background:white;text-align:center;" onchange="saveTimeWork()" />
             <span style="font-size:12px;color:var(--ink-soft);">h</span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;background:var(--pink-soft);padding:7px 10px;border-radius:10px;">
             <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">📝 Valo</span>
-            <input type="number" id="timeValorisation" step="0.25" min="0" placeholder="0" style="width:0;flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#c4547a;background:white;text-align:center;" onchange="saveTimeWork()" />
+            <input type="number" id="timeValorisation" step="0.25" min="0" placeholder="0" style="width:52px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#c4547a;background:white;text-align:center;" onchange="saveTimeWork()" />
             <span style="font-size:12px;color:var(--ink-soft);">h</span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;background:var(--lavender-soft);padding:7px 10px;border-radius:10px;">
             <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">📚 Ens.</span>
-            <input type="number" id="timeEnseignement" step="0.25" min="0" placeholder="0" style="width:0;flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#7355b8;background:white;text-align:center;" onchange="saveTimeWork()" />
+            <input type="number" id="timeEnseignement" step="0.25" min="0" placeholder="0" style="width:52px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#7355b8;background:white;text-align:center;" onchange="saveTimeWork()" />
             <span style="font-size:12px;color:var(--ink-soft);">h</span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;background:#e6f7f1;padding:7px 10px;border-radius:10px;">
             <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">📋 Cand.</span>
-            <input type="number" id="timeCandidatures" step="0.25" min="0" placeholder="0" style="width:0;flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#3a8a6a;background:white;text-align:center;" onchange="saveTimeWork()" />
+            <input type="number" id="timeCandidatures" step="0.25" min="0" placeholder="0" style="width:52px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#3a8a6a;background:white;text-align:center;" onchange="saveTimeWork()" />
             <span style="font-size:12px;color:var(--ink-soft);">h</span>
           </div>
         </div>
@@ -1466,34 +1466,28 @@
       <div class="card">
         <div class="card-row">
           <h2>📜 Historique des cours</h2>
-          <span style="font-size:13px;color:var(--ink-soft);">Source : CV</span>
+          <button class="btn-primary" onclick="openAddCourseForm()">+ Ajouter</button>
+        </div>
+        <div id="addCourseForm" style="display:none;background:#faf8fd;border-radius:12px;padding:14px;margin-bottom:14px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 2fr 1fr 1fr 80px auto;gap:8px;align-items:center;">
+            <input type="text" id="newCourseYear" placeholder="2025-2026" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+            <input type="text" id="newCourseSchool" placeholder="Établissement" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+            <input type="text" id="newCourseName" placeholder="Intitulé du cours" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+            <input type="text" id="newCourseLevel" placeholder="Niveau" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+            <input type="text" id="newCourseType" placeholder="Type" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+            <input type="number" id="newCourseHours" placeholder="h" min="0" step="0.5" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:center;" />
+            <button onclick="addCourse()" style="padding:7px 12px;background:var(--lavender-soft);border:1px solid var(--lavender);border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;white-space:nowrap;">✓ OK</button>
+          </div>
         </div>
         <div style="overflow-x:auto;">
-          <table class="data-table">
+          <table class="data-table" id="teachingHistoryTable">
             <thead>
-              <tr><th>Année</th><th>Établissement</th><th>Cours</th><th>Niveau</th><th>Type</th><th style="text-align:right;">Heures</th></tr>
+              <tr><th>Année</th><th>Établissement</th><th>Cours</th><th>Niveau</th><th>Type</th><th style="text-align:right;">Heures</th><th></th></tr>
             </thead>
-            <tbody>
-              <tr><td><strong>2025-2026</strong></td><td>Paris 1</td><td>Cartographie et graphique</td><td>L1 S2</td><td>TD</td><td style="text-align:right;">24 h</td></tr>
-              <tr><td>2024-2025</td><td>Paris 1</td><td>Initiation au diagnostic territorial</td><td>L1 S2</td><td>TD</td><td style="text-align:right;">26 h</td></tr>
-              <tr><td>2024-2025</td><td>EHESS</td><td>Construire une recherche en TES (S1)</td><td>M1/M2</td><td>Séminaire</td><td style="text-align:right;">26 h</td></tr>
-              <tr><td>2024-2025</td><td>EHESS</td><td>Construire une recherche en TES (S2)</td><td>M1/M2</td><td>Séminaire</td><td style="text-align:right;">26 h</td></tr>
-              <tr><td>2024-2025</td><td>EHESS</td><td>Construire une recherche en TES (S2)</td><td>M1/M2</td><td>Séminaire</td><td style="text-align:right;">2 h</td></tr>
-              <tr><td>2023-2024</td><td>Paris 1</td><td>Initiation au diagnostic territorial</td><td>L1 S1</td><td>TD</td><td style="text-align:right;">26 h</td></tr>
-              <tr><td>2023-2024</td><td>EHESS</td><td>Construire une recherche en TES (S1)</td><td>M1/M2</td><td>Séminaire</td><td style="text-align:right;">26 h</td></tr>
-              <tr><td>2023-2024</td><td>EHESS</td><td>Construire une recherche en TES (S2)</td><td>M1/M2</td><td>Séminaire</td><td style="text-align:right;">26 h</td></tr>
-              <tr><td>2023-2024</td><td>EHESS</td><td>Construire une recherche en TES (S1)</td><td>M1/M2</td><td>Séminaire</td><td style="text-align:right;">2 h</td></tr>
-              <tr><td>2022-2023</td><td>EHESS</td><td>Patrimoine et matrimoine : enjeux féministes</td><td>Master TEMA+</td><td>Séminaire propre</td><td style="text-align:right;">26 h</td></tr>
-              <tr><td>2022-2023</td><td>EHESS</td><td>Construire une recherche en TES</td><td>M1/M2 S1</td><td>Séminaire</td><td style="text-align:right;">26 h</td></tr>
-              <tr><td>2022-2023</td><td>EHESS</td><td>Géographie morale et politique : mobilité, migrations, genre</td><td>M1/M2 S1</td><td>Séminaire</td><td style="text-align:right;">2 h</td></tr>
-              <tr><td>2022-2023</td><td>CNAM</td><td>Espace public, nouveaux lieux culturels</td><td>Master</td><td>Séminaire</td><td style="text-align:right;">3 h</td></tr>
-              <tr><td>2022-2023</td><td>UCO Angers</td><td>Actualité de l'art : conservation patrimoine</td><td>L1</td><td>TD</td><td style="text-align:right;">2 h</td></tr>
-              <tr><td>2021-2022</td><td>EHESS</td><td>Enquête collective sur la métropole parisienne</td><td>M1/M2</td><td>Séminaire</td><td style="text-align:right;">48 h</td></tr>
-              <tr><td>2021-2022</td><td>UPEC</td><td>Géographie politique</td><td>L3</td><td>TD</td><td style="text-align:right;">3 h</td></tr>
-              <tr><td colspan="5" style="text-align:right;font-weight:700;color:var(--ink);">TOTAL</td><td style="text-align:right;font-weight:700;color:var(--ink);">294 h</td></tr>
-            </tbody>
+            <tbody id="teachingHistoryBody"></tbody>
           </table>
         </div>
+        <div id="teachingHistoryTotal" style="text-align:right;font-weight:700;font-size:14px;margin-top:8px;color:var(--ink);"></div>
       </div>
     </div>
 
@@ -1668,6 +1662,11 @@
           </div>
         </div>
       </div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <h2>🎯 Budget mensuel</h2>
+      <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 12px;">Fixe un objectif par catégorie de dépense — la barre t'indique où tu en es.</p>
+      <div id="budgetFeedback"></div>
     </div>
     <div class="card" style="margin-top:18px;">
       <div class="card-row">
@@ -2538,6 +2537,25 @@ function migrate(s) {
   s.work.candidatures = s.work.candidatures || [];
   s.work.articles = s.work.articles || [];
   s.work.communications = s.work.communications || [];
+  if (!s.work.teachingCourses) s.work.teachingCourses = [
+    { id:"tc1",  year:"2025-2026", school:"Paris 1",    name:"Cartographie et graphique",                              level:"L1 S2",      type:"TD",              hours:24 },
+    { id:"tc2",  year:"2024-2025", school:"Paris 1",    name:"Initiation au diagnostic territorial",                   level:"L1 S2",      type:"TD",              hours:26 },
+    { id:"tc3",  year:"2024-2025", school:"EHESS",      name:"Construire une recherche en TES (S1)",                   level:"M1/M2",      type:"Séminaire",       hours:26 },
+    { id:"tc4",  year:"2024-2025", school:"EHESS",      name:"Construire une recherche en TES (S2)",                   level:"M1/M2",      type:"Séminaire",       hours:26 },
+    { id:"tc5",  year:"2024-2025", school:"EHESS",      name:"Construire une recherche en TES (S2)",                   level:"M1/M2",      type:"Séminaire",       hours:2  },
+    { id:"tc6",  year:"2023-2024", school:"Paris 1",    name:"Initiation au diagnostic territorial",                   level:"L1 S1",      type:"TD",              hours:26 },
+    { id:"tc7",  year:"2023-2024", school:"EHESS",      name:"Construire une recherche en TES (S1)",                   level:"M1/M2",      type:"Séminaire",       hours:26 },
+    { id:"tc8",  year:"2023-2024", school:"EHESS",      name:"Construire une recherche en TES (S2)",                   level:"M1/M2",      type:"Séminaire",       hours:26 },
+    { id:"tc9",  year:"2023-2024", school:"EHESS",      name:"Construire une recherche en TES (S1)",                   level:"M1/M2",      type:"Séminaire",       hours:2  },
+    { id:"tc10", year:"2022-2023", school:"EHESS",      name:"Patrimoine et matrimoine : enjeux féministes",           level:"Master TEMA+",type:"Séminaire propre",hours:26 },
+    { id:"tc11", year:"2022-2023", school:"EHESS",      name:"Construire une recherche en TES",                        level:"M1/M2 S1",   type:"Séminaire",       hours:26 },
+    { id:"tc12", year:"2022-2023", school:"EHESS",      name:"Géographie morale et politique : mobilité, migrations, genre", level:"M1/M2 S1", type:"Séminaire",  hours:2  },
+    { id:"tc13", year:"2022-2023", school:"CNAM",       name:"Espace public, nouveaux lieux culturels",                level:"Master",     type:"Séminaire",       hours:3  },
+    { id:"tc14", year:"2022-2023", school:"UCO Angers", name:"Actualité de l'art : conservation patrimoine",           level:"L1",         type:"TD",              hours:2  },
+    { id:"tc15", year:"2021-2022", school:"EHESS",      name:"Enquête collective sur la métropole parisienne",         level:"M1/M2",      type:"Séminaire",       hours:48 },
+    { id:"tc16", year:"2021-2022", school:"UPEC",       name:"Géographie politique",                                   level:"L3",         type:"TD",              hours:3  },
+  ];
+  if (!s.budgets) s.budgets = {};
   s.contacts = s.contacts || [];
   // Migration : aligner les noms de projets sur les sous-onglets Travail
   if (Array.isArray(s.work?.postdocProjects)) {
@@ -2746,7 +2764,7 @@ function setupTabs() {
 function onViewChange(view) {
   if (view === "activities") renderActivityChart();
   if (view === "health") { renderBodyChart(currentBodyMetric); renderWellbeingChart(); renderStepsChart(); }
-  if (view === "money") { renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); }
+  if (view === "money") { renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
 }
@@ -3038,6 +3056,7 @@ function renderProjects() {
   renderValorisationView();
   renderTeachingView();
   renderTaskProgress();
+  updateWorkTabBadges();
 }
 
 function _renderProjectCardFeatured(targetId, projectFilter, gradientCss, defaultBarColor) {
@@ -3098,6 +3117,42 @@ function renderPostdocView() {
   admRender();
 }
 function isCandProject(p) { return p.id === "p-seed-candidatures" || /^candidatures?$/i.test(p.name); }
+
+function updateWorkTabBadges() {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const projMap = {};
+  for (const p of state.work.postdocProjects) projMap[p.id] = p;
+  function alertFor(filterFn) {
+    return state.work.postdocTasks.some(t => {
+      if (t.done) return false;
+      if (!filterFn(t)) return false;
+      return t.priority === "urgent" || (t.deadline && t.deadline <= todayStr);
+    });
+  }
+  const checks = {
+    tasks:        alertFor(() => true),
+    postdoc:      alertFor(t => { const p = projMap[t.projectId]; return p && isPostdocProject(p); }),
+    candidatures: alertFor(t => { const p = projMap[t.projectId]; return p && isCandProject(p); }),
+    valorisation: alertFor(t => { const p = projMap[t.projectId]; return p && isValoProject(p); }),
+    teaching:     alertFor(t => { const p = projMap[t.projectId]; return p && isTeachingProject(p); }),
+  };
+  const workSection = document.querySelector('[data-view="work"]');
+  if (!workSection) return;
+  for (const [sub, hasAlert] of Object.entries(checks)) {
+    const btn = workSection.querySelector(`.sub-tab[data-sub="${sub}"]`);
+    if (!btn) continue;
+    let badge = btn.querySelector('.sub-tab-badge');
+    if (hasAlert && !badge) {
+      badge = document.createElement('span');
+      badge.className = 'sub-tab-badge';
+      btn.appendChild(badge);
+    } else if (!hasAlert && badge) {
+      badge.remove();
+    }
+  }
+}
+
 function renderCandidaturesProjectCard() {
   _renderProjectCardFeatured("candidaturesProjectCard", isCandProject,
     "linear-gradient(135deg,var(--lavender-soft) 0%, var(--peach-soft) 100%)",
@@ -3527,6 +3582,51 @@ function renderTeachingView() {
   _renderProjectCardFeatured("teachingProjectCard", isTeachingProject,
     "linear-gradient(135deg,var(--lavender-soft) 0%, var(--peach-soft) 100%)",
     "linear-gradient(90deg,var(--lavender),var(--peach))");
+  renderTeachingHistory();
+}
+
+function renderTeachingHistory() {
+  const courses = state.work.teachingCourses || [];
+  const tbody = document.getElementById("teachingHistoryBody");
+  const totalEl = document.getElementById("teachingHistoryTotal");
+  if (!tbody) return;
+  const sorted = [...courses].sort((a, b) => (b.year || "").localeCompare(a.year || ""));
+  tbody.innerHTML = sorted.map(c => `
+    <tr>
+      <td>${escapeHtml(c.year || "")}</td>
+      <td>${escapeHtml(c.school || "")}</td>
+      <td>${escapeHtml(c.name || "")}</td>
+      <td>${escapeHtml(c.level || "")}</td>
+      <td>${escapeHtml(c.type || "")}</td>
+      <td style="text-align:right;">${c.hours} h</td>
+      <td><button onclick="deleteCourse('${c.id}')" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:13px;padding:2px 6px;border-radius:6px;" title="Supprimer">✕</button></td>
+    </tr>`).join("");
+  const total = courses.reduce((s, c) => s + (Number(c.hours) || 0), 0);
+  if (totalEl) totalEl.textContent = `Total : ${total} h`;
+}
+function openAddCourseForm() {
+  const f = document.getElementById("addCourseForm");
+  if (f) f.style.display = f.style.display === "none" ? "" : "none";
+}
+function addCourse() {
+  const year  = document.getElementById("newCourseYear")?.value.trim();
+  const school = document.getElementById("newCourseSchool")?.value.trim();
+  const name  = document.getElementById("newCourseName")?.value.trim();
+  const level = document.getElementById("newCourseLevel")?.value.trim();
+  const type  = document.getElementById("newCourseType")?.value.trim();
+  const hours = Number(document.getElementById("newCourseHours")?.value) || 0;
+  if (!name) return;
+  if (!state.work.teachingCourses) state.work.teachingCourses = [];
+  state.work.teachingCourses.push({ id: "tc" + Date.now(), year, school, name, level, type, hours });
+  saveState();
+  ["newCourseYear","newCourseSchool","newCourseName","newCourseLevel","newCourseType","newCourseHours"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  renderTeachingHistory();
+}
+function deleteCourse(id) {
+  if (!confirm("Supprimer ce cours ?")) return;
+  state.work.teachingCourses = (state.work.teachingCourses || []).filter(c => c.id !== id);
+  saveState();
+  renderTeachingHistory();
 }
 
 function renderAutreView() {
@@ -3834,6 +3934,7 @@ function renderTasks() {
       </div>`;
   }).join("");
   renderDeadlineCalendar();
+  updateWorkTabBadges();
 }
 const PRIO_DOT_COLORS = { urgent: "#dc2626", high: "#ea580c", medium: "#f59e0b", low: "#94a3b8" };
 function renderDeadlineCalendar() {
@@ -3967,6 +4068,7 @@ function toggleTask(id) {
     renderTaskBilan();
     renderProjects();
     renderCandidatures(); // aussi pour les tâches candidatures
+    updateWorkTabBadges();
   }
 }
 function toggleCandTask(id, checked) {
@@ -4068,6 +4170,7 @@ function deleteTask(id) {
   renderTasks();
   renderTaskBilan();
   renderProjects();
+  updateWorkTabBadges();
 }
 
 /* ---- Édition de tâche ---- */
@@ -4266,6 +4369,7 @@ function saveTaskEdit() {
   renderProjects();
   renderCandidatures();
   renderCalendar();
+  updateWorkTabBadges();
 }
 function deleteTaskFromModal() {
   const id = document.getElementById("taskEditId").value;
@@ -4278,6 +4382,7 @@ function deleteTaskFromModal() {
   renderProjects();
   renderCandidatures();
   renderCalendar();
+  updateWorkTabBadges();
 }
 
 /* ========= WORK :: CANDIDATURES (KANBAN) ========= */
@@ -5162,12 +5267,12 @@ function addTransaction() {
   state.transactions.unshift({ id: "tx" + Date.now(), date: new Date().toISOString(), type: txType, amount, category, note });
   document.getElementById("txAmount").value = ""; document.getElementById("txNote").value = "";
   saveState();
-  renderMoney(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart();
+  renderMoney(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback();
 }
 function deleteTx(id) {
   state.transactions = state.transactions.filter(t => t.id !== id);
   saveState();
-  renderMoney(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart();
+  renderMoney(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback();
 }
 
 /* ===== TX EDIT MODAL ===== */
@@ -5225,7 +5330,7 @@ function saveTxFromModal() {
   tx.date = orig.toISOString();
   saveState();
   closeTxModal();
-  renderMoney(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart();
+  renderMoney(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback();
 }
 function deleteTxFromModal() {
   const id = document.getElementById("txModalId").value;
@@ -5233,11 +5338,16 @@ function deleteTxFromModal() {
   state.transactions = state.transactions.filter(t => t.id !== id);
   saveState();
   closeTxModal();
-  renderMoney(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart();
+  renderMoney(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback();
 }
 document.getElementById("txModal").addEventListener("click", e => { if (e.target.id === "txModal") closeTxModal(); });
 const CAT_COLORS = ["#c9b6f0", "#f5b6c9", "#b4d4f1", "#f7c9a3", "#aee0c8", "#efb8c8", "#f5e6a8", "#d4b6f0"];
-function catColor(cat) { const idx = state.categories.indexOf(cat); return CAT_COLORS[(idx >= 0 ? idx : 0) % CAT_COLORS.length]; }
+function catColor(cat) {
+  if (!cat) return CAT_COLORS[0];
+  let h = 0;
+  for (let i = 0; i < cat.length; i++) h = (Math.imul(31, h) + cat.charCodeAt(i)) | 0;
+  return CAT_COLORS[Math.abs(h) % CAT_COLORS.length];
+}
 function renderTxList() {
   const list = state.transactions.slice(0, 50);
   document.getElementById("txCount").textContent = state.transactions.length + " au total";
@@ -5353,6 +5463,57 @@ function renderMoneyCatChart() {
     },
   });
 }
+function renderBudgetFeedback() {
+  const el = document.getElementById("budgetFeedback");
+  if (!el) return;
+  const [start, end] = currentMonthRange();
+  const totals = {};
+  for (const tx of state.transactions) {
+    const d = new Date(tx.date);
+    if (d >= start && d < end && tx.type === "expense") totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
+  }
+  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) { el.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:12px;">Aucune dépense ce mois.</p>`; return; }
+  const budgets = state.budgets || {};
+  el.innerHTML = entries.map(([cat, spent]) => {
+    const target = budgets[cat] || 0;
+    const pct = target > 0 ? Math.min(150, Math.round((spent / target) * 100)) : 0;
+    const over = target > 0 && spent > target;
+    const barColor = over ? "#ef4444" : pct > 80 ? "#f59e0b" : "#72c4a2";
+    const targetDisplay = target > 0
+      ? `<span style="color:${over ? '#ef4444' : 'var(--ink-soft)'};">${spent.toFixed(0)} / ${target} €${over ? " ⚠️" : ""}</span>`
+      : `<span style="color:var(--ink-softer);font-size:11px;">pas de budget —</span>`;
+    return `
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+          <span style="display:flex;align-items:center;gap:6px;font-size:13px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:${catColor(cat)};flex-shrink:0;display:inline-block;"></span>
+            ${escapeHtml(cat)}
+          </span>
+          <span style="display:flex;align-items:center;gap:8px;font-size:12px;">
+            ${targetDisplay}
+            <input type="number" min="0" step="10" placeholder="Objectif €"
+              value="${target || ""}"
+              title="Budget mensuel pour ${escapeHtml(cat)}"
+              onchange="setBudget('${escapeHtml(cat)}', this.value)"
+              style="width:80px;padding:2px 6px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:11px;text-align:right;color:var(--ink-soft);" />
+          </span>
+        </div>
+        ${target > 0 ? `<div style="background:#f3eef9;height:6px;border-radius:999px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${barColor};transition:width 0.4s;border-radius:999px;"></div>
+        </div>` : ""}
+      </div>`;
+  }).join("");
+}
+function setBudget(cat, value) {
+  if (!state.budgets) state.budgets = {};
+  const n = Number(String(value).replace(",", "."));
+  if (n > 0) state.budgets[cat] = n;
+  else delete state.budgets[cat];
+  saveState();
+  renderBudgetFeedback();
+}
+
 function renderMoneyIncomeCatChart() {
   if (moneyIncomeCatChart) moneyIncomeCatChart.destroy();
   const wrap = document.getElementById("moneyIncomeCatChart").parentElement;
@@ -5367,10 +5528,9 @@ function renderMoneyIncomeCatChart() {
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucun revenu<br>ce mois"); return; }
 
-  const INCOME_COLORS = ["#aee0c8", "#b4d4f1", "#c9b6f0", "#f5e6a8", "#d4b6f0", "#efb8c8"];
   moneyIncomeCatChart = new Chart(document.getElementById("moneyIncomeCatChart"), {
     type: "doughnut",
-    data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map((_, i) => INCOME_COLORS[i % INCOME_COLORS.length]), borderWidth: 0, hoverOffset: 6 }] },
+    data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
     options: {
       ...baseChartOpts(), cutout: "62%",
       plugins: { ...baseChartOpts().plugins, legend: { position: "right", labels: { color: "#8a8499", font: { size: 11 }, boxWidth: 10, boxHeight: 10, usePointStyle: true, padding: 8 } } },
