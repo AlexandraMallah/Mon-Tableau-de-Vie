@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v51</title>
+<title>Mon Tableau de Vie · v52</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3055,7 +3055,7 @@ function _renderProjectCardFeatured(targetId, projectFilter, gradientCss, defaul
   const tasksHtml = openTasks.length
     ? openTasks.map(t => {
         const dlClass = deadlineClass(t.deadline);
-        const dlText = t.deadline ? `📅 ${formatDeadline(t.deadline)}` : "";
+        const dlText = t.deadline ? `${t.kind === "event" ? "📅" : "⏰"} ${formatDeadline(t.deadline)}` : "";
         return `
           <div class="task-row prio-${t.priority}">
             <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
@@ -3528,7 +3528,7 @@ function renderAutreView() {
   const tasksHtml = openTasks.length
     ? openTasks.map(t => {
         const dlClass = deadlineClass(t.deadline);
-        const dlText  = t.deadline ? `📅 ${formatDeadline(t.deadline)}` : "";
+        const dlText  = t.deadline ? `${t.kind === "event" ? "📅" : "⏰"} ${formatDeadline(t.deadline)}` : "";
         return `<div class="task-row prio-${t.priority}">
           <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
           <div class="task-name">${escapeHtml(t.name)}</div>
@@ -3674,7 +3674,7 @@ function renderTeachingView() {
   const tasksHtml = openTasks.length
     ? openTasks.map(t => {
         const dlClass = deadlineClass(t.deadline);
-        const dlText = t.deadline ? `📅 ${formatDeadline(t.deadline)}` : "";
+        const dlText = t.deadline ? `${t.kind === "event" ? "📅" : "⏰"} ${formatDeadline(t.deadline)}` : "";
         return `
           <div class="task-row prio-${t.priority}">
             <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
@@ -3788,13 +3788,13 @@ function renderTasks() {
   document.getElementById("taskList").innerHTML = sorted.map(t => {
     const project = state.work.postdocProjects.find(p => p.id === t.projectId);
     const dlClass = deadlineClass(t.deadline);
-    const dlText = t.deadline ? `📅 ${formatDeadline(t.deadline)}` : "";
+    const isEvent = t.kind === "event";
+    const dlText = t.deadline ? `${isEvent ? "📅" : "⏰"} ${formatDeadline(t.deadline)}` : "";
     const tagHtml = project ? `<span class="task-project-tag">${escapeHtml(project.name)}</span>` : "";
     const pct = taskProgress(t);
     const progressColor = pct >= 100 ? '#4ade80' : `hsl(${Math.round(pct * 1.2)}, 72%, 52%)`;
     const progressHtml = pct > 0 ? `<div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%;background:${progressColor};"></div></div>` : "";
     const pctBadge = pct > 0 && !t.done ? `<span class="task-pct-badge" style="color:${progressColor};background:${progressColor}22;">${pct}%</span>` : "";
-    const isEvent = t.kind === "event";
     const kindBadge = isEvent
       ? `<span class="task-kind-badge is-event" title="${t.calEventId ? "Lié à un événement du calendrier" : "Événement prévu"}">📅 ${t.calEventId ? "Lié au cal." : "Événement"}</span>`
       : "";
