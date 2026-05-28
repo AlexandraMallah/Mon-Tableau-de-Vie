@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v29</title>
+<title>Mon Tableau de Vie · v32</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -430,6 +430,23 @@
 
   /* ========= WORK ========= */
   .work-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
+  .tasks-layout { display: grid; grid-template-columns: 1fr 234px; gap: 22px; align-items: start; }
+  @media (max-width: 860px) { .tasks-layout { grid-template-columns: 1fr; } }
+  .deadline-cal-wrap { background: var(--bg-1); border-radius: 16px; padding: 14px; position: sticky; top: 80px; }
+  .deadline-cal-title { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+  .dcal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .dcal-head { text-align: center; font-size: 10px; color: var(--ink-softer); font-weight: 700; padding-bottom: 4px; }
+  .dcal-day {
+    aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-radius: 7px; font-size: 10px; cursor: default; padding: 2px; transition: background 0.15s;
+  }
+  .dcal-day.has-tasks { cursor: pointer; }
+  .dcal-day.has-tasks:hover { filter: brightness(0.95); }
+  .dcal-day.is-today { background: var(--lavender) !important; font-weight: 700; }
+  .dcal-day.is-past { opacity: 0.3; }
+  .dcal-day.out-of-month { opacity: 0.25; }
+  .dcal-dots { display: flex; gap: 2px; margin-top: 2px; flex-wrap: wrap; justify-content: center; }
+  .dcal-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
   .btn-primary {
     background: var(--lilac); color: white; border: none;
     padding: 9px 16px; border-radius: 12px; cursor: pointer;
@@ -1140,6 +1157,10 @@
             </div>
           </div>
         </div>
+        <div id="journalMoodToday" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);">
+          <div style="font-size:12px;color:var(--ink-softer);margin-bottom:6px;">✍️ Ton journal d'aujourd'hui évoque :</div>
+          <div id="journalMoodTodayBadges" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -1157,37 +1178,48 @@
 
     <!-- Sub: Tâches -->
     <div class="sub-view active" data-sub="tasks">
-      <div class="card" style="margin-bottom:18px;">
-        <h2>📊 Progression par section</h2>
-        <p style="color:var(--ink-soft);font-size:12px;margin:-8px 0 14px;">Calculée automatiquement selon les tâches complétées dans chaque projet.</p>
-        <div id="taskProgressList"></div>
-      </div>
-      <div class="card" style="margin-bottom:18px;">
-        <div class="work-header">
-          <h2 style="margin:0;">📊 Bilan</h2>
-          <span style="color:var(--ink-soft);font-size:13px;" id="bilanCaption"></span>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div class="card" style="padding:14px 16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <h2 style="margin:0;font-size:14px;">📊 Progression</h2>
+          </div>
+          <div id="taskProgressList"></div>
         </div>
-        <div class="stat-grid" id="bilanStats" style="grid-template-columns:repeat(4,1fr);"></div>
-        <div style="height:14px;"></div>
-        <div class="chart-wrap" style="height:200px;"><canvas id="bilanChart"></canvas></div>
+        <div class="card" style="padding:14px 16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <h2 style="margin:0;font-size:14px;">📊 Bilan</h2>
+            <span style="color:var(--ink-soft);font-size:11px;" id="bilanCaption"></span>
+          </div>
+          <div class="stat-grid" id="bilanStats" style="grid-template-columns:repeat(4,1fr);gap:6px;"></div>
+          <div style="height:8px;"></div>
+          <div class="chart-wrap" style="height:120px;"><canvas id="bilanChart"></canvas></div>
+        </div>
       </div>
       <div class="card">
         <div class="work-header">
           <h2 style="margin:0;">Toutes mes tâches <span class="count" id="taskCount"></span></h2>
         </div>
         <p style="color:var(--ink-soft);font-size:13px;margin:-8px 0 14px;">Triées par niveau d'urgence puis par échéance. 🚨 = urgent, 🔴 = haute, 🟠 = moyenne, ⚪ = faible.</p>
-        <div class="task-list" id="taskList"></div>
-        <div class="add-task-form">
-          <input type="text" id="newTaskName" placeholder="Nouvelle tâche…" />
-          <select id="newTaskProject"></select>
-          <select id="newTaskPriority">
-            <option value="urgent">🚨 Urgent</option>
-            <option value="high">Priorité haute</option>
-            <option value="medium" selected>Priorité moyenne</option>
-            <option value="low">Priorité faible</option>
-          </select>
-          <input type="date" id="newTaskDeadline" />
-          <button class="btn-primary" onclick="addTask()">Ajouter</button>
+        <div class="tasks-layout">
+          <div>
+            <div class="task-list" id="taskList"></div>
+            <div class="add-task-form">
+              <input type="text" id="newTaskName" placeholder="Nouvelle tâche…" />
+              <select id="newTaskProject"></select>
+              <select id="newTaskPriority">
+                <option value="urgent">🚨 Urgent</option>
+                <option value="high">Priorité haute</option>
+                <option value="medium" selected>Priorité moyenne</option>
+                <option value="low">Priorité faible</option>
+              </select>
+              <input type="date" id="newTaskDeadline" />
+              <button class="btn-primary" onclick="addTask()">Ajouter</button>
+            </div>
+          </div>
+          <div class="deadline-cal-wrap">
+            <div class="deadline-cal-title">📅 Deadlines · 30 jours</div>
+            <div id="deadlineCalendar"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1723,6 +1755,7 @@
       <h2>Note du jour</h2>
       <p style="color:var(--ink-soft);font-size:13px;margin:-8px 0 12px;">Pensées, gratitudes, réflexions. Enregistrement automatique.</p>
       <textarea class="journal-input" id="journalToday" placeholder="Aujourd'hui, je…"></textarea>
+      <div id="journalMoodTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:0;"></div>
     </div>
     <div style="height:18px;"></div>
     <div class="card">
@@ -2103,6 +2136,45 @@
 <input type="file" id="importFile" accept=".json" style="display:none;" />
 
 <script>
+/* ===== ANALYSE ÉMOTIONNELLE DU JOURNAL ===== */
+const JOURNAL_EMOTIONS = [
+  { id: "joie",       label: "Joie",       emoji: "😊", color: "#16a34a", bg: "#dcfce7",
+    words: ["heureux","heureuse","content","contente","bien","super","génial","top","joie","bonheur","sourire","fier","fière","enthousiaste","ravi","ravie","chouette","formidable","belle journée","bonne journée","trop bien","vraiment bien","tellement bien","adorable","sympa","happy"] },
+  { id: "gratitude",  label: "Gratitude",  emoji: "🙏", color: "#b45309", bg: "#fef3c7",
+    words: ["reconnaissance","reconnaissant","reconnaissante","gratitude","chance","chanceux","chanceuse","merci","béni","bénie","comblé","comblée","privilégié","privilégiée","tellement heureuse","tellement heureux","ça m'a touché","ça m'a touchée"] },
+  { id: "motivation", label: "Motivation", emoji: "🔥", color: "#d97706", bg: "#fff7ed",
+    words: ["motivé","motivée","envie","projet","idée","créatif","créative","productif","productive","avancé","avancée","accompli","accomplie","réussi","réussie","terminé","terminée","fini","finie","focus","déterminé","déterminée","hâte","impatient","impatiente","lancé","lancée"] },
+  { id: "serenite",   label: "Sérénité",   emoji: "😌", color: "#0d9488", bg: "#ccfbf1",
+    words: ["calme","serein","sereine","tranquille","apaisé","apaisée","zen","reposé","reposée","détente","détendu","détendue","paisible","relax","relaxé","relaxée","bien dormi","bonne nuit"] },
+  { id: "stress",     label: "Stress",     emoji: "😰", color: "#ea580c", bg: "#ffedd5",
+    words: ["stressé","stressée","stress","anxieux","anxieuse","inquiet","inquiète","pression","débordé","débordée","surchargé","surchargée","submergé","submergée","angoisse","angoissé","angoissée","worriée","pas dormi","retard","trop de","deadline","urgence","overwhelm"] },
+  { id: "fatigue",    label: "Fatigue",    emoji: "😴", color: "#7c3aed", bg: "#ede9fe",
+    words: ["fatigué","fatiguée","épuisé","épuisée","crevé","crevée","claqué","claquée","las","lasse","pas dormi","mal dormi","endormi","endormie","sieste","nuit courte","nuit blanche","somnolent","somnolente","vidé","vidée"] },
+  { id: "tristesse",  label: "Tristesse",  emoji: "😢", color: "#2563eb", bg: "#dbeafe",
+    words: ["triste","tristesse","difficile","pleuré","pleurer","seule","seul","manque","vide","mélancolie","cafard","déprimé","déprimée","pas bien","morose","découragement","découragé","découragée","meh","spleen","pesant","lourd"] },
+  { id: "colere",     label: "Irritation", emoji: "😤", color: "#dc2626", bg: "#fee2e2",
+    words: ["énervé","énervée","agacé","agacée","frustré","frustrée","colère","furieux","furieuse","irrité","irritée","insupportable","ras-le-bol","ras le bol","en a marre","marre","chiant","chiante","nul","nulle","exaspéré","exaspérée"] },
+];
+function analyzeJournal(text) {
+  if (!text || text.trim().length < 15) return [];
+  const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const lower = norm(text);
+  const results = [];
+  for (const e of JOURNAL_EMOTIONS) {
+    const hits = e.words.filter(w => lower.includes(norm(w)));
+    if (hits.length) results.push({ ...e, count: hits.length });
+  }
+  return results.sort((a, b) => b.count - a.count);
+}
+function emotionBadgesHtml(emotions, small = false) {
+  if (!emotions.length) return "";
+  const sz = small ? "11px" : "12px";
+  const pad = small ? "2px 8px" : "4px 11px";
+  return emotions.map(e =>
+    `<span style="display:inline-flex;align-items:center;gap:3px;padding:${pad};border-radius:999px;background:${e.bg};color:${e.color};font-size:${sz};font-weight:600;white-space:nowrap;">${e.emoji} ${e.label}</span>`
+  ).join("");
+}
+
 const STORE_KEY = "tableauDeVie_v3";
 const LEGACY_KEYS = ["tableauDeVie_v2", "tableauDeVie_v1"];
 
@@ -2581,6 +2653,18 @@ function renderWellbeing() {
   const today = getToday();
   document.querySelectorAll("#moodScale button").forEach(b => b.classList.toggle("active", Number(b.dataset.v) === today.mood));
   document.querySelectorAll("#energyScale button").forEach(b => b.classList.toggle("active", Number(b.dataset.v) === today.energy));
+  // Émotions détectées dans le journal du jour
+  const journalEmotions = analyzeJournal(today.journal || "");
+  const todayBlock = document.getElementById("journalMoodToday");
+  const todayBadges = document.getElementById("journalMoodTodayBadges");
+  if (todayBlock && todayBadges) {
+    if (journalEmotions.length) {
+      todayBadges.innerHTML = emotionBadgesHtml(journalEmotions);
+      todayBlock.style.display = "";
+    } else {
+      todayBlock.style.display = "none";
+    }
+  }
   // Heures couché / réveil
   const bedEl = document.getElementById("bedtimeInput");
   const wakeEl = document.getElementById("wakeTimeInput");
@@ -2916,9 +3000,22 @@ function renderTasks() {
   document.getElementById("taskCount").textContent = `(${open} en cours / ${tasks.length})`;
   if (!tasks.length) {
     document.getElementById("taskList").innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucune tâche pour l'instant.</p>`;
+    renderDeadlineCalendar();
     return;
   }
-  const sorted = [...tasks].sort((a, b) => {
+  // Filtre par deadline si une date est sélectionnée dans le calendrier
+  document.getElementById("deadlineFilterBanner")?.remove();
+  const filtered = _deadlineFilter ? tasks.filter(t => t.deadline === _deadlineFilter) : tasks;
+  if (_deadlineFilter) {
+    const dateLabel = new Date(_deadlineFilter + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    document.getElementById("taskList").insertAdjacentHTML("beforebegin",
+      `<div id="deadlineFilterBanner" style="background:var(--lavender-soft);border:1px solid var(--lavender);border-radius:10px;padding:7px 12px;font-size:13px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span>📅 Tâches du <strong>${dateLabel}</strong></span>
+        <button onclick="filterTasksByDeadline(null)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--lavender);">✕ Tout voir</button>
+      </div>`
+    );
+  }
+  const sorted = [...filtered].sort((a, b) => {
     if (a.done !== b.done) return a.done ? 1 : -1;
     const prio = { urgent: -1, high: 0, medium: 1, low: 2 };
     if (prio[a.priority] !== prio[b.priority]) return prio[a.priority] - prio[b.priority];
@@ -2952,6 +3049,75 @@ function renderTasks() {
         <button class="task-del" onclick="deleteTask('${t.id}')">✕</button>
       </div>`;
   }).join("");
+  renderDeadlineCalendar();
+}
+const PRIO_DOT_COLORS = { urgent: "#dc2626", high: "#ea580c", medium: "#f59e0b", low: "#94a3b8" };
+function renderDeadlineCalendar() {
+  const el = document.getElementById("deadlineCalendar");
+  if (!el) return;
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const todayStr = now.toISOString().slice(0, 10);
+  // Regrouper les tâches non terminées par deadline
+  const byDate = {};
+  for (const t of state.work.postdocTasks) {
+    if (!t.done && t.deadline) {
+      (byDate[t.deadline] = byDate[t.deadline] || []).push(t);
+    }
+  }
+  // Commencer le lundi de la semaine en cours
+  const start = new Date(now);
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  // Générer 5 semaines = 35 jours
+  const cells = [];
+  for (let i = 0; i < 35; i++) {
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    cells.push(d);
+  }
+  // En-têtes
+  const heads = ["L","Ma","Me","J","V","S","D"].map(d =>
+    `<div class="dcal-head">${d}</div>`).join("");
+  // Trouver les mois couverts (sur les 30 prochains jours)
+  const monthsSet = new Set();
+  for (let i = 0; i < 35; i++) {
+    const d = new Date(now); d.setDate(d.getDate() + i);
+    monthsSet.add(d.toLocaleDateString("fr-FR", { month: "short" }));
+  }
+  const monthLabel = [...monthsSet].join(" · ");
+  const daysCells = cells.map(day => {
+    const key = day.toISOString().slice(0, 10);
+    const isPast = day < now;
+    const isToday = key === todayStr;
+    const tasks = byDate[key] || [];
+    const dots = tasks.slice(0, 4).map(t =>
+      `<span class="dcal-dot" style="background:${PRIO_DOT_COLORS[t.priority] || '#94a3b8'}"></span>`
+    ).join("");
+    const bg = tasks.length && !isToday ? "var(--lavender-soft)" : "";
+    const titleAttr = tasks.length ? `title="${tasks.map(t => t.name).join("\n")}"` : "";
+    return `<div class="dcal-day ${isToday ? 'is-today' : ''} ${isPast ? 'is-past' : ''} ${tasks.length ? 'has-tasks' : ''}"
+      style="${bg ? `background:${bg};` : ''}"
+      ${titleAttr}
+      ${tasks.length ? `onclick="filterTasksByDeadline('${key}')"` : ""}>
+      <span>${day.getDate()}</span>
+      ${dots ? `<div class="dcal-dots">${dots}</div>` : ""}
+    </div>`;
+  }).join("");
+  el.innerHTML = `
+    <div style="font-size:11px;color:var(--ink-softer);margin-bottom:6px;text-transform:capitalize;">${monthLabel}</div>
+    <div class="dcal-grid">${heads}${daysCells}</div>
+    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
+      ${Object.entries(PRIO_DOT_COLORS).map(([p, c]) =>
+        `<span style="display:flex;align-items:center;gap:3px;font-size:10px;color:var(--ink-soft);">
+          <span class="dcal-dot" style="background:${c}"></span>${p === 'urgent' ? '🚨 Urgent' : p === 'high' ? '🔴 Haute' : p === 'medium' ? '🟠 Moyenne' : '⚪ Faible'}
+        </span>`
+      ).join("")}
+    </div>`;
+}
+let _deadlineFilter = null;
+function filterTasksByDeadline(dateKey) {
+  _deadlineFilter = _deadlineFilter === dateKey ? null : dateKey;
+  renderTasks();
+  // Scroll vers la liste
+  document.getElementById("taskList")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 function addTask() {
   const name = document.getElementById("newTaskName").value.trim();
@@ -4415,9 +4581,19 @@ function updateGoal(id, val) {
 function deleteGoal(id) { state.goals = state.goals.filter(g => g.id !== id); saveState(); renderGoals(); }
 
 /* ========= JOURNAL ========= */
+function renderJournalMoodTags(text) {
+  const el = document.getElementById("journalMoodTags");
+  if (!el) return;
+  const emotions = analyzeJournal(text);
+  el.innerHTML = emotions.length
+    ? `<span style="font-size:11px;color:var(--ink-softer);align-self:center;">Ton journal évoque :</span> ` + emotionBadgesHtml(emotions)
+    : "";
+}
 function renderJournal() {
   const today = getToday();
-  document.getElementById("journalToday").value = today.journal || "";
+  const text = today.journal || "";
+  document.getElementById("journalToday").value = text;
+  renderJournalMoodTags(text);
   const past = Object.entries(state.history)
     .filter(([k, v]) => k !== todayKey() && v.journal && v.journal.trim())
     .sort((a, b) => b[0].localeCompare(a[0])).slice(0, 20);
@@ -4429,9 +4605,10 @@ function renderJournal() {
     const [y, m, d] = k.split("-");
     const dateObj = new Date(Number(y), Number(m) - 1, Number(d));
     const dateStr = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    const badges = emotionBadgesHtml(analyzeJournal(v.journal), true);
     return `
       <div class="journal-entry">
-        <div class="journal-date">${dateStr}</div>
+        <div class="journal-date">${dateStr}${badges ? `<span style="margin-left:8px;">${badges}</span>` : ""}</div>
         <div class="journal-text">${escapeHtml(v.journal)}</div>
       </div>`;
   }).join("");
@@ -4440,8 +4617,9 @@ function setupJournal() {
   const ta = document.getElementById("journalToday");
   let timeout;
   ta.addEventListener("input", () => {
+    renderJournalMoodTags(ta.value); // temps réel immédiat
     clearTimeout(timeout);
-    timeout = setTimeout(() => { getToday().journal = ta.value; saveState(); renderJournal(); }, 500);
+    timeout = setTimeout(() => { getToday().journal = ta.value; saveState(); }, 800);
   });
 }
 
