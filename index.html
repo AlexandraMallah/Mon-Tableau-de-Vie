@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v33</title>
+<title>Mon Tableau de Vie · v34</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -6253,14 +6253,14 @@ document.getElementById("newActivityName").addEventListener("keydown", e => {
 });
 
 /* Modal backdrop close */
-["projectModal", "candModal", "articleModal", "commModal", "subModal", "taskEditModal", "manualEventModal"].forEach(id => {
+// taskEditModal et manualEventModal exclus : leurs selects/date pickers génèrent
+// des clics parasites sur le fond qui ferment la modal involontairement.
+["projectModal", "candModal", "articleModal", "commModal", "subModal"].forEach(id => {
   const bg = document.getElementById(id);
+  if (!bg) return;
   bg.addEventListener("click", e => {
-    // Ferme uniquement si le clic est directement sur le fond (pas sur le contenu de la modal)
     if (e.target === bg) bg.classList.remove("open");
   });
-  // Empêche les clics à l'intérieur de la modal de remonter vers le fond
-  bg.querySelector(".modal")?.addEventListener("click", e => e.stopPropagation());
 });
 
 /* ========= EXPORT / IMPORT ========= */
