@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v61</title>
+<title>Mon Tableau de Vie · v62</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1404,31 +1404,17 @@
       </div>
       <div class="card" style="margin-bottom:18px;">
         <div class="work-header">
-          <h2 style="margin:0;">Articles <span class="count" id="articleCount"></span></h2>
+          <h2 style="margin:0;">📄 Articles <span class="count" id="articleCount"></span></h2>
           <button class="btn-primary" onclick="openArticleModal()">+ Nouvel article</button>
         </div>
-        <div style="overflow-x:auto;">
-          <table class="data-table" id="articleTable">
-            <thead>
-              <tr><th>Titre</th><th>Journal</th><th>Co-auteurs</th><th>Statut</th><th>Soumis le</th></tr>
-            </thead>
-            <tbody id="articleBody"></tbody>
-          </table>
-        </div>
+        <div class="kanban" id="articleKanban"></div>
       </div>
       <div class="card">
         <div class="work-header">
-          <h2 style="margin:0;">Communications <span class="count" id="commCount"></span></h2>
+          <h2 style="margin:0;">🎤 Communications <span class="count" id="commCount"></span></h2>
           <button class="btn-primary" onclick="openCommModal()">+ Nouvelle communication</button>
         </div>
-        <div style="overflow-x:auto;">
-          <table class="data-table" id="commTable">
-            <thead>
-              <tr><th>Événement</th><th>Lieu</th><th>Date</th><th>Type</th><th>Statut</th></tr>
-            </thead>
-            <tbody id="commBody"></tbody>
-          </table>
-        </div>
+        <div class="kanban" id="commKanban"></div>
       </div>
     </div>
 
@@ -4390,23 +4376,38 @@ function deleteCand() {
 
 /* ========= WORK :: ARTICLES ========= */
 function renderArticles() {
+  const kanban = document.getElementById("articleKanban");
+  if (!kanban) return;
   const list = state.work.articles;
   document.getElementById("articleCount").textContent = list.length ? `(${list.length})` : "";
-  if (!list.length) {
-    document.getElementById("articleBody").innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--ink-soft);padding:18px;">Aucun article — clique sur "+ Nouvel article" pour en ajouter un.</td></tr>`;
-    return;
-  }
-  document.getElementById("articleBody").innerHTML = list.map(a => {
-    const col = STATUS_COLORS[a.status] || { bg: "#efeaf5", fg: "#4a4458" };
+  const cols = ARTICLE_STATUSES.map(status => {
+    const cards = list.filter(a => a.status === status);
+    const colorBg = STATUS_COLORS[status]?.bg || "#e6dcfa";
+    const cardsHtml = cards.length ? cards.map(a => {
+      const col = STATUS_COLORS[a.status] || { bg: "#efeaf5", fg: "#4a4458" };
+      const journalBadge = a.journal ? `<span class="type-badge" style="background:${col.bg}99;color:${col.fg};">${escapeHtml(a.journal)}</span>` : "";
+      const coauthors = a.coauthors ? `<div style="font-size:11px;color:var(--ink-soft);margin-top:3px;">${escapeHtml(a.coauthors)}</div>` : "";
+      const dateHtml = a.submittedDate ? `<div class="deadline">📅 ${formatDeadline(a.submittedDate)}</div>` : "";
+      return `
+        <div class="kanban-card" onclick="openArticleModal('${a.id}')">
+          ${journalBadge}
+          <div class="title">${escapeHtml(a.title || "—")}</div>
+          ${coauthors}
+          ${dateHtml}
+        </div>`;
+    }).join("") :
+      `<p style="font-size:12px;color:var(--ink-softer);text-align:center;padding:14px 0;">—</p>`;
     return `
-      <tr onclick="openArticleModal('${a.id}')">
-        <td style="font-weight:500;">${escapeHtml(a.title || "—")}</td>
-        <td>${escapeHtml(a.journal || "—")}</td>
-        <td style="color:var(--ink-soft);">${escapeHtml(a.coauthors || "—")}</td>
-        <td><span class="status-badge" style="background:${col.bg};color:${col.fg};">${escapeHtml(a.status)}</span></td>
-        <td style="color:var(--ink-soft);">${a.submittedDate ? formatDeadline(a.submittedDate) : "—"}</td>
-      </tr>`;
+      <div class="kanban-col">
+        <div class="kanban-col-head">
+          <span class="kanban-col-dot" style="background:${colorBg}"></span>
+          <span class="kanban-col-title">${status}</span>
+          <span class="kanban-col-count">${cards.length}</span>
+        </div>
+        ${cardsHtml}
+      </div>`;
   }).join("");
+  kanban.innerHTML = cols;
 }
 function openArticleModal(id) {
   const isEdit = !!id;
@@ -4464,23 +4465,43 @@ function deleteArticle() {
 
 /* ========= WORK :: COMMUNICATIONS ========= */
 function renderCommunications() {
+  const kanban = document.getElementById("commKanban");
+  if (!kanban) return;
   const list = state.work.communications;
   document.getElementById("commCount").textContent = list.length ? `(${list.length})` : "";
-  if (!list.length) {
-    document.getElementById("commBody").innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--ink-soft);padding:18px;">Aucune communication — clique sur "+ Nouvelle communication" pour en ajouter une.</td></tr>`;
-    return;
-  }
-  document.getElementById("commBody").innerHTML = list.map(c => {
-    const col = STATUS_COLORS[c.status] || { bg: "#efeaf5", fg: "#4a4458" };
+  const cols = COMM_STATUSES.map(status => {
+    const cards = list.filter(c => c.status === status);
+    const colorBg = STATUS_COLORS[status]?.bg || "#e6dcfa";
+    const cardsHtml = cards.length ? cards.map(c => {
+      const typeBadge = c.type ? `<span class="type-badge" style="background:${colorBg}99;color:var(--ink-soft);">${escapeHtml(c.type)}</span>` : "";
+      const location = c.location ? `<div style="font-size:11px;color:var(--ink-soft);margin-top:3px;">📍 ${escapeHtml(c.location)}</div>` : "";
+      let dateHtml = "";
+      if (c.date) {
+        const days = daysUntil(c.date);
+        const dlClass = deadlineClass(c.date);
+        const dlExtra = days != null ? (days < 0 ? ` (passée)` : days === 0 ? ` (aujourd'hui)` : ` (J−${days})`) : "";
+        dateHtml = `<div class="deadline ${dlClass}">📅 ${formatDeadline(c.date)}${dlExtra}</div>`;
+      }
+      return `
+        <div class="kanban-card" onclick="openCommModal('${c.id}')">
+          ${typeBadge}
+          <div class="title">${escapeHtml(c.event || "—")}</div>
+          ${location}
+          ${dateHtml}
+        </div>`;
+    }).join("") :
+      `<p style="font-size:12px;color:var(--ink-softer);text-align:center;padding:14px 0;">—</p>`;
     return `
-      <tr onclick="openCommModal('${c.id}')">
-        <td style="font-weight:500;">${escapeHtml(c.event || "—")}</td>
-        <td style="color:var(--ink-soft);">${escapeHtml(c.location || "—")}</td>
-        <td style="color:var(--ink-soft);">${c.date ? formatDeadline(c.date) : "—"}</td>
-        <td>${escapeHtml(c.type || "—")}</td>
-        <td><span class="status-badge" style="background:${col.bg};color:${col.fg};">${escapeHtml(c.status)}</span></td>
-      </tr>`;
+      <div class="kanban-col">
+        <div class="kanban-col-head">
+          <span class="kanban-col-dot" style="background:${colorBg}"></span>
+          <span class="kanban-col-title">${status}</span>
+          <span class="kanban-col-count">${cards.length}</span>
+        </div>
+        ${cardsHtml}
+      </div>`;
   }).join("");
+  kanban.innerHTML = cols;
 }
 function openCommModal(id) {
   const isEdit = !!id;
