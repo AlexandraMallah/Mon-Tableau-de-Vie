@@ -500,9 +500,8 @@
   .task-edit-btn:hover { background: var(--lavender-soft); }
   .task-del:hover { color: var(--red); }
   .task-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-  .task-progress-bar { height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; }
-  .task-progress-fill { height: 100%; background: linear-gradient(90deg, var(--lavender), #a78bfa); border-radius: 3px; transition: width 0.4s; }
-  .task-progress-fill.done { background: var(--mint); }
+  .task-progress-bar { height: 7px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 2px; }
+  .task-progress-fill { height: 100%; border-radius: 4px; transition: width 0.4s, background 0.4s; }
   .task-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .task-pct-badge { font-size: 11px; font-weight: 600; color: var(--lavender); background: var(--lavender-soft); padding: 1px 6px; border-radius: 6px; }
   /* Modal jalons */
@@ -2492,12 +2491,13 @@ function renderHabits() {
       const num = Number(value) || 0;
       const pct = Math.min(100, Math.round((num / (h.target || 1)) * 100));
       const barColor = isDone ? "var(--mint)" : (num >= 7000 && /pas/i.test(h.name)) ? "var(--peach)" : "var(--rose)";
+      const inputStep = (h.target || 1) <= 30 ? 1 : 100;
       return `
         <div class="habit habit-numeric ${isDone ? "done" : ""}">
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
               <span style="font-size:14.5px;">${escapeHtml(h.name)}</span>
-              <input type="number" value="${num || ''}" onchange="setHabitValue('${h.id}', this.value)" placeholder="0" min="0" step="100"
+              <input type="number" value="${num || ''}" onchange="setHabitValue('${h.id}', this.value)" placeholder="0" min="0" step="${inputStep}"
                 style="width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:right;background:white;" />
               <span style="font-size:11px;color:var(--ink-soft);">/ ${h.target}${h.unit ? " " + h.unit : ""}</span>
             </div>
@@ -2908,8 +2908,9 @@ function renderTasks() {
     const dlText = t.deadline ? `📅 ${formatDeadline(t.deadline)}` : "";
     const tagHtml = project ? `<span class="task-project-tag">${escapeHtml(project.name)}</span>` : "";
     const pct = taskProgress(t);
-    const progressHtml = pct > 0 ? `<div class="task-progress-bar"><div class="task-progress-fill ${pct>=100?'done':''}" style="width:${pct}%"></div></div>` : "";
-    const pctBadge = pct > 0 && !t.done ? `<span class="task-pct-badge">${pct}%</span>` : "";
+    const progressColor = pct >= 100 ? '#4ade80' : `hsl(${Math.round(pct * 1.2)}, 72%, 52%)`;
+    const progressHtml = pct > 0 ? `<div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%;background:${progressColor};"></div></div>` : "";
+    const pctBadge = pct > 0 && !t.done ? `<span class="task-pct-badge" style="color:${progressColor};background:${progressColor}22;">${pct}%</span>` : "";
     return `
       <div class="task-row prio-${t.priority} ${t.done ? "done" : ""}">
         <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
