@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v105</title>
+<title>Mon Tableau de Vie · v106</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -402,32 +402,32 @@
   /* ===== Budget mensuel ===== */
   .budget-add-form {
     display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-    padding: 12px; background: #faf8fd; border-radius: 12px;
-    border: 1px solid var(--line); margin-bottom: 16px;
+    padding: 10px 12px; background: #faf8fd; border-radius: 12px;
+    border: 1px solid var(--line); margin-bottom: 12px;
   }
   .budget-row {
-    background: white; border: 1px solid var(--line); border-radius: 11px;
-    padding: 11px 14px; margin-bottom: 8px;
+    background: white; border: 1px solid var(--line); border-radius: 9px;
+    padding: 6px 12px; margin-bottom: 5px;
     border-left-width: 3px; border-left-color: var(--line);
     transition: border-left-color 0.2s;
   }
   .budget-row-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .budget-cat-label { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; flex: 1; min-width: 0; }
-  .budget-row-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .budget-cat-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; flex: 1; min-width: 0; }
+  .budget-row-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
   .budget-input {
-    width: 80px; padding: 4px 8px; border: 1px solid var(--line);
-    border-radius: 8px; font-family: inherit; font-size: 12px;
+    width: 76px; padding: 3px 7px; border: 1px solid var(--line);
+    border-radius: 7px; font-family: inherit; font-size: 12px;
     text-align: right; color: var(--ink); background: var(--bg-1);
   }
   .budget-input:focus { outline: none; border-color: var(--lavender); background: white; }
   .budget-del {
     background: none; border: none; color: var(--ink-softer);
-    cursor: pointer; font-size: 13px; padding: 2px 5px; border-radius: 5px;
+    cursor: pointer; font-size: 12px; padding: 1px 4px; border-radius: 4px;
   }
   .budget-del:hover { background: var(--rose-soft); color: var(--red); }
-  .budget-bar-wrap { background: #f3eef9; height: 7px; border-radius: 999px; overflow: hidden; margin-top: 8px; }
+  .budget-bar-wrap { background: #f3eef9; height: 5px; border-radius: 999px; overflow: hidden; margin-top: 4px; }
   .budget-bar { height: 100%; border-radius: 999px; transition: width 0.4s; }
-  .budget-pct-label { font-size: 10px; color: var(--ink-softer); margin-top: 3px; text-align: right; }
+  .budget-pct-label { font-size: 10px; color: var(--ink-softer); margin-top: 2px; text-align: right; line-height: 1; }
 
   .sub-total-banner {
     background: linear-gradient(135deg, var(--butter-soft), var(--peach-soft));
