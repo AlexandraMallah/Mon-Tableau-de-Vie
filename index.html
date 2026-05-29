@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v114</title>
+<title>Mon Tableau de Vie · v115</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3040,6 +3040,7 @@ function migrate(s) {
   s.work = s.work || { postdocTasks: [], postdocProjects: [], candidatures: [], articles: [], communications: [] };
   s.work.postdocTasks = s.work.postdocTasks || [];
   s.work.postdocProjects = s.work.postdocProjects || [];
+  s.work.deletedSeedIds = s.work.deletedSeedIds || [];
   s.work.candidatures = s.work.candidatures || [];
   s.work.articles = s.work.articles || [];
   s.work.communications = s.work.communications || [];
@@ -3067,16 +3068,15 @@ function migrate(s) {
   if (Array.isArray(s.work?.postdocProjects)) {
     const renames = { "p-seed-postdoc": "Postdoc", "p-seed-valo": "Valorisation", "p-seed-enseignement": "Enseignement", "p-seed-candidatures": "Candidatures", "p-seed-autre": "Autre", "p-seed-prixthese": "Prix de thèse" };
     s.work.postdocProjects.forEach(p => { if (renames[p.id]) p.name = renames[p.id]; });
-    // S'assure que le projet Candidatures existe
-    if (!s.work.postdocProjects.find(p => p.id === "p-seed-candidatures")) {
+    // S'assure que les projets fixes existent — sauf si l'utilisateur les a supprimés volontairement
+    const deleted = s.work.deletedSeedIds || [];
+    if (!s.work.postdocProjects.find(p => p.id === "p-seed-candidatures") && !deleted.includes("p-seed-candidatures")) {
       s.work.postdocProjects.push({ id: "p-seed-candidatures", name: "Candidatures", progress: 0, notes: "Candidatures MCF, MSCA, CNRS, ERC en cours." });
     }
-    // S'assure que le projet Autre existe
-    if (!s.work.postdocProjects.find(p => p.id === "p-seed-autre")) {
+    if (!s.work.postdocProjects.find(p => p.id === "p-seed-autre") && !deleted.includes("p-seed-autre")) {
       s.work.postdocProjects.push({ id: "p-seed-autre", name: "Autre", progress: 0, notes: "Travail non categorise : jurys, soutenances blanches, formations, syndicat…" });
     }
-    // S'assure que le projet Prix de thèse existe
-    if (!s.work.postdocProjects.find(p => p.id === "p-seed-prixthese")) {
+    if (!s.work.postdocProjects.find(p => p.id === "p-seed-prixthese") && !deleted.includes("p-seed-prixthese")) {
       s.work.postdocProjects.push({ id: "p-seed-prixthese", name: "Prix de thèse", progress: 0, notes: "Candidatures aux prix de thèse." });
     }
   }
@@ -4437,13 +4437,16 @@ function saveProject() {
   updateProjectSelect();
   renderCustomSectionChips();
 }
-const FIXED_SECTION_IDS = ["p-seed-postdoc", "p-seed-candidatures", "p-seed-prixthese", "p-seed-valo", "p-seed-enseignement", "p-seed-autre"];
+function _recordDeletedSeed(id) {
+  if (!id.startsWith("p-seed-")) return;
+  state.work.deletedSeedIds = state.work.deletedSeedIds || [];
+  if (!state.work.deletedSeedIds.includes(id)) state.work.deletedSeedIds.push(id);
+}
 function deleteProject() {
   const id = document.getElementById("projectModalId").value;
   if (!id) return;
-  // Protège uniquement les 6 sections fixes
-  if (FIXED_SECTION_IDS.includes(id)) { showToast("Les sections fixes ne peuvent pas être supprimées."); return; }
   if (!confirm("Supprimer cette section ? Les tâches liées resteront mais sans section assignée.")) return;
+  _recordDeletedSeed(id);
   state.work.postdocProjects = state.work.postdocProjects.filter(p => p.id !== id);
   state.work.postdocTasks.forEach(t => { if (t.projectId === id) t.projectId = ""; });
   saveState();
@@ -4454,10 +4457,11 @@ function deleteProject() {
   renderCustomSectionChips();
 }
 function deleteCustomSection(id) {
-  if (!id || FIXED_SECTION_IDS.includes(id)) return;
+  if (!id) return;
   const p = state.work.postdocProjects.find(x => x.id === id);
   if (!p) return;
   if (!confirm(`Supprimer la section "${p.name}" ? Les tâches liées resteront mais sans section.`)) return;
+  _recordDeletedSeed(id);
   state.work.postdocProjects = state.work.postdocProjects.filter(x => x.id !== id);
   state.work.postdocTasks.forEach(t => { if (t.projectId === id) t.projectId = ""; });
   saveState();
