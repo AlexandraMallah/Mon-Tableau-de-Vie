@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v77</title>
+<title>Mon Tableau de Vie · v78</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -231,6 +231,9 @@
   .scale button:hover { background: var(--lavender-soft); transform: translateY(-1px); }
   .scale.mood button.active { background: var(--pink-soft); border-color: var(--pink); }
   .scale.energy button.active { background: var(--peach-soft); border-color: var(--peach); }
+  .scale.sleepquality { grid-template-columns: repeat(3, 1fr); }
+  .scale.sleepquality button.active { background: var(--sky-soft); border-color: var(--sky); }
+  .sleepquality-label { font-size: 11px; color: var(--sky); text-align: center; margin-top: 5px; min-height: 15px; font-weight: 500; letter-spacing: 0.01em; }
   .sleep-input { display: flex; align-items: center; gap: 12px; }
   .sleep-input input[type="range"] { flex: 1; accent-color: var(--sky); }
   .sleep-input .sleep-val {
@@ -1219,6 +1222,15 @@
                 <span id="sleepVal">7.5</span> h
                 <span class="sleep-qual" id="sleepQualLabel"></span>
               </div>
+            </div>
+            <div style="margin-top:12px;">
+              <label style="font-size:11px;color:var(--ink-softer);margin-bottom:6px;display:block;">Qualité du sommeil</label>
+              <div class="scale sleepquality" id="sleepQualityScale">
+                <button data-v="peaceful">😴</button>
+                <button data-v="restless">😫</button>
+                <button data-v="fragmented">👁️</button>
+              </div>
+              <div class="sleepquality-label" id="sleepQualityLabel"></div>
             </div>
           </div>
           <div class="wb-block">
@@ -2677,13 +2689,14 @@ let _selectedDayKey = null; // null = aujourd'hui
 function getSelectedDayKey() { return _selectedDayKey || todayKey(); }
 function getToday() {
   const k = getSelectedDayKey();
-  if (!state.history[k]) state.history[k] = { habits: {}, activities: {}, mood: null, sleep: null, energy: null, weight: null, water: 0, journal: "", bedtime: null, wakeTime: null };
+  if (!state.history[k]) state.history[k] = { habits: {}, activities: {}, mood: null, sleep: null, sleepQuality: null, energy: null, weight: null, water: 0, journal: "", bedtime: null, wakeTime: null };
   else {
     const d = state.history[k];
     if (!d.habits) d.habits = {}; if (!d.activities) d.activities = {};
     if (d.water == null) d.water = 0; if (d.journal == null) d.journal = "";
     if (d.bedtime === undefined) d.bedtime = null;
     if (d.wakeTime === undefined) d.wakeTime = null;
+    if (d.sleepQuality === undefined) d.sleepQuality = null;
   }
   return state.history[k];
 }
@@ -2821,6 +2834,9 @@ function labelFor(kind, v) {
   return "";
 }
 function sleepLabel(h) { return h < 7 ? "Insuffisant" : h <= 9 ? "Correct" : "Bon"; }
+function sleepQualityLabel(q) {
+  return { peaceful: "Paisible", restless: "Agité", fragmented: "Beaucoup de réveils" }[q] || "";
+}
 function sleepQualClass(h) { return h < 7 ? "insuf" : h <= 9 ? "correct" : "bon"; }
 
 /* ========= HABITS ========= */
@@ -2922,6 +2938,9 @@ function renderWellbeing() {
   const today = getToday();
   document.querySelectorAll("#moodScale button").forEach(b => b.classList.toggle("active", Number(b.dataset.v) === today.mood));
   document.querySelectorAll("#energyScale button").forEach(b => b.classList.toggle("active", Number(b.dataset.v) === today.energy));
+  document.querySelectorAll("#sleepQualityScale button").forEach(b => b.classList.toggle("active", b.dataset.v === today.sleepQuality));
+  const sqLbl = document.getElementById("sleepQualityLabel");
+  if (sqLbl) sqLbl.textContent = today.sleepQuality ? sleepQualityLabel(today.sleepQuality) : "";
   // Émotions détectées dans le journal du jour
   const journalEmotions = analyzeJournal(today.journal || "");
   const todayBlock = document.getElementById("journalMoodToday");
@@ -2962,6 +2981,13 @@ function setupWellbeing() {
   });
   document.querySelectorAll("#energyScale button").forEach(b => {
     b.onclick = () => { getToday().energy = Number(b.dataset.v); saveState(); renderTodayView(); };
+  });
+  document.querySelectorAll("#sleepQualityScale button").forEach(b => {
+    b.onclick = () => {
+      const t = getToday();
+      t.sleepQuality = t.sleepQuality === b.dataset.v ? null : b.dataset.v; // re-clic = désélectionne
+      saveState(); renderTodayView();
+    };
   });
   // Slider durée sommeil
   const slider = document.getElementById("sleepRange");
