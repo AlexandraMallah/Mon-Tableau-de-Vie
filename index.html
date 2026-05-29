@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v82</title>
+<title>Mon Tableau de Vie · v83</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1894,10 +1894,6 @@
     <div id="candTypeEditList"></div>
     <input type="text" id="newCandTypeInput" placeholder="Nouveau type (Entrée pour ajouter)" />
 
-    <div class="section-title">🤖 Analyse IA du journal</div>
-    <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 8px;line-height:1.5;">Clé API Anthropic pour détecter les émotions de ton journal avec Claude (optionnel).<br>Crée la tienne sur <strong>console.anthropic.com</strong> → API Keys. Stockée localement, jamais envoyée ailleurs.</p>
-    <input type="password" id="anthropicApiKeyInput" placeholder="sk-ant-api03-…" autocomplete="off" style="font-family:monospace;font-size:12px;" />
-
     <div class="actions">
       <button class="primary" onclick="saveSettings()">Enregistrer</button>
       <button class="secondary" onclick="closeSettings()">Annuler</button>
@@ -2487,7 +2483,6 @@ const DEFAULT_STATE = {
   transactions: [],
   subscriptions: [],
   accounts: { courantStart: 0, epargneStart: 0 },
-  settings: { anthropicApiKey: "" },
   domestique: { groceries: [], chores: [], plants: [] },
   calEvents: [],
   calSources: [],
@@ -2595,8 +2590,6 @@ function migrate(s) {
     }
   }
   s.history = s.history || {};
-  s.settings = s.settings || { anthropicApiKey: "" };
-  if (!s.settings.anthropicApiKey) s.settings.anthropicApiKey = s.settings.anthropicApiKey || "";
   s.work = s.work || { postdocTasks: [], postdocProjects: [], candidatures: [], articles: [], communications: [] };
   s.work.postdocTasks = s.work.postdocTasks || [];
   s.work.postdocProjects = s.work.postdocProjects || [];
@@ -2744,7 +2737,7 @@ let _selectedDayKey = null; // null = aujourd'hui
 function getSelectedDayKey() { return _selectedDayKey || todayKey(); }
 function getToday() {
   const k = getSelectedDayKey();
-  if (!state.history[k]) state.history[k] = { habits: {}, activities: {}, mood: null, sleep: null, sleepQuality: null, energy: null, weight: null, water: 0, journal: "", bedtime: null, wakeTime: null, journalAiEmotions: null };
+  if (!state.history[k]) state.history[k] = { habits: {}, activities: {}, mood: null, sleep: null, sleepQuality: null, energy: null, weight: null, water: 0, journal: "", bedtime: null, wakeTime: null };
   else {
     const d = state.history[k];
     if (!d.habits) d.habits = {}; if (!d.activities) d.activities = {};
@@ -2752,7 +2745,6 @@ function getToday() {
     if (d.bedtime === undefined) d.bedtime = null;
     if (d.wakeTime === undefined) d.wakeTime = null;
     if (d.sleepQuality === undefined) d.sleepQuality = null;
-    if (d.journalAiEmotions === undefined) d.journalAiEmotions = null;
   }
   return state.history[k];
 }
@@ -3014,8 +3006,8 @@ function renderWellbeing() {
   document.querySelectorAll("#sleepQualityScale button").forEach(b => b.classList.toggle("active", b.dataset.v === today.sleepQuality));
   const sqLbl = document.getElementById("sleepQualityLabel");
   if (sqLbl) sqLbl.textContent = today.sleepQuality ? sleepQualityLabel(today.sleepQuality) : "";
-  // Émotions détectées dans le journal du jour (cache IA si dispo)
-  const journalEmotions = getJournalEmotions(today.journal || "", today);
+  // Émotions détectées dans le journal du jour
+  const journalEmotions = analyzeJournal(today.journal || "");
   const todayBlock = document.getElementById("journalMoodToday");
   const todayBadges = document.getElementById("journalMoodTodayBadges");
   if (todayBlock && todayBadges) {
@@ -5766,58 +5758,11 @@ function updateGoal(id, val) {
 }
 function deleteGoal(id) { state.goals = state.goals.filter(g => g.id !== id); saveState(); renderGoals(); }
 
-/* ========= JOURNAL — ANALYSE IA ========= */
-
-// Appel Claude Haiku pour comprendre les émotions du journal
-async function analyzeJournalWithClaude(text) {
-  const apiKey = state.settings?.anthropicApiKey;
-  if (!apiKey || text.trim().length < 20) return null;
-  try {
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-client-side-key-access": "true",
-        "content-type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5",
-        max_tokens: 80,
-        messages: [{ role: "user", content:
-          `Lis ce journal intime et identifie les émotions réellement exprimées (explicitement ou implicitement). Réponds UNIQUEMENT avec un JSON valide, rien d'autre : {"emotions":["id1","id2"]}
-Émotions disponibles : joie, gratitude, motivation, serenite, stress, fatigue, tristesse, irritation
-Règle : n'inclus une émotion que si elle est clairement présente. Si le texte est neutre ou purement factuel, renvoie {"emotions":[]}.
-Journal : "${text.slice(0, 700).replace(/"/g, '\\"')}"` }]
-      })
-    });
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    const raw = data.content?.[0]?.text || "";
-    const m = raw.match(/\{[\s\S]*?\}/);
-    if (!m) return null;
-    const parsed = JSON.parse(m[0]);
-    const valid = new Set(JOURNAL_EMOTIONS.map(e => e.id));
-    return Array.isArray(parsed.emotions) ? parsed.emotions.filter(id => valid.has(id)) : null;
-  } catch(e) {
-    console.warn("[journal-ai]", e.message);
-    return null;
-  }
-}
-
-// Renvoie les émotions du jour : cache IA si dispo, sinon heuristique
-function getJournalEmotions(text, today) {
-  if (Array.isArray(today?.journalAiEmotions)) {
-    return today.journalAiEmotions.map(id => JOURNAL_EMOTIONS.find(e => e.id === id)).filter(Boolean);
-  }
-  return analyzeJournal(text);
-}
-
-function renderJournalMoodTags(text, today) {
+/* ========= JOURNAL ========= */
+function renderJournalMoodTags(text) {
   const el = document.getElementById("journalMoodTags");
   if (!el) return;
-  const td = today || getToday();
-  const emotions = getJournalEmotions(text, td);
+  const emotions = analyzeJournal(text);
   el.innerHTML = emotions.length
     ? `<span style="font-size:11px;color:var(--ink-softer);align-self:center;">Ton journal évoque :</span> ` + emotionBadgesHtml(emotions)
     : "";
@@ -5848,40 +5793,11 @@ function renderJournal() {
 }
 function setupJournal() {
   const ta = document.getElementById("journalToday");
-  let saveTimer, aiTimer;
-
+  let timeout;
   ta.addEventListener("input", () => {
-    const text = ta.value;
-    const today = getToday();
-
-    // Affichage immédiat (heuristique ou cache IA existant)
-    renderJournalMoodTags(text, today);
-
-    // Sauvegarde debounce 800ms
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => { today.journal = text; saveState(); }, 800);
-
-    // Analyse IA debounce 1800ms (si clé configurée)
-    if (state.settings?.anthropicApiKey && text.trim().length > 20) {
-      clearTimeout(aiTimer);
-
-      // Indicateur "en cours"
-      const el = document.getElementById("journalMoodTags");
-      if (el) el.innerHTML = `<span style="font-size:11px;color:var(--ink-softer);font-style:italic;">✨ Analyse…</span>`;
-
-      aiTimer = setTimeout(async () => {
-        const emotionIds = await analyzeJournalWithClaude(text);
-        const t = getToday(); // re-fetch au cas où jour changé
-        if (emotionIds !== null) {
-          t.journalAiEmotions = emotionIds;
-          t.journal = text;
-          saveState();
-        }
-        // Re-render avec le résultat (IA ou fallback heuristique si null)
-        renderJournalMoodTags(text, t);
-        renderWellbeing(); // met à jour la carte "Comment je me sens"
-      }, 1800);
-    }
+    renderJournalMoodTags(ta.value);
+    clearTimeout(timeout);
+    timeout = setTimeout(() => { getToday().journal = ta.value; saveState(); }, 800);
   });
 }
 
@@ -7498,7 +7414,6 @@ function openSettings() {
   document.getElementById("nameInput").value = state.name || "";
   document.getElementById("accountCourantStart").value = state.accounts?.courantStart ?? 0;
   document.getElementById("accountEpargneStart").value = state.accounts?.epargneStart ?? 0;
-  document.getElementById("anthropicApiKeyInput").value = state.settings?.anthropicApiKey || "";
   renderSettingsLists();
   ["newHabitInput", "newActivityName", "newActivityEmoji", "newCatInput", "newIncomeCatInput", "newSavingsCatInput", "newCandTypeInput"]
     .forEach(i => document.getElementById(i).value = "");
@@ -7530,8 +7445,6 @@ function saveSettings() {
   if (!state.accounts) state.accounts = { courantStart: 0, epargneStart: 0 };
   state.accounts.courantStart = Number(document.getElementById("accountCourantStart").value) || 0;
   state.accounts.epargneStart = Number(document.getElementById("accountEpargneStart").value) || 0;
-  if (!state.settings) state.settings = {};
-  state.settings.anthropicApiKey = document.getElementById("anthropicApiKeyInput").value.trim();
   const nh = document.getElementById("newHabitInput").value.trim();
   if (nh) state.habits.push({ id: "h" + Date.now(), name: nh });
   const naName = document.getElementById("newActivityName").value.trim();
