@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v103</title>
+<title>Mon Tableau de Vie · v104</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -396,6 +396,36 @@
   /* Listes scrollantes dans Financier */
   #txList  { max-height: 420px; overflow-y: auto; padding-right: 2px; }
   #subList { max-height: 320px; overflow-y: auto; padding-right: 2px; }
+
+  /* ===== Budget mensuel ===== */
+  .budget-add-form {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    padding: 12px; background: #faf8fd; border-radius: 12px;
+    border: 1px solid var(--line); margin-bottom: 16px;
+  }
+  .budget-row {
+    background: white; border: 1px solid var(--line); border-radius: 11px;
+    padding: 11px 14px; margin-bottom: 8px;
+    border-left-width: 3px; border-left-color: var(--line);
+    transition: border-left-color 0.2s;
+  }
+  .budget-row-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .budget-cat-label { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; flex: 1; min-width: 0; }
+  .budget-row-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .budget-input {
+    width: 80px; padding: 4px 8px; border: 1px solid var(--line);
+    border-radius: 8px; font-family: inherit; font-size: 12px;
+    text-align: right; color: var(--ink); background: var(--bg-1);
+  }
+  .budget-input:focus { outline: none; border-color: var(--lavender); background: white; }
+  .budget-del {
+    background: none; border: none; color: var(--ink-softer);
+    cursor: pointer; font-size: 13px; padding: 2px 5px; border-radius: 5px;
+  }
+  .budget-del:hover { background: var(--rose-soft); color: var(--red); }
+  .budget-bar-wrap { background: #f3eef9; height: 7px; border-radius: 999px; overflow: hidden; margin-top: 8px; }
+  .budget-bar { height: 100%; border-radius: 999px; transition: width 0.4s; }
+  .budget-pct-label { font-size: 10px; color: var(--ink-softer); margin-top: 3px; text-align: right; }
 
   .sub-total-banner {
     background: linear-gradient(135deg, var(--butter-soft), var(--peach-soft));
@@ -5984,43 +6014,97 @@ function renderBudgetFeedback() {
   const el = document.getElementById("budgetFeedback");
   if (!el) return;
   const [start, end] = currentMonthRange();
+
+  // Dépenses réelles ce mois par catégorie
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d < end && tx.type === "expense") totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
+    if (d >= start && d < end && tx.type === "expense")
+      totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
   }
-  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-  if (!entries.length) { el.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:12px;">Aucune dépense ce mois.</p>`; return; }
+
   const budgets = state.budgets || {};
-  el.innerHTML = entries.map(([cat, spent]) => {
+
+  // Union : catégories avec dépenses + catégories avec objectif défini
+  const allCats = [...new Set([...Object.keys(totals), ...Object.keys(budgets)])];
+  allCats.sort((a, b) => (totals[b] || 0) - (totals[a] || 0));
+
+  // Formulaire d'ajout
+  const allExpCats = state.categories || [];
+  // Catégories disponibles pour ajout (pas encore dans budgets ou sans dépenses ce mois)
+  const addOptions = allExpCats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  const addForm = `
+    <div class="budget-add-form">
+      <select id="newBudgetCat" style="flex:1;min-width:120px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;background:white;">
+        <option value="">Catégorie…</option>
+        ${addOptions}
+      </select>
+      <input type="number" id="newBudgetAmount" placeholder="Objectif €" min="1" step="10"
+        style="width:110px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;"
+        onkeydown="if(event.key==='Enter') addBudgetGoal()" />
+      <button class="btn-primary" onclick="addBudgetGoal()">+ Ajouter</button>
+    </div>`;
+
+  if (!allCats.length) {
+    el.innerHTML = addForm + `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:16px 0;">Aucun objectif encore — ajoute ta première catégorie ci-dessus.</p>`;
+    return;
+  }
+
+  const rows = allCats.map(cat => {
+    const spent  = totals[cat] || 0;
     const target = budgets[cat] || 0;
-    const pct = target > 0 ? Math.min(150, Math.round((spent / target) * 100)) : 0;
-    const over = target > 0 && spent > target;
-    const barColor = over ? "#ef4444" : pct > 80 ? "#f59e0b" : "#72c4a2";
-    const targetDisplay = target > 0
-      ? `<span style="color:${over ? '#ef4444' : 'var(--ink-soft)'};">${spent.toFixed(0)} / ${target} €${over ? " ⚠️" : ""}</span>`
-      : `<span style="color:var(--ink-softer);font-size:11px;">pas de budget —</span>`;
+    const pct    = target > 0 ? Math.min(150, Math.round((spent / target) * 100)) : 0;
+    const over   = target > 0 && spent > target;
+    const warn   = target > 0 && !over && pct >= 80;
+    const barColor = over ? "#ef4444" : warn ? "#f59e0b" : "#72c4a2";
+
+    const spentLabel = target > 0
+      ? `<span style="font-size:12px;color:${over ? '#ef4444' : warn ? '#b45309' : 'var(--ink-soft)'};">
+           ${spent.toFixed(0)} / ${target} €${over ? " ⚠️" : warn ? " ⚡" : ""}
+         </span>`
+      : spent > 0
+        ? `<span style="font-size:12px;color:var(--ink-soft);">${spent.toFixed(0)} € dépensés</span>`
+        : `<span style="font-size:11px;color:var(--ink-softer);">pas encore de dépense</span>`;
+
     return `
-      <div style="margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-          <span style="display:flex;align-items:center;gap:6px;font-size:13px;">
-            <span style="width:10px;height:10px;border-radius:50%;background:${catColor(cat)};flex-shrink:0;display:inline-block;"></span>
+      <div class="budget-row" style="${over ? 'border-left:3px solid #ef4444;' : warn ? 'border-left:3px solid #f59e0b;' : ''}">
+        <div class="budget-row-top">
+          <span class="budget-cat-label">
+            <span style="width:9px;height:9px;border-radius:50%;background:${catColor(cat)};flex-shrink:0;display:inline-block;"></span>
             ${escapeHtml(cat)}
           </span>
-          <span style="display:flex;align-items:center;gap:8px;font-size:12px;">
-            ${targetDisplay}
-            <input type="number" min="0" step="10" placeholder="Objectif €"
+          <span class="budget-row-right">
+            ${spentLabel}
+            <input type="number" min="0" step="10" placeholder="€"
               value="${target || ""}"
-              title="Budget mensuel pour ${escapeHtml(cat)}"
+              title="Objectif mensuel pour ${escapeHtml(cat)}"
               onchange="setBudget('${escapeHtml(cat)}', this.value)"
-              style="width:80px;padding:2px 6px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:11px;text-align:right;color:var(--ink-soft);" />
+              class="budget-input" />
+            <button onclick="setBudget('${escapeHtml(cat)}','0')"
+              title="Supprimer cet objectif"
+              class="budget-del">✕</button>
           </span>
         </div>
-        ${target > 0 ? `<div style="background:#f3eef9;height:6px;border-radius:999px;overflow:hidden;">
-          <div style="width:${pct}%;height:100%;background:${barColor};transition:width 0.4s;border-radius:999px;"></div>
-        </div>` : ""}
+        ${target > 0 ? `
+        <div class="budget-bar-wrap">
+          <div class="budget-bar" style="width:${pct}%;background:${barColor};"></div>
+        </div>
+        <div class="budget-pct-label">${pct}%${over ? ` — dépassé de ${(spent - target).toFixed(0)} €` : ""}</div>` : ""}
       </div>`;
   }).join("");
+
+  el.innerHTML = addForm + rows;
+}
+
+function addBudgetGoal() {
+  const catEl    = document.getElementById("newBudgetCat");
+  const amtEl    = document.getElementById("newBudgetAmount");
+  const cat      = catEl?.value?.trim();
+  const amount   = Number(String(amtEl?.value || "").replace(",", "."));
+  if (!cat || !amount || amount <= 0) return;
+  setBudget(cat, amount);
+  if (catEl) catEl.value = "";
+  if (amtEl) amtEl.value = "";
 }
 function setBudget(cat, value) {
   if (!state.budgets) state.budgets = {};
