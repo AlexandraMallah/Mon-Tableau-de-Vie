@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v89</title>
+<title>Mon Tableau de Vie · v90</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -317,16 +317,18 @@
   .money-stat.expense { background: linear-gradient(135deg, white 0%, var(--rose-soft) 100%); }
   .money-stat.balance { background: linear-gradient(135deg, white 0%, var(--lavender-soft) 100%); }
   .tx-form { display: grid; grid-template-columns: auto 1fr 1fr 2fr auto; gap: 8px; align-items: center; margin-bottom: 14px; background: #faf8fd; padding: 12px; border-radius: 14px; }
-  .tx-form .type-toggle { display: flex; gap: 4px; }
+  .tx-form .type-toggle {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  }
   .tx-form .type-toggle button {
     padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line);
-    background: white; cursor: pointer; font-size: 13px; color: var(--ink-soft); font-family: inherit;
+    background: white; cursor: pointer; font-size: 13px; color: var(--ink-soft);
+    font-family: inherit; text-align: center; width: 100%;
   }
-  .tx-form .type-toggle button.active.expense { background: var(--rose-soft); border-color: var(--rose); color: var(--ink); }
-  .tx-form .type-toggle button.active.income { background: var(--mint-soft); border-color: var(--mint); color: var(--ink); }
-  .tx-form .type-toggle button.active.savings { background: var(--lavender-soft); border-color: var(--lavender); color: var(--ink); }
-  .tx-form .type-toggle button.active.external { background: var(--butter-soft); border-color: var(--butter); color: var(--ink); }
-  .tx-form .type-toggle { flex-wrap: wrap; }
+  .tx-form .type-toggle button.active.expense  { background: var(--rose-soft);    border-color: var(--rose);    color: var(--ink); }
+  .tx-form .type-toggle button.active.income   { background: var(--mint-soft);    border-color: var(--mint);    color: var(--ink); }
+  .tx-form .type-toggle button.active.savings  { background: var(--lavender-soft);border-color: var(--lavender);color: var(--ink); }
+  .tx-form .type-toggle button.active.external { background: var(--butter-soft);  border-color: var(--butter);  color: var(--ink); }
   .tx-amount.savings { color: #6b4d99; }
   .tx-amount.external { color: var(--orange); }
   .tx-form input, .tx-form select {
@@ -1192,7 +1194,7 @@
 
     /* === Financier : formulaire === */
     .tx-form { grid-template-columns: 1fr 1fr; gap: 6px; }
-    .tx-form .type-toggle { grid-column: span 2; }
+    .tx-form .type-toggle { grid-column: span 2; gap: 5px; }
     .tx-form .add-btn { grid-column: span 2; }
 
     /* === Modal : quasi plein écran === */
@@ -1780,9 +1782,9 @@
       <div class="tx-form">
         <div class="type-toggle">
           <button id="txTypeExpense" class="active expense" onclick="setTxType('expense')">− Dépense</button>
+          <button id="txTypeExternal" class="external" onclick="setTxType('external')">🧾 Hors compte</button>
           <button id="txTypeIncome" class="income" onclick="setTxType('income')">+ Revenu</button>
           <button id="txTypeSavings" class="savings" onclick="setTxType('savings')">💰 Épargne</button>
-          <button id="txTypeExternal" class="external" onclick="setTxType('external')">🧾 Hors compte</button>
         </div>
         <input type="number" id="txAmount" placeholder="Montant (€)" step="0.01" />
         <select id="txCategory"></select>
@@ -2238,9 +2240,9 @@
     <label>Type</label>
     <div class="type-toggle" style="display:flex;gap:6px;margin-bottom:6px;">
       <button type="button" id="txModalTypeExpense" onclick="setTxModalType('expense')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">− Dépense</button>
+      <button type="button" id="txModalTypeExternal" onclick="setTxModalType('external')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">🧾 Hors compte</button>
       <button type="button" id="txModalTypeIncome" onclick="setTxModalType('income')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">+ Revenu</button>
       <button type="button" id="txModalTypeSavings" onclick="setTxModalType('savings')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">💰 Épargne</button>
-      <button type="button" id="txModalTypeExternal" onclick="setTxModalType('external')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">🧾 Hors compte</button>
     </div>
     <div class="grid-2">
       <div>
