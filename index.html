@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v113</title>
+<title>Mon Tableau de Vie · v114</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4437,11 +4437,12 @@ function saveProject() {
   updateProjectSelect();
   renderCustomSectionChips();
 }
+const FIXED_SECTION_IDS = ["p-seed-postdoc", "p-seed-candidatures", "p-seed-prixthese", "p-seed-valo", "p-seed-enseignement", "p-seed-autre"];
 function deleteProject() {
   const id = document.getElementById("projectModalId").value;
   if (!id) return;
-  // Protège les sections fixes
-  if (id.startsWith("p-seed-")) { showToast("Les sections fixes ne peuvent pas être supprimées."); return; }
+  // Protège uniquement les 6 sections fixes
+  if (FIXED_SECTION_IDS.includes(id)) { showToast("Les sections fixes ne peuvent pas être supprimées."); return; }
   if (!confirm("Supprimer cette section ? Les tâches liées resteront mais sans section assignée.")) return;
   state.work.postdocProjects = state.work.postdocProjects.filter(p => p.id !== id);
   state.work.postdocTasks.forEach(t => { if (t.projectId === id) t.projectId = ""; });
@@ -4453,7 +4454,7 @@ function deleteProject() {
   renderCustomSectionChips();
 }
 function deleteCustomSection(id) {
-  if (!id || id.startsWith("p-seed-")) return;
+  if (!id || FIXED_SECTION_IDS.includes(id)) return;
   const p = state.work.postdocProjects.find(x => x.id === id);
   if (!p) return;
   if (!confirm(`Supprimer la section "${p.name}" ? Les tâches liées resteront mais sans section.`)) return;
