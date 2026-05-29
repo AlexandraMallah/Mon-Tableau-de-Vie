@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v87</title>
+<title>Mon Tableau de Vie · v88</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -325,7 +325,10 @@
   .tx-form .type-toggle button.active.expense { background: var(--rose-soft); border-color: var(--rose); color: var(--ink); }
   .tx-form .type-toggle button.active.income { background: var(--mint-soft); border-color: var(--mint); color: var(--ink); }
   .tx-form .type-toggle button.active.savings { background: var(--lavender-soft); border-color: var(--lavender); color: var(--ink); }
+  .tx-form .type-toggle button.active.external { background: var(--butter-soft); border-color: var(--butter); color: var(--ink); }
+  .tx-form .type-toggle { flex-wrap: wrap; }
   .tx-amount.savings { color: #6b4d99; }
+  .tx-amount.external { color: var(--orange); }
   .tx-form input, .tx-form select {
     padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
     font-family: inherit; font-size: 14px; color: var(--ink); background: white;
@@ -1749,6 +1752,7 @@
           <button id="txTypeExpense" class="active expense" onclick="setTxType('expense')">− Dépense</button>
           <button id="txTypeIncome" class="income" onclick="setTxType('income')">+ Revenu</button>
           <button id="txTypeSavings" class="savings" onclick="setTxType('savings')">💰 Épargne</button>
+          <button id="txTypeExternal" class="external" onclick="setTxType('external')">🧾 Hors compte</button>
         </div>
         <input type="number" id="txAmount" placeholder="Montant (€)" step="0.01" />
         <select id="txCategory"></select>
@@ -2206,6 +2210,7 @@
       <button type="button" id="txModalTypeExpense" onclick="setTxModalType('expense')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">− Dépense</button>
       <button type="button" id="txModalTypeIncome" onclick="setTxModalType('income')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">+ Revenu</button>
       <button type="button" id="txModalTypeSavings" onclick="setTxModalType('savings')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">💰 Épargne</button>
+      <button type="button" id="txModalTypeExternal" onclick="setTxModalType('external')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">🧾 Hors compte</button>
     </div>
     <div class="grid-2">
       <div>
@@ -5358,6 +5363,7 @@ function setTxType(t) {
   document.getElementById("txTypeExpense").classList.toggle("active", t === "expense");
   document.getElementById("txTypeIncome").classList.toggle("active", t === "income");
   document.getElementById("txTypeSavings").classList.toggle("active", t === "savings");
+  document.getElementById("txTypeExternal").classList.toggle("active", t === "external");
   populateTxCategories();
 }
 function renderMoney() { populateTxCategories(); renderMoneySummary(); renderTxList(); renderSavings(); renderAccounts(); }
@@ -5498,9 +5504,10 @@ function closeTxModal() { document.getElementById("txModal").classList.remove("o
 function setTxModalType(t, presetCategory) {
   txModalType = t;
   const cfg = {
-    expense: { btn: "txModalTypeExpense", bg: "var(--rose-soft)", border: "var(--rose)", list: state.categories },
-    income: { btn: "txModalTypeIncome", bg: "var(--mint-soft)", border: "var(--mint)", list: state.incomeCategories },
-    savings: { btn: "txModalTypeSavings", bg: "var(--lavender-soft)", border: "var(--lavender)", list: state.savingsCategories },
+    expense:  { btn: "txModalTypeExpense",  bg: "var(--rose-soft)",    border: "var(--rose)",    list: state.categories },
+    income:   { btn: "txModalTypeIncome",   bg: "var(--mint-soft)",    border: "var(--mint)",    list: state.incomeCategories },
+    savings:  { btn: "txModalTypeSavings",  bg: "var(--lavender-soft)",border: "var(--lavender)",list: state.savingsCategories },
+    external: { btn: "txModalTypeExternal", bg: "var(--butter-soft)",  border: "var(--butter)",  list: state.categories },
   };
   for (const [type, c] of Object.entries(cfg)) {
     const b = document.getElementById(c.btn);
@@ -5562,9 +5569,10 @@ function renderTxList() {
   document.getElementById("txList").innerHTML = list.map(tx => {
     const d = new Date(tx.date);
     const dateStr = d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-    const sign = tx.type === "income" ? "+" : tx.type === "savings" ? (tx.amount >= 0 ? "💳→🏦" : "🏦→💳") : "−";
+    const sign = tx.type === "income" ? "+" : tx.type === "savings" ? (tx.amount >= 0 ? "💳→🏦" : "🏦→💳") : tx.type === "external" ? "🧾" : "−";
     const dotColor = tx.type === "savings" ? "#c9b6f0"
                    : tx.type === "income" ? "#aee0c8"
+                   : tx.type === "external" ? "#f5e6a8"
                    : catColor(tx.category);
     return `
       <div class="tx-row">
@@ -5596,6 +5604,7 @@ function renderMoneyFlowChart() {
       { label: "Revenus", data: months.map(m => monthSum(m, "income")), backgroundColor: "#aee0c8", borderRadius: 8 },
       { label: "Dépenses", data: months.map(m => monthSum(m, "expense")), backgroundColor: "#efb8c8", borderRadius: 8 },
       { label: "Épargne", data: months.map(m => monthSum(m, "savings")), backgroundColor: "#c9b6f0", borderRadius: 8 },
+      { label: "Hors compte", data: months.map(m => monthSum(m, "external")), backgroundColor: "#f5e6a8", borderRadius: 8 },
     ] },
     options: {
       ...baseChartOpts(),
@@ -5653,7 +5662,7 @@ function renderMoneyCatChart() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d < end && tx.type === "expense") totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
+    if (d >= start && d < end && (tx.type === "expense" || tx.type === "external")) totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>ce mois"); return; }
@@ -7878,7 +7887,7 @@ function applyPatch(p) {
   if (Array.isArray(p.transactions)) {
     for (const tx of p.transactions) {
       if (!tx.amount) continue;
-      const validType = ["income", "savings", "expense"].includes(tx.type) ? tx.type : "expense";
+      const validType = ["income", "savings", "expense", "external"].includes(tx.type) ? tx.type : "expense";
       state.transactions.unshift({
         id: "tx" + Date.now() + Math.random().toString(36).slice(2, 6),
         date: new Date().toISOString(),
