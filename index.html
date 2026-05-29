@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v97</title>
+<title>Mon Tableau de Vie · v98</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -731,6 +731,15 @@
   .day-nav-back { font-size: 12px; color: var(--lavender); cursor: pointer; margin-top: 3px; }
   .day-nav-back:hover { text-decoration: underline; }
 
+  /* Mode jour futur : grise les anneaux et la grille habitudes/humeur */
+  .future-day #rings,
+  .future-day .grid-two {
+    opacity: 0.25;
+    pointer-events: none;
+    user-select: none;
+    transition: opacity 0.2s;
+  }
+
   /* ========= CAL SOURCES (multi-couleurs Google) ========= */
   .cal-sources-grid {
     background: #faf8fd; border-radius: 12px; padding: 10px 12px;
@@ -1374,6 +1383,9 @@
         <div class="day-nav-back" id="dayNavBackBtn" onclick="navToToday()" style="display:none;">↩ Retour à aujourd'hui</div>
       </div>
       <button class="day-nav-btn" id="dayNavNext" onclick="navDay(1)" title="Jour suivant" disabled>▶</button>
+    </div>
+    <div id="futureDayBanner" style="display:none;background:var(--butter-soft,#fef9e7);border:1px solid var(--butter,#f5d76e);border-radius:12px;padding:9px 16px;margin-bottom:18px;font-size:13px;color:var(--ink-soft);text-align:center;">
+      📅 Tu prépares <strong id="futureDayBannerLabel">demain</strong> à l'avance — seul le to-do est actif pour les jours futurs
     </div>
     <div class="rings" id="rings"></div>
     <div class="grid-two">
@@ -3304,22 +3316,64 @@ function setupWellbeing() {
 }
 function renderTodayNav() {
   const k = getSelectedDayKey();
-  const isToday = k === todayKey();
+  const tk = todayKey();
+  const isToday = k === tk;
+  const isFuture = k > tk;
+
+  // Label : Aujourd'hui / Demain / date passée ou future
+  const dDate = new Date(k + "T12:00:00");
+  const tDate = new Date(tk + "T12:00:00");
+  const diffDays = Math.round((dDate - tDate) / 86400000);
+  let labelText;
+  if (isToday) {
+    labelText = "Aujourd'hui";
+  } else if (diffDays === 1) {
+    labelText = "Demain 📅";
+  } else if (diffDays === -1) {
+    labelText = "Hier";
+  } else {
+    labelText = formatDateFr(dDate);
+  }
+
   const label = document.getElementById("dayNavLabel");
   const backBtn = document.getElementById("dayNavBackBtn");
   const nextBtn = document.getElementById("dayNavNext");
-  if (label) label.textContent = isToday ? "Aujourd'hui" : formatDateFr(new Date(k + "T12:00:00"));
-  if (backBtn) backBtn.style.display = isToday ? "none" : "";
-  if (nextBtn) nextBtn.disabled = isToday;
-  // Met à jour le titre du header si on est sur un autre jour
-  document.getElementById("greeting").textContent = isToday ? getGreeting() : "📅 " + new Date(k + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-  document.getElementById("todayDate").textContent = formatDateFr(new Date(k + "T12:00:00"));
+  if (label) label.textContent = labelText;
+  if (backBtn) {
+    backBtn.style.display = isToday ? "none" : "";
+    backBtn.textContent = isFuture ? "↩ Retour à aujourd'hui" : "↩ Retour à aujourd'hui";
+  }
+  // Désactive ▶ si on est déjà à +14 jours
+  const maxFutureKey = (() => { const d = new Date(tk + "T12:00:00"); d.setDate(d.getDate() + 14); return todayKey(d); })();
+  if (nextBtn) nextBtn.disabled = k >= maxFutureKey;
+
+  // Greeting dans le header
+  if (isToday) {
+    document.getElementById("greeting").textContent = getGreeting();
+  } else {
+    document.getElementById("greeting").textContent = "📅 " + dDate.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  }
+  document.getElementById("todayDate").textContent = isToday ? formatDateFr(dDate) : "";
+
+  // Bandeau jour futur
+  const banner = document.getElementById("futureDayBanner");
+  if (banner) {
+    banner.style.display = isFuture ? "" : "none";
+    const bl = document.getElementById("futureDayBannerLabel");
+    if (bl) bl.textContent = diffDays === 1 ? "demain" : "ce jour";
+  }
+
+  // Sur un jour futur : grise les sections non pertinentes via classe CSS
+  const todaySection = document.querySelector('.view[data-view="today"]');
+  if (todaySection) todaySection.classList.toggle("future-day", isFuture);
 }
 function navDay(delta) {
   const current = new Date(getSelectedDayKey() + "T12:00:00");
   current.setDate(current.getDate() + delta);
   const newKey = todayKey(current);
-  if (newKey > todayKey()) return; // pas dans le futur
+  // Limite : pas au-delà de +14 jours dans le futur
+  const maxFutureKey = (() => { const d = new Date(todayKey() + "T12:00:00"); d.setDate(d.getDate() + 14); return todayKey(d); })();
+  if (newKey > maxFutureKey) return;
   _selectedDayKey = (newKey === todayKey()) ? null : newKey;
   renderTodayNav();
   renderTodayView();
