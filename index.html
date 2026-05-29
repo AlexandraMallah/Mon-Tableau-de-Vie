@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v106</title>
+<title>Mon Tableau de Vie · v107</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -5880,30 +5880,30 @@ function deleteTxFromModal() {
 document.getElementById("txModal").addEventListener("click", e => { if (e.target.id === "txModal") closeTxModal(); });
 // 24 couleurs pastel toutes distinctes — assignées par index dans la liste des catégories
 const CAT_PALETTE = [
-  "#c9b6f0", // lavande
-  "#f5956e", // orange brûlé
-  "#7ecba8", // menthe
-  "#f5b6c9", // rose bonbon
-  "#6ab8e8", // bleu ciel
-  "#f0c93a", // jaune soleil
-  "#e08acd", // fuchsia
-  "#5ecab6", // turquoise
-  "#f0a060", // abricot
-  "#90aee8", // bleu pervenche
-  "#b47fe0", // violet
-  "#88d888", // vert pomme
-  "#e8c060", // miel
-  "#e86880", // corail
-  "#60c8a8", // jade
-  "#d890a8", // vieux rose
-  "#80b8e8", // bleu glacier
-  "#e8d060", // citron
-  "#98c870", // vert olive
-  "#e89050", // terracotta
-  "#a090d8", // iris
-  "#70d8a8", // aqua
-  "#d8a060", // caramel
-  "#c870a0", // framboise
+  "#ddd0f7", // lavande
+  "#f9c4ae", // pêche
+  "#b5e3d0", // menthe
+  "#fad4df", // rose bonbon
+  "#add9f4", // bleu ciel
+  "#f7e49d", // citron doux
+  "#f0bce5", // lilas rosé
+  "#a8e3d8", // turquoise pâle
+  "#f7cda8", // abricot
+  "#c0d5f5", // bleu pervenche
+  "#d4b5f2", // violet pastel
+  "#bdeabd", // vert menthe
+  "#f5dfa0", // miel doux
+  "#f4adbe", // corail rosé
+  "#a8e3d0", // jade pâle
+  "#ecc0d4", // vieux rose
+  "#b8d8f5", // bleu glacier
+  "#f5ebb0", // vanille
+  "#c8e5a8", // vert tendre
+  "#f5c49a", // terracotta pastel
+  "#c8c0ec", // iris
+  "#b0ecda", // aqua pâle
+  "#ecd0a0", // caramel clair
+  "#e8b0d4", // framboise douce
 ];
 function catColor(cat) {
   if (!cat) return CAT_PALETTE[0];
