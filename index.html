@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v91</title>
+<title>Mon Tableau de Vie · v92</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -320,12 +320,12 @@
   .money-stat.balance { background: linear-gradient(135deg, white 0%, var(--lavender-soft) 100%); }
   .tx-form { display: grid; grid-template-columns: auto 1fr 1fr 2fr auto; gap: 8px; align-items: center; margin-bottom: 14px; background: #faf8fd; padding: 12px; border-radius: 14px; }
   .tx-form .type-toggle {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    display: flex; gap: 5px; flex-wrap: nowrap;  /* une ligne sur desktop */
   }
   .tx-form .type-toggle button {
-    padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line);
-    background: white; cursor: pointer; font-size: 13px; color: var(--ink-soft);
-    font-family: inherit; text-align: center; width: 100%;
+    padding: 8px 11px; border-radius: 10px; border: 1px solid var(--line);
+    background: white; cursor: pointer; font-size: 12.5px; color: var(--ink-soft);
+    font-family: inherit; text-align: center; white-space: nowrap;
   }
   .tx-form .type-toggle button.active.expense  { background: var(--rose-soft);    border-color: var(--rose);    color: var(--ink); }
   .tx-form .type-toggle button.active.income   { background: var(--mint-soft);    border-color: var(--mint);    color: var(--ink); }
@@ -1203,7 +1203,10 @@
 
     /* === Financier : formulaire === */
     .tx-form { grid-template-columns: 1fr 1fr; gap: 6px; }
-    .tx-form .type-toggle { grid-column: span 2; gap: 5px; }
+    .tx-form .type-toggle {
+      grid-column: span 2;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 5px; /* 2×2 sur mobile */
+    }
     .tx-form .add-btn { grid-column: span 2; }
 
     /* === Modal : quasi plein écran === */
