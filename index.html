@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v78</title>
+<title>Mon Tableau de Vie · v79</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2574,7 +2574,7 @@ function migrate(s) {
   s.contacts = s.contacts || [];
   // Migration : aligner les noms de projets sur les sous-onglets Travail
   if (Array.isArray(s.work?.postdocProjects)) {
-    const renames = { "p-seed-postdoc": "Postdoc", "p-seed-valo": "Valorisation", "p-seed-enseignement": "Enseignement", "p-seed-candidatures": "Candidatures", "p-seed-autre": "Autre" };
+    const renames = { "p-seed-postdoc": "Postdoc", "p-seed-valo": "Valorisation", "p-seed-enseignement": "Enseignement", "p-seed-candidatures": "Candidatures", "p-seed-autre": "Autre", "p-seed-prixthese": "Prix de thèse" };
     s.work.postdocProjects.forEach(p => { if (renames[p.id]) p.name = renames[p.id]; });
     // S'assure que le projet Candidatures existe
     if (!s.work.postdocProjects.find(p => p.id === "p-seed-candidatures")) {
@@ -2583,6 +2583,10 @@ function migrate(s) {
     // S'assure que le projet Autre existe
     if (!s.work.postdocProjects.find(p => p.id === "p-seed-autre")) {
       s.work.postdocProjects.push({ id: "p-seed-autre", name: "Autre", progress: 0, notes: "Travail non categorise : jurys, soutenances blanches, formations, syndicat…" });
+    }
+    // S'assure que le projet Prix de thèse existe
+    if (!s.work.postdocProjects.find(p => p.id === "p-seed-prixthese")) {
+      s.work.postdocProjects.push({ id: "p-seed-prixthese", name: "Prix de thèse", progress: 0, notes: "Candidatures aux prix de thèse." });
     }
   }
   // Migration : lier automatiquement les tâches MSCA/candidature au projet "Candidatures"
@@ -3050,7 +3054,8 @@ function isPostdocProject(p) { return /^postdoc/i.test(p.name) || /\bélites mob
 function isValoProject(p) { return /valorisation/i.test(p.name); }
 function isTeachingProject(p) { return /enseignement/i.test(p.name); }
 function isAutreProject(p) { return p.id === "p-seed-autre" || /^autre$/i.test(p.name); }
-function isMajorProject(p) { return isPostdocProject(p) || isValoProject(p) || isTeachingProject(p) || isAutreProject(p); }
+function isPrixTheseProject(p) { return p.id === "p-seed-prixthese" || /^prix\s*de\s*th[eè]se$/i.test(p.name); }
+function isMajorProject(p) { return isPostdocProject(p) || isValoProject(p) || isTeachingProject(p) || isAutreProject(p) || isPrixTheseProject(p); }
 
 function renderProjects() {
   // Le grid "Autres projets" affiche les projets qui n'ont pas leur propre sous-onglet
@@ -3818,7 +3823,7 @@ function updateProjectSelect() {
   const sel = document.getElementById("newTaskProject");
   if (!sel) return;
   const cur = sel.value;
-  const sectionIds = ["p-seed-postdoc", "p-seed-candidatures", "p-seed-valo", "p-seed-enseignement", "p-seed-autre"];
+  const sectionIds = ["p-seed-postdoc", "p-seed-candidatures", "p-seed-prixthese", "p-seed-valo", "p-seed-enseignement", "p-seed-autre"];
   const sectionProjects = state.work.postdocProjects
     .filter(p => sectionIds.includes(p.id))
     .sort((a, b) => sectionIds.indexOf(a.id) - sectionIds.indexOf(b.id));
@@ -4331,7 +4336,7 @@ function openTaskEditModal(id) {
   document.getElementById("taskEditPriority").value = t.priority || "medium";
   document.getElementById("taskEditDeadline").value = t.deadline || "";
   const pSel = document.getElementById("taskEditProject");
-  const sectionIds = ["p-seed-postdoc", "p-seed-candidatures", "p-seed-valo", "p-seed-enseignement", "p-seed-autre"];
+  const sectionIds = ["p-seed-postdoc", "p-seed-candidatures", "p-seed-prixthese", "p-seed-valo", "p-seed-enseignement", "p-seed-autre"];
   const sectionProjects = state.work.postdocProjects.filter(p => sectionIds.includes(p.id));
   // Ordre fixe : Postdoc, Candidatures, Valorisation, Enseignement
   sectionProjects.sort((a, b) => sectionIds.indexOf(a.id) - sectionIds.indexOf(b.id));
