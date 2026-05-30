@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v118</title>
+<title>Mon Tableau de Vie · v119</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -586,12 +586,12 @@
   .task-deadline { font-size: 12px; color: var(--ink-soft); }
   .task-deadline.urgent { color: var(--red); font-weight: 600; }
   .task-deadline.soon { color: var(--orange); }
-  .task-del { background: none; border: none; color: var(--ink-softer); cursor: pointer; opacity: 0; transition: opacity 0.2s; font-size: 15px; }
+  .task-del { background: none; border: none; color: var(--ink-softer); cursor: pointer; opacity: 0.35; transition: opacity 0.2s, color 0.2s; font-size: 15px; }
   .task-row:hover .task-del { opacity: 1; }
-  .task-edit-btn { background: none; border: none; cursor: pointer; opacity: 0; transition: opacity 0.2s; font-size: 13px; padding: 2px 5px; border-radius: 6px; }
+  .task-edit-btn { background: none; border: none; cursor: pointer; opacity: 0.45; transition: opacity 0.2s; font-size: 13px; padding: 2px 5px; border-radius: 6px; }
   .task-row:hover .task-edit-btn { opacity: 1; }
   .task-edit-btn:hover { background: var(--lavender-soft); }
-  .task-del:hover { color: var(--red); }
+  .task-del:hover { color: var(--red); opacity: 1; }
   .task-row.is-event { background: linear-gradient(to right, #f0f9ff 0%, white 60%); border-left-color: #7dd3fc !important; }
   .task-row.is-event .task-name { color: #0369a1; }
   .task-kind-badge { font-size: 10px; padding: 2px 7px; border-radius: 999px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
@@ -3685,6 +3685,8 @@ function _renderProjectCardFeatured(targetId, projectFilter, gradientCss, defaul
             <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
             <div class="task-name">${escapeHtml(t.name)}</div>
             ${dlText ? `<span class="task-deadline ${dlClass}">${dlText}</span>` : ""}
+            <button class="task-edit-btn" onclick="openTaskEditModal('${t.id}')" title="Modifier">✏️</button>
+            <button class="task-del" onclick="deleteTask('${t.id}')" title="Supprimer">✕</button>
           </div>`;
       }).join("")
     : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:14px;">Aucune tâche en cours pour ce projet 🎉</p>`;
@@ -4263,6 +4265,7 @@ function renderAutreView() {
           <div class="task-name">${escapeHtml(t.name)}</div>
           ${dlText ? `<span class="task-deadline ${dlClass}">${dlText}</span>` : ""}
           <button class="task-edit-btn" onclick="openTaskEdit('${t.id}')">✏️</button>
+          <button class="task-del" onclick="deleteTask('${t.id}')" title="Supprimer">✕</button>
         </div>`;
       }).join("")
     : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:14px;">Aucune tache en cours 🎉</p>`;
