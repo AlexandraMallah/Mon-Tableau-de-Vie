@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v116</title>
+<title>Mon Tableau de Vie · v117</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1420,7 +1420,7 @@
     .task-progress-bar { height: 4px; margin-top: 4px; }
     /* Boutons tjrs visibles sur mobile (pas de hover) */
     .task-edit-btn { opacity: 1 !important; font-size: 12px; padding: 3px 5px; margin-top: 1px; }
-    .task-del { opacity: 0; width: 0; padding: 0; overflow: hidden; }
+    .task-del { opacity: 1 !important; font-size: 13px; color: var(--ink-softer); padding: 3px 5px; width: auto; overflow: visible; }
     /* Priorité emoji */
     .task-row::before { font-size: 11px !important; margin-right: 2px; }
 
