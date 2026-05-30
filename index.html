@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v125</title>
+<title>Mon Tableau de Vie · v126</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1503,6 +1503,19 @@
   .adm-bar-pris { background:#7aa9d6; height:13px; }
   .adm-bar-plan { background:#c9b6f0; height:13px; }
   .adm-bar-ct { font-size:11px; min-width:90px; color:var(--ink-soft); }
+
+  /* ---- Sport Planning ---- */
+  .sport-day-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:12px; }
+  .sport-day-cell { border-radius:10px; padding:8px 4px 6px; text-align:center; }
+  .sport-day-cell .sd-label { font-size:10px; color:var(--ink-softer); text-transform:uppercase; font-weight:700; letter-spacing:.04em; }
+  .sport-day-cell .sd-date  { font-size:12px; color:var(--ink); font-weight:600; margin:2px 0; }
+  .sport-day-cell .sd-icon  { font-size:18px; line-height:1; }
+  .sport-day-cell .sd-ev    { font-size:10px; color:var(--ink-softer); margin-top:2px; }
+  @media(max-width:600px) { .sport-day-grid { grid-template-columns:repeat(7,1fr); gap:3px; } .sport-day-cell { padding:5px 2px; } .sport-day-cell .sd-date { font-size:10px; } }
+
+  /* ---- Trend Prediction ---- */
+  .trend-metric-btn { padding:5px 12px; border-radius:999px; border:1.5px solid var(--line); background:white; font-size:12px; font-family:inherit; cursor:pointer; color:var(--ink-soft); transition:all 0.15s; }
+  .trend-metric-btn.active { background:var(--lavender-soft); border-color:var(--lavender); color:var(--ink); font-weight:600; }
 </style>
 <!-- PWA -->
 <link rel="manifest" href="manifest.json" />
@@ -1922,6 +1935,11 @@
         <div class="chart-wrap"><canvas id="activityChart"></canvas></div>
       </div>
     </div>
+    <div class="card" style="margin-top:14px;">
+      <h2>🗓️ Planning sport — 14 prochains jours</h2>
+      <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 14px;">Basé sur tes événements calendrier. Vert = créneau libre, orange = chargé, rouge = surchargé → pense à récupérer.</p>
+      <div id="sportPlanningContent"></div>
+    </div>
   </section>
 
   <!-- VIEW: HEALTH -->
@@ -1998,6 +2016,15 @@
       <div style="height:14px;"></div>
       <p style="color:var(--ink-soft);font-size:12px;margin:0 0 6px;">🟢 ≥ 9000 · 🟠 7000-8999 · 🔴 < 7000 · La ligne pointillée verte = objectif 9000</p>
       <div class="chart-wrap" style="height:240px;"><canvas id="stepsChart"></canvas></div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <h2>📈 Tendance prévisionnelle</h2>
+      <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 14px;">Régression linéaire sur tes données — fiable à partir de ~3 semaines de saisie continue.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;" id="trendMetricBtns"></div>
+      <div id="trendGoalRow" style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;"></div>
+      <div id="trendResult"></div>
+      <div class="chart-wrap" style="height:180px;display:none;" id="trendChartWrap"><canvas id="trendChart"></canvas></div>
     </div>
   </section>
 
@@ -2962,6 +2989,7 @@ const DEFAULT_STATE = {
   },
   contacts: [],
   admin: { missions:[], abonnement:[], congesConfig:{ droitsCA:27, droitsRTT:20 }, congesPeriodes:[] },
+  _trendGoals: {},
 };
 
 function loadState() {
@@ -3304,8 +3332,8 @@ function setupTabs() {
 }
 function onViewChange(view) {
   if (view === "work") updateWorkTabBadges();
-  if (view === "activities") renderActivityChart();
-  if (view === "health") { renderBodyChart(currentBodyMetric); renderWellbeingChart(); renderStepsChart(); }
+  if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
+  if (view === "health") { renderBodyChart(currentBodyMetric); renderWellbeingChart(); renderStepsChart(); renderTrendPrediction(); }
   if (view === "money") { renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
@@ -5405,6 +5433,7 @@ function renderActivities() {
       </div>`;
   }).join("");
   renderActivityStats();
+  renderSportPlanning();
 }
 function activityWeekTotal(id) {
   return lastDates(7).reduce((sum, d) => sum + (state.history[todayKey(d)]?.activities?.[id] ? 1 : 0), 0);
@@ -5437,6 +5466,74 @@ function renderActivityChart() {
       },
     },
   });
+}
+
+/* ========= SPORT PLANNING ========= */
+function renderSportPlanning() {
+  const el = document.getElementById("sportPlanningContent");
+  if (!el) return;
+
+  const now = new Date(); now.setHours(0,0,0,0);
+
+  // 14 prochains jours (en deux lignes de 7)
+  const days = [];
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date(now); d.setDate(now.getDate() + i);
+    const dk = todayKey(d);
+    const evCount = state.calEvents.filter(e => e.date === dk).length;
+    const load = evCount === 0 ? "free" : evCount <= 2 ? "moderate" : "heavy";
+    const bg    = load === "free" ? "var(--mint-soft)"     : load === "moderate" ? "#fff3e0" : "var(--rose-soft)";
+    const icon  = load === "free" ? "🏃"                   : load === "moderate" ? "💪"      : "😴";
+    const tip   = load === "free" ? "Créneau libre"        : load === "moderate" ? `${evCount} évén.` : `${evCount} évén.`;
+    days.push({
+      dayName: d.toLocaleDateString("fr-FR", { weekday: "short" }),
+      dateStr: d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }),
+      evCount, load, bg, icon, tip
+    });
+  }
+
+  const hasActs = state.activities.length > 0;
+  const recentActDays = lastDates(14).filter(d => {
+    const dk = todayKey(d);
+    return state.activities.some(a => state.history[dk]?.activities?.[a.id]);
+  }).length;
+
+  let daysSinceLast = 0;
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(now); d.setDate(now.getDate() - i);
+    if (state.activities.some(a => state.history[todayKey(d)]?.activities?.[a.id])) break;
+    daysSinceLast++;
+  }
+
+  let msg = "";
+  if (!hasActs) {
+    msg = `<p style="font-size:13px;color:var(--ink-soft);text-align:center;padding:8px 0;">Définis des activités sportives dans la section ci-dessus pour obtenir des suggestions personnalisées.</p>`;
+  } else if (daysSinceLast >= 4) {
+    msg = `<div style="font-size:13px;padding:8px 12px;background:#fff3e0;border-radius:10px;margin-bottom:10px;">⚡ <strong>${daysSinceLast} jours sans séance</strong> — vise un créneau 🏃 cette semaine !</div>`;
+  } else if (recentActDays >= 8) {
+    msg = `<div style="font-size:13px;padding:8px 12px;background:var(--mint-soft);border-radius:10px;margin-bottom:10px;">🔥 Très bonne dynamique ! (${recentActDays} jours actifs sur 14). Pense à intégrer des 😴 de récupération.</div>`;
+  } else {
+    msg = `<div style="font-size:13px;padding:8px 12px;background:var(--lavender-soft);border-radius:10px;margin-bottom:10px;">📊 ${recentActDays} jour${recentActDays>1?"s":""} d'activité sur les 14 derniers.</div>`;
+  }
+
+  const noCalData = state.calEvents.length === 0 && !state.calSources.some(s=>s.url);
+
+  const renderWeek = (slice) => `
+    <div class="sport-day-grid">
+      ${slice.map(d => `
+        <div class="sport-day-cell" style="background:${d.bg};">
+          <div class="sd-label">${d.dayName}</div>
+          <div class="sd-date">${d.dateStr}</div>
+          <div class="sd-icon">${d.icon}</div>
+          <div class="sd-ev">${d.evCount > 0 ? d.tip : "libre"}</div>
+        </div>`).join("")}
+    </div>`;
+
+  el.innerHTML = msg
+    + renderWeek(days.slice(0, 7))
+    + `<div style="font-size:11px;color:var(--ink-softer);margin:4px 0 8px;text-align:right;">Semaine suivante ↓</div>`
+    + renderWeek(days.slice(7, 14))
+    + (noCalData ? `<p style="font-size:12px;color:var(--ink-softer);margin-top:8px;">💡 Synchronise ton Google Agenda (onglet Calendrier → Configurer) pour que les recommandations tiennent compte de tous tes événements.</p>` : "");
 }
 
 /* ========= HEALTH ========= */
@@ -5521,6 +5618,7 @@ function renderHealth() {
       dateInput.addEventListener("change", () => fillBodyCompForm(dateInput.value));
     }
   }
+  renderTrendPrediction();
 }
 function getWaterHabit() {
   return state.habits.find(h => h.id === "h-eau") || state.habits.find(h => /eau/i.test(h.name));
@@ -5796,6 +5894,198 @@ function renderWellbeingChart() {
         y5: { position: "left", min: 0, max: 5, grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", stepSize: 1 } },
         y12: { position: "right", min: 0, max: 24, grid: { display: false }, ticks: { color: "#8a8499", stepSize: 4, callback: v => v + "h" } },
       },
+    },
+  });
+}
+
+/* ========= TREND PREDICTION ========= */
+let _trendMetric = "weight";
+let _trendChart = null;
+
+const TREND_METRICS = [
+  { key: "weight",     label: "Poids",         unit: "kg",  color: "#b4d4f1", goalDir: "down" },
+  { key: "sleep",      label: "Sommeil",        unit: "h",   color: "#c9b6f0", goalDir: "up"   },
+  { key: "energy",     label: "Énergie",        unit: "/5",  color: "#aee0c8", goalDir: "up"   },
+  { key: "mood",       label: "Humeur",         unit: "/5",  color: "#f7c9a3", goalDir: "up"   },
+  { key: "bodyFat",    label: "Masse grasse",   unit: "%",   color: "#f5b6c9", goalDir: "down" },
+  { key: "muscleMass", label: "Masse maigre",   unit: "%",   color: "#aee0c8", goalDir: "up"   },
+];
+
+function linReg(points) {
+  const n = points.length; if (n < 2) return null;
+  const sx = points.reduce((s,p)=>s+p.x,0), sy = points.reduce((s,p)=>s+p.y,0);
+  const sxy = points.reduce((s,p)=>s+p.x*p.y,0), sx2 = points.reduce((s,p)=>s+p.x*p.x,0);
+  const D = n*sx2 - sx*sx; if (!D) return null;
+  const slope = (n*sxy - sx*sy)/D;
+  const intercept = (sy - slope*sx)/n;
+  const meanY = sy/n;
+  const ssTot = points.reduce((s,p)=>s+(p.y-meanY)**2,0);
+  const ssRes = points.reduce((s,p)=>s+(p.y-(slope*p.x+intercept))**2,0);
+  const r2 = ssTot>0 ? Math.max(0, 1-ssRes/ssTot) : 0;
+  return { slope, intercept, r2 };
+}
+
+function renderTrendMetricBtns() {
+  const el = document.getElementById("trendMetricBtns");
+  if (!el) return;
+  el.innerHTML = TREND_METRICS.map(m => `
+    <button class="trend-metric-btn${_trendMetric===m.key?" active":""}"
+      onclick="_trendMetric='${m.key}';renderTrendPrediction()">
+      ${m.label}
+    </button>`).join("");
+}
+
+function renderTrendPrediction() {
+  renderTrendMetricBtns();
+  const resultEl = document.getElementById("trendResult");
+  const wrapEl   = document.getElementById("trendChartWrap");
+  const goalRow  = document.getElementById("trendGoalRow");
+  if (!resultEl || !wrapEl || !goalRow) return;
+
+  const cfg = TREND_METRICS.find(m=>m.key===_trendMetric);
+
+  // Goal input row
+  const goalInputId = `trendGoalInput_${_trendMetric}`;
+  if (!state._trendGoals) state._trendGoals = {};
+  const storedGoal = state._trendGoals[_trendMetric] ?? "";
+  goalRow.innerHTML = `
+    <label style="font-size:13px;color:var(--ink-soft);">Mon objectif :</label>
+    <input type="number" id="${goalInputId}" value="${storedGoal}" placeholder="ex: 58"
+      step="0.1" style="width:90px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;"
+      oninput="if(!state._trendGoals)state._trendGoals={};state._trendGoals['${_trendMetric}']=this.value;renderTrendPrediction();" />
+    <span style="font-size:13px;color:var(--ink-softer);">${cfg.unit}</span>`;
+
+  // Collect data points — x = day index (0, 1, 2, ...), label = date string
+  const entries = Object.entries(state.history)
+    .filter(([k,v]) => v && v[_trendMetric] != null && v[_trendMetric] > 0)
+    .sort(([a],[b]) => a.localeCompare(b));
+
+  const MIN_POINTS = 14;
+  if (entries.length < MIN_POINTS) {
+    resultEl.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:12px 0;">Pas encore assez de données — il faut au moins ${MIN_POINTS} saisies de <strong>${cfg.label.toLowerCase()}</strong> pour générer une projection (${entries.length} disponibles).</p>`;
+    wrapEl.style.display = "none";
+    return;
+  }
+
+  const t0 = new Date(entries[0][0]).getTime();
+  const points = entries.map(([k,v],i) => ({
+    x: (new Date(k).getTime() - t0) / 86400000,
+    y: Number(v[_trendMetric]),
+    date: k,
+    idx: i,
+  }));
+
+  const reg = linReg(points);
+  if (!reg) { resultEl.innerHTML = `<p style="color:var(--ink-soft);">Calcul impossible.</p>`; return; }
+
+  const goalVal = parseFloat(state._trendGoals?.[_trendMetric]);
+  const now = new Date(); now.setHours(0,0,0,0);
+  const daysSinceT0 = (now.getTime() - t0) / 86400000;
+
+  // Confidence
+  const conf = reg.r2 >= 0.6
+    ? { label:"bonne", color:"#16a34a", bg:"#dcfce7" }
+    : reg.r2 >= 0.3
+    ? { label:"modérée", color:"#c08a4d", bg:"#fff7ed" }
+    : { label:"faible", color:"#94a3b8", bg:"#f1f5f9" };
+
+  let projHtml = "";
+  if (!isNaN(goalVal) && goalVal > 0) {
+    if (Math.abs(reg.slope) < 0.0001) {
+      projHtml = `<div style="font-size:13px;color:var(--ink-soft);margin-bottom:8px;">→ La tendance est plate — pas d'évolution vers l'objectif détectée.</div>`;
+    } else {
+      const lastY = reg.slope * points[points.length-1].x + reg.intercept;
+      const towardsGoal = cfg.goalDir === "down" ? reg.slope < 0 : reg.slope > 0;
+      const altGoalOk = !towardsGoal && ((cfg.goalDir === "down" && goalVal < lastY) || (cfg.goalDir === "up" && goalVal > lastY));
+      if (!towardsGoal && !altGoalOk) {
+        projHtml = `<div style="font-size:13px;padding:8px 12px;background:var(--rose-soft);border-radius:10px;margin-bottom:8px;">↘ La tendance actuelle s'éloigne de l'objectif (${goalVal} ${cfg.unit}). Continue à saisir tes données pour affiner.</div>`;
+      } else {
+        const xGoal = (goalVal - reg.intercept) / reg.slope;
+        const daysToGoal = xGoal - daysSinceT0;
+        if (daysToGoal <= 0) {
+          projHtml = `<div style="font-size:13px;padding:8px 12px;background:var(--mint-soft);border-radius:10px;margin-bottom:8px;">✅ Objectif atteint ou dépassé selon la tendance actuelle !</div>`;
+        } else if (daysToGoal > 730) {
+          projHtml = `<div style="font-size:13px;color:var(--ink-soft);margin-bottom:8px;">📅 Projection au-delà de 2 ans — la tendance est trop lente pour être fiable sur cette durée.</div>`;
+        } else {
+          const targetDate = new Date(t0 + xGoal * 86400000);
+          const targetLabel = targetDate.toLocaleDateString("fr-FR", { day:"numeric", month:"long", year:"numeric" });
+          projHtml = `<div style="font-size:13px;padding:8px 12px;background:var(--mint-soft);border-radius:10px;margin-bottom:8px;">📅 À ce rythme, tu atteindrais <strong>${goalVal} ${cfg.unit}</strong> vers le <strong>${targetLabel}</strong> (dans ~${Math.round(daysToGoal)} jours).</div>`;
+        }
+      }
+    }
+  }
+
+  resultEl.innerHTML = `
+    ${projHtml}
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <span style="font-size:12px;color:var(--ink-softer);">${entries.length} mesures · tendance ${reg.slope > 0 ? "↗ +":"↘ "}${Math.abs(reg.slope*7).toFixed(2)} ${cfg.unit}/sem</span>
+      <span style="font-size:11px;padding:2px 9px;border-radius:999px;background:${conf.bg};color:${conf.color};font-weight:600;">Fiabilité ${conf.label} (R²=${reg.r2.toFixed(2)})</span>
+    </div>`;
+
+  // Chart using numeric x-axis (no time adapter needed)
+  wrapEl.style.display = "";
+
+  // Projection: up to 60 days ahead or to goal (capped at 90)
+  const projDays = Math.min(90, isNaN(goalVal) ? 60 : Math.max(0, Math.round((goalVal - reg.intercept) / reg.slope - daysSinceT0) + 10));
+
+  // Build combined label list: existing dates + future dates
+  const allLabels = [...points.map(p => p.date)];
+  const futureLabels = [];
+  for (let dd = 1; dd <= projDays; dd++) {
+    const futureDate = new Date(now); futureDate.setDate(now.getDate() + dd);
+    futureLabels.push(todayKey(futureDate));
+  }
+  const allCombined = [...allLabels, ...futureLabels];
+
+  // Actual data: sparse array aligned to allCombined indices
+  const actualData = allCombined.map((lbl, i) => i < points.length ? points[i].y : null);
+
+  // Trend line over actual range only
+  const trendData = allCombined.map((lbl, i) => {
+    if (i < points.length) return +(reg.slope * points[i].x + reg.intercept).toFixed(2);
+    return null;
+  });
+
+  // Projection: from last actual point onwards
+  const lastActualIdx = points.length - 1;
+  const projData = allCombined.map((lbl, i) => {
+    if (i < lastActualIdx) return null;
+    const futX = daysSinceT0 + (i - lastActualIdx);
+    return +(reg.slope * futX + reg.intercept).toFixed(2);
+  });
+
+  // Goal line (flat)
+  const goalData = (!isNaN(goalVal) && goalVal > 0)
+    ? allCombined.map(() => goalVal)
+    : null;
+
+  // Tick labels: show only a subset for readability
+  const tickStep = Math.max(1, Math.floor(allCombined.length / 6));
+  const displayLabels = allCombined.map((lbl, i) => {
+    if (i % tickStep !== 0) return "";
+    const d = new Date(lbl + "T12:00:00");
+    return d.toLocaleDateString("fr-FR", { day:"numeric", month:"short" });
+  });
+
+  if (_trendChart) _trendChart.destroy();
+  _trendChart = new Chart(document.getElementById("trendChart"), {
+    type: "line",
+    data: {
+      labels: displayLabels,
+      datasets: [
+        { label: cfg.label, data: actualData, borderColor: cfg.color, backgroundColor: cfg.color + "44", pointRadius: 3, pointHoverRadius: 5, tension: 0.2, spanGaps: false },
+        { label: "Tendance", data: trendData, borderColor: cfg.color, borderWidth: 2, borderDash: [5,3], pointRadius: 0, tension: 0, spanGaps: false },
+        { label: "Projection", data: projData, borderColor: "#94a3b8", borderWidth: 1.5, borderDash: [3,4], pointRadius: 0, tension: 0, spanGaps: false },
+        ...(goalData ? [{ label:"Objectif", data: goalData, borderColor:"#16a34a", borderWidth:1.5, borderDash:[6,3], pointRadius:0, tension:0 }] : []),
+      ],
+    },
+    options: {
+      ...baseChartOpts(),
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#8a8499", maxTicksLimit: 7, autoSkip: false } },
+        y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + cfg.unit } },
+      },
+      plugins: { ...baseChartOpts().plugins, legend: { display: false } },
     },
   });
 }
