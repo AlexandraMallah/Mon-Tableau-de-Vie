@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v120</title>
+<title>Mon Tableau de Vie · v121</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4264,7 +4264,7 @@ function renderAutreView() {
           <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
           <div class="task-name">${escapeHtml(t.name)}</div>
           ${dlText ? `<span class="task-deadline ${dlClass}">${dlText}</span>` : ""}
-          <button class="task-edit-btn" onclick="openTaskEdit('${t.id}')">✏️</button>
+          <button class="task-edit-btn" onclick="openTaskEditModal('${t.id}')" title="Modifier">✏️</button>
           <button class="task-del" onclick="deleteTask('${t.id}')" title="Supprimer">✕</button>
         </div>`;
       }).join("")
