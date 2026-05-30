@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie · v119</title>
+<title>Mon Tableau de Vie · v120</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7762,8 +7762,15 @@ function renderMealEvents() {
           <span>· ${escapeHtml(ing)}</span>
           <button class="meal-ing-del" onclick="deleteMealIngredient('${ev.id}','${dish.id}',${idx})" title="Retirer">✕</button>
         </div>`).join("");
+      const syncedCount = linked ? (dish.ingredients || []).filter(ing =>
+        state.domestique.groceries.some(g => g.eventId === ev.groceryEventId && g.name === ing)
+      ).length : 0;
       const linkedHint = linked && dish.ingredients?.length
-        ? `<div style="font-size:11px;color:#16a34a;margin-top:5px;">✅ Ajoutés dans « ${escapeHtml(linked.name)} »</div>` : "";
+        ? `<div style="font-size:11px;color:${syncedCount === dish.ingredients.length ? "#16a34a" : "#c08a4d"};margin-top:5px;">
+            ${syncedCount === dish.ingredients.length
+              ? `✅ ${syncedCount} ing. dans « ${escapeHtml(linked.name)} »`
+              : `⚠️ ${syncedCount}/${dish.ingredients.length} ing. dans « ${escapeHtml(linked.name)} »`}
+           </div>` : "";
       return `
       <div class="meal-dish-block">
         <div class="meal-dish-hd" onclick="toggleMealDish('${ev.id}','${dish.id}')">
@@ -7936,6 +7943,15 @@ function createGroceryFromMeal(mealEventId) {
   const gev = { id: "ev" + Date.now(), name: ev.name, date: ev.date };
   state.domestique.groceryEvents.unshift(gev);
   ev.groceryEventId = gev.id;
+  // Backfill : ajoute tous les ingrédients déjà saisis dans les plats
+  (ev.dishes || []).forEach(dish => {
+    (dish.ingredients || []).forEach(ing => {
+      state.domestique.groceries.push({
+        id: "g" + Date.now() + Math.random().toString(36).slice(2,6),
+        eventId: gev.id, name: ing, checked: false,
+      });
+    });
+  });
   saveState(); renderMealEvents(); renderGroceries();
 }
 function switchToGroceriesFor(groceryEventId) {
