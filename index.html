@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v150</title>
+<title>Mon Tableau de Vie 🌿 · v151</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1626,6 +1626,12 @@
       <div class="card">
         <h2>Mes habitudes <span class="count" id="habitCount"></span></h2>
         <div class="habit-list" id="habitList"></div>
+        <div style="height:1px;background:var(--line);margin:14px 0;"></div>
+        <div class="card-row" style="margin-bottom:10px;">
+          <h2 style="margin:0;font-size:15px;">✨ Routines</h2>
+          <span id="routineTodayBadge" style="font-size:12px;color:var(--ink-soft);"></span>
+        </div>
+        <div id="routineTodayBlock"></div>
       </div>
       <div class="card">
         <h2>Comment je me sens aujourd'hui</h2>
@@ -1681,15 +1687,6 @@
           <div id="journalMoodTodayBadges" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
         </div>
       </div>
-    </div>
-
-    <!-- Routines matin / soir -->
-    <div class="card" style="margin-top:14px;">
-      <div class="card-row" style="margin-bottom:12px;">
-        <h2 style="margin:0;">✨ Routines</h2>
-        <span id="routineTodayBadge" style="font-size:13px;color:var(--ink-soft);"></span>
-      </div>
-      <div id="routineTodayBlock"></div>
     </div>
 
     <!-- To-do du jour (widget partagé avec Domestique) -->
