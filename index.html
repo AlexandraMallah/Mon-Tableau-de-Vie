@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v151</title>
+<title>Mon Tableau de Vie 🌿 · v152</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2047,11 +2047,10 @@
     </div>
     <div class="card" style="margin-top:18px;">
       <div class="card-row" style="margin-bottom:14px;">
-        <h2 style="margin:0;">✨ Routines</h2>
+        <h2 style="margin:0;">✨ Routines — 30 jours</h2>
         <span id="skincareStreakBadge" style="font-size:13px;color:var(--ink-soft);"></span>
       </div>
-      <div id="skincareTodayBlock"></div>
-      <div id="skincare30Grid" style="margin-top:14px;"></div>
+      <div id="skincare30Grid"></div>
     </div>
 
     <div class="card" style="margin-top:18px;">
@@ -6169,9 +6168,8 @@ function renderSkincare() {
       ${routineSection("soir")}
     </div>`;
 
-  // Écrire les cases à cocher dans les deux onglets
+  // Écrire les cases à cocher uniquement dans l'onglet Aujourd'hui
   if (todayAujourd) todayAujourd.innerHTML = checkboxHtml;
-  if (todayBlock)   todayBlock.innerHTML   = checkboxHtml;
 
   // --- Grille 30 jours ---
   if (!grid30) return;
