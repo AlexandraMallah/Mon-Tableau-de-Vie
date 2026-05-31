@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v144</title>
+<title>Mon Tableau de Vie 🌿 · v145</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2129,7 +2129,7 @@
         <span id="dailyExpenseMonthLabel" style="font-size:13px;font-weight:400;color:var(--ink-soft);"></span>
         <span id="dailyExpenseLegend" style="margin-left:auto;"></span>
       </div>
-      <div class="chart-wrap" style="height:180px;"><canvas id="dailyExpenseChart"></canvas></div>
+      <div class="chart-wrap" style="height:220px;"><canvas id="dailyExpenseChart"></canvas></div>
     </div>
     <div class="grid-two-eq">
       <div class="card">
@@ -6729,10 +6729,18 @@ function renderDailyExpenseChart() {
     else if (tx.type === "income" || tx.type === "savings-out") inByDay[dk] += tx.amount;
   }
 
-  const labels   = days.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
-  const outData  = days.map(d => outByDay[todayKey(d)]);
-  const inData   = days.map(d => inByDay[todayKey(d)]);
-  const isToday  = (d) => d.toDateString() === now.toDateString();
+  const labels  = days.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
+  const outData = days.map(d => outByDay[todayKey(d)]);
+  const inData  = days.map(d => inByDay[todayKey(d)]);
+  const isToday = (d) => d.toDateString() === now.toDateString();
+
+  // Cumul dépenses du mois en cours
+  const [mStart] = currentMonthRange();
+  let cumul = 0;
+  const cumulData = days.map(d => {
+    if (d >= mStart) cumul += outByDay[todayKey(d)];
+    return d >= mStart ? cumul : null;
+  });
 
   // Label du mois
   const monthLbl = document.getElementById("dailyExpenseMonthLabel");
@@ -6741,11 +6749,14 @@ function renderDailyExpenseChart() {
   // Légende HTML
   const legendEl = document.getElementById("dailyExpenseLegend");
   if (legendEl) legendEl.innerHTML = `
-    <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);margin-right:14px;">
-      <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#aee0c8;"></span>Ce qui rentre
+    <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);margin-right:12px;">
+      <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#aee0c8;"></span>Rentre
+    </span>
+    <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);margin-right:12px;">
+      <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#efb8c8;"></span>Sort
     </span>
     <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);">
-      <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#efb8c8;"></span>Ce qui sort
+      <span style="display:inline-block;width:20px;height:2px;border-radius:2px;background:#c9b6f0;"></span>Cumul sorties
     </span>`;
 
   if (dailyExpenseChart) dailyExpenseChart.destroy();
@@ -6758,15 +6769,28 @@ function renderDailyExpenseChart() {
           label: "Rentre",
           data: inData,
           backgroundColor: days.map(d => isToday(d) ? "#7dd4a8" : "#aee0c8"),
-          borderRadius: 4,
-          order: 1,
+          borderRadius: 3,
+          order: 2,
         },
         {
           label: "Sort",
           data: outData,
           backgroundColor: days.map(d => isToday(d) ? "#d97fa0" : "#efb8c8"),
-          borderRadius: 4,
-          order: 2,
+          borderRadius: 3,
+          order: 3,
+        },
+        {
+          type: "line",
+          label: "Cumul sorties",
+          data: cumulData,
+          borderColor: "#c9b6f0",
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          fill: false,
+          tension: 0.3,
+          order: 1,
+          yAxisID: "yCumul",
         },
       ],
     },
@@ -6777,18 +6801,28 @@ function renderDailyExpenseChart() {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: ctx => `${ctx.dataset.label === "Rentre" ? "↓ Rentre" : "↑ Sort"} : ${(ctx.raw || 0).toFixed(2)} €`,
+            label: ctx => {
+              if (ctx.dataset.label === "Cumul sorties") return `Cumul sorties : ${(ctx.raw || 0).toFixed(2)} €`;
+              return `${ctx.dataset.label === "Rentre" ? "↓ Rentre" : "↑ Sort"} : ${(ctx.raw || 0).toFixed(2)} €`;
+            },
           },
         },
       },
       scales: {
         x: {
-          ticks: { color: "#8a8499", font: { size: 10 }, maxTicksLimit: 10, maxRotation: 0 },
+          ticks: { color: "#8a8499", font: { size: 9 }, maxRotation: 45, minRotation: 45, autoSkip: false },
           grid: { display: false },
         },
         y: {
+          position: "left",
           ticks: { color: "#8a8499", font: { size: 10 }, callback: v => v + " €" },
           grid: { color: "#efeaf5" },
+          beginAtZero: true,
+        },
+        yCumul: {
+          position: "right",
+          ticks: { color: "#c9b6f0", font: { size: 10 }, callback: v => v + " €" },
+          grid: { display: false },
           beginAtZero: true,
         },
       },
