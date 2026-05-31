@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v147</title>
+<title>Mon Tableau de Vie 🌿 · v148</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3494,9 +3494,12 @@ function computeStreak(habitId) {
 }
 function renderHabits() {
   const today = getToday();
-  const done = state.habits.filter(h => isHabitDone(h, today.habits[h.id])).length;
-  document.getElementById("habitCount").textContent = `${done}/${state.habits.length}`;
-  document.getElementById("habitList").innerHTML = state.habits.map(h => {
+  // Les habitudes de routine ont leur propre section — on les exclut ici
+  const ROUTINE_IDS = new Set(["h-skincare-matin","h-skincare-soir","h-dents-matin","h-dents-soir","h-douche"]);
+  const visibleHabits = state.habits.filter(h => !ROUTINE_IDS.has(h.id));
+  const done = visibleHabits.filter(h => isHabitDone(h, today.habits[h.id])).length;
+  document.getElementById("habitCount").textContent = `${done}/${visibleHabits.length}`;
+  document.getElementById("habitList").innerHTML = visibleHabits.map(h => {
     const value = today.habits[h.id];
     const isDone = isHabitDone(h, value);
     const streak = computeStreak(h.id);
@@ -6113,55 +6116,47 @@ function renderSkincare() {
       : `✨ ${streak} jour${streak > 1 ? "s" : ""}`;
   }
 
-  // --- Carte de routine ---
-  const routineCard = (key) => {
+  // --- Ligne compacte par routine ---
+  const routineRow = (key) => {
     const r = ROUTINES[key];
     const done = r.steps.map(s => !!habits[s.id]);
     const nb   = done.filter(Boolean).length;
     const full = nb === r.steps.length;
     const pct  = Math.round((nb / r.steps.length) * 100);
-    const stepRow = (s, isDone) => `
-      <div onclick="toggleSkincare('${s.id}')" style="
-        display:flex;align-items:center;gap:10px;padding:10px 14px;
-        border-radius:12px;cursor:pointer;transition:all 0.2s;
-        background:${isDone ? `${r.color}22` : "transparent"};
+
+    const chip = (s, isDone) => `
+      <div onclick="toggleSkincare('${s.id}')" title="${s.label}" style="
+        display:flex;align-items:center;gap:5px;padding:6px 10px;
+        border-radius:20px;cursor:pointer;transition:all 0.18s;user-select:none;
+        background:${isDone ? r.color : "white"};
         border:1.5px solid ${isDone ? r.color : "var(--line)"};
-        margin-bottom:6px;
+        font-size:12px;font-weight:600;
+        color:${isDone ? "white" : "var(--ink-soft)"};
       ">
-        <div style="
-          width:28px;height:28px;border-radius:50%;flex-shrink:0;
-          background:${isDone ? r.color : "white"};
-          border:2px solid ${isDone ? r.color : "var(--line)"};
-          display:flex;align-items:center;justify-content:center;
-          font-size:14px;transition:all 0.2s;
-        ">${isDone ? "✓" : s.emoji}</div>
-        <span style="font-size:13px;font-weight:500;color:var(--ink);">${s.label}</span>
-        ${isDone ? `<span style="margin-left:auto;font-size:11px;color:${r.color};">✓</span>` : ""}
+        <span style="font-size:13px;">${isDone ? "✓" : s.emoji}</span>
+        <span>${s.label}</span>
       </div>`;
+
     return `
-      <div style="
-        flex:1;min-width:0;padding:14px 16px;border-radius:18px;
-        background:${full ? `linear-gradient(135deg,${r.color}25,white)` : "#faf8fd"};
-        border:2px solid ${full ? r.color : "var(--line)"};
-        transition:all 0.2s;
-      ">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-          <span style="font-size:18px;">${r.emoji}</span>
-          <span style="font-weight:700;font-size:14px;color:var(--ink);">${r.label}</span>
-          <span style="margin-left:auto;font-size:12px;font-weight:600;
-            color:${full ? r.color : "var(--ink-soft)"};">${nb}/${r.steps.length}</span>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
+        border-radius:14px;transition:background 0.2s;
+        background:${full ? `${r.color}18` : "transparent"};">
+        <span style="font-size:16px;flex-shrink:0;">${r.emoji}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--ink);width:110px;flex-shrink:0;">${r.label}</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;flex:1;">
+          ${r.steps.map((s, i) => chip(s, done[i])).join("")}
         </div>
-        ${r.steps.map((s, i) => stepRow(s, done[i])).join("")}
-        <div style="margin-top:8px;height:4px;border-radius:4px;background:var(--line);overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:${r.color};border-radius:4px;transition:width 0.3s;"></div>
-        </div>
+        <span style="font-size:12px;font-weight:600;flex-shrink:0;
+          color:${full ? r.color : "var(--ink-soft)"};">${full ? "✓" : `${nb}/${r.steps.length}`}</span>
       </div>`;
   };
 
-  todayBlock.innerHTML = `<div style="display:flex;gap:12px;flex-wrap:wrap;">
-    ${routineCard("matin")}
-    ${routineCard("soir")}
-  </div>`;
+  todayBlock.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      ${routineRow("matin")}
+      <div style="height:1px;background:var(--line);margin:0 4px;"></div>
+      ${routineRow("soir")}
+    </div>`;
 
   // --- Grille 30 jours ---
   if (!grid30) return;
