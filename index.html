@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v141</title>
+<title>Mon Tableau de Vie 🌿 · v142</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -345,9 +345,11 @@
   .tx-form .type-toggle button.active.expense  { background: var(--rose-soft);    border-color: var(--rose);    color: var(--ink); }
   .tx-form .type-toggle button.active.income   { background: var(--mint-soft);    border-color: var(--mint);    color: var(--ink); }
   .tx-form .type-toggle button.active.savings  { background: var(--lavender-soft);border-color: var(--lavender);color: var(--ink); }
-  .tx-form .type-toggle button.active.external { background: var(--butter-soft);  border-color: var(--butter);  color: var(--ink); }
+  .tx-form .type-toggle button.active.external    { background: var(--butter-soft);  border-color: var(--butter);  color: var(--ink); }
+  .tx-form .type-toggle button.active.savings-out { background: #e0f4f4;             border-color: #5bbcb8;        color: var(--ink); }
   .tx-amount.savings { color: #6b4d99; }
   .tx-amount.external { color: var(--orange); }
+  .tx-amount.savings-out { color: #3aaba6; }
   .tx-form input, .tx-form select {
     padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
     font-family: inherit; font-size: 14px; color: var(--ink); background: white;
@@ -2098,6 +2100,7 @@
           <button id="txTypeExternal" class="external" onclick="setTxType('external')">🧾 Hors compte</button>
           <button id="txTypeIncome" class="income" onclick="setTxType('income')">+ Revenu</button>
           <button id="txTypeSavings" class="savings" onclick="setTxType('savings')">💰 Épargne</button>
+          <button id="txTypeSavingsOut" class="savings-out" onclick="setTxType('savings-out')">🏦→💳 Retrait</button>
         </div>
         <input type="number" id="txAmount" placeholder="Montant (€)" step="0.01" />
         <select id="txCategory"></select>
@@ -2605,6 +2608,7 @@
       <button type="button" id="txModalTypeExternal" onclick="setTxModalType('external')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">🧾 Hors compte</button>
       <button type="button" id="txModalTypeIncome" onclick="setTxModalType('income')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">+ Revenu</button>
       <button type="button" id="txModalTypeSavings" onclick="setTxModalType('savings')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">💰 Épargne</button>
+      <button type="button" id="txModalTypeSavingsOut" onclick="setTxModalType('savings-out')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">🏦→💳 Retrait</button>
     </div>
     <div class="grid-2">
       <div>
@@ -6424,23 +6428,26 @@ function setTxType(t) {
   document.getElementById("txTypeIncome").classList.toggle("active", t === "income");
   document.getElementById("txTypeSavings").classList.toggle("active", t === "savings");
   document.getElementById("txTypeExternal").classList.toggle("active", t === "external");
+  document.getElementById("txTypeSavingsOut").classList.toggle("active", t === "savings-out");
   populateTxCategories();
 }
 function renderMoney() { populateTxCategories(); renderMoneySummary(); renderTxList(); renderSavings(); renderAccounts(); renderForecast(); }
 function balanceCourant() {
   const start = state.accounts?.courantStart || 0;
-  let income = 0, expense = 0, savings = 0;
+  let income = 0, expense = 0, savings = 0, savingsOut = 0;
   for (const t of state.transactions) {
-    if (t.type === "income") income += t.amount;
-    else if (t.type === "expense") expense += t.amount;
-    else if (t.type === "savings") savings += t.amount;
+    if (t.type === "income")       income    += t.amount;
+    else if (t.type === "expense") expense   += t.amount;
+    else if (t.type === "savings") savings   += t.amount;
+    else if (t.type === "savings-out") savingsOut += t.amount;
   }
-  return start + income - expense - savings;
+  return start + income + savingsOut - expense - savings;
 }
 function balanceEpargne() {
   const start = state.accounts?.epargneStart || 0;
-  const savings = state.transactions.filter(t => t.type === "savings").reduce((s, t) => s + t.amount, 0);
-  return start + savings;
+  const savings    = state.transactions.filter(t => t.type === "savings").reduce((s, t) => s + t.amount, 0);
+  const savingsOut = state.transactions.filter(t => t.type === "savings-out").reduce((s, t) => s + t.amount, 0);
+  return start + savings - savingsOut;
 }
 function renderAccounts() {
   const c = balanceCourant();
@@ -6481,15 +6488,18 @@ function setCurrentBalance(account) {
   // Calcul du "base" (balance sans starting)
   let base;
   if (account === "courant") {
-    let income = 0, expense = 0, savings = 0;
+    let income = 0, expense = 0, savings = 0, savingsOut = 0;
     for (const t of state.transactions) {
-      if (t.type === "income") income += t.amount;
-      else if (t.type === "expense") expense += t.amount;
-      else if (t.type === "savings") savings += t.amount;
+      if (t.type === "income")           income     += t.amount;
+      else if (t.type === "expense")     expense    += t.amount;
+      else if (t.type === "savings")     savings    += t.amount;
+      else if (t.type === "savings-out") savingsOut += t.amount;
     }
-    base = income - expense - savings;
+    base = income + savingsOut - expense - savings;
   } else {
-    base = state.transactions.filter(t => t.type === "savings").reduce((s, t) => s + t.amount, 0);
+    const sv  = state.transactions.filter(t => t.type === "savings").reduce((s, t) => s + t.amount, 0);
+    const svo = state.transactions.filter(t => t.type === "savings-out").reduce((s, t) => s + t.amount, 0);
+    base = sv - svo;
   }
   const startBalance = n - base;
   if (!state.accounts) state.accounts = { courantStart: 0, epargneStart: 0 };
@@ -6500,8 +6510,9 @@ function setCurrentBalance(account) {
 }
 function populateTxCategories() {
   const sel = document.getElementById("txCategory");
-  const list = txType === "income" ? state.incomeCategories
-             : txType === "savings" ? state.savingsCategories
+  const list = txType === "income"       ? state.incomeCategories
+             : txType === "savings"      ? state.savingsCategories
+             : txType === "savings-out"  ? state.savingsCategories
              : state.categories;
   sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
 }
@@ -6530,8 +6541,7 @@ function renderMoneySummary() {
 function addTransaction() {
   const amount = Number(document.getElementById("txAmount").value);
   if (!amount) return;
-  // Pour expense et income : montant > 0 obligatoire. Pour savings : montant négatif autorisé (retrait).
-  if (txType !== "savings" && amount <= 0) return;
+  if (amount <= 0) return;
   const category = document.getElementById("txCategory").value;
   const note = document.getElementById("txNote").value.trim();
   state.transactions.unshift({ id: "tx" + Date.now(), date: new Date().toISOString(), type: txType, amount, category, note });
@@ -6564,10 +6574,11 @@ function closeTxModal() { document.getElementById("txModal").classList.remove("o
 function setTxModalType(t, presetCategory) {
   txModalType = t;
   const cfg = {
-    expense:  { btn: "txModalTypeExpense",  bg: "var(--rose-soft)",    border: "var(--rose)",    list: state.categories },
-    income:   { btn: "txModalTypeIncome",   bg: "var(--mint-soft)",    border: "var(--mint)",    list: state.incomeCategories },
-    savings:  { btn: "txModalTypeSavings",  bg: "var(--lavender-soft)",border: "var(--lavender)",list: state.savingsCategories },
-    external: { btn: "txModalTypeExternal", bg: "var(--butter-soft)",  border: "var(--butter)",  list: state.categories },
+    expense:      { btn: "txModalTypeExpense",    bg: "var(--rose-soft)",    border: "var(--rose)",    list: state.categories },
+    income:       { btn: "txModalTypeIncome",     bg: "var(--mint-soft)",    border: "var(--mint)",    list: state.incomeCategories },
+    savings:      { btn: "txModalTypeSavings",    bg: "var(--lavender-soft)",border: "var(--lavender)",list: state.savingsCategories },
+    external:     { btn: "txModalTypeExternal",   bg: "var(--butter-soft)",  border: "var(--butter)",  list: state.categories },
+    "savings-out":{ btn: "txModalTypeSavingsOut", bg: "#e0f4f4",             border: "#5bbcb8",        list: state.savingsCategories },
   };
   for (const [type, c] of Object.entries(cfg)) {
     const b = document.getElementById(c.btn);
@@ -6586,7 +6597,7 @@ function saveTxFromModal() {
   const tx = state.transactions.find(t => t.id === id);
   if (!tx) return;
   const amount = Number(document.getElementById("txModalAmount").value);
-  if (!amount || (txModalType !== "savings" && amount <= 0)) { alert("Montant invalide"); return; }
+  if (!amount || amount <= 0) { alert("Montant invalide"); return; }
   const category = document.getElementById("txModalCategory").value;
   const note = document.getElementById("txModalNote").value.trim();
   const dateStr = document.getElementById("txModalDate").value;
@@ -6664,10 +6675,14 @@ function renderTxList() {
   document.getElementById("txList").innerHTML = list.map(tx => {
     const d = new Date(tx.date);
     const dateStr = d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-    const sign = tx.type === "income" ? "+" : tx.type === "savings" ? (tx.amount >= 0 ? "💳→🏦" : "🏦→💳") : tx.type === "external" ? "🧾" : "−";
-    const dotColor = tx.type === "savings" ? "#c9b6f0"
-                   : tx.type === "income" ? "#aee0c8"
-                   : tx.type === "external" ? "#f5e6a8"
+    const sign = tx.type === "income"      ? "+"
+               : tx.type === "savings"     ? "💳→🏦"
+               : tx.type === "savings-out" ? "🏦→💳"
+               : tx.type === "external"    ? "🧾" : "−";
+    const dotColor = tx.type === "savings"     ? "#c9b6f0"
+                   : tx.type === "savings-out" ? "#89d4cf"
+                   : tx.type === "income"      ? "#aee0c8"
+                   : tx.type === "external"    ? "#f5e6a8"
                    : catColor(tx.category);
     return `
       <div class="tx-row">
@@ -6693,10 +6708,11 @@ function renderMoneyFlowChart() {
     return state.transactions.filter(t => { const td = new Date(t.date); return td >= m && td < end && t.type === type; }).reduce((s, t) => s + t.amount, 0);
   };
   const flowDatasets = [
-    { label: "Revenus",      data: months.map(m => monthSum(m, "income")),   backgroundColor: "#aee0c8", borderRadius: 8 },
-    { label: "Dépenses",     data: months.map(m => monthSum(m, "expense")),  backgroundColor: "#efb8c8", borderRadius: 8 },
-    { label: "Épargne",      data: months.map(m => monthSum(m, "savings")),  backgroundColor: "#c9b6f0", borderRadius: 8 },
-    { label: "Hors compte",  data: months.map(m => monthSum(m, "external")), backgroundColor: "#f5e6a8", borderRadius: 8 },
+    { label: "Revenus",         data: months.map(m => monthSum(m, "income")),       backgroundColor: "#aee0c8", borderRadius: 8 },
+    { label: "Dépenses",        data: months.map(m => monthSum(m, "expense")),      backgroundColor: "#efb8c8", borderRadius: 8 },
+    { label: "Épargne",         data: months.map(m => monthSum(m, "savings")),      backgroundColor: "#c9b6f0", borderRadius: 8 },
+    { label: "Retrait épargne", data: months.map(m => monthSum(m, "savings-out")),  backgroundColor: "#89d4cf", borderRadius: 8 },
+    { label: "Hors compte",     data: months.map(m => monthSum(m, "external")),     backgroundColor: "#f5e6a8", borderRadius: 8 },
   ];
   // Légende HTML custom — pleine largeur, espacement uniforme
   const legendEl = document.getElementById("flowLegend");
@@ -7390,7 +7406,9 @@ function computeMetric(m) {
   if (m.type === "savings-month") {
     const [start, end] = currentMonthRange();
     const savings = state.transactions.filter(t => { const d = new Date(t.date); return d >= start && d < end && t.type === "savings"; }).reduce((s, t) => s + t.amount, 0);
-    return { score: Math.min(1, savings / m.target), value: savings.toFixed(0) + " €", label: m.label };
+    const savingsOut = state.transactions.filter(t => { const d = new Date(t.date); return d >= start && d < end && t.type === "savings-out"; }).reduce((s, t) => s + t.amount, 0);
+    const net = savings - savingsOut;
+    return { score: Math.min(1, Math.max(0, net) / m.target), value: net.toFixed(0) + " € net", label: m.label };
   }
   if (m.type === "groceries-active") {
     const events = state.domestique?.groceryEvents || [];
