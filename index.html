@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v138</title>
+<title>Mon Tableau de Vie 🌿 · v139</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -5520,7 +5520,7 @@ function computeHormones() {
   const res = {};
   HORMONES.forEach(h => { res[h.id] = { score: 0, sources: [], days: [] }; });
 
-  const socialRe = /ami|amie|copain|copine|soirée|apéro|sortie|famille|maman|papa|parents|frère|sœur|soeur|frangine|frangin|mamie|papi/i;
+  const socialRe = /ami|amie|copain|copine|soirée|apéro|sortie|famille|maman|papa|parents|frère|sœur|soeur|frangine|frangin|mamie|papi|déjeuner|dejeuner|dîner|diner|brunch|repas|goûter|gouter|lunch|picnic|pique-nique|anniversaire|fête|fete/i;
 
   for (const d of last7) {
     const dk     = todayKey(d);
@@ -5598,24 +5598,73 @@ function showHormoneDetail(hId) {
 }
 function closeHormoneDetail() { document.getElementById("hormoneDetailModal").style.display = "none"; }
 
-let _hormoneRadarChart = null;
 function renderHormones() {
   const el = document.getElementById("hormonesContent");
   if (!el) return;
   const data = computeHormones();
 
+  // ── Petal chart (SVG pur) ──────────────────────────────────────
+  const CX = 125, CY = 125, MAX_R = 90, SPAN = 0.60; // SPAN ≈ 34° demi-ouverture
+  const SIZE = 250;
+  // Directions des 4 pétales : haut, droite, bas, gauche
+  const DIRS = [-Math.PI/2, 0, Math.PI/2, Math.PI];
+
+  function petalPath(angle, r) {
+    const a1 = angle - SPAN, a2 = angle + SPAN;
+    const x1 = (CX + r * Math.cos(a1)).toFixed(2), y1 = (CY + r * Math.sin(a1)).toFixed(2);
+    const x2 = (CX + r * Math.cos(a2)).toFixed(2), y2 = (CY + r * Math.sin(a2)).toFixed(2);
+    return `M${CX},${CY} L${x1},${y1} A${r.toFixed(2)},${r.toFixed(2)} 0 0,1 ${x2},${y2} Z`;
+  }
+
+  // Cercles de référence (25 / 50 / 75 / 100 %)
+  const refRings = [0.25, 0.5, 0.75, 1].map(f =>
+    `<circle cx="${CX}" cy="${CY}" r="${(MAX_R*f).toFixed(1)}" fill="none" stroke="#efeaf5" stroke-width="${f===1?1.5:1}"/>`
+  ).join("");
+
+  // Axes (lignes fines)
+  const axes = DIRS.map(a =>
+    `<line x1="${CX}" y1="${CY}" x2="${(CX+MAX_R*Math.cos(a)).toFixed(1)}" y2="${(CY+MAX_R*Math.sin(a)).toFixed(1)}" stroke="#efeaf5" stroke-width="1"/>`
+  ).join("");
+
+  // Pétales fantômes (max, très transparent) + pétales réels
+  const ghosts = HORMONES.map((h,i) =>
+    `<path d="${petalPath(DIRS[i], MAX_R)}" fill="${h.color}" opacity="0.10"/>`
+  ).join("");
+
+  const petals = HORMONES.map((h,i) => {
+    const pct = Math.min(1, data[h.id].score / h.target);
+    const r   = Math.max(4, MAX_R * pct);
+    return `<path d="${petalPath(DIRS[i], r)}" fill="${h.color}" opacity="0.88"
+      style="filter:drop-shadow(0 2px 6px ${h.color}99);transition:d .5s;"/>`;
+  }).join("");
+
+  // Emojis aux extrémités (position fixe = MAX_R + 18)
+  const LR = MAX_R + 20;
+  const emojiLabels = HORMONES.map((h,i) => {
+    const lx = (CX + LR * Math.cos(DIRS[i])).toFixed(1);
+    const ly = (CY + LR * Math.sin(DIRS[i])).toFixed(1);
+    return `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle"
+      font-size="20" style="cursor:pointer;user-select:none;"
+      onclick="showHormoneDetail('${h.id}')">${h.emoji}</text>`;
+  }).join("");
+
+  const svgHtml = `<svg width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}" style="overflow:visible;">
+    ${refRings}${axes}${ghosts}${petals}${emojiLabels}
+  </svg>`;
+
+  // ── Légende cliquable ──────────────────────────────────────────
   const legendHtml = HORMONES.map(h => {
     const d   = data[h.id];
     const pct = Math.min(100, Math.round((d.score / h.target) * 100));
     const col = pct >= 70 ? "#16a34a" : pct >= 35 ? "#d97706" : "#94a3b8";
     const src = d.sources.slice(0,2).join(" · ") || "aucune source cette semaine";
-    return `<div class="hormone-legend-row" onclick="showHormoneDetail('${h.id}')" title="Voir le détail">
+    return `<div class="hormone-legend-row" onclick="showHormoneDetail('${h.id}')">
       <div class="hormone-legend-dot" style="background:${h.color};"></div>
       <div class="hormone-legend-body">
         <div class="hormone-legend-top">
           <span class="hormone-legend-name">${h.emoji} ${h.label}</span>
           <span class="hormone-legend-val" style="color:${col};">${d.score}/${h.target}j &nbsp;${pct}%</span>
-          <span style="color:var(--ink-softer);font-size:13px;margin-left:4px;">›</span>
+          <span style="color:var(--ink-softer);font-size:13px;">›</span>
         </div>
         <div class="hormone-legend-src">${src}</div>
       </div>
@@ -5623,44 +5672,9 @@ function renderHormones() {
   }).join("");
 
   el.innerHTML = `<div class="hormone-chart-wrap">
-    <div class="hormone-svg-wrap"><canvas id="hormoneRadar" width="220" height="220"></canvas></div>
+    <div class="hormone-svg-wrap">${svgHtml}</div>
     <div class="hormone-legend">${legendHtml}</div>
   </div>`;
-
-  // Radar Chart.js
-  if (_hormoneRadarChart) { _hormoneRadarChart.destroy(); _hormoneRadarChart = null; }
-  const ctx = document.getElementById("hormoneRadar");
-  if (!ctx) return;
-  const pcts = HORMONES.map(h => Math.min(100, Math.round((data[h.id].score / h.target) * 100)));
-  _hormoneRadarChart = new Chart(ctx, {
-    type: "radar",
-    data: {
-      labels: HORMONES.map(h => `${h.emoji} ${h.label}`),
-      datasets: [{
-        data: pcts,
-        backgroundColor: "rgba(201,182,240,0.18)",
-        borderColor: "#c9b6f0",
-        borderWidth: 2.5,
-        pointBackgroundColor: HORMONES.map(h => h.color),
-        pointBorderColor: "white",
-        pointBorderWidth: 2,
-        pointRadius: 6,
-      }],
-    },
-    options: {
-      ...baseChartOpts(),
-      plugins: { ...baseChartOpts().plugins, legend: { display: false } },
-      scales: {
-        r: {
-          beginAtZero: true, max: 100,
-          ticks: { stepSize: 25, color: "#8a8499", font: { size: 10 }, backdropColor: "transparent" },
-          grid: { color: "#efeaf5" },
-          angleLines: { color: "#efeaf5" },
-          pointLabels: { color: "#4a4458", font: { size: 12, weight: "600" } },
-        },
-      },
-    },
-  });
 }
 
 function toggleActivityHormone(actId, hId) {
