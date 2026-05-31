@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿</title>
+<title>Mon Tableau de Vie 🌿 · v136</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -5497,10 +5497,10 @@ const PASTEL_PALETTE = ["#c9b6f0", "#f5b6c9", "#b4d4f1", "#f7c9a3", "#aee0c8", "
 
 /* ── Hormones ──────────────────────────────────────────────────────── */
 const HORMONES = [
-  { id: "endorphines", label: "Endorphines", emoji: "🏃", color: "#a8e6cf", desc: "Effort physique, sport",         target: 3  },
-  { id: "dopamine",    label: "Dopamine",    emoji: "🎯", color: "#ffd3a8", desc: "Accomplissement, plaisir",      target: 10 },
-  { id: "serotonine",  label: "Sérotonine",  emoji: "☀️", color: "#ffe89a", desc: "Calme, créativité, nature",     target: 7  },
-  { id: "ocytocine",   label: "Ocytocine",   emoji: "🤗", color: "#ffc8dd", desc: "Lien social, affection",        target: 2  },
+  { id: "endorphines", label: "Endorphines", emoji: "🏃", color: "#a8e6cf", desc: "Effort physique, sport",        target: 4, unit: "j" },
+  { id: "dopamine",    label: "Dopamine",    emoji: "🎯", color: "#ffd3a8", desc: "Accomplissement, plaisir",     target: 5, unit: "j" },
+  { id: "serotonine",  label: "Sérotonine",  emoji: "☀️", color: "#ffe89a", desc: "Calme, créativité, nature",    target: 5, unit: "j" },
+  { id: "ocytocine",   label: "Ocytocine",   emoji: "🤗", color: "#ffc8dd", desc: "Lien social, affection",       target: 3, unit: "j" },
 ];
 
 // Déduit les hormones probables d'une activité d'après son nom
@@ -5516,46 +5516,57 @@ function autoHormones(name) {
 }
 
 function computeHormones() {
+  // Option A : on compte les JOURS (régularité), pas les sessions cumulées
   const last7 = _last7Days();
   const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
   const k7 = todayKey(sevenAgo);
   const res = {};
   HORMONES.forEach(h => { res[h.id] = { score: 0, sources: [] }; });
 
-  // 1. Activités avec leurs hormones associées
   for (const d of last7) {
     const dk = todayKey(d);
-    const acts = state.history[dk]?.activities || {};
-    for (const a of state.activities) {
-      if (acts[a.id]) {
-        for (const hId of (a.hormones || ["endorphines"])) {
-          if (res[hId]) { res[hId].score++; res[hId].sources.push(a.name); }
-        }
-      }
+    const entry   = state.history[dk] || {};
+    const acts    = entry.activities || {};
+    const habits  = entry.habits    || {};
+
+    // — Endorphines : au moins 1 activité physique ce jour
+    const endoActs = state.activities.filter(a => acts[a.id] && (a.hormones || ["endorphines"]).includes("endorphines"));
+    if (endoActs.length) {
+      res.endorphines.score++;
+      endoActs.slice(0, 2).forEach(a => res.endorphines.sources.push(a.name));
+    }
+
+    // — Dopamine : tâche finie CE jour OU lecture OU activité dopamine
+    const taskToday = (state.work?.postdocTasks || []).some(t => t.done && t.completedAt === dk);
+    const lectureToday = Number(habits["h-lecture"]) > 0;
+    const dopActs = state.activities.filter(a => acts[a.id] && (a.hormones || []).includes("dopamine"));
+    if (taskToday || lectureToday || dopActs.length) {
+      res.dopamine.score++;
+      if (taskToday)      res.dopamine.sources.push("tâche(s)");
+      if (lectureToday)   res.dopamine.sources.push("lecture");
+      dopActs.slice(0, 1).forEach(a => res.dopamine.sources.push(a.name));
+    }
+
+    // — Sérotonine : journal OU humeur ≥ 4 OU activité sérotonine
+    const hasJournal  = (entry.journal || "").trim().length > 0;
+    const hasGoodMood = (entry.mood || 0) >= 4;
+    const serActs = state.activities.filter(a => acts[a.id] && (a.hormones || []).includes("serotonine"));
+    if (hasJournal || hasGoodMood || serActs.length) {
+      res.serotonine.score++;
+      if (hasJournal)    res.serotonine.sources.push("journal");
+      if (hasGoodMood)   res.serotonine.sources.push("bonne humeur");
+      serActs.slice(0, 1).forEach(a => res.serotonine.sources.push(a.name));
     }
   }
 
-  // 2. Tâches de travail finies → dopamine
-  const doneTasks = (state.work?.postdocTasks || []).filter(t => t.done && t.completedAt >= k7).length;
-  if (doneTasks) { res.dopamine.score += doneTasks; res.dopamine.sources.push(`${doneTasks} tâche${doneTasks > 1 ? "s" : ""} finies`); }
-
-  // 3. Lecture (habitude h-lecture) → dopamine
-  const lectureDays = last7.filter(d => Number(state.history[todayKey(d)]?.habits?.["h-lecture"]) > 0).length;
-  if (lectureDays) { res.dopamine.score += lectureDays; res.dopamine.sources.push(`${lectureDays}j lecture`); }
-
-  // 4. Journal → sérotonine
-  const journalDays = last7.filter(d => (state.history[todayKey(d)]?.journal || "").trim().length > 0).length;
-  if (journalDays) { res.serotonine.score += journalDays; res.serotonine.sources.push(`${journalDays}j journal`); }
-
-  // 6. Événements sociaux calendrier → ocytocine
+  // — Ocytocine : jours distincts avec au moins 1 événement social
   const socialRe = /ami|amie|copain|copine|soirée|apéro|sortie|famille|maman|papa|parents|frère|sœur|soeur|frangine|frangin|mamie|papi/i;
-  const socialEvs = state.calEvents.filter(e => (e.date || "") >= k7 && socialRe.test(e.title || ""));
-  if (socialEvs.length) { res.ocytocine.score += socialEvs.length; res.ocytocine.sources.push(`${socialEvs.length} moment${socialEvs.length > 1 ? "s" : ""} social${socialEvs.length > 1 ? "aux" : ""}`); }
+  const socialDays = new Set(state.calEvents.filter(e => (e.date || "") >= k7 && socialRe.test(e.title || "")).map(e => e.date));
+  res.ocytocine.score = socialDays.size;
+  if (socialDays.size) res.ocytocine.sources.push(`${socialDays.size} jour${socialDays.size > 1 ? "s" : ""} avec des proches`);
 
-  // 7. Humeur ≥ 4 → sérotonine (signe d'un état serein)
-  const highMood = last7.filter(d => (state.history[todayKey(d)]?.mood || 0) >= 4).length;
-  if (highMood) { res.serotonine.score += highMood * 0.5; res.serotonine.sources.push(`${highMood}j bonne humeur`); }
-
+  // Dédoublonner les sources pour l'affichage
+  Object.values(res).forEach(r => { r.sources = [...new Set(r.sources)]; });
   return res;
 }
 
@@ -5587,6 +5598,7 @@ function renderHormones() {
       <div class="hormone-card-name">${h.label}</div>
       <div class="hormone-card-desc">${h.desc}</div>
       <div class="hormone-card-score" style="color:${scoreColor};">${pct}%</div>
+      <div class="hormone-card-desc" style="font-weight:600;color:${scoreColor};margin-bottom:3px;">${Math.min(d.score, h.target)} / ${h.target} j</div>
       <div class="hormone-card-sources">${uniq}</div>
     </div>`;
   }).join("")}</div>`;
