@@ -7119,6 +7119,7 @@ function deleteTxFromModal() {
   renderMoney(); renderDailyExpenseChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 document.getElementById("txModal").addEventListener("click", e => { if (e.target.id === "txModal") closeTxModal(); });
+document.querySelector("#txModal .modal").addEventListener("click", e => e.stopPropagation());
 document.getElementById("catDetailModal").addEventListener("click", e => { if (e.target.id === "catDetailModal") e.target.classList.remove("open"); });
 // 24 couleurs pastel toutes distinctes — assignées par index dans la liste des catégories
 const CAT_PALETTE = [
