@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v152</title>
+<title>Mon Tableau de Vie 🌿 · v153</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -333,12 +333,13 @@
   .money-stat.income { background: linear-gradient(135deg, white 0%, var(--mint-soft) 100%); }
   .money-stat.expense { background: linear-gradient(135deg, white 0%, var(--rose-soft) 100%); }
   .money-stat.balance { background: linear-gradient(135deg, white 0%, var(--lavender-soft) 100%); }
-  .tx-form { display: grid; grid-template-columns: auto 1fr 1fr 2fr auto; gap: 8px; align-items: center; margin-bottom: 14px; background: #faf8fd; padding: 12px; border-radius: 14px; }
+  .tx-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; background: #faf8fd; padding: 12px; border-radius: 14px; }
+  .tx-form-inputs { display: grid; grid-template-columns: 1fr 1fr 2fr auto; gap: 8px; align-items: center; }
   .tx-form .type-toggle {
-    display: flex; gap: 5px; flex-wrap: nowrap;  /* une ligne sur desktop */
+    display: flex; gap: 5px; flex-wrap: wrap;
   }
   .tx-form .type-toggle button {
-    padding: 8px 11px; border-radius: 10px; border: 1px solid var(--line);
+    padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line);
     background: white; cursor: pointer; font-size: 12.5px; color: var(--ink-soft);
     font-family: inherit; text-align: center; white-space: nowrap;
   }
@@ -1300,8 +1301,8 @@
   @media (max-width: 880px) {
     .rings, .grid-three, .money-summary, .stat-grid { grid-template-columns: repeat(2, 1fr); }
     .grid-two, .grid-two-eq { grid-template-columns: 1fr; }
-    .tx-form { grid-template-columns: 1fr 1fr; }
-    .tx-form .type-toggle, .tx-form .add-btn { grid-column: span 2; }
+    .tx-form-inputs { grid-template-columns: 1fr 1fr; }
+    .tx-form-inputs .add-btn { grid-column: span 2; }
     .add-goal-form { grid-template-columns: 1fr 1fr; }
     .add-goal-form button { grid-column: span 2; }
     .add-task-form { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1408,15 +1409,7 @@
     .kanban-col { min-width: unset; width: 100%; }
 
     /* === Financier : formulaire === */
-    /* Financier : formulaire entièrement empilé → plus de scroll horizontal */
-    .tx-form {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .tx-form .type-toggle {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
-    }
+    .tx-form-inputs { grid-template-columns: 1fr; }
     .tx-form input, .tx-form select, .tx-form .add-btn { width: 100%; }
 
     /* === Modal : quasi plein écran === */
@@ -2107,10 +2100,12 @@
           <button id="txTypeSavings" class="savings" onclick="setTxType('savings')">💰 Épargne</button>
           <button id="txTypeSavingsOut" class="savings-out" onclick="setTxType('savings-out')">🏦→💳 Retrait</button>
         </div>
-        <input type="number" id="txAmount" placeholder="Montant (€)" step="0.01" />
-        <select id="txCategory"></select>
-        <input type="text" id="txNote" placeholder="Note (optionnel)" />
-        <button class="add-btn" onclick="addTransaction()">Ajouter</button>
+        <div class="tx-form-inputs">
+          <input type="number" id="txAmount" placeholder="Montant (€)" step="0.01" />
+          <select id="txCategory"></select>
+          <input type="text" id="txNote" placeholder="Note (optionnel)" />
+          <button class="add-btn" onclick="addTransaction()">Ajouter</button>
+        </div>
       </div>
     </div>
     <div class="card" style="margin-bottom:18px;">
