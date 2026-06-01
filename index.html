@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v162</title>
+<title>Mon Tableau de Vie 🌿 · v163</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7091,9 +7091,11 @@ function renderBudgetGauge() {
     if (tx.type === "savings-out")  savingsOut += tx.amount;
     if (tx.type === "expense" || tx.type === "external") spent += tx.amount;
   }
-  const budget = income - savings + savingsOut; // revenus nets disponibles
+  // Restant = solde courant réel (ce qu'il y a vraiment en banque)
+  const remaining = balanceCourant();
+  const budget    = spent + remaining; // total disponible = dépensé + ce qu'il reste
 
-  if (budget <= 0) {
+  if (budget <= 0 && income === 0) {
     el.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);padding:6px 0;">
       Aucun revenu enregistré ce mois — ajoute ton salaire pour voir la jauge.</p>`;
     return;
@@ -7102,8 +7104,7 @@ function renderBudgetGauge() {
   const totalDays   = Math.round((end - start) / 86400000);
   const daysElapsed = Math.max(1, Math.round((now - start) / 86400000));
   const daysLeft    = Math.max(0, totalDays - daysElapsed);
-  const remaining   = budget - spent;
-  const pct         = Math.min(100, Math.round((spent / budget) * 100));
+  const pct         = budget > 0 ? Math.min(100, Math.round((spent / budget) * 100)) : 0;
   const dailyActual = spent / daysElapsed;
   const projectedTotal = dailyActual * totalDays;
   const dailyIdeal  = budget / totalDays;
