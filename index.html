@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v154</title>
+<title>Mon Tableau de Vie 🌿 · v155</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -6583,9 +6583,27 @@ function populateTxCategories() {
              : state.categories;
   sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
 }
+// Mois financier : du 26 du mois précédent au 25 du mois courant (cycle salaire)
 function currentMonthRange() {
   const now = new Date();
-  return [new Date(now.getFullYear(), now.getMonth(), 1), new Date(now.getFullYear(), now.getMonth() + 1, 1)];
+  const day = now.getDate();
+  let start, end;
+  if (day >= 26) {
+    // Ex : 26 juin → 25 juillet
+    start = new Date(now.getFullYear(), now.getMonth(), 26);
+    end   = new Date(now.getFullYear(), now.getMonth() + 1, 26);
+  } else {
+    // Ex : 1→25 juin → période 26 mai → 25 juin
+    start = new Date(now.getFullYear(), now.getMonth() - 1, 26);
+    end   = new Date(now.getFullYear(), now.getMonth(), 26);
+  }
+  return [start, end];
+}
+function currentMonthLabel() {
+  const [start, end] = currentMonthRange();
+  const fmt = d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  const endDisplay = new Date(end); endDisplay.setDate(endDisplay.getDate() - 1);
+  return `${fmt(start)} → ${fmt(endDisplay)}`;
 }
 function renderMoneySummary() {
   const [start, end] = currentMonthRange();
@@ -6599,10 +6617,10 @@ function renderMoneySummary() {
     }
   }
   const balance = income - expense;
-  const monthName = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const period = currentMonthLabel();
   document.getElementById("moneySummary").innerHTML = `
-    <div class="money-stat income"><div class="label">Revenus — ${monthName}</div><div class="value">+${income.toFixed(2)} €</div></div>
-    <div class="money-stat expense"><div class="label">Dépenses — ${monthName}</div><div class="value">−${expense.toFixed(2)} €</div></div>
+    <div class="money-stat income"><div class="label">Revenus — ${period}</div><div class="value">+${income.toFixed(2)} €</div></div>
+    <div class="money-stat expense"><div class="label">Dépenses — ${period}</div><div class="value">−${expense.toFixed(2)} €</div></div>
     <div class="money-stat balance"><div class="label">Solde</div><div class="value">${balance >= 0 ? "+" : ""}${balance.toFixed(2)} €</div></div>`;
 }
 function addTransaction() {
@@ -7490,7 +7508,7 @@ const PILLAR_DEFS = [
     id: "finances", name: "Finances", emoji: "💰", color: "#f7c9a3", bg: "var(--peach-soft)",
     metrics: [
       { type: "tx-tracked", target: 5, label: "Dépenses tracées/sem" },
-      { type: "savings-month", target: 1000, label: "Épargne 30 jours (obj. 1 000 €)" },
+      { type: "savings-month", target: 1000, label: "Épargne du mois (obj. 1 000 €)" },
     ]
   },
   {
@@ -7609,11 +7627,11 @@ function computeMetric(m) {
     return { score: Math.min(1, count / m.target), value: count + " tx", label: m.label };
   }
   if (m.type === "savings-month") {
-    const since30 = new Date(); since30.setDate(since30.getDate() - 30);
-    const savings    = state.transactions.filter(t => new Date(t.date) >= since30 && t.type === "savings").reduce((s, t) => s + t.amount, 0);
-    const savingsOut = state.transactions.filter(t => new Date(t.date) >= since30 && t.type === "savings-out").reduce((s, t) => s + t.amount, 0);
+    const [start, end] = currentMonthRange();
+    const savings    = state.transactions.filter(t => { const d = new Date(t.date); return d >= start && d < end && t.type === "savings"; }).reduce((s, t) => s + t.amount, 0);
+    const savingsOut = state.transactions.filter(t => { const d = new Date(t.date); return d >= start && d < end && t.type === "savings-out"; }).reduce((s, t) => s + t.amount, 0);
     const net = savings - savingsOut;
-    return { score: Math.min(1, Math.max(0, net) / m.target), value: net.toFixed(0) + " € net (30j)", label: m.label };
+    return { score: Math.min(1, Math.max(0, net) / m.target), value: net.toFixed(0) + " € net", label: m.label };
   }
   if (m.type === "groceries-active") {
     const events = state.domestique?.groceryEvents || [];
