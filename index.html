@@ -7448,41 +7448,26 @@ function renderMoneyCatChart() {
 function openCatDetail(cat) {
   const [start, end] = currentMonthRange();
   const txs = state.transactions
-    .filter(tx => (tx.type === "expense" || tx.type === "external") && tx.category === cat && new Date(tx.date) >= start && new Date(tx.date) < end)
+    .filter(tx => tx.type === "expense" && tx.category === cat && new Date(tx.date) >= start && new Date(tx.date) < end)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  const totalExpense  = txs.filter(t => t.type === "expense").reduce((s, t) => s + t.amount, 0);
-  const totalExternal = txs.filter(t => t.type === "external").reduce((s, t) => s + t.amount, 0);
-  const totalAll = totalExpense + totalExternal;
+  const total = txs.reduce((s, tx) => s + tx.amount, 0);
 
   document.getElementById("catDetailTitle").textContent = cat;
-  document.getElementById("catDetailTotal").textContent = totalAll.toFixed(2) + " €";
+  document.getElementById("catDetailTotal").textContent = total.toFixed(2) + " €";
   document.getElementById("catDetailDot").style.background = catColor(cat);
 
-  const subtotals = totalExternal > 0
-    ? `<div style="display:flex;gap:16px;font-size:12px;color:var(--ink-soft);margin-bottom:12px;flex-wrap:wrap;">
-        <span>💳 Compte : <strong>${totalExpense.toFixed(2)} €</strong></span>
-        <span>🧾 Hors compte : <strong>${totalExternal.toFixed(2)} €</strong></span>
-       </div>` : "";
-
-  document.getElementById("catDetailList").innerHTML = (subtotals) + (txs.length ? txs.map(tx => {
+  document.getElementById("catDetailList").innerHTML = txs.length ? txs.map(tx => {
     const d = new Date(tx.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
-    const badge = tx.type === "external"
-      ? `<span style="font-size:10px;background:#fef9c3;color:#92400e;border-radius:5px;padding:1px 5px;font-weight:600;flex-shrink:0;">🧾 hors compte</span>`
-      : "";
     return `
       <div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);">
         <div style="flex:1;">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <span style="font-size:14px;color:var(--ink);">${escapeHtml(tx.note || "—")}</span>
-            ${badge}
-          </div>
+          <div style="font-size:14px;color:var(--ink);">${escapeHtml(tx.note || "—")}</div>
           <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${d}</div>
         </div>
         <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${tx.amount.toFixed(2)} €</div>
         <button onclick="openTxModal('${tx.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:11px;cursor:pointer;flex-shrink:0;">✎</button>
       </div>`;
-  }).join("") : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px 0;">Aucune dépense dans cette catégorie.</p>`);
+  }).join("") : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px 0;">Aucune dépense dans cette catégorie.</p>`;
 
   document.getElementById("catDetailModal").classList.add("open");
 }
