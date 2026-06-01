@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v163</title>
+<title>Mon Tableau de Vie 🌿 · v164</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7664,6 +7664,7 @@ const PILLAR_DEFS = [
     metrics: [
       { type: "tx-tracked", target: 5, label: "Dépenses tracées/sem" },
       { type: "savings-month", target: 1000, label: "Épargne du mois (obj. 1 000 €)" },
+      { type: "budget-on-track", label: "Budget respecté" },
     ]
   },
   {
@@ -7726,6 +7727,27 @@ function countHolidaysInWeek(weekDates) {
 }
 function computeMetric(m) {
   // Retourne un objet { score: 0-1, value: "...", label: m.label }
+  if (m.type === "budget-on-track") {
+    const [start, end] = currentMonthRange();
+    const now = new Date();
+    const totalDays   = Math.round((end - start) / 86400000);
+    const daysElapsed = Math.max(1, Math.round((now - start) / 86400000));
+    let spent = 0;
+    for (const tx of state.transactions) {
+      const d = new Date(tx.date);
+      if (d >= start && d < end && (tx.type === "expense" || tx.type === "external")) spent += tx.amount;
+    }
+    const remaining = balanceCourant();
+    const budget = spent + remaining;
+    if (budget <= 0) return { score: 0, value: "—", label: m.label };
+    // Rythme idéal : daysElapsed/totalDays du budget
+    const idealSpent = budget * (daysElapsed / totalDays);
+    // Score : 1 si on est en dessous ou à l'idéal, décroît si on dépasse
+    const ratio = spent / Math.max(1, idealSpent);
+    const score = Math.max(0, Math.min(1, 2 - ratio)); // 1 si ratio≤1, 0 si ratio≥2
+    const pct = Math.round((spent / budget) * 100);
+    return { score, value: `${pct}% consommé (j${daysElapsed}/${totalDays})`, label: m.label };
+  }
   if (m.type === "habit-avg") {
     const habit = state.habits.find(h => h.id === m.habitId);
     if (!habit) return { score: 0, value: "—", label: m.label };
