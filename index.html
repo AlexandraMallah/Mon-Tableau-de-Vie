@@ -1549,40 +1549,6 @@
   /* ---- Trend Prediction ---- */
   .trend-metric-btn { padding:5px 12px; border-radius:999px; border:1.5px solid var(--line); background:white; font-size:12px; font-family:inherit; cursor:pointer; color:var(--ink-soft); transition:all 0.15s; }
   .trend-metric-btn.active { background:var(--lavender-soft); border-color:var(--lavender); color:var(--ink); font-weight:600; }
-
-  /* ===== PIN OVERLAY ===== */
-  #pinOverlay {
-    position: fixed; inset: 0; z-index: 99999;
-    background: linear-gradient(145deg, #f8f5ff 0%, #fff5f8 100%);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 20px; font-family: inherit;
-  }
-  #pinOverlay h1 { font-size: 26px; font-weight: 700; color: var(--ink); margin: 0; }
-  #pinOverlay .pin-subtitle { font-size: 14px; color: var(--ink-soft); margin: 0; text-align: center; }
-  .pin-dots { display: flex; gap: 14px; margin: 6px 0; }
-  .pin-dot {
-    width: 16px; height: 16px; border-radius: 50%;
-    border: 2px solid var(--lilac); background: white;
-    transition: background 0.15s;
-  }
-  .pin-dot.filled { background: var(--lilac); }
-  .pin-pad {
-    display: grid; grid-template-columns: repeat(3, 68px); gap: 10px;
-  }
-  .pin-key {
-    height: 68px; border-radius: 16px; border: 1.5px solid var(--line);
-    background: white; font-size: 22px; font-weight: 600; color: var(--ink);
-    cursor: pointer; transition: background 0.1s, transform 0.1s;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06);
-  }
-  .pin-key:active { background: var(--lavender-soft); transform: scale(0.96); }
-  .pin-key.del { font-size: 18px; color: var(--ink-soft); }
-  .pin-key.ok { background: var(--lilac); color: white; border-color: var(--lilac); font-size: 18px; }
-  .pin-key.ok:active { background: #9370c9; }
-  .pin-key.empty { background: transparent; border-color: transparent; box-shadow: none; cursor: default; }
-  #pinError { color: #dc2626; font-size: 13px; min-height: 18px; margin: 0; }
-  #pinForgot { font-size: 12px; color: var(--ink-softer); cursor: pointer; text-decoration: underline; background: none; border: none; padding: 0; font-family: inherit; }
 </style>
 <!-- PWA -->
 <link rel="manifest" href="manifest.json" />
@@ -1593,34 +1559,6 @@
 <link rel="apple-touch-icon" href="icon-192.png" />
 </head>
 <body>
-
-<!-- ===== PIN OVERLAY ===== -->
-<div id="pinOverlay" style="display:none;">
-  <h1>Mon Tableau de Vie 🌿</h1>
-  <p class="pin-subtitle" id="pinSubtitle">Déverrouille ton tableau de bord</p>
-  <div class="pin-dots" id="pinDots">
-    <div class="pin-dot" id="pd0"></div>
-    <div class="pin-dot" id="pd1"></div>
-    <div class="pin-dot" id="pd2"></div>
-    <div class="pin-dot" id="pd3"></div>
-  </div>
-  <p id="pinError"></p>
-  <div class="pin-pad">
-    <button class="pin-key" onclick="pinKey(1)">1</button>
-    <button class="pin-key" onclick="pinKey(2)">2</button>
-    <button class="pin-key" onclick="pinKey(3)">3</button>
-    <button class="pin-key" onclick="pinKey(4)">4</button>
-    <button class="pin-key" onclick="pinKey(5)">5</button>
-    <button class="pin-key" onclick="pinKey(6)">6</button>
-    <button class="pin-key" onclick="pinKey(7)">7</button>
-    <button class="pin-key" onclick="pinKey(8)">8</button>
-    <button class="pin-key" onclick="pinKey(9)">9</button>
-    <button class="pin-key del" onclick="pinDel()">⌫</button>
-    <button class="pin-key" onclick="pinKey(0)">0</button>
-    <button class="pin-key ok" onclick="pinSubmit()">✓</button>
-  </div>
-  <button id="pinForgot" onclick="pinReset()" style="display:none;">Code oublié ? Réinitialiser (efface les données)</button>
-</div>
 
 <div class="container">
   <header class="top">
@@ -2555,13 +2493,6 @@
     <div class="section-title">Types de candidatures</div>
     <div id="candTypeEditList"></div>
     <input type="text" id="newCandTypeInput" placeholder="Nouveau type (Entrée pour ajouter)" />
-
-    <div class="section-title">🔐 Code PIN</div>
-    <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 10px;">Le PIN verrouille l'accès à l'appli. Tu n'as à le rentrer qu'une fois toutes les 30 jours.</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="secondary" onclick="pinStartChange(); closeSettings();" style="font-size:13px;">Changer le PIN</button>
-      <button class="secondary" onclick="pinDisable(); closeSettings();" style="font-size:13px;color:#dc2626;border-color:#dc2626;">Désactiver le PIN</button>
-    </div>
 
     <div class="actions">
       <button class="primary" onclick="saveSettings()">Enregistrer</button>
@@ -10900,139 +10831,6 @@ if ("serviceWorker" in navigator) {
   </div>
 </div>
 
-<script>
-/* ===== PIN LOCK ===== */
-const PIN_HASH_KEY   = "app_pin_hash";
-const PIN_UNTIL_KEY  = "app_pin_until";
-const PIN_TTL_MS     = 30 * 24 * 60 * 60 * 1000; // 30 jours
-
-let _pinBuffer = [];
-let _pinMode   = "enter"; // "enter" | "setup1" | "setup2"
-let _pinSetup1 = null;
-
-async function pinHash(digits) {
-  const buf = new TextEncoder().encode(digits.join(""));
-  const hash = await crypto.subtle.digest("SHA-256", buf);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,"0")).join("");
-}
-
-function pinUpdateDots() {
-  for (let i = 0; i < 4; i++) {
-    const el = document.getElementById("pd" + i);
-    if (el) el.classList.toggle("filled", i < _pinBuffer.length);
-  }
-}
-
-function pinKey(n) {
-  if (_pinBuffer.length >= 4) return;
-  _pinBuffer.push(n);
-  pinUpdateDots();
-  document.getElementById("pinError").textContent = "";
-  if (_pinBuffer.length === 4) setTimeout(pinSubmit, 120);
-}
-
-function pinDel() {
-  _pinBuffer.pop();
-  pinUpdateDots();
-}
-
-async function pinSubmit() {
-  if (_pinBuffer.length < 4) return;
-  const h = await pinHash(_pinBuffer);
-  _pinBuffer = [];
-  pinUpdateDots();
-
-  if (_pinMode === "setup1") {
-    _pinSetup1 = h;
-    _pinMode = "setup2";
-    document.getElementById("pinSubtitle").textContent = "Confirme ton code PIN";
-    document.getElementById("pinError").textContent = "";
-    return;
-  }
-  if (_pinMode === "setup2") {
-    if (h !== _pinSetup1) {
-      document.getElementById("pinError").textContent = "Les codes ne correspondent pas — recommence";
-      _pinMode = "setup1";
-      _pinSetup1 = null;
-      document.getElementById("pinSubtitle").textContent = "Choisis un code PIN à 4 chiffres";
-      return;
-    }
-    localStorage.setItem(PIN_HASH_KEY, h);
-    pinUnlock();
-    return;
-  }
-  // mode "enter"
-  const stored = localStorage.getItem(PIN_HASH_KEY);
-  if (h === stored) {
-    pinUnlock();
-  } else {
-    document.getElementById("pinError").textContent = "Code incorrect, réessaie";
-  }
-}
-
-function pinUnlock() {
-  localStorage.setItem(PIN_UNTIL_KEY, Date.now() + PIN_TTL_MS);
-  document.getElementById("pinOverlay").style.display = "none";
-}
-
-function pinStartChange() {
-  _pinMode = "setup1";
-  _pinBuffer = [];
-  _pinSetup1 = null;
-  document.getElementById("pinSubtitle").textContent = "Choisis un nouveau code PIN à 4 chiffres";
-  document.getElementById("pinError").textContent = "";
-  document.getElementById("pinForgot").style.display = "none";
-  pinUpdateDots();
-  document.getElementById("pinOverlay").style.display = "flex";
-}
-
-function pinDisable() {
-  if (!confirm("Désactiver le code PIN ? L'appli sera accessible sans code.")) return;
-  localStorage.removeItem(PIN_HASH_KEY);
-  localStorage.removeItem(PIN_UNTIL_KEY);
-}
-
-function pinReset() {
-  if (!confirm("Réinitialiser le PIN ? Toutes tes données seront effacées.")) return;
-  localStorage.clear();
-  location.reload();
-}
-
-// Keyboard support
-document.addEventListener("keydown", e => {
-  const overlay = document.getElementById("pinOverlay");
-  if (!overlay || overlay.style.display === "none") return;
-  if (e.key >= "0" && e.key <= "9") pinKey(Number(e.key));
-  else if (e.key === "Backspace") pinDel();
-  else if (e.key === "Enter") pinSubmit();
-});
-
-// Init au chargement
-(function initPinOnLoad() {
-  const stored  = localStorage.getItem(PIN_HASH_KEY);
-  const until   = Number(localStorage.getItem(PIN_UNTIL_KEY) || 0);
-  const overlay = document.getElementById("pinOverlay");
-
-  if (!stored) {
-    // Pas encore de PIN → setup
-    _pinMode = "setup1";
-    document.getElementById("pinSubtitle").textContent = "Choisis un code PIN à 4 chiffres";
-    document.getElementById("pinForgot").style.display = "none";
-    overlay.style.display = "flex";
-    return;
-  }
-  if (Date.now() < until) {
-    // Encore déverrouillé → on passe
-    overlay.style.display = "none";
-    return;
-  }
-  // PIN requis
-  _pinMode = "enter";
-  document.getElementById("pinSubtitle").textContent = "Déverrouille ton tableau de bord";
-  document.getElementById("pinForgot").style.display = "block";
-  overlay.style.display = "flex";
-})();
-</script>
 
 </body>
 </html>
