@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v161</title>
+<title>Mon Tableau de Vie 🌿 · v162</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2093,13 +2093,7 @@
     <div class="card" style="margin-bottom:18px;" id="budgetGaugeCard">
       <div class="card-row" style="margin-bottom:14px;">
         <h2 style="margin:0;">🎯 Budget de vie</h2>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <label style="font-size:12px;color:var(--ink-soft);">Budget mensuel :</label>
-          <input type="number" id="monthlyBudgetInput" placeholder="ex: 500" step="10"
-            style="width:90px;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;"
-            oninput="saveMonthlyBudget()" />
-          <span style="font-size:13px;color:var(--ink-soft);">€</span>
-        </div>
+        <span style="font-size:12px;color:var(--ink-soft);">Revenus − épargne du mois</span>
       </div>
       <div id="budgetGauge"></div>
     </div>
@@ -7080,74 +7074,66 @@ function renderMoneyCatChart() {
     },
   });
 }
-function saveMonthlyBudget() {
-  const v = Number(document.getElementById("monthlyBudgetInput").value) || 0;
-  state.accounts.monthlyBudget = v;
-  saveState();
-  renderBudgetGauge();
-}
 function renderBudgetGauge() {
   const el = document.getElementById("budgetGauge");
-  const inp = document.getElementById("monthlyBudgetInput");
   if (!el) return;
-  const budget = state.accounts.monthlyBudget || 0;
-  if (inp) inp.value = budget || "";
-
-  if (!budget) {
-    el.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);text-align:center;padding:8px 0;">
-      Saisis ton budget mensuel ci-dessus pour voir ta jauge 👆</p>`;
-    return;
-  }
 
   const [start, end] = currentMonthRange();
   const now = new Date();
+
+  // Budget auto = revenus − épargne nette du mois
+  let income = 0, savings = 0, savingsOut = 0, spent = 0;
+  for (const tx of state.transactions) {
+    const d = new Date(tx.date);
+    if (d < start || d >= end) continue;
+    if (tx.type === "income")       income     += tx.amount;
+    if (tx.type === "savings")      savings    += tx.amount;
+    if (tx.type === "savings-out")  savingsOut += tx.amount;
+    if (tx.type === "expense" || tx.type === "external") spent += tx.amount;
+  }
+  const budget = income - savings + savingsOut; // revenus nets disponibles
+
+  if (budget <= 0) {
+    el.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);padding:6px 0;">
+      Aucun revenu enregistré ce mois — ajoute ton salaire pour voir la jauge.</p>`;
+    return;
+  }
+
   const totalDays   = Math.round((end - start) / 86400000);
   const daysElapsed = Math.max(1, Math.round((now - start) / 86400000));
   const daysLeft    = Math.max(0, totalDays - daysElapsed);
-
-  // Dépenses réelles sur la période
-  let spent = 0;
-  for (const tx of state.transactions) {
-    const d = new Date(tx.date);
-    if (d >= start && d < end && (tx.type === "expense" || tx.type === "external")) spent += tx.amount;
-  }
-
   const remaining   = budget - spent;
   const pct         = Math.min(100, Math.round((spent / budget) * 100));
   const dailyActual = spent / daysElapsed;
   const projectedTotal = dailyActual * totalDays;
   const dailyIdeal  = budget / totalDays;
   const dailyLeft   = daysLeft > 0 ? remaining / daysLeft : 0;
-
-  // Couleur selon niveau
   const color = pct >= 90 ? "#dc2626" : pct >= 70 ? "#f59e0b" : "#10b981";
-  const bgColor = pct >= 90 ? "#fee2e2" : pct >= 70 ? "#fef3c7" : "#d1fae5";
 
-  // Alerte
   let alertHtml = "";
   if (remaining < 0) {
     alertHtml = `<div style="margin-bottom:14px;padding:10px 14px;border-radius:12px;background:#fee2e2;border:1.5px solid #dc2626;font-size:13px;color:#dc2626;font-weight:600;">
-      🚨 Budget dépassé de ${Math.abs(remaining).toFixed(0)} € — il reste ${daysLeft} jours dans le mois</div>`;
+      🚨 Budget dépassé de ${Math.abs(remaining).toFixed(0)} € — il reste ${daysLeft} jours</div>`;
   } else if (projectedTotal > budget * 1.05) {
     alertHtml = `<div style="margin-bottom:14px;padding:10px 14px;border-radius:12px;background:#fef3c7;border:1.5px solid #f59e0b;font-size:13px;color:#92400e;">
-      ⚠️ À ce rythme tu dépasseras ton budget (~${projectedTotal.toFixed(0)} € projeté) — réduis à <strong>${dailyLeft.toFixed(0)} €/jour</strong> max</div>`;
+      ⚠️ À ce rythme tu finiras à ~${projectedTotal.toFixed(0)} € — limite-toi à <strong>${dailyLeft.toFixed(0)} €/jour</strong></div>`;
   } else if (pct >= 70) {
     alertHtml = `<div style="margin-bottom:14px;padding:10px 14px;border-radius:12px;background:#fef3c7;border:1.5px solid #f59e0b;font-size:13px;color:#92400e;">
-      👀 Tu as dépensé ${pct}% de ton budget — reste <strong>${dailyLeft.toFixed(0)} €/jour</strong> pour tenir</div>`;
+      👀 ${pct}% du budget consommé — reste <strong>${dailyLeft.toFixed(0)} €/jour</strong> pour tenir</div>`;
   }
 
   el.innerHTML = `
     ${alertHtml}
-    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);margin-bottom:8px;">
-      <span><strong style="color:var(--ink);font-size:15px;">${spent.toFixed(0)} €</strong> dépensés</span>
-      <span style="color:${color};font-weight:600;">${remaining >= 0 ? remaining.toFixed(0) + " € restants" : "−" + Math.abs(remaining).toFixed(0) + " € dépassé"}</span>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+      <span style="font-size:13px;color:var(--ink-soft);"><strong style="color:var(--ink);font-size:16px;">${spent.toFixed(0)} €</strong> dépensés sur ${budget.toFixed(0)} €</span>
+      <span style="font-size:13px;font-weight:600;color:${color};">${remaining >= 0 ? "+" + remaining.toFixed(0) : "−" + Math.abs(remaining).toFixed(0)} € restants</span>
     </div>
-    <div style="height:18px;border-radius:999px;background:#f0f0f5;overflow:hidden;margin-bottom:10px;">
+    <div style="height:16px;border-radius:999px;background:#f0f0f5;overflow:hidden;margin-bottom:10px;">
       <div style="height:100%;width:${pct}%;background:${color};border-radius:999px;transition:width 0.4s;"></div>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);">
-      <span>Jour ${daysElapsed}/${totalDays} · <strong>${daysLeft}</strong> jours restants</span>
-      <span>Idéal : ${dailyIdeal.toFixed(0)} €/j · Actuel : <strong style="color:${dailyActual > dailyIdeal * 1.1 ? "#f59e0b" : "var(--ink)"};">${dailyActual.toFixed(0)} €/j</strong></span>
+      <span>Jour <strong>${daysElapsed}</strong>/${totalDays} · <strong>${daysLeft}</strong> jours restants</span>
+      <span>Idéal : ${dailyIdeal.toFixed(0)} €/j · Rythme actuel : <strong style="color:${dailyActual > dailyIdeal * 1.1 ? "#f59e0b" : "var(--ink)"};">${dailyActual.toFixed(0)} €/j</strong></span>
     </div>`;
 }
 function renderBudgetFeedback() {
