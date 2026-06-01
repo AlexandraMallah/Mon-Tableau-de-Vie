@@ -2116,21 +2116,21 @@
           <button id="txTypeSavings" class="savings" onclick="setTxType('savings')">💰 Épargne</button>
           <button id="txTypeSavingsOut" class="savings-out" onclick="setTxType('savings-out')">🏦→💳 Retrait</button>
         </div>
+        <label id="txReimbursableWrap" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin-bottom:6px;cursor:pointer;">
+          <input type="checkbox" id="txReimbursable" style="width:15px;height:15px;cursor:pointer;" onchange="toggleMissionField('txMissionWrap', this.checked)" />
+          💼 Frais pro — remboursé par le boulot
+        </label>
+        <div id="txMissionWrap" style="display:none;margin-bottom:6px;">
+          <input type="text" id="txMission" list="missionList" placeholder="Mission / déplacement (ex : Conférence MHT Amsterdam)"
+            style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);box-sizing:border-box;" />
+          <datalist id="missionList"></datalist>
+        </div>
         <div class="tx-form-inputs">
           <input type="number" id="txAmount" placeholder="Montant (€)" step="0.01" />
           <select id="txCategory"></select>
           <input type="text" id="txNote" placeholder="Note (optionnel)" />
           <input type="date" id="txDate" />
           <button class="add-btn" onclick="addTransaction()">Ajouter</button>
-        </div>
-        <label id="txReimbursableWrap" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin-top:4px;cursor:pointer;">
-          <input type="checkbox" id="txReimbursable" style="width:15px;height:15px;cursor:pointer;" onchange="toggleMissionField('txMissionWrap', this.checked)" />
-          💼 Frais pro — remboursé par le boulot
-        </label>
-        <div id="txMissionWrap" style="display:none;margin-top:6px;">
-          <input type="text" id="txMission" list="missionList" placeholder="Mission / déplacement (ex : Conférence MHT Amsterdam)"
-            style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);box-sizing:border-box;" />
-          <datalist id="missionList"></datalist>
         </div>
       </div>
     </div>
