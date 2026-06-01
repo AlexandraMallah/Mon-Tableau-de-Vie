@@ -6657,6 +6657,7 @@ function renderExternalSummary() {
     </details>`;
 }
 let _reimbFormOpenId = null;
+let _openMissions = null; // null = auto-init au premier rendu
 
 function renderReimbursable() {
   const card = document.getElementById("reimbursableCard");
@@ -6681,6 +6682,8 @@ function renderReimbursable() {
 
   // Grouper les pending par mission (clé "" = sans mission)
   const groups = {};
+  // Init _openMissions la première fois (toutes ouvertes par défaut)
+  if (_openMissions === null) _openMissions = new Set();
   for (const tx of pending) {
     const key = tx.mission?.trim() || "";
     if (!groups[key]) groups[key] = [];
@@ -6735,16 +6738,18 @@ function renderReimbursable() {
   const missionBlock = key => {
     const txs = groups[key];
     const total = txs.reduce((s, t) => s + t.amount, 0);
-    const label = key || "Sans mission";
     const missionDateId = "missionDate_" + btoa(key || "_none").replace(/=/g, "");
+    const isExpanded = _openMissions.has(key);
     return `
       <div style="margin-bottom:14px;border:1.5px solid var(--line);border-radius:14px;overflow:hidden;">
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--lavender-soft);">
+        <div onclick="toggleMissionCollapse(${JSON.stringify(key)})"
+          style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--lavender-soft);cursor:pointer;user-select:none;">
+          <span style="font-size:13px;transition:transform .2s;transform:rotate(${isExpanded ? 90 : 0}deg);color:var(--ink-soft);">▶</span>
           <div style="flex:1;">
             <div style="font-size:14px;font-weight:700;color:var(--ink);">${key ? '✈️ ' + escapeHtml(key) : '📌 Sans mission'}</div>
             <div style="font-size:12px;color:var(--ink-soft);">${txs.length} dépense${txs.length > 1 ? 's' : ''} · ${total.toFixed(2)} €</div>
           </div>
-          <button onclick="toggleGroupReimb('${missionDateId}')"
+          <button onclick="event.stopPropagation();toggleGroupReimb('${missionDateId}')"
             style="padding:5px 11px;border-radius:8px;border:1.5px solid var(--lilac);background:white;color:var(--lilac);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">
             Tout rembourser →
           </button>
@@ -6752,27 +6757,27 @@ function renderReimbursable() {
         <div id="${missionDateId}_form" style="display:none;padding:10px 14px;background:#f0fdf4;border-top:1px solid #d1fae5;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
             <span style="font-size:12px;color:var(--ink-soft);">Date :</span>
-            <input type="date" id="${missionDateId}" value="${today}"
+            <input type="date" id="${missionDateId}" value="${today}" onclick="event.stopPropagation()"
               style="padding:5px 9px;border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:12px;" />
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
             <span style="font-size:12px;color:var(--ink-soft);">Montant remboursé :</span>
-            <input type="number" id="${missionDateId}_amt" value="${total.toFixed(2)}" step="0.01" min="0"
+            <input type="number" id="${missionDateId}_amt" value="${total.toFixed(2)}" step="0.01" min="0" onclick="event.stopPropagation()"
               style="width:100px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:12px;" />
             <span style="font-size:11px;color:var(--ink-soft);">€ (total dépensé : ${total.toFixed(2)} €)</span>
           </div>
           <div style="display:flex;gap:8px;">
-            <button onclick="confirmGroupReimbursed(${JSON.stringify(txs.map(t => t.id))}, '${missionDateId}', ${JSON.stringify(key || '')})"
+            <button onclick="event.stopPropagation();confirmGroupReimbursed(${JSON.stringify(txs.map(t => t.id))}, '${missionDateId}', ${JSON.stringify(key || '')})"
               style="padding:5px 14px;border-radius:7px;border:none;background:#10b981;color:white;font-size:12px;font-weight:600;cursor:pointer;">
               Confirmer tout ✓
             </button>
-            <button onclick="document.getElementById('${missionDateId}_form').style.display='none'"
+            <button onclick="event.stopPropagation();document.getElementById('${missionDateId}_form').style.display='none'"
               style="padding:5px 10px;border-radius:7px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:12px;cursor:pointer;">
               Annuler
             </button>
           </div>
         </div>
-        <div>${txs.map(tx => txRow(tx)).join("")}</div>
+        <div style="display:${isExpanded ? 'block' : 'none'};">${txs.map(tx => txRow(tx)).join("")}</div>
       </div>`;
   };
 
@@ -6815,6 +6820,12 @@ function renderReimbursable() {
 function toggleGroupReimb(id) {
   const form = document.getElementById(id + "_form");
   if (form) form.style.display = form.style.display === "none" ? "flex" : "none";
+}
+function toggleMissionCollapse(key) {
+  if (!_openMissions) _openMissions = new Set();
+  if (_openMissions.has(key)) _openMissions.delete(key);
+  else _openMissions.add(key);
+  renderReimbursable();
 }
 function _createReimbIncomeTx(dateIso, reimbAmount, note) {
   // Crée une transaction Revenu pour le remboursement reçu
