@@ -7257,11 +7257,16 @@ function renderMoneyCatChart() {
     type: "doughnut",
     data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
     options: {
-      ...baseChartOpts(), cutout: "62%",
+      responsive: true, maintainAspectRatio: false,
+      cutout: "62%",
+      interaction: { mode: "nearest", intersect: true },
       onClick: (evt, elements) => {
         if (!elements.length) return;
         const idx = elements[0].index;
         openCatDetail(entries[idx][0]);
+      },
+      onHover: (evt, elements) => {
+        evt.native.target.style.cursor = elements.length ? "pointer" : "default";
       },
       plugins: {
         ...baseChartOpts().plugins,
