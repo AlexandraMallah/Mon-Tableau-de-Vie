@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v155</title>
+<title>Mon Tableau de Vie 🌿 · v156</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2378,11 +2378,37 @@
 
   <!-- VIEW: JOURNAL -->
   <section class="view" data-view="journal">
-    <div class="card">
-      <h2>Note du jour</h2>
-      <p style="color:var(--ink-soft);font-size:13px;margin:-8px 0 12px;">Pensées, gratitudes, réflexions. Enregistrement automatique.</p>
-      <textarea class="journal-input" id="journalToday" placeholder="Aujourd'hui, je…"></textarea>
-      <div id="journalMoodTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:0;"></div>
+    <div class="grid-two">
+      <div class="card">
+        <h2>✍️ Note libre</h2>
+        <p style="color:var(--ink-soft);font-size:13px;margin:-8px 0 12px;">Pensées, réflexions du moment. Sauvegarde automatique.</p>
+        <textarea class="journal-input" id="journalToday" placeholder="Aujourd'hui, je…"></textarea>
+        <div id="journalMoodTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:0;"></div>
+      </div>
+      <div class="card">
+        <h2>🌱 En bref aujourd'hui</h2>
+        <p style="color:var(--ink-soft);font-size:13px;margin:-8px 0 16px;">Trois questions, deux minutes.</p>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px;">🏆 Accomplissement du jour</label>
+            <input type="text" id="journalAccomplishment" maxlength="200"
+              placeholder="Une chose faite dont je suis fière…"
+              style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:white;box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px;">🙏 Gratitude</label>
+            <input type="text" id="journalGratitude" maxlength="200"
+              placeholder="Ce pour quoi je suis reconnaissante…"
+              style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:white;box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px;">✨ Moment fort</label>
+            <input type="text" id="journalHighlight" maxlength="200"
+              placeholder="La meilleure chose du jour…"
+              style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:white;box-sizing:border-box;" />
+          </div>
+        </div>
+      </div>
     </div>
     <div style="height:18px;"></div>
     <div class="card">
@@ -2914,31 +2940,40 @@ const JOURNAL_EMOTIONS = [
             "réussi","réussie","déterminé","déterminée","lancé","lancée",
             "j'ai avancé","belle avancée","grosse avancée","bien avancé","bien avancée",
             "en forme","dans le flow","dans le feu","j'ai hâte","trop impatiente","trop impatient",
-            "ça avance bien","j'ai enfin","on avance"] },
+            "ça avance bien","j'ai enfin","on avance","bonne journée","super journée",
+            "journée productive","super bien","vraiment bien","trop bien","contente","content",
+            "fière","fier","j'ai kiffé","c'était top","trop cool","j'adore","j'ai adoré",
+            "belle journée","ça s'est bien passé","bien passé"] },
   { id: "serenite", label: "Sérénité", emoji: "😌", color: "#0d9488", bg: "#ccfbf1",
     words: ["serein","sereine","apaisé","apaisée","zen","reposé","reposée",
             "détendu","détendue","paisible","tranquille","en paix","légèreté",
-            "bien dormi","bonne nuit","nuit paisible","j'ai bien dormi","me sens légère","me sens léger"] },
+            "bien dormi","bonne nuit","nuit paisible","j'ai bien dormi","me sens légère","me sens léger",
+            "ça fait du bien","ressourcée","ressourcé","calme","douce journée","doux moment",
+            "belle soirée","chouette","agréable","sympa","c'était sympa"] },
   { id: "stress", label: "Stress", emoji: "😰", color: "#ea580c", bg: "#ffedd5",
     words: ["stressé","stressée","stresse","anxieux","anxieuse","inquiet","inquiète",
             "débordée","débordé","surchargé","surchargée","submergé","submergée",
             "angoisse","angoissé","angoissée","grosse pression","sous pression",
             "pas dormi","n'ai pas dormi","deadline","urgence","trop de boulot",
-            "j'en peux plus","overwhelmed","trop de choses"] },
+            "j'en peux plus","overwhelmed","trop de choses","beaucoup à faire",
+            "journée chargée","c'est compliqué","c'est difficile","galère","galéré"] },
   { id: "fatigue", label: "Fatigue", emoji: "😴", color: "#7c3aed", bg: "#ede9fe",
     words: ["fatigué","fatiguée","épuisé","épuisée","crevé","crevée","claqué","claquée",
             "las","lasse","mal dormi","nuit courte","nuit blanche","somnolent","somnolente",
             "vidé","vidée","je traîne","j'ai du mal","à bout","sans énergie","manque d'énergie",
-            "besoin de repos","besoin de dormir","trop peu dormi"] },
+            "besoin de repos","besoin de dormir","trop peu dormi","j'ai pas dormi",
+            "trop fatiguée","trop fatigué","pas la forme","pas d'énergie","pétée","lessivée"] },
   { id: "tristesse", label: "Tristesse", emoji: "😢", color: "#2563eb", bg: "#dbeafe",
     words: ["triste","tristesse","pleuré","pleurer","mélancolie","cafard","déprimé","déprimée",
             "morose","découragé","découragée","découragement","spleen","nostalgie","nostalgique",
             "ça me manque","elle me manque","il me manque","me sens seule","me sens seul",
-            "pas le moral","le moral dans les chaussettes","pas top le moral","pas top aujourd'hui"] },
+            "pas le moral","le moral dans les chaussettes","pas top le moral","pas top aujourd'hui",
+            "pas bien","un peu down","bof","pas terrible","pas génial","pas terrible"] },
   { id: "colere", label: "Irritation", emoji: "😤", color: "#dc2626", bg: "#fee2e2",
     words: ["énervé","énervée","agacé","agacée","frustré","frustrée","colère","furieux","furieuse",
             "irrité","irritée","insupportable","ras-le-bol","ras le bol","j'en ai marre",
-            "exaspéré","exaspérée","c'est nul","je déteste","c'est chiant","franchement non"] },
+            "exaspéré","exaspérée","c'est nul","je déteste","c'est chiant","franchement non",
+            "pénible","c'est relou","relou","je supporte plus","trop galère","putain"] },
 ];
 function analyzeJournal(text) {
   if (!text || text.trim().length < 15) return [];
@@ -3306,7 +3341,7 @@ let _selectedDayKey = null; // null = aujourd'hui
 function getSelectedDayKey() { return _selectedDayKey || todayKey(); }
 function getToday() {
   const k = getSelectedDayKey();
-  if (!state.history[k]) state.history[k] = { habits: {}, activities: {}, mood: null, sleep: null, sleepQuality: null, energy: null, weight: null, water: 0, journal: "", bedtime: null, wakeTime: null, todo: [] };
+  if (!state.history[k]) state.history[k] = { habits: {}, activities: {}, mood: null, sleep: null, sleepQuality: null, energy: null, weight: null, water: 0, journal: "", bedtime: null, wakeTime: null, todo: [], accomplishment: "", gratitude: "", highlight: "" };
   else {
     const d = state.history[k];
     if (!d.habits) d.habits = {}; if (!d.activities) d.activities = {};
@@ -3315,6 +3350,9 @@ function getToday() {
     if (d.wakeTime === undefined) d.wakeTime = null;
     if (d.sleepQuality === undefined) d.sleepQuality = null;
     if (!Array.isArray(d.todo)) d.todo = [];
+    if (d.accomplishment === undefined) d.accomplishment = "";
+    if (d.gratitude === undefined) d.gratitude = "";
+    if (d.highlight === undefined) d.highlight = "";
   }
   return state.history[k];
 }
@@ -7445,8 +7483,22 @@ function renderJournal() {
   const text = today.journal || "";
   document.getElementById("journalToday").value = text;
   renderJournalMoodTags(text);
+  // Prompts dev perso
+  const aEl = document.getElementById("journalAccomplishment");
+  const gEl = document.getElementById("journalGratitude");
+  const hEl = document.getElementById("journalHighlight");
+  if (aEl) aEl.value = today.accomplishment || "";
+  if (gEl) gEl.value = today.gratitude || "";
+  if (hEl) hEl.value = today.highlight || "";
+
+  // Entrées passées : on affiche journal libre + prompts s'ils existent
   const past = Object.entries(state.history)
-    .filter(([k, v]) => k !== todayKey() && v.journal && v.journal.trim())
+    .filter(([k, v]) => k !== todayKey() && (
+      (v.journal && v.journal.trim()) ||
+      (v.accomplishment && v.accomplishment.trim()) ||
+      (v.gratitude && v.gratitude.trim()) ||
+      (v.highlight && v.highlight.trim())
+    ))
     .sort((a, b) => b[0].localeCompare(a[0])).slice(0, 20);
   if (!past.length) {
     document.getElementById("journalPast").innerHTML = `<p style="color:var(--ink-soft);font-size:14px;padding:10px;">Tes entrées passées apparaîtront ici.</p>`;
@@ -7456,11 +7508,17 @@ function renderJournal() {
     const [y, m, d] = k.split("-");
     const dateObj = new Date(Number(y), Number(m) - 1, Number(d));
     const dateStr = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-    const badges = emotionBadgesHtml(analyzeJournal(v.journal), true);
+    const badges = emotionBadgesHtml(analyzeJournal(v.journal || ""), true);
+    const promptsHtml = [
+      v.accomplishment ? `<div style="margin-top:6px;font-size:13px;"><span style="color:#d97706;font-weight:600;">🏆</span> ${escapeHtml(v.accomplishment)}</div>` : "",
+      v.gratitude      ? `<div style="margin-top:4px;font-size:13px;"><span style="color:#b45309;font-weight:600;">🙏</span> ${escapeHtml(v.gratitude)}</div>` : "",
+      v.highlight      ? `<div style="margin-top:4px;font-size:13px;"><span style="color:#7c3aed;font-weight:600;">✨</span> ${escapeHtml(v.highlight)}</div>` : "",
+    ].join("");
     return `
       <div class="journal-entry">
         <div class="journal-date">${dateStr}${badges ? `<span style="margin-left:8px;">${badges}</span>` : ""}</div>
-        <div class="journal-text">${escapeHtml(v.journal)}</div>
+        ${promptsHtml}
+        ${v.journal && v.journal.trim() ? `<div class="journal-text" style="margin-top:${promptsHtml ? "8px" : "0"};color:var(--ink-soft);">${escapeHtml(v.journal)}</div>` : ""}
       </div>`;
   }).join("");
 }
@@ -7472,6 +7530,21 @@ function setupJournal() {
     clearTimeout(timeout);
     timeout = setTimeout(() => { getToday().journal = ta.value; saveState(); }, 800);
   });
+  // Prompts dev perso
+  const autoSave = (fieldId, key) => {
+    const el = document.getElementById(fieldId);
+    if (!el) return;
+    let t;
+    el.addEventListener("input", () => {
+      clearTimeout(t);
+      t = setTimeout(() => { getToday()[key] = el.value; saveState(); }, 800);
+    });
+    el.addEventListener("focus", () => el.style.borderColor = "var(--lavender)");
+    el.addEventListener("blur",  () => el.style.borderColor = "var(--line)");
+  };
+  autoSave("journalAccomplishment", "accomplishment");
+  autoSave("journalGratitude",      "gratitude");
+  autoSave("journalHighlight",      "highlight");
 }
 
 /* ========= PILIERS DE VIE (auto-calculés) ========= */
