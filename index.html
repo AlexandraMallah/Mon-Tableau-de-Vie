@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v184</title>
+<title>Mon Tableau de Vie 🌿 · v185</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1677,6 +1677,21 @@
     <div id="futureDayBanner" style="display:none;background:var(--butter-soft,#fef9e7);border:1px solid var(--butter,#f5d76e);border-radius:12px;padding:9px 16px;margin-bottom:18px;font-size:13px;color:var(--ink-soft);text-align:center;">
       📅 Tu prépares <strong id="futureDayBannerLabel">demain</strong> à l'avance — seul le to-do est actif pour les jours futurs
     </div>
+    <!-- Widget météo -->
+    <div id="weatherWidget" style="display:none;background:linear-gradient(135deg,var(--sky-soft),var(--lavender-soft));border-radius:16px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div id="weatherIcon" style="font-size:32px;line-height:1;">⛅</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+          <span id="weatherTemp" style="font-size:22px;font-weight:700;color:var(--ink);">—</span>
+          <span id="weatherDesc" style="font-size:13px;color:var(--ink-soft);text-transform:capitalize;">Chargement…</span>
+          <span id="weatherCity" style="font-size:12px;color:var(--ink-softer);margin-left:auto;">📍 —</span>
+        </div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">
+          <span id="weatherFeels">Ressenti : —</span> · <span id="weatherHumidity">Humidité : —</span> · <span id="weatherWind">Vent : —</span>
+        </div>
+      </div>
+      <button onclick="fetchWeather()" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.6);font-size:11px;cursor:pointer;color:var(--ink-soft);" title="Actualiser">🔄</button>
+    </div>
     <div class="rings" id="rings"></div>
     <div class="grid-two">
       <div class="card">
@@ -2265,6 +2280,20 @@
         <span id="dailyExpenseLegend" style="margin-left:auto;"></span>
       </div>
       <div class="chart-wrap" style="height:220px;"><canvas id="dailyExpenseChart"></canvas></div>
+    </div>
+    <!-- Évolution du solde + comparaison mois -->
+    <div class="grid-two-eq" style="margin-bottom:18px;">
+      <div class="card">
+        <h2 style="margin:0 0 12px;">📉 Évolution du solde (3 mois)</h2>
+        <div class="chart-wrap" style="height:200px;"><canvas id="balanceEvolutionChart"></canvas></div>
+      </div>
+      <div class="card" id="monthCompareCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px;">
+          <h2 style="margin:0;">⚖️ Mois en mois</h2>
+          <span id="monthCompareLabel" style="font-size:12px;color:var(--ink-soft);"></span>
+        </div>
+        <div id="monthCompareBody"></div>
+      </div>
     </div>
     <div class="grid-two-eq">
       <div class="card">
@@ -3560,6 +3589,63 @@ function renderHeader() {
   document.getElementById("todayDate").textContent = formatDateFr();
 }
 
+/* ========= MÉTÉO (Open-Meteo, sans clé API) ========= */
+const WMO_ICONS = {
+  0:"☀️",1:"🌤️",2:"⛅",3:"☁️",
+  45:"🌫️",48:"🌫️",
+  51:"🌦️",53:"🌦️",55:"🌧️",
+  61:"🌧️",63:"🌧️",65:"🌧️",
+  71:"🌨️",73:"🌨️",75:"❄️",
+  80:"🌦️",81:"🌧️",82:"⛈️",
+  95:"⛈️",96:"⛈️",99:"⛈️",
+};
+const WMO_DESC = {
+  0:"Ciel dégagé",1:"Principalement dégagé",2:"Partiellement nuageux",3:"Couvert",
+  45:"Brouillard",48:"Brouillard givrant",
+  51:"Bruine légère",53:"Bruine modérée",55:"Bruine dense",
+  61:"Pluie légère",63:"Pluie modérée",65:"Pluie forte",
+  71:"Neige légère",73:"Neige modérée",75:"Neige forte",
+  80:"Averses légères",81:"Averses modérées",82:"Averses violentes",
+  95:"Orage",96:"Orage avec grêle",99:"Orage fort",
+};
+async function fetchWeather() {
+  const widget = document.getElementById("weatherWidget");
+  if (!widget) return;
+  widget.style.display = "flex";
+  document.getElementById("weatherDesc").textContent = "Chargement…";
+  try {
+    // 1. Géolocalisation
+    const pos = await new Promise((res, rej) =>
+      navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000 })
+    );
+    const { latitude: lat, longitude: lon } = pos.coords;
+    // 2. Nom de la ville via Nominatim
+    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+    const geoData = await geoRes.json();
+    const city = geoData.address?.city || geoData.address?.town || geoData.address?.village || geoData.address?.county || "Ma position";
+    // 3. Météo via Open-Meteo (gratuit, sans clé)
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&wind_speed_unit=kmh&timezone=auto`;
+    const wRes = await fetch(url);
+    const wData = await wRes.json();
+    const cur = wData.current;
+    const code = cur.weather_code;
+    document.getElementById("weatherIcon").textContent   = WMO_ICONS[code] || "🌡️";
+    document.getElementById("weatherTemp").textContent   = Math.round(cur.temperature_2m) + "°C";
+    document.getElementById("weatherDesc").textContent   = WMO_DESC[code] || "—";
+    document.getElementById("weatherCity").textContent   = "📍 " + city;
+    document.getElementById("weatherFeels").textContent  = "Ressenti : " + Math.round(cur.apparent_temperature) + "°C";
+    document.getElementById("weatherHumidity").textContent = "Humidité : " + cur.relative_humidity_2m + "%";
+    document.getElementById("weatherWind").textContent   = "Vent : " + Math.round(cur.wind_speed_10m) + " km/h";
+  } catch(e) {
+    document.getElementById("weatherDesc").textContent = "Localisation refusée ou réseau indisponible";
+  }
+}
+// Charger la météo quand on est sur Aujourd'hui
+function maybeLoadWeather() {
+  const w = document.getElementById("weatherWidget");
+  if (w && w.style.display !== "flex") fetchWeather();
+}
+
 /* ========= TABS ========= */
 function setupTabs() {
   document.querySelectorAll(".tab").forEach(t => {
@@ -3584,10 +3670,11 @@ function setupTabs() {
   });
 }
 function onViewChange(view) {
+  if (view === "today") maybeLoadWeather();
   if (view === "work") updateWorkTabBadges();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
   if (view === "health") { renderBodyChart(currentBodyMetric); renderWellbeingChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); }
-  if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
+  if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
 }
@@ -6957,7 +7044,7 @@ function confirmReimbursed(id) {
   tx.reimbTxId = _createReimbIncomeTx(dateIso, reimbAmt, note);
   _reimbFormOpenId = null;
   saveState();
-  renderMoney(); renderDailyExpenseChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 
 function confirmGroupReimbursed(ids, dateInputId, mission) {
@@ -6976,7 +7063,7 @@ function confirmGroupReimbursed(ids, dateInputId, mission) {
   if (txs[0]) txs[0].reimbTxId = incId;
   _reimbFormOpenId = null;
   saveState();
-  renderMoney(); renderDailyExpenseChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 
 function toggleReimbForm(id) {
@@ -6995,7 +7082,7 @@ function undoReimbursed(id) {
   delete tx.reimbursedAt;
   delete tx.reimbursedAmount;
   saveState();
-  renderMoney(); renderDailyExpenseChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 function balanceCourant() {
   const start = state.accounts?.courantStart || 0;
@@ -7147,12 +7234,12 @@ function addTransaction() {
   toggleMissionField("txMissionWrap", false);
   initTxDate(); // remet à aujourd'hui après ajout
   saveState();
-  renderMoney(); renderDailyExpenseChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 function deleteTx(id) {
   state.transactions = state.transactions.filter(t => t.id !== id);
   saveState();
-  renderMoney(); renderDailyExpenseChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 
 /* ===== TX EDIT MODAL ===== */
@@ -7233,7 +7320,7 @@ function saveTxFromModal() {
   tx.mission = tx.reimbursable ? (document.getElementById("txModalMission")?.value.trim() || "") : "";
   saveState();
   closeTxModal();
-  renderMoney(); renderDailyExpenseChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 function deleteTxFromModal() {
   const id = document.getElementById("txModalId").value;
@@ -7241,7 +7328,7 @@ function deleteTxFromModal() {
   state.transactions = state.transactions.filter(t => t.id !== id);
   saveState();
   closeTxModal();
-  renderMoney(); renderDailyExpenseChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 document.getElementById("catDetailModal").addEventListener("click", e => { if (e.target.id === "catDetailModal") e.target.classList.remove("open"); });
 // 24 couleurs pastel toutes distinctes — assignées par index dans la liste des catégories
@@ -7524,6 +7611,103 @@ function renderMoneyFlowChart() {
     },
   });
 }
+let balanceEvolutionChart = null;
+function renderBalanceEvolutionChart() {
+  // Calcul du solde courant jour par jour sur les 90 derniers jours
+  const today = new Date(); today.setHours(0,0,0,0);
+  const days = [];
+  for (let i = 89; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    days.push(d);
+  }
+  const base = state.accounts?.courantStart || 0;
+  // Trier toutes les transactions par date
+  const txSorted = [...state.transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const balances = days.map(day => {
+    const dk = day.toISOString().slice(0,10);
+    let bal = base;
+    for (const t of txSorted) {
+      if (t.date > dk) break;
+      if (t.type === "income")       bal += t.amount;
+      else if (t.type === "expense") bal -= t.amount;
+      else if (t.type === "savings") bal -= t.amount;
+      else if (t.type === "savings-out") bal += t.amount;
+    }
+    return bal;
+  });
+  // Labels : 1 sur 10 pour ne pas surcharger
+  const labels = days.map((d, i) => i % 10 === 0 ? d.toLocaleDateString("fr-FR", { day:"numeric", month:"short" }) : "");
+  if (balanceEvolutionChart) balanceEvolutionChart.destroy();
+  const ctx = document.getElementById("balanceEvolutionChart");
+  if (!ctx) return;
+  // Couleur de la courbe selon solde final
+  const lastBal = balances[balances.length - 1];
+  const lineColor = lastBal >= 0 ? "#4d9c7e" : "#c75b4d";
+  balanceEvolutionChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        data: balances,
+        borderColor: lineColor,
+        backgroundColor: lineColor + "22",
+        fill: true,
+        tension: 0.35,
+        pointRadius: 0,
+        borderWidth: 2.5,
+      }]
+    },
+    options: {
+      ...baseChartOpts(),
+      plugins: { ...baseChartOpts().plugins, legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#8a8499", maxRotation: 0 } },
+        y: {
+          grid: { color: "#f3eef9" },
+          ticks: { color: "#8a8499", callback: v => v.toFixed(0) + " €" },
+        },
+      },
+    },
+  });
+}
+
+function renderMonthComparison() {
+  const el = document.getElementById("monthCompareBody");
+  const lbl = document.getElementById("monthCompareLabel");
+  if (!el) return;
+  const now = new Date();
+  const mThis  = new Date(now.getFullYear(), now.getMonth(), 1);
+  const mPrev  = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const mPrev2 = new Date(now.getFullYear(), now.getMonth(), 1); // fin mois précédent
+  const sum = (from, to, type) =>
+    state.transactions.filter(t => { const d = new Date(t.date); return d >= from && d < to && t.type === type; })
+    .reduce((s, t) => s + t.amount, 0);
+  const nowLabel   = mThis.toLocaleDateString("fr-FR", { month:"long" });
+  const prevLabel  = mPrev.toLocaleDateString("fr-FR", { month:"long" });
+  if (lbl) lbl.textContent = `${prevLabel} → ${nowLabel}`;
+  const rows = [
+    { label: "Dépenses",  icon: "−", colorN: "#c75b4d", n: sum(mThis, new Date(now.getFullYear(), now.getMonth()+1, 1), "expense"), p: sum(mPrev, mPrev2, "expense") },
+    { label: "Revenus",   icon: "+", colorN: "#4d9c7e", n: sum(mThis, new Date(now.getFullYear(), now.getMonth()+1, 1), "income"),  p: sum(mPrev, mPrev2, "income") },
+    { label: "Épargne",   icon: "💰", colorN: "#7c5cbf", n: sum(mThis, new Date(now.getFullYear(), now.getMonth()+1, 1), "savings"), p: sum(mPrev, mPrev2, "savings") },
+    { label: "Hors cpt.", icon: "🧾", colorN: "#c08a4d", n: sum(mThis, new Date(now.getFullYear(), now.getMonth()+1, 1), "external"), p: sum(mPrev, mPrev2, "external") },
+  ];
+  el.innerHTML = rows.map(r => {
+    const diff = r.n - r.p;
+    const pct  = r.p > 0 ? ((diff / r.p) * 100).toFixed(0) : "—";
+    // Pour les dépenses, hausse = mauvais (rouge) ; pour le reste, hausse = bon (vert)
+    const isExpense = r.label === "Dépenses" || r.label === "Hors cpt.";
+    const diffColor = diff === 0 ? "var(--ink-soft)" : (diff > 0 ? (isExpense ? "#c75b4d" : "#4d9c7e") : (isExpense ? "#4d9c7e" : "#c75b4d"));
+    const arrow = diff === 0 ? "→" : (diff > 0 ? "↑" : "↓");
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);gap:8px;">
+      <span style="font-size:13px;color:var(--ink);font-weight:500;min-width:70px;">${r.icon} ${r.label}</span>
+      <span style="font-size:12px;color:var(--ink-soft);">${r.p.toFixed(0)} €</span>
+      <span style="font-size:13px;font-weight:700;color:${r.colorN};">${r.n.toFixed(0)} €</span>
+      <span style="font-size:12px;font-weight:700;color:${diffColor};min-width:52px;text-align:right;">${arrow} ${Math.abs(diff).toFixed(0)} € ${pct !== "—" ? `(${pct}%)` : ""}</span>
+    </div>`;
+  }).join("") +
+  `<div style="margin-top:8px;font-size:11px;color:var(--ink-softer);text-align:right;">← ${prevLabel} · ${nowLabel} en cours →</div>`;
+}
+
 function renderSavings() {
   const all = state.transactions.filter(t => t.type === "savings");
   // Total = solde réel du compte épargne (solde de départ + toutes les transactions)
@@ -11010,6 +11194,8 @@ try {
   populateTxCategories();
   renderAll();
   checkSeedBanner();
+  // Météo au démarrage (onglet Aujourd'hui actif par défaut)
+  setTimeout(fetchWeather, 800);
 } catch(e) {
   console.error("[init] crash :", e);
   document.body.innerHTML = `
