@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v231</title>
+<title>Mon Tableau de Vie 🌿 · v232</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3949,6 +3949,40 @@ function migrate(s) {
   if (!s.work.workNotes) s.work.workNotes = [];
   if (!s.work.biblio) s.work.biblio = { refs: [], codes: [], extracts: [], zoteroUserId: '', zoteroApiKey: '' };
   if (!s.work.biblioProjects) s.work.biblioProjects = [];
+  // Migration : déplacer les refs/collections des projets vers la biblio globale
+  if (!s.work.biblio) s.work.biblio = { refs: [], codes: [], extracts: [], collections: [], zoteroUserId: "", zoteroApiKey: "" };
+  if (s.work.biblioProjects) {
+    s.work.biblioProjects.forEach(p => {
+      if (!p.biblio) return;
+      // Déplacer refs vers global (déduplique par zoteroKey)
+      if ((p.biblio.refs||[]).length > 0) {
+        const existingKeys = new Set((s.work.biblio.refs||[]).map(r => r.zoteroKey || r.id));
+        (p.biblio.refs||[]).forEach(r => {
+          if (!existingKeys.has(r.zoteroKey || r.id)) {
+            if (!s.work.biblio.refs) s.work.biblio.refs = [];
+            s.work.biblio.refs.push(r);
+            existingKeys.add(r.zoteroKey || r.id);
+          }
+        });
+        p.biblio.refs = [];
+      }
+      // Déplacer collections vers global
+      if ((p.biblio.collections||[]).length > 0) {
+        if (!s.work.biblio.collections || s.work.biblio.collections.length === 0) {
+          s.work.biblio.collections = p.biblio.collections;
+          s.work.biblio.collectionOrder = p.biblio.collectionOrder || [];
+        }
+        p.biblio.collections = [];
+        p.biblio.collectionOrder = [];
+      }
+      // Déplacer config Zotero vers global si pas encore là
+      if (p.biblio.zoteroUserId && !s.work.biblio.zoteroUserId) {
+        s.work.biblio.zoteroUserId = p.biblio.zoteroUserId;
+        s.work.biblio.zoteroApiKey  = p.biblio.zoteroApiKey || "";
+        s.work.biblio.zoteroSkipPersonal = p.biblio.zoteroSkipPersonal || false;
+      }
+    });
+  }
   return s;
 }
 function saveState() {
@@ -10190,6 +10224,12 @@ function _biblioDef() {
   return { refs: [], codes: [], extracts: [], zoteroUserId: "", zoteroApiKey: "" };
 }
 
+// Biblio GLOBALE : refs + collections partagées entre tous les projets
+function _getGlobalBiblio() {
+  if (!state.work.biblio) state.work.biblio = { refs: [], codes: [], extracts: [], collections: [], zoteroUserId: "", zoteroApiKey: "" };
+  return state.work.biblio;
+}
+
 function _getBiblioProjects() {
   if (!state.work.biblioProjects) state.work.biblioProjects = [];
   return state.work.biblioProjects;
@@ -10364,7 +10404,7 @@ function toggleBiblioCollapse(key, e) {
 function renderBiblioCollectionTree() {
   const el = document.getElementById("biblioCollectionTree");
   if (!el) return;
-  const biblio = _getActiveBiblio() || _biblioDef();
+  const biblio = _getGlobalBiblio();
   const cols = biblio.collections || [];
 
   if (!cols.length) {
@@ -10506,7 +10546,7 @@ function renderBiblioRefs() {
     if (el) el.innerHTML = '<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:24px;">Crée un <strong>+ Projet</strong> pour commencer.</p>';
     return;
   }
-  const biblio = _getActiveBiblio() || _biblioDef();
+  const biblio = _getGlobalBiblio();
   const search = (document.getElementById("biblioSearch")?.value || "").toLowerCase();
   const filterStatus = document.getElementById("biblioFilterStatus")?.value || "";
   const filterType   = document.getElementById("biblioFilterType")?.value   || "";
@@ -10611,7 +10651,7 @@ function selectCodeColor(color) {
   });
 }
 function renderBiblioCodes() {
-  const biblio = _getActiveBiblio() || _biblioDef();
+  const biblio = _getActiveBiblio() || _biblioDef(); // codes = projet
   const codes = biblio.codes || [];
   const countEl = document.getElementById("biblioCodeCount");
   if (countEl) countEl.textContent = `(${codes.length})`;
@@ -10683,7 +10723,8 @@ function populateBiblioExtractFilters() {
   }
 }
 function renderBiblioExtracts() {
-  const biblio = _getActiveBiblio() || _biblioDef();
+  const biblio = _getGlobalBiblio();
+  const projectBiblio = _getActiveBiblio() || _biblioDef();
   const filterRef  = document.getElementById("biblioExtractFilterRef")?.value  || "";
   const filterCode = document.getElementById("biblioExtractFilterCode")?.value || "";
   let exts = biblio.extracts || [];
@@ -10756,7 +10797,7 @@ function openExtractModal(id) {
   document.getElementById("extractModal").classList.add("open");
 }
 function renderExtractRefPicker() {
-  const biblio = _getActiveBiblio() || _biblioDef();
+  const biblio = _getGlobalBiblio();
   const refs = biblio.refs || [];
   const cols = biblio.collections || [];
   const search = (document.getElementById("extractRefSearch")?.value || "").toLowerCase().trim();
@@ -10910,14 +10951,15 @@ function populateBiblioByCodeSelect() {
   sel.value = prev;
 }
 function renderBiblioByCode() {
-  const biblio = _getActiveBiblio() || _biblioDef();
+  const biblio = _getGlobalBiblio();
+  const projectBiblio = _getActiveBiblio() || _biblioDef();
   const codeId = document.getElementById("biblioByCodeSelect")?.value || "";
   const el = document.getElementById("biblioByCodeContent");
   if (!el) return;
   if (!codeId) { el.innerHTML = ""; return; }
   const code = (biblio.codes||[]).find(c=>c.id===codeId);
   if (!code) return;
-  const exts = (biblio.extracts||[]).filter(e=>(e.codes||[]).includes(codeId));
+  const exts = (projectBiblio.extracts||[]).filter(e=>(e.codes||[]).includes(codeId));
   if (!exts.length) {
     el.innerHTML = `<div class="card"><p style="color:var(--ink-soft);text-align:center;padding:20px;">Aucun extrait codé "${code.label}" pour l'instant.</p></div>`;
     return;
@@ -11016,8 +11058,8 @@ async function syncZotero() {
     _biblioProjectId = id;
     renderBiblioProjectSelect();
   }
-  const b = _getActiveBiblio() || _biblioDef();
-  const cfg = state.work.biblio || {};
+  const b = _getGlobalBiblio();
+  const cfg = b;
   const uid = cfg.zoteroUserId;
   const key = cfg.zoteroApiKey;
   const skipPersonal = cfg.zoteroSkipPersonal || false;
