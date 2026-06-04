@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v255</title>
+<title>Mon Tableau de Vie 🌿 · v256</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -11752,9 +11752,10 @@ function renderMealWeekGrid() {
     const plan = state.domestique.mealPlan?.[key] || {};
     const isToday = key === today;
     const dayNum  = `${d.getDate()} ${d.toLocaleDateString("fr-FR", { month: "short" })}`;
-    html += `
+    const sep = i === 7 ? '<div style="grid-column:1/-1;border-top:2px dashed var(--line);margin:4px 0;"></div>' : '';
+    html += sep + `
     <div class="meal-day-row${isToday ? " meal-today" : ""}">
-      <div class="meal-day-label">${dayShort[i]}<span class="meal-day-num">${dayNum}</span></div>
+      <div class="meal-day-label">${dayShort[i%7]}<span class="meal-day-num">${dayNum}</span></div>
       <div class="meal-slot" onclick="editMealSlot('${key}','midi',this)">
         <span class="meal-slot-label">Midi</span>
         <span class="meal-slot-value${plan.midi ? "" : " empty"}">${plan.midi ? escapeHtml(plan.midi) : "—"}</span>
