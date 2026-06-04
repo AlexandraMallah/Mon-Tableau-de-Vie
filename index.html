@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v248</title>
+<title>Mon Tableau de Vie 🌿 · v249</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13520,14 +13520,8 @@ function signInWithGoogle() {
     return;
   }
   const provider = new firebase.auth.GoogleAuthProvider();
-  _fbAuth.signInWithPopup(provider).catch(e => {
-    if (e.code === "auth/popup-blocked" || e.code === "auth/popup-closed-by-user") {
-      showToast("↗️ Redirection vers Google…");
-      setTimeout(() => _fbAuth.signInWithRedirect(provider), 500);
-    } else {
-      showToast("❌ " + (e.message || e));
-    }
-  });
+  showToast("↗️ Redirection vers Google…");
+  _fbAuth.signInWithRedirect(provider);
 }
 
 function showSyncMenu() {
@@ -13554,6 +13548,11 @@ function showSyncMenu() {
     _fbDb   = firebase.firestore();
     _fbAuth = firebase.auth();
 
+    // Récupérer la session après une redirection Google
+    _fbAuth.getRedirectResult().then(result => {
+      if (result && result.user) showToast("✅ Connecté·e !");
+    }).catch(() => {});
+
     _fbAuth.onAuthStateChanged(user => {
       _fbUser = user;
       _fbUpdateUI(user);
@@ -13561,7 +13560,6 @@ function showSyncMenu() {
         _fbLoad();
       } else {
         if (_fbUnsub) { _fbUnsub(); _fbUnsub = null; }
-        // Montre le bouton connexion seulement quand on sait que l'utilisateur n'est pas connecté
         const btn = document.getElementById("syncSignInBtn");
         if (btn) btn.style.display = "";
         _fbSetStatus("off");
