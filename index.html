@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v230</title>
+<title>Mon Tableau de Vie 🌿 · v231</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2133,10 +2133,12 @@
           </div>
           <!-- Handle de redimensionnement -->
           <div id="biblioResizeHandle"
-            style="cursor:col-resize;background:var(--line);border-radius:4px;align-self:stretch;margin:0 2px;width:8px;min-width:8px;transition:background 0.15s;display:flex;align-items:center;justify-content:center;"
+            style="cursor:col-resize;align-self:stretch;width:16px;min-width:16px;display:flex;align-items:center;justify-content:center;"
             onmousedown="startBiblioResize(event)"
-            onmouseover="this.style.background='var(--lavender)'"
-            onmouseout="this.style.background='var(--line)'"></div>
+            onmouseover="document.getElementById('biblioResizeLine').style.background='var(--lavender)'"
+            onmouseout="document.getElementById('biblioResizeLine').style.background='var(--line)'">
+            <div id="biblioResizeLine" style="width:4px;height:100%;background:var(--line);border-radius:4px;transition:background 0.15s;pointer-events:none;"></div>
+          </div>
           <!-- Liste refs -->
           <div class="card">
           <div class="work-header">
@@ -10443,9 +10445,9 @@ function startBiblioResize(e) {
   function onUp() {
     document.removeEventListener("mousemove", onMove);
     document.removeEventListener("mouseup",   onUp);
-    document.getElementById("biblioResizeHandle").style.background = "var(--line)";
+    document.getElementById("biblioResizeLine").style.background = "var(--line)";
   }
-  document.getElementById("biblioResizeHandle").style.background = "var(--lavender)";
+  document.getElementById("biblioResizeLine").style.background = "var(--lavender)";
   document.addEventListener("mousemove", onMove);
   document.addEventListener("mouseup",   onUp);
 }
