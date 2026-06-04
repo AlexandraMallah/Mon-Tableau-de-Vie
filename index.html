@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v237</title>
+<title>Mon Tableau de Vie 🌿 · v238</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10663,8 +10663,31 @@ function renderBiblioRefs() {
   if (filterStatus) refs = refs.filter(r => r.status === filterStatus);
   if (filterType)   refs = refs.filter(r => r.type   === filterType);
   if (filterColl) {
-    const descKeys = getAllDescendantKeys(filterColl, _getGlobalBiblio().collections || []);
-    refs = refs.filter(r => (r.zoteroCollections||[]).some(k => descKeys.has(k)));
+    // Utiliser le biblio déjà capturé (évite un double appel qui peut renvoyer un objet différent)
+    const globalCols = biblio.collections || [];
+    if (globalCols.length > 0) {
+      const descKeys = getAllDescendantKeys(filterColl, globalCols);
+      refs = refs.filter(r => (r.zoteroCollections||[]).some(k => descKeys.has(k)));
+    } else {
+      // Fallback : approche bottom-up — chercher si filterColl est ancêtre d'une collection de la ref
+      // Utilise les collections stockées dans l'arbre visible (state.work.biblio.collections recalculé)
+      const freshCols = (state.work.biblio || {}).collections || [];
+      refs = refs.filter(r => {
+        return (r.zoteroCollections||[]).some(rKey => {
+          if (rKey === filterColl) return true;
+          // Remonter les ancêtres
+          let cur = rKey; let depth = 0;
+          while (cur && depth < 30) {
+            const col = freshCols.find(c => c.key === cur);
+            if (!col) break;
+            if (col.parentKey === filterColl) return true;
+            cur = col.parentKey;
+            depth++;
+          }
+          return false;
+        });
+      });
+    }
   }
   const countEl = document.getElementById("biblioRefCount");
   if (countEl) countEl.textContent = `(${refs.length}/${biblio.refs.length})`;
