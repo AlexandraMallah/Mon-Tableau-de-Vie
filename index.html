@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v257</title>
+<title>Mon Tableau de Vie 🌿 · v258</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2571,6 +2571,7 @@
       <button class="sub-tab" data-sub="meals">🍽️ Repas</button>
       <button class="sub-tab" data-sub="groceries">🛒 Courses</button>
       <button class="sub-tab" data-sub="plants">🌱 Plantes</button>
+      <button class="sub-tab" data-sub="cuisine">🍳 Cuisine</button>
     </div>
 
     <!-- Sub: To-do du jour -->
@@ -2633,6 +2634,7 @@
     <div class="sub-view" data-sub="meals">
       <!-- Navigation semaine -->
       <div class="meal-week-nav">
+        <button class="btn-soft" onclick="generateMealGroceries()" style="font-size:12px;margin-right:8px;">🛒 Générer la liste de courses</button>
         <button class="day-nav-btn" onclick="mealNavWeek(-1)" title="Semaine précédente">◀</button>
         <div id="mealWeekLabel" class="meal-week-label">Semaine du …</div>
         <button class="day-nav-btn" onclick="mealNavWeek(1)" title="Semaine suivante">▶</button>
@@ -2726,6 +2728,21 @@
         <div id="plantsList"></div>
       </div>
     </div>
+  <!-- Sub: Cuisine -->
+    <div class="sub-view" data-sub="cuisine">
+      <div class="card">
+        <div class="work-header">
+          <h2 style="margin:0;">🍳 Mes recettes <span class="count" id="recipeCount"></span></h2>
+          <button class="btn-primary" onclick="openRecipeModal()">+ Recette</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <input type="text" id="recipeSearch" placeholder="🔍 Chercher une recette…" oninput="renderRecipes()"
+            style="flex:1;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;" />
+        </div>
+        <div id="recipeList"></div>
+      </div>
+    </div>
+
   </section>
 
   <!-- VIEW: CALENDAR -->
@@ -3125,6 +3142,35 @@
       <div class="spacer"></div>
       <button class="secondary" onclick="closeCodeModal()">Annuler</button>
       <button class="primary" onclick="saveCode()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Recette -->
+<div class="modal-bg" id="recipeModal" onclick="if(event.target===this)closeRecipeModal()">
+  <div class="modal" style="max-width:600px;max-height:90vh;overflow-y:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+    <h2 id="recipeModalTitle">Nouvelle recette</h2>
+    <input type="hidden" id="recipeModalId" />
+    <div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:0;">
+      <div><label>Nom de la recette *</label>
+        <input type="text" id="recipeModalName" placeholder="ex : Poulet rôti" /></div>
+      <div><label>Portions</label>
+        <input type="number" id="recipeModalServings" min="1" value="4"
+          style="width:80px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" /></div>
+    </div>
+    <label>Ingrédients</label>
+    <div id="recipeIngredientsList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+    <button onclick="addRecipeIngredient()"
+      style="width:100%;padding:8px;border:1.5px dashed var(--line);background:transparent;border-radius:10px;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">+ Ajouter un ingrédient</button>
+    <label style="margin-top:10px;">Notes (optionnel)</label>
+    <textarea id="recipeModalNotes" rows="2"
+      style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;"
+      placeholder="Préparation, astuces…"></textarea>
+    <div class="actions">
+      <button class="danger" id="recipeModalDeleteBtn" onclick="deleteRecipe()" style="display:none;">Supprimer</button>
+      <div class="spacer"></div>
+      <button class="secondary" onclick="closeRecipeModal()">Annuler</button>
+      <button class="primary" onclick="saveRecipe()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -3755,7 +3801,7 @@ const DEFAULT_STATE = {
   transactions: [],
   subscriptions: [],
   accounts: { courantStart: 0, epargneStart: 0 },
-  domestique: { groceries: [], groceryEvents: [], mealEvents: [], chores: [], plants: [], tasks: [] },
+  domestique: { groceries: [], groceryEvents: [], mealEvents: [], chores: [], plants: [], tasks: [], recipes: [] },
   calEvents: [],
   calSources: [],
   googleCal: { url: "", lastSync: null },
@@ -3847,7 +3893,8 @@ function migrate(s) {
   s.domestique.groceryEvents = s.domestique.groceryEvents || [];
   s.domestique.chores = s.domestique.chores || [];
   s.domestique.plants = s.domestique.plants || [];
-  s.domestique.tasks  = s.domestique.tasks  || [];
+  s.domestique.tasks    = s.domestique.tasks    || [];
+  s.domestique.recipes  = s.domestique.recipes  || [];
   s.domestique.mealPlan = s.domestique.mealPlan || {};
   s.domestique.mealEvents = s.domestique.mealEvents || [];
   // Migration : convertit les anciens plats (strings) en objets { id, name, ingredients }
@@ -10309,7 +10356,163 @@ function deleteTodoItem(id) {
   _renderAllTodo();
 }
 
-function renderDomestique() { renderTodo(); renderDomesticTasks(); renderMealPlan(); renderGroceries(); renderPlants(); }
+function renderDomestique() { renderTodo(); renderDomesticTasks(); renderMealPlan(); renderGroceries(); renderPlants(); renderRecipes(); }
+
+/* ========= CUISINE — RECETTES ========= */
+function renderRecipes() {
+  if (!state.domestique.recipes) state.domestique.recipes = [];
+  const recipes = state.domestique.recipes;
+  const search = (document.getElementById("recipeSearch")?.value || "").toLowerCase();
+  const countEl = document.getElementById("recipeCount");
+  if (countEl) countEl.textContent = `(${recipes.length})`;
+  const el = document.getElementById("recipeList");
+  if (!el) return;
+  const filtered = search ? recipes.filter(r => r.name.toLowerCase().includes(search) || (r.notes||"").toLowerCase().includes(search)) : recipes;
+  if (!filtered.length) {
+    el.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">${recipes.length ? "Aucun résultat." : "Aucune recette — clique sur + Recette !"}</p>`;
+    return;
+  }
+  el.innerHTML = filtered.map(r => `
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;border-bottom:1px solid var(--line);cursor:pointer;" onclick="openRecipeModal('${r.id}')">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:14px;">${escapeHtml(r.name)}</div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">
+          👥 ${r.servings} portion${r.servings>1?"s":""} · ${(r.ingredients||[]).length} ingrédient${(r.ingredients||[]).length>1?"s":""}
+        </div>
+        ${r.ingredients&&r.ingredients.length ? `<div style="font-size:12px;color:var(--ink-softer);margin-top:3px;">${r.ingredients.slice(0,4).map(i=>escapeHtml(i.quantity+" "+i.unit+" "+i.name)).join(", ")}${r.ingredients.length>4?"…":""}</div>` : ""}
+      </div>
+    </div>`).join("");
+}
+
+function openRecipeModal(id) {
+  const r = id ? (state.domestique.recipes||[]).find(x => x.id === id) : null;
+  document.getElementById("recipeModalTitle").textContent = r ? "Modifier la recette" : "Nouvelle recette";
+  document.getElementById("recipeModalId").value = id || "";
+  document.getElementById("recipeModalName").value = r?.name || "";
+  document.getElementById("recipeModalServings").value = r?.servings || 4;
+  document.getElementById("recipeModalNotes").value = r?.notes || "";
+  const delBtn = document.getElementById("recipeModalDeleteBtn");
+  if (delBtn) delBtn.style.display = r ? "inline-block" : "none";
+  // Ingrédients
+  const list = document.getElementById("recipeIngredientsList");
+  list.innerHTML = "";
+  (r?.ingredients||[{quantity:"",unit:"",name:""}]).forEach(ing => addRecipeIngredient(ing));
+  document.getElementById("recipeModal").classList.add("open");
+}
+function closeRecipeModal() { document.getElementById("recipeModal").classList.remove("open"); }
+
+function addRecipeIngredient(ing) {
+  ing = ing || {quantity:"",unit:"",name:""};
+  const list = document.getElementById("recipeIngredientsList");
+  const row = document.createElement("div");
+  row.style.cssText = "display:flex;gap:6px;align-items:center;";
+  row.innerHTML = `
+    <input type="text" value="${escapeHtml(String(ing.quantity||""))}" placeholder="Qté" class="rec-ing-qty"
+      style="width:60px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+    <input type="text" value="${escapeHtml(ing.unit||"")}" placeholder="Unité" class="rec-ing-unit"
+      style="width:80px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+    <input type="text" value="${escapeHtml(ing.name||"")}" placeholder="Ingrédient" class="rec-ing-name"
+      style="flex:1;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+    <button onclick="this.parentElement.remove()" style="padding:6px 9px;border-radius:7px;border:1px solid var(--line);background:white;cursor:pointer;color:var(--ink-softer);">✕</button>`;
+  list.appendChild(row);
+}
+
+function saveRecipe() {
+  if (!state.domestique.recipes) state.domestique.recipes = [];
+  const id = document.getElementById("recipeModalId").value;
+  const name = document.getElementById("recipeModalName").value.trim();
+  if (!name) { alert("Le nom est obligatoire."); return; }
+  const servings = parseInt(document.getElementById("recipeModalServings").value) || 4;
+  const notes = document.getElementById("recipeModalNotes").value.trim();
+  const ingredients = [];
+  document.querySelectorAll("#recipeIngredientsList > div").forEach(row => {
+    const qty  = row.querySelector(".rec-ing-qty")?.value.trim();
+    const unit = row.querySelector(".rec-ing-unit")?.value.trim();
+    const name2= row.querySelector(".rec-ing-name")?.value.trim();
+    if (name2) ingredients.push({ id: "ing"+Date.now()+Math.random().toString(36).slice(2,5), quantity: qty||"", unit: unit||"", name: name2 });
+  });
+  const data = { id: id||"rec"+Date.now(), name, servings, ingredients, notes, createdAt: new Date().toISOString() };
+  if (id) { const i = state.domestique.recipes.findIndex(r=>r.id===id); if(i>=0) state.domestique.recipes[i]=data; }
+  else     state.domestique.recipes.unshift(data);
+  saveState(); closeRecipeModal(); renderRecipes();
+}
+
+function deleteRecipe() {
+  const id = document.getElementById("recipeModalId").value;
+  if (!id || !confirm("Supprimer cette recette ?")) return;
+  state.domestique.recipes = state.domestique.recipes.filter(r => r.id !== id);
+  saveState(); closeRecipeModal(); renderRecipes();
+}
+
+// Sélectionner une recette dans un créneau repas
+function pickRecipeForMeal(dateKey, slot, slotEl) {
+  const recipes = state.domestique.recipes || [];
+  if (!recipes.length) { alert("Aucune recette — crée-en une dans l'onglet 🍳 Cuisine."); return; }
+  const names = ["— Aucune recette —", ...recipes.map(r => r.name + " (" + r.servings + " portions)")];
+  const choice = prompt("Choisir une recette pour ce repas :
+" + names.map((n,i)=>i+". "+n).join("
+") + "
+
+Tape le numéro :");
+  const idx = parseInt(choice);
+  if (isNaN(idx) || idx < 0 || idx > recipes.length) return;
+  if (!state.domestique.mealPlan) state.domestique.mealPlan = {};
+  if (!state.domestique.mealPlan[dateKey]) state.domestique.mealPlan[dateKey] = {};
+  if (idx === 0) {
+    state.domestique.mealPlan[dateKey][slot] = "";
+    state.domestique.mealPlan[dateKey][slot+"RecipeId"] = "";
+  } else {
+    const rec = recipes[idx-1];
+    state.domestique.mealPlan[dateKey][slot] = rec.name;
+    state.domestique.mealPlan[dateKey][slot+"RecipeId"] = rec.id;
+  }
+  saveState(); renderMealWeekGrid();
+}
+
+// Générer la liste de courses à partir des recettes du planning
+function generateMealGroceries() {
+  const weekStart = getMealWeekStart();
+  const recipes = state.domestique.recipes || [];
+  const aggregated = {}; // "name|unit" -> { name, unit, quantity }
+  let found = 0;
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(weekStart); d.setDate(d.getDate() + i);
+    const key = todayKey(d);
+    const plan = state.domestique.mealPlan?.[key] || {};
+    ["midi","soir"].forEach(slot => {
+      const recId = plan[slot+"RecipeId"];
+      if (!recId) return;
+      const rec = recipes.find(r => r.id === recId);
+      if (!rec) return;
+      found++;
+      (rec.ingredients||[]).forEach(ing => {
+        const k = ing.name.toLowerCase()+"|"+(ing.unit||"");
+        if (!aggregated[k]) aggregated[k] = { name: ing.name, unit: ing.unit||"", quantity: 0, qtyStr: "" };
+        const n = parseFloat(String(ing.quantity).replace(",","."));
+        if (!isNaN(n)) aggregated[k].quantity += n;
+        else aggregated[k].qtyStr = (aggregated[k].qtyStr ? aggregated[k].qtyStr+", " : "") + ing.quantity;
+      });
+    });
+  }
+  if (found === 0) { showToast("Aucune recette dans le planning — assigne des recettes d'abord."); return; }
+  // Ajouter à la liste de courses
+  if (!state.domestique.groceryEvents) state.domestique.groceryEvents = [];
+  let evId = state.domestique.groceryEvents.find(e => e.name === "Courses semaine")?.id;
+  if (!evId) {
+    evId = "ev-courses-" + Date.now();
+    state.domestique.groceryEvents.push({ id: evId, name: "Courses semaine", date: todayKey() });
+  }
+  if (!state.domestique.groceries) state.domestique.groceries = [];
+  Object.values(aggregated).forEach(item => {
+    const qty = item.quantity > 0 ? (Number.isInteger(item.quantity) ? String(item.quantity) : item.quantity.toFixed(1)) : item.qtyStr;
+    const label = (qty ? qty+" "+(item.unit?item.unit+" ":"") : "") + item.name;
+    state.domestique.groceries.push({ id: "g"+Date.now()+Math.random().toString(36).slice(2,5), name: label, eventId: evId, checked: false });
+  });
+  saveState();
+  showToast(`🛒 ${Object.keys(aggregated).length} ingrédients ajoutés aux courses !`);
+  // Aller aux courses
+  document.querySelector('[data-sub="groceries"]')?.click();
+}
 
 /* ============================================================
    BIBLIOGRAPHIE — CRUD + ZOTERO
@@ -11756,7 +11959,9 @@ function renderMealWeekGrid() {
     html += sep + `
     <div class="meal-day-row${isToday ? " meal-today" : ""}">
       <div class="meal-day-label">${dayShort[i%7]}<span class="meal-day-num">${dayNum}</span></div>
-      <div class="meal-slot" onclick="editMealSlot('${key}','midi',this)">
+      <div class="meal-slot" style="position:relative;">
+        <button onclick="event.stopPropagation();pickRecipeForMeal('${key}','midi',this)" title="Choisir une recette" style="position:absolute;top:4px;right:4px;background:none;border:none;cursor:pointer;font-size:12px;opacity:0.5;">📖</button>
+        <div onclick="editMealSlot('${key}','midi',this)">
         <span class="meal-slot-label">Midi</span>
         <span class="meal-slot-value${plan.midi ? "" : " empty"}">${plan.midi ? escapeHtml(plan.midi) : "—"}</span>
       </div>
@@ -11771,8 +11976,9 @@ function renderMealWeekGrid() {
 
 function editMealSlot(dateKey, slot, slotEl) {
   const valueSpan = slotEl.querySelector(".meal-slot-value");
-  if (!valueSpan || slotEl.querySelector("input")) return; // déjà en édition
+  if (!valueSpan || slotEl.querySelector("input")) return;
   const current = state.domestique.mealPlan?.[dateKey]?.[slot] || "";
+  const currentRecipeId = state.domestique.mealPlan?.[dateKey]?.[slot+"RecipeId"] || "";
   const input = document.createElement("input");
   input.value = current;
   input.placeholder = slot === "midi" ? "Déjeuner…" : "Dîner…";
