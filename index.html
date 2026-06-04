@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v253</title>
+<title>Mon Tableau de Vie 🌿 · v254</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -11229,7 +11229,7 @@ function renderExtractCodeSearch() {
   const biblio = _getActiveBiblio() || _biblioDef();
   const allCodes = biblio.codes || [];
   if (!allCodes.length) {
-    dropdown.innerHTML = '<p style="padding:8px;font-size:12px;color:var(--ink-softer);">Crée d'abord des codes dans l'onglet 🏷️ Codes.</p>';
+    dropdown.innerHTML = "<p style='padding:8px;font-size:12px;color:var(--ink-softer);'>Crée d'abord des codes dans l'onglet 🏷️ Codes.</p>";
     dropdown.style.display = "block";
     return;
   }
