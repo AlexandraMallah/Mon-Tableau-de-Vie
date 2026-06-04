@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v201</title>
+<title>Mon Tableau de Vie 🌿 · v202</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1798,6 +1798,7 @@
       <button class="sub-tab" data-sub="valorisation">📝 Valorisation</button>
       <button class="sub-tab" data-sub="teaching">📚 Enseignement</button>
       <button class="sub-tab" data-sub="notes">📓 Notes</button>
+      <button class="sub-tab" data-sub="biblio">📖 Biblio</button>
     </div>
 
     <!-- Sub: Tâches -->
@@ -2089,6 +2090,119 @@
               data-placeholder="Écris ta note ici…"></div>
             <div style="font-size:11px;color:var(--ink-softer);text-align:right;" id="noteAutoSaveLabel"></div>
           </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Sub: Bibliographie -->
+    <div class="sub-view" data-sub="biblio">
+      <!-- Mini-nav interne -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;" id="biblioNav">
+        <button class="sub-tab active" data-biblio="refs" onclick="switchBiblioPanel('refs')">📚 Références</button>
+        <button class="sub-tab" data-biblio="extracts" onclick="switchBiblioPanel('extracts')">✏️ Extraits</button>
+        <button class="sub-tab" data-biblio="codes" onclick="switchBiblioPanel('codes')">🏷️ Codes</button>
+        <button class="sub-tab" data-biblio="bycode" onclick="switchBiblioPanel('bycode')">🔍 Vue par code</button>
+        <button class="sub-tab" data-biblio="zotero" onclick="switchBiblioPanel('zotero')" style="margin-left:auto;">⚙️ Zotero</button>
+      </div>
+
+      <!-- Panel : Références -->
+      <div id="biblioPanel-refs">
+        <div class="card">
+          <div class="work-header">
+            <h2 style="margin:0;">📚 Mes références <span class="count" id="biblioRefCount"></span></h2>
+            <button class="btn-primary" onclick="openRefModal()">+ Ajouter</button>
+          </div>
+          <!-- Filtres -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+            <input type="text" id="biblioSearch" placeholder="🔍 Chercher…" oninput="renderBiblioRefs()"
+              style="flex:1;min-width:160px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;" />
+            <select id="biblioFilterStatus" onchange="renderBiblioRefs()"
+              style="padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:white;">
+              <option value="">Tous les statuts</option>
+              <option value="to-read">📌 À lire</option>
+              <option value="reading">📖 En cours</option>
+              <option value="read">✅ Lu</option>
+            </select>
+            <select id="biblioFilterType" onchange="renderBiblioRefs()"
+              style="padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:white;">
+              <option value="">Tous les types</option>
+              <option value="book">📗 Livre</option>
+              <option value="article">📄 Article</option>
+              <option value="chapter">📑 Chapitre</option>
+              <option value="report">📋 Rapport</option>
+              <option value="other">📎 Autre</option>
+            </select>
+          </div>
+          <div id="biblioRefList"></div>
+        </div>
+      </div>
+
+      <!-- Panel : Extraits -->
+      <div id="biblioPanel-extracts" style="display:none;">
+        <div class="card">
+          <div class="work-header" style="margin-bottom:14px;">
+            <h2 style="margin:0;">✏️ Extraits codés <span class="count" id="biblioExtractCount"></span></h2>
+            <button class="btn-primary" onclick="openExtractModal()">+ Ajouter un extrait</button>
+          </div>
+          <!-- Filtre par référence -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+            <select id="biblioExtractFilterRef" onchange="renderBiblioExtracts()"
+              style="flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:white;">
+              <option value="">Toutes les références</option>
+            </select>
+            <select id="biblioExtractFilterCode" onchange="renderBiblioExtracts()"
+              style="flex:1;min-width:160px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:white;">
+              <option value="">Tous les codes</option>
+            </select>
+          </div>
+          <div id="biblioExtractList"></div>
+        </div>
+      </div>
+
+      <!-- Panel : Codes -->
+      <div id="biblioPanel-codes" style="display:none;">
+        <div class="card">
+          <div class="work-header" style="margin-bottom:14px;">
+            <h2 style="margin:0;">🏷️ Mes codes <span class="count" id="biblioCodeCount"></span></h2>
+            <button class="btn-primary" onclick="openCodeModal()">+ Nouveau code</button>
+          </div>
+          <div id="biblioCodeList"></div>
+        </div>
+      </div>
+
+      <!-- Panel : Vue par code -->
+      <div id="biblioPanel-bycode" style="display:none;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+          <select id="biblioByCodeSelect" onchange="renderBiblioByCode()"
+            style="flex:1;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:white;">
+            <option value="">Sélectionne un code…</option>
+          </select>
+        </div>
+        <div id="biblioByCodeContent"></div>
+      </div>
+
+      <!-- Panel : Zotero -->
+      <div id="biblioPanel-zotero" style="display:none;">
+        <div class="card">
+          <h2 style="margin:0 0 10px;">⚙️ Connexion Zotero</h2>
+          <p style="font-size:13px;color:var(--ink-soft);margin:0 0 14px;">L'API Zotero est gratuite. Trouve ton User ID et ta clé API sur <strong>zotero.org → Paramètres → Feeds/API</strong>.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div>
+              <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">User ID (nombre)</label>
+              <input type="text" id="zoteroUserId" placeholder="ex : 1234567"
+                style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;box-sizing:border-box;" />
+            </div>
+            <div>
+              <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Clé API</label>
+              <input type="text" id="zoteroApiKey" placeholder="ex : aBcDeFgH12345678"
+                style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;box-sizing:border-box;" />
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-primary" onclick="saveZoteroConfig()">💾 Enregistrer</button>
+            <button class="btn-soft" onclick="syncZotero()">🔄 Synchroniser la bibliothèque</button>
+          </div>
+          <div id="zoteroStatus" style="margin-top:12px;font-size:13px;"></div>
         </div>
       </div>
     </div>
@@ -2779,6 +2893,112 @@
     <div class="actions">
       <button class="primary" onclick="saveSettings()">Enregistrer</button>
       <button class="secondary" onclick="closeSettings()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BIBLIO MODALS ===== -->
+<!-- Modal référence -->
+<div class="modal-bg" id="refModal" onclick="if(event.target===this)closeRefModal()">
+  <div class="modal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+    <h2 id="refModalTitle">Nouvelle référence</h2>
+    <input type="hidden" id="refModalId" />
+    <div class="grid-2">
+      <div>
+        <label>Type</label>
+        <select id="refModalType" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;">
+          <option value="book">📗 Livre</option>
+          <option value="article">📄 Article</option>
+          <option value="chapter">📑 Chapitre</option>
+          <option value="report">📋 Rapport</option>
+          <option value="other">📎 Autre</option>
+        </select>
+      </div>
+      <div>
+        <label>Statut</label>
+        <select id="refModalStatus" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;">
+          <option value="to-read">📌 À lire</option>
+          <option value="reading">📖 En cours</option>
+          <option value="read">✅ Lu</option>
+        </select>
+      </div>
+    </div>
+    <label>Titre *</label>
+    <input type="text" id="refModalTitle2" placeholder="Titre de l'ouvrage ou de l'article" />
+    <label>Auteur(s)</label>
+    <input type="text" id="refModalAuthors" placeholder="Nom, Prénom ; Nom2, Prénom2" />
+    <div class="grid-2">
+      <div><label>Année</label><input type="text" id="refModalYear" placeholder="2024" /></div>
+      <div><label>Pages / Volume</label><input type="text" id="refModalPages" placeholder="ex: 234 p. ou vol. 3(2)" /></div>
+    </div>
+    <label>Éditeur / Revue</label>
+    <input type="text" id="refModalPublisher" placeholder="Maison d'édition ou nom de la revue" />
+    <label>DOI / URL</label>
+    <input type="text" id="refModalDoi" placeholder="https://..." />
+    <label>Notes personnelles</label>
+    <textarea id="refModalNotes" rows="3" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;" placeholder="Pourquoi ce texte est pertinent, résumé…"></textarea>
+    <div class="actions">
+      <button class="danger" id="refModalDeleteBtn" onclick="deleteRef()" style="display:none;">Supprimer</button>
+      <div class="spacer"></div>
+      <button class="secondary" onclick="closeRefModal()">Annuler</button>
+      <button class="primary" onclick="saveRef()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal extrait -->
+<div class="modal-bg" id="extractModal" onclick="if(event.target===this)closeExtractModal()">
+  <div class="modal" style="max-width:600px;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+    <h2 id="extractModalTitle">Nouvel extrait</h2>
+    <input type="hidden" id="extractModalId" />
+    <label>Référence *</label>
+    <select id="extractModalRef" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:0;"></select>
+    <div class="grid-2" style="margin-top:10px;">
+      <div><label>Page(s)</label><input type="text" id="extractModalPage" placeholder="ex : 45 ou 45-47" /></div>
+      <div><label>Codes attribués *</label></div>
+    </div>
+    <div id="extractCodePicker" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:8px;background:#faf8fd;border-radius:10px;min-height:36px;"></div>
+    <label>Passage (texte à citer)</label>
+    <textarea id="extractModalText" rows="6"
+      style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;line-height:1.6;"
+      placeholder="Colle ou tape ici le passage que tu veux coder…"></textarea>
+    <label>Annotation personnelle</label>
+    <input type="text" id="extractModalNote" placeholder="Ta remarque, interprétation…" />
+    <div class="actions">
+      <button class="danger" id="extractModalDeleteBtn" onclick="deleteExtract()" style="display:none;">Supprimer</button>
+      <div class="spacer"></div>
+      <button class="secondary" onclick="closeExtractModal()">Annuler</button>
+      <button class="primary" onclick="saveExtract()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal code -->
+<div class="modal-bg" id="codeModal" onclick="if(event.target===this)closeCodeModal()">
+  <div class="modal" style="max-width:440px;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+    <h2 id="codeModalTitle">Nouveau code</h2>
+    <input type="hidden" id="codeModalId" />
+    <label>Intitulé du code *</label>
+    <input type="text" id="codeModalLabel" placeholder="ex : Méthode, Théorie, Exemple empirique…" />
+    <label>Couleur</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;" id="codeColorPicker">
+      <button onclick="selectCodeColor('#c9b6f0')" style="width:28px;height:28px;border-radius:50%;background:#c9b6f0;border:2px solid transparent;cursor:pointer;" data-color="#c9b6f0"></button>
+      <button onclick="selectCodeColor('#aee0c8')" style="width:28px;height:28px;border-radius:50%;background:#aee0c8;border:2px solid transparent;cursor:pointer;" data-color="#aee0c8"></button>
+      <button onclick="selectCodeColor('#f5b6c9')" style="width:28px;height:28px;border-radius:50%;background:#f5b6c9;border:2px solid transparent;cursor:pointer;" data-color="#f5b6c9"></button>
+      <button onclick="selectCodeColor('#f7c9a3')" style="width:28px;height:28px;border-radius:50%;background:#f7c9a3;border:2px solid transparent;cursor:pointer;" data-color="#f7c9a3"></button>
+      <button onclick="selectCodeColor('#b4d4f1')" style="width:28px;height:28px;border-radius:50%;background:#b4d4f1;border:2px solid transparent;cursor:pointer;" data-color="#b4d4f1"></button>
+      <button onclick="selectCodeColor('#f5e6a8')" style="width:28px;height:28px;border-radius:50%;background:#f5e6a8;border:2px solid transparent;cursor:pointer;" data-color="#f5e6a8"></button>
+      <button onclick="selectCodeColor('#d4b6f0')" style="width:28px;height:28px;border-radius:50%;background:#d4b6f0;border:2px solid transparent;cursor:pointer;" data-color="#d4b6f0"></button>
+      <button onclick="selectCodeColor('#89d4cf')" style="width:28px;height:28px;border-radius:50%;background:#89d4cf;border:2px solid transparent;cursor:pointer;" data-color="#89d4cf"></button>
+    </div>
+    <input type="hidden" id="codeModalColor" value="#c9b6f0" />
+    <label>Description (optionnel)</label>
+    <input type="text" id="codeModalDesc" placeholder="À quoi sert ce code ?" />
+    <div class="actions">
+      <button class="danger" id="codeModalDeleteBtn" onclick="deleteCode()" style="display:none;">Supprimer</button>
+      <div class="spacer"></div>
+      <button class="secondary" onclick="closeCodeModal()">Annuler</button>
+      <button class="primary" onclick="saveCode()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -3670,6 +3890,7 @@ function migrate(s) {
   }
   if (!s.work) s.work = {};
   if (!s.work.workNotes) s.work.workNotes = [];
+  if (!s.work.biblio) s.work.biblio = { refs: [], codes: [], extracts: [], zoteroUserId: '', zoteroApiKey: '' };
   return s;
 }
 function saveState() {
@@ -3833,6 +4054,7 @@ function setupTabs() {
       t.classList.add("active");
       parent.querySelector(`.sub-view[data-sub="${t.dataset.sub}"]`).classList.add("active");
       if (t.dataset.sub === "notes") renderWorkNotes();
+      if (t.dataset.sub === "biblio") { switchBiblioPanel('refs'); }
     });
   });
 }
@@ -9888,6 +10110,420 @@ function deleteTodoItem(id) {
 }
 
 function renderDomestique() { renderTodo(); renderDomesticTasks(); renderMealPlan(); renderGroceries(); renderPlants(); }
+
+/* ============================================================
+   BIBLIOGRAPHIE — CRUD + ZOTERO
+   ============================================================ */
+
+// ── État par défaut ──────────────────────────────────────────
+function _biblioDef() {
+  return { refs: [], codes: [], extracts: [], zoteroUserId: "", zoteroApiKey: "" };
+}
+
+// ── Panel navigation ─────────────────────────────────────────
+let _biblioPanel = "refs";
+function switchBiblioPanel(panel) {
+  _biblioPanel = panel;
+  ["refs","extracts","codes","bycode","zotero"].forEach(p => {
+    const el = document.getElementById("biblioPanel-" + p);
+    if (el) el.style.display = p === panel ? "" : "none";
+    const btn = document.querySelector(`[data-biblio="${p}"]`);
+    if (btn) btn.classList.toggle("active", p === panel);
+  });
+  if (panel === "refs")     renderBiblioRefs();
+  if (panel === "extracts") { populateBiblioExtractFilters(); renderBiblioExtracts(); }
+  if (panel === "codes")    renderBiblioCodes();
+  if (panel === "bycode")   { populateBiblioByCodeSelect(); renderBiblioByCode(); }
+  if (panel === "zotero")   loadZoteroConfig();
+}
+
+// ── Refs ─────────────────────────────────────────────────────
+const REF_TYPE_ICON = { book:"📗", article:"📄", chapter:"📑", report:"📋", other:"📎" };
+const REF_STATUS = { "to-read":"📌 À lire", "reading":"📖 En cours", "read":"✅ Lu" };
+
+function renderBiblioRefs() {
+  const biblio = state.work.biblio || _biblioDef();
+  const search = (document.getElementById("biblioSearch")?.value || "").toLowerCase();
+  const filterStatus = document.getElementById("biblioFilterStatus")?.value || "";
+  const filterType   = document.getElementById("biblioFilterType")?.value   || "";
+  let refs = biblio.refs || [];
+  if (search) refs = refs.filter(r =>
+    (r.title||"").toLowerCase().includes(search) ||
+    (r.authors||"").toLowerCase().includes(search) ||
+    (r.year||"").includes(search)
+  );
+  if (filterStatus) refs = refs.filter(r => r.status === filterStatus);
+  if (filterType)   refs = refs.filter(r => r.type   === filterType);
+  const countEl = document.getElementById("biblioRefCount");
+  if (countEl) countEl.textContent = `(${refs.length}/${biblio.refs.length})`;
+  const el = document.getElementById("biblioRefList");
+  if (!el) return;
+  if (!refs.length) {
+    el.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucune référence — clique sur "+ Ajouter".</p>`;
+    return;
+  }
+  el.innerHTML = refs.map(r => {
+    const extractCount = (biblio.extracts||[]).filter(e => e.refId === r.id).length;
+    return `<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer;" onclick="openRefModal('${r.id}')">
+      <span style="font-size:18px;flex-shrink:0;margin-top:2px;">${REF_TYPE_ICON[r.type]||"📎"}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(r.title||"Sans titre")}</div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${escapeHtml(r.authors||"")}${r.year?" · "+r.year:""}</div>
+        ${r.zoteroKey?'<span style="font-size:10px;background:#fff3e0;color:#dc7014;border-radius:5px;padding:1px 5px;">Z</span>':''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+        <span style="font-size:11px;background:#f0f0f5;color:var(--ink-soft);border-radius:6px;padding:2px 7px;">${REF_STATUS[r.status]||""}</span>
+        ${extractCount?`<span style="font-size:11px;color:var(--lilac);">✏️ ${extractCount} extrait${extractCount>1?"s":""}</span>`:""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function openRefModal(id) {
+  const biblio = state.work.biblio || _biblioDef();
+  const r = id ? (biblio.refs||[]).find(x => x.id === id) : null;
+  document.getElementById("refModalTitle").textContent = r ? "Modifier la référence" : "Nouvelle référence";
+  document.getElementById("refModalId").value = id || "";
+  document.getElementById("refModalType").value = r?.type || "book";
+  document.getElementById("refModalStatus").value = r?.status || "to-read";
+  document.getElementById("refModalTitle2").value = r?.title || "";
+  document.getElementById("refModalAuthors").value = r?.authors || "";
+  document.getElementById("refModalYear").value = r?.year || "";
+  document.getElementById("refModalPages").value = r?.pages || "";
+  document.getElementById("refModalPublisher").value = r?.publisher || "";
+  document.getElementById("refModalDoi").value = r?.doi || "";
+  document.getElementById("refModalNotes").value = r?.notes || "";
+  const delBtn = document.getElementById("refModalDeleteBtn");
+  if (delBtn) delBtn.style.display = r ? "inline-block" : "none";
+  document.getElementById("refModal").classList.add("open");
+  setTimeout(() => document.getElementById("refModalTitle2").focus(), 50);
+}
+function closeRefModal() { document.getElementById("refModal").classList.remove("open"); }
+function saveRef() {
+  if (!state.work.biblio) state.work.biblio = _biblioDef();
+  const b = state.work.biblio;
+  const id = document.getElementById("refModalId").value;
+  const title = document.getElementById("refModalTitle2").value.trim();
+  if (!title) { alert("Le titre est obligatoire."); return; }
+  const data = {
+    id: id || "ref" + Date.now(),
+    type:      document.getElementById("refModalType").value,
+    status:    document.getElementById("refModalStatus").value,
+    title,
+    authors:   document.getElementById("refModalAuthors").value.trim(),
+    year:      document.getElementById("refModalYear").value.trim(),
+    pages:     document.getElementById("refModalPages").value.trim(),
+    publisher: document.getElementById("refModalPublisher").value.trim(),
+    doi:       document.getElementById("refModalDoi").value.trim(),
+    notes:     document.getElementById("refModalNotes").value.trim(),
+    createdAt: id ? ((b.refs||[]).find(r=>r.id===id)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+  };
+  if (id) { const i = (b.refs||[]).findIndex(r=>r.id===id); if(i>=0) b.refs[i]={...b.refs[i],...data}; }
+  else    { if(!b.refs) b.refs=[]; b.refs.unshift(data); }
+  saveState(); closeRefModal(); renderBiblioRefs();
+}
+function deleteRef() {
+  const id = document.getElementById("refModalId").value;
+  if (!id || !confirm("Supprimer cette référence et tous ses extraits ?")) return;
+  const b = state.work.biblio;
+  b.refs     = (b.refs||[]).filter(r => r.id !== id);
+  b.extracts = (b.extracts||[]).filter(e => e.refId !== id);
+  saveState(); closeRefModal(); renderBiblioRefs();
+}
+
+// ── Codes ─────────────────────────────────────────────────────
+let _selectedCodeColor = "#c9b6f0";
+function selectCodeColor(color) {
+  _selectedCodeColor = color;
+  document.getElementById("codeModalColor").value = color;
+  document.querySelectorAll("#codeColorPicker button").forEach(b => {
+    b.style.border = b.dataset.color === color ? "2px solid var(--ink)" : "2px solid transparent";
+  });
+}
+function renderBiblioCodes() {
+  const biblio = state.work.biblio || _biblioDef();
+  const codes = biblio.codes || [];
+  const countEl = document.getElementById("biblioCodeCount");
+  if (countEl) countEl.textContent = `(${codes.length})`;
+  const el = document.getElementById("biblioCodeList");
+  if (!el) return;
+  if (!codes.length) {
+    el.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucun code — crée-en un pour commencer à coder tes extraits.</p>`;
+    return;
+  }
+  el.innerHTML = codes.map(c => {
+    const n = (biblio.extracts||[]).filter(e => (e.codes||[]).includes(c.id)).length;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer;" onclick="openCodeModal('${c.id}')">
+      <span style="width:18px;height:18px;border-radius:50%;background:${c.color};flex-shrink:0;display:inline-block;"></span>
+      <span style="font-weight:600;font-size:14px;flex:1;">${escapeHtml(c.label)}</span>
+      ${c.description?`<span style="font-size:12px;color:var(--ink-soft);flex:2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.description)}</span>`:""}
+      <span style="font-size:12px;color:var(--ink-softer);">${n} extrait${n>1?"s":""}</span>
+    </div>`;
+  }).join("");
+}
+function openCodeModal(id) {
+  const biblio = state.work.biblio || _biblioDef();
+  const c = id ? (biblio.codes||[]).find(x => x.id === id) : null;
+  document.getElementById("codeModalTitle").textContent = c ? "Modifier le code" : "Nouveau code";
+  document.getElementById("codeModalId").value = id || "";
+  document.getElementById("codeModalLabel").value = c?.label || "";
+  document.getElementById("codeModalDesc").value = c?.description || "";
+  selectCodeColor(c?.color || "#c9b6f0");
+  const delBtn = document.getElementById("codeModalDeleteBtn");
+  if (delBtn) delBtn.style.display = c ? "inline-block" : "none";
+  document.getElementById("codeModal").classList.add("open");
+}
+function closeCodeModal() { document.getElementById("codeModal").classList.remove("open"); }
+function saveCode() {
+  if (!state.work.biblio) state.work.biblio = _biblioDef();
+  const b = state.work.biblio;
+  const id = document.getElementById("codeModalId").value;
+  const label = document.getElementById("codeModalLabel").value.trim();
+  if (!label) { alert("L'intitulé est obligatoire."); return; }
+  const data = { id: id || "code" + Date.now(), label, color: document.getElementById("codeModalColor").value, description: document.getElementById("codeModalDesc").value.trim() };
+  if (id) { const i = (b.codes||[]).findIndex(c=>c.id===id); if(i>=0) b.codes[i]=data; }
+  else    { if(!b.codes) b.codes=[]; b.codes.push(data); }
+  saveState(); closeCodeModal(); renderBiblioCodes();
+}
+function deleteCode() {
+  const id = document.getElementById("codeModalId").value;
+  if (!id || !confirm("Supprimer ce code ? Les extraits associés le perdront.")) return;
+  const b = state.work.biblio;
+  b.codes = (b.codes||[]).filter(c => c.id !== id);
+  (b.extracts||[]).forEach(e => { e.codes = (e.codes||[]).filter(cid => cid !== id); });
+  saveState(); closeCodeModal(); renderBiblioCodes();
+}
+
+// ── Extraits ──────────────────────────────────────────────────
+function populateBiblioExtractFilters() {
+  const biblio = state.work.biblio || _biblioDef();
+  const refSel  = document.getElementById("biblioExtractFilterRef");
+  const codeSel = document.getElementById("biblioExtractFilterCode");
+  if (refSel) {
+    const prev = refSel.value;
+    refSel.innerHTML = '<option value="">Toutes les références</option>' +
+      (biblio.refs||[]).map(r => `<option value="${r.id}">${escapeHtml(r.title)}</option>`).join("");
+    refSel.value = prev;
+  }
+  if (codeSel) {
+    const prev = codeSel.value;
+    codeSel.innerHTML = '<option value="">Tous les codes</option>' +
+      (biblio.codes||[]).map(c => `<option value="${c.id}">${escapeHtml(c.label)}</option>`).join("");
+    codeSel.value = prev;
+  }
+}
+function renderBiblioExtracts() {
+  const biblio = state.work.biblio || _biblioDef();
+  const filterRef  = document.getElementById("biblioExtractFilterRef")?.value  || "";
+  const filterCode = document.getElementById("biblioExtractFilterCode")?.value || "";
+  let exts = biblio.extracts || [];
+  if (filterRef)  exts = exts.filter(e => e.refId === filterRef);
+  if (filterCode) exts = exts.filter(e => (e.codes||[]).includes(filterCode));
+  const countEl = document.getElementById("biblioExtractCount");
+  if (countEl) countEl.textContent = `(${exts.length})`;
+  const el = document.getElementById("biblioExtractList");
+  if (!el) return;
+  if (!exts.length) {
+    el.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucun extrait pour ce filtre.</p>`;
+    return;
+  }
+  el.innerHTML = exts.map(e => {
+    const ref = (biblio.refs||[]).find(r => r.id === e.refId);
+    const codes = (e.codes||[]).map(cid => (biblio.codes||[]).find(c=>c.id===cid)).filter(Boolean);
+    return `<div style="padding:12px 14px;border-bottom:1px solid var(--line);" onclick="openExtractModal('${e.id}')" style="cursor:pointer;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;cursor:pointer;">
+        ${codes.map(c=>`<span style="font-size:11px;background:${c.color}33;color:var(--ink);border:1.5px solid ${c.color};border-radius:20px;padding:2px 9px;font-weight:600;">${escapeHtml(c.label)}</span>`).join("")}
+        ${e.page?`<span style="font-size:11px;color:var(--ink-softer);padding:2px 6px;">p.${e.page}</span>`:""}
+      </div>
+      <div style="font-size:13px;color:var(--ink);line-height:1.6;background:#faf8fd;border-left:3px solid var(--lavender);padding:8px 12px;border-radius:0 8px 8px 0;cursor:pointer;">"${escapeHtml((e.text||"").slice(0,300))}${e.text&&e.text.length>300?"…":""}"</div>
+      ${ref?`<div style="font-size:11px;color:var(--ink-softer);margin-top:5px;">— ${escapeHtml(ref.authors||ref.title||"")}${ref.year?" ("+ref.year+")":""}</div>`:""}
+      ${e.note?`<div style="font-size:12px;color:var(--ink-soft);margin-top:4px;font-style:italic;">💬 ${escapeHtml(e.note)}</div>`:""}
+    </div>`;
+  }).join("");
+}
+function openExtractModal(id) {
+  const biblio = state.work.biblio || _biblioDef();
+  const e = id ? (biblio.extracts||[]).find(x => x.id === id) : null;
+  document.getElementById("extractModalTitle").textContent = e ? "Modifier l'extrait" : "Nouvel extrait";
+  document.getElementById("extractModalId").value = id || "";
+  // Référence select
+  const refSel = document.getElementById("extractModalRef");
+  refSel.innerHTML = '<option value="">— Choisir une référence —</option>' +
+    (biblio.refs||[]).map(r => `<option value="${r.id}"${e&&e.refId===r.id?" selected":""}>${escapeHtml(r.title)}</option>`).join("");
+  // Page, texte, note
+  document.getElementById("extractModalPage").value = e?.page || "";
+  document.getElementById("extractModalText").value = e?.text || "";
+  document.getElementById("extractModalNote").value = e?.note || "";
+  // Code picker
+  const selectedCodes = e?.codes || [];
+  const picker = document.getElementById("extractCodePicker");
+  picker.innerHTML = (biblio.codes||[]).length
+    ? (biblio.codes||[]).map(c => {
+        const on = selectedCodes.includes(c.id);
+        return `<button onclick="toggleExtractCode('${c.id}',this)" data-code="${c.id}"
+          style="font-size:12px;padding:4px 10px;border-radius:20px;border:1.5px solid ${c.color};background:${on?c.color+"55":"white"};color:var(--ink);cursor:pointer;font-family:inherit;font-weight:${on?700:400};">
+          ${escapeHtml(c.label)}</button>`;
+      }).join("")
+    : `<span style="font-size:12px;color:var(--ink-softer);">Crée d'abord des codes dans l'onglet 🏷️ Codes.</span>`;
+  const delBtn = document.getElementById("extractModalDeleteBtn");
+  if (delBtn) delBtn.style.display = e ? "inline-block" : "none";
+  document.getElementById("extractModal").classList.add("open");
+}
+function toggleExtractCode(codeId, btn) {
+  const biblio = state.work.biblio || _biblioDef();
+  const c = (biblio.codes||[]).find(x=>x.id===codeId);
+  const on = btn.style.fontWeight === "700";
+  btn.style.fontWeight = on ? "400" : "700";
+  btn.style.background = on ? "white" : (c?.color||"#c9b6f0")+"55";
+}
+function closeExtractModal() { document.getElementById("extractModal").classList.remove("open"); }
+function saveExtract() {
+  if (!state.work.biblio) state.work.biblio = _biblioDef();
+  const b = state.work.biblio;
+  const id = document.getElementById("extractModalId").value;
+  const text = document.getElementById("extractModalText").value.trim();
+  if (!text) { alert("Le passage est obligatoire."); return; }
+  const refId = document.getElementById("extractModalRef").value;
+  if (!refId) { alert("Choisis une référence."); return; }
+  // Codes sélectionnés
+  const codes = [];
+  document.querySelectorAll("#extractCodePicker button").forEach(btn => {
+    if (btn.style.fontWeight === "700") codes.push(btn.dataset.code);
+  });
+  const data = {
+    id: id || "ext" + Date.now(),
+    refId,
+    text,
+    page: document.getElementById("extractModalPage").value.trim(),
+    note: document.getElementById("extractModalNote").value.trim(),
+    codes,
+    createdAt: id ? ((b.extracts||[]).find(e=>e.id===id)?.createdAt||new Date().toISOString()) : new Date().toISOString(),
+  };
+  if (id) { const i = (b.extracts||[]).findIndex(e=>e.id===id); if(i>=0) b.extracts[i]=data; }
+  else    { if(!b.extracts) b.extracts=[]; b.extracts.unshift(data); }
+  saveState(); closeExtractModal();
+  populateBiblioExtractFilters(); renderBiblioExtracts();
+}
+function deleteExtract() {
+  const id = document.getElementById("extractModalId").value;
+  if (!id || !confirm("Supprimer cet extrait ?")) return;
+  state.work.biblio.extracts = (state.work.biblio.extracts||[]).filter(e => e.id !== id);
+  saveState(); closeExtractModal(); renderBiblioExtracts();
+}
+
+// ── Vue par code ──────────────────────────────────────────────
+function populateBiblioByCodeSelect() {
+  const biblio = state.work.biblio || _biblioDef();
+  const sel = document.getElementById("biblioByCodeSelect");
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Sélectionne un code…</option>' +
+    (biblio.codes||[]).map(c => {
+      const n = (biblio.extracts||[]).filter(e=>(e.codes||[]).includes(c.id)).length;
+      return `<option value="${c.id}">${escapeHtml(c.label)} (${n})`;
+    }).join("");
+  sel.value = prev;
+}
+function renderBiblioByCode() {
+  const biblio = state.work.biblio || _biblioDef();
+  const codeId = document.getElementById("biblioByCodeSelect")?.value || "";
+  const el = document.getElementById("biblioByCodeContent");
+  if (!el) return;
+  if (!codeId) { el.innerHTML = ""; return; }
+  const code = (biblio.codes||[]).find(c=>c.id===codeId);
+  if (!code) return;
+  const exts = (biblio.extracts||[]).filter(e=>(e.codes||[]).includes(codeId));
+  if (!exts.length) {
+    el.innerHTML = `<div class="card"><p style="color:var(--ink-soft);text-align:center;padding:20px;">Aucun extrait codé "${code.label}" pour l'instant.</p></div>`;
+    return;
+  }
+  // Grouper par référence
+  const byRef = {};
+  exts.forEach(e => { if(!byRef[e.refId]) byRef[e.refId]=[]; byRef[e.refId].push(e); });
+  el.innerHTML = Object.entries(byRef).map(([refId, refExts]) => {
+    const ref = (biblio.refs||[]).find(r=>r.id===refId);
+    return `<div class="card" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="width:14px;height:14px;border-radius:50%;background:${code.color};flex-shrink:0;"></span>
+        <strong style="font-size:14px;">${escapeHtml(ref?.title||"Référence inconnue")}</strong>
+        <span style="font-size:12px;color:var(--ink-softer);">${escapeHtml(ref?.authors||"")}${ref?.year?" · "+ref.year:""}</span>
+      </div>
+      ${refExts.map(e => `
+        <div style="margin-bottom:12px;padding-left:12px;border-left:3px solid ${code.color};">
+          <div style="font-size:13px;color:var(--ink);line-height:1.7;font-style:italic;">"${escapeHtml(e.text||"")}"</div>
+          ${e.page?`<div style="font-size:11px;color:var(--ink-softer);margin-top:3px;">p.${e.page}</div>`:""}
+          ${e.note?`<div style="font-size:12px;color:var(--ink-soft);margin-top:4px;">💬 ${escapeHtml(e.note)}</div>`:""}
+        </div>`).join("")}
+    </div>`;
+  }).join("");
+}
+
+// ── Zotero ────────────────────────────────────────────────────
+function loadZoteroConfig() {
+  const b = state.work.biblio || _biblioDef();
+  const uidEl = document.getElementById("zoteroUserId");
+  const keyEl = document.getElementById("zoteroApiKey");
+  if (uidEl) uidEl.value = b.zoteroUserId || "";
+  if (keyEl) keyEl.value = b.zoteroApiKey || "";
+}
+function saveZoteroConfig() {
+  if (!state.work.biblio) state.work.biblio = _biblioDef();
+  state.work.biblio.zoteroUserId = document.getElementById("zoteroUserId")?.value.trim() || "";
+  state.work.biblio.zoteroApiKey = document.getElementById("zoteroApiKey")?.value.trim() || "";
+  saveState();
+  showToast("✅ Config Zotero enregistrée");
+}
+async function syncZotero() {
+  const b = state.work.biblio || _biblioDef();
+  const uid = b.zoteroUserId; const key = b.zoteroApiKey;
+  const statusEl = document.getElementById("zoteroStatus");
+  if (!uid || !key) { if(statusEl) statusEl.textContent = "❌ Renseigne ton User ID et ta clé API d'abord."; return; }
+  if (statusEl) statusEl.innerHTML = "⏳ Synchronisation en cours…";
+  try {
+    let start = 0; const limit = 100; let items = [];
+    while (true) {
+      const url = `https://api.zotero.org/users/${uid}/items?format=json&limit=${limit}&start=${start}&key=${key}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const batch = await res.json();
+      items = items.concat(batch);
+      if (batch.length < limit) break;
+      start += limit;
+    }
+    let added = 0, updated = 0;
+    items.forEach(item => {
+      const d = item.data;
+      if (!d || !d.title) return;
+      const typeMap = { book:"book", journalArticle:"article", bookSection:"chapter", report:"report" };
+      const type = typeMap[d.itemType] || "other";
+      const authors = (d.creators||[]).filter(c=>c.creatorType==="author")
+        .map(c => [c.lastName, c.firstName].filter(Boolean).join(", ")).join("; ");
+      const existing = (b.refs||[]).find(r => r.zoteroKey === item.key);
+      const data = {
+        id: existing?.id || "ref" + Date.now() + Math.random().toString(36).slice(2,6),
+        zoteroKey: item.key, type,
+        title: d.title, authors,
+        year: (d.date||"").slice(0,4),
+        publisher: d.publisher || d.publicationTitle || "",
+        doi: d.DOI || d.url || "",
+        pages: d.numPages || d.pages || "",
+        notes: "", status: existing?.status || "to-read",
+        createdAt: existing?.createdAt || new Date().toISOString(),
+      };
+      if (existing) { const i = b.refs.findIndex(r=>r.id===existing.id); b.refs[i]={...b.refs[i],...data}; updated++; }
+      else          { if(!b.refs) b.refs=[]; b.refs.unshift(data); added++; }
+    });
+    if (!state.work.biblio) state.work.biblio = b;
+    else { state.work.biblio.refs = b.refs; }
+    saveState();
+    if (statusEl) statusEl.innerHTML = `✅ Synchronisé : <strong>${added}</strong> nouvelles références, <strong>${updated}</strong> mises à jour.`;
+    showToast(`📚 Zotero : ${added} ajoutées, ${updated} mises à jour`);
+  } catch(err) {
+    if (statusEl) statusEl.innerHTML = `❌ Erreur : ${err.message}. Vérifie ton User ID et ta clé API.`;
+  }
+}
+
+
 
 /* ========= TÂCHES DOMESTIQUES ========= */
 let _domTaskShowDone = false;
