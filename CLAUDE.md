@@ -17,8 +17,8 @@ Alexandra Mallah, postdoctorante en géographie (UPHF), française. Ce dashboard
 - **URL live** : https://alexandramllh.github.io/Mon-Tableau-de-Vie/
 - **Repo GitHub** : https://github.com/AlexandraMllh/Mon-Tableau-de-Vie
 - **Fichier de travail** : `/Users/alexandramallah/Documents/Mon-Tableau-de-Vie/index.html`
-- **Version actuelle** : v32 (dans le `<title>`)
-- **Taille** : ~7000 lignes, 255 fonctions JS
+- **Version actuelle** : v199 (dans le `<title>`)
+- **Taille** : ~12000 lignes
 
 ---
 
@@ -85,7 +85,8 @@ Le fichier `index.html` est organisé en 4 blocs :
 `tasks` · `time` · `postdoc` · `candidatures` · `valorisation` · `teaching`
 
 ### Sous-vues Domestique
-`groceries` · `chores` · `plants`
+`todo` · `domtasks` · `meals` · `groceries` · `plants`
+(L'onglet `chores` a été supprimé)
 
 ---
 
@@ -236,10 +237,52 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 
 ---
 
+## Fonctionnalités ajoutées récemment (v150→v199)
+
+### Finances
+- **🏠 Charge fixe** : `tx.fixedCharge = true` — exclue de la jauge budget, du donut dépenses, du graphique flux 6 mois
+- **💼 Frais pro** : `tx.reimbursable = true` — exclus du donut dépenses, du flux 6 mois, des objectifs par catégorie
+- **Jauge budget** : couleur basée sur `dailyActual / dailyIdeal` (pas sur le % consommé)
+- **Évolution du solde** : courbe 90 jours (`balanceEvolutionChart`)
+- **Comparaison N vs N-1** : carte `⚖️ Mois en mois`
+- Cycle financier : du 26 du mois précédent au 25 du mois courant (`currentMonthRange()`)
+- Formulaire "Nouvelle transaction" remonté en haut de page
+
+### Santé
+- **💊 Suivi pilule** : `state.history[dk].pillTaken` — checkbox dans Aujourd'hui, calendrier 90j + streak dans Santé
+- Fonctions : `togglePill()`, `renderPill()`, `renderPillSante()`, `_pillStreak()`, `_pillBestStreak()`
+
+### Météo
+- Widget en haut de l'onglet Aujourd'hui
+- API Open-Meteo (gratuit, sans clé) + Nominatim pour la ville
+- `fetchWeather()`, `maybeLoadWeather()`
+- Codes météo WMO : `WMO_ICONS`, `WMO_DESC`
+
+### Notes Travail
+- Éditeur WYSIWYG `contenteditable` + `document.execCommand`
+- `_noteFlushToLocalStorage()` : sauvegarde immédiate localStorage à chaque frappe
+- `window.addEventListener('pagehide', _noteFlushToLocalStorage)` : protection avant reload
+- Interface mobile responsive : navigation panneau (sidebar ↔ éditeur)
+- `state.work.workNotes = [{ id, name, emoji, notes: [{id, title, content, createdAt, updatedAt}] }]`
+
+### Domestique
+- Onglet **🗒️ Tâches** (`domtasks`) : `state.domestique.tasks = [{id, name, category, priority, deadline, done}]`
+- Fonctions : `renderDomesticTasks()`, `addDomesticTask()`, `toggleDomesticTask()`, `deleteDomesticTask()`
+- Onglet Ménage supprimé
+
+### Service Worker (mises à jour critiques)
+- `{ updateViaCache: 'none' }` sur l'enregistrement + `reg.update()` au démarrage
+- `controllerchange` → `window.location.href = '/Mon-Tableau-de-Vie/?_r=' + Date.now()` (PAS `location.reload()` — ne marche pas en PWA Samsung)
+- Cache avec `ignoreSearch: true` au fallback (gère `?_cb=timestamp`)
+- `_noteFlushToLocalStorage()` appelé avant tout reload
+
+### Icônes PWA
+- `apple-touch-icon` dans `<head>` pour iOS (pas le manifest)
+- Nommer les nouveaux fichiers icône avec un nouveau suffixe à chaque changement (ex: v3, v4…) pour forcer le re-téléchargement
+
 ## Fonctionnalités en attente / à faire
 
 - **Bodytrax importer** : importer les métriques corporelles depuis export Samsung Health ou Bodytrax CSV
-- Vérifier la sync Firebase sur mobile après incidents passés
 
 ---
 
@@ -254,6 +297,10 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 | Cache GitHub Pages | Script timestamp `?_cb=` en head |
 | Couché/Réveil ordre | Couché (bedtimeInput) GAUCHE, Réveil (wakeTimeInput) DROITE |
 | Bouton "Recharger" dangereux | Supprimé du header (existait dans une version précédente) |
+| `location.reload()` ne marche pas en PWA Samsung | Utiliser `window.location.href = '/Mon-Tableau-de-Vie/?_r=' + Date.now()` |
+| Icône PWA pas mise à jour | iOS lit `apple-touch-icon` dans `<head>`, pas le manifest. Renommer le fichier icône à chaque changement. |
+| Notes perdues au rechargement SW | `_noteFlushToLocalStorage()` + `pagehide` listener |
+| SW bloqué en cache HTTP | `{ updateViaCache: 'none' }` + `reg.update()` |
 
 ---
 
