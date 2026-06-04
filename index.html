@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v217</title>
+<title>Mon Tableau de Vie 🌿 · v218</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10768,6 +10768,7 @@ async function syncZotero() {
     const sources = [];
 
     // 0. Collections personnelles
+    const skipPersonal = cfg.zoteroSkipPersonal || false;
     if (statusEl) statusEl.innerHTML = "⏳ Récupération des collections…";
     const allCollections = [];
     if (!skipPersonal) try {
@@ -10779,7 +10780,6 @@ async function syncZotero() {
     } catch(e) {}
 
     // 1. Bibliothèque personnelle (sauf si ignorée)
-    const skipPersonal = cfg.zoteroSkipPersonal || false;
     if (!skipPersonal) {
       if (statusEl) statusEl.innerHTML = "⏳ Bibliothèque personnelle…";
       const personalItems = await fetchAll(`https://api.zotero.org/users/${uid}/items?format=json&key=${key}`);
