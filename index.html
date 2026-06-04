@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v205</title>
+<title>Mon Tableau de Vie 🌿 · v206</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10224,17 +10224,8 @@ let _biblioPanel = "refs";
 function switchBiblioPanel(panel) {
   _biblioPanel = panel;
   renderBiblioProjectSelect();
-  // Guard : s'il n'y a pas de projet, afficher message
+  // Guard : s'il n'y a pas de projet, afficher message dans le liste (sans détruire le HTML)
   const projects = _getBiblioProjects();
-  if (!projects.length && panel !== "zotero") {
-    ["refs","extracts","codes","bycode","zotero"].forEach(p => {
-      const el = document.getElementById("biblioPanel-" + p);
-      if (el) el.style.display = "none";
-    });
-    const refsEl = document.getElementById("biblioPanel-refs");
-    if (refsEl) { refsEl.style.display = ""; refsEl.innerHTML = '<div class="card"><p style="text-align:center;padding:24px;color:var(--ink-soft);font-size:14px;">Crée un projet avec le bouton <strong>+ Projet</strong> pour commencer.</p></div>'; }
-    return;
-  }
   ["refs","extracts","codes","bycode","zotero"].forEach(p => {
     const el = document.getElementById("biblioPanel-" + p);
     if (el) el.style.display = p === panel ? "" : "none";
@@ -10253,6 +10244,11 @@ const REF_TYPE_ICON = { book:"📗", article:"📄", chapter:"📑", report:"�
 const REF_STATUS = { "to-read":"📌 À lire", "reading":"📖 En cours", "read":"✅ Lu" };
 
 function renderBiblioRefs() {
+  if (!_getBiblioProjects().length) {
+    const el = document.getElementById("biblioRefList");
+    if (el) el.innerHTML = '<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:24px;">Crée un <strong>+ Projet</strong> pour commencer.</p>';
+    return;
+  }
   const biblio = _getActiveBiblio() || _biblioDef();
   const search = (document.getElementById("biblioSearch")?.value || "").toLowerCase();
   const filterStatus = document.getElementById("biblioFilterStatus")?.value || "";
