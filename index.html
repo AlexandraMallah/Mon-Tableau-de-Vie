@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v241</title>
+<title>Mon Tableau de Vie 🌿 · v242</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3102,6 +3102,10 @@
       <button onclick="selectCodeColor('#89d4cf')" style="width:28px;height:28px;border-radius:50%;background:#89d4cf;border:2px solid transparent;cursor:pointer;" data-color="#89d4cf"></button>
     </div>
     <input type="hidden" id="codeModalColor" value="#c9b6f0" />
+    <label>Code parent (optionnel)</label>
+    <select id="codeModalParent" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:0;">
+      <option value="">— Aucun (code racine) —</option>
+    </select>
     <label>Description (optionnel)</label>
     <input type="text" id="codeModalDesc" placeholder="À quoi sert ce code ?" />
     <div class="actions">
@@ -10879,7 +10883,7 @@ function selectCodeColor(color) {
   });
 }
 function renderBiblioCodes() {
-  const biblio = _getActiveBiblio() || _biblioDef(); // codes = projet
+  const biblio = _getActiveBiblio() || _biblioDef();
   const codes = biblio.codes || [];
   const countEl = document.getElementById("biblioCodeCount");
   if (countEl) countEl.textContent = `(${codes.length})`;
@@ -10889,46 +10893,103 @@ function renderBiblioCodes() {
     el.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucun code — crée-en un pour commencer à coder tes extraits.</p>`;
     return;
   }
-  el.innerHTML = codes.map(c => {
-    const n = (biblio.extracts||[]).filter(e => (e.codes||[]).includes(c.id)).length;
-    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer;" onclick="openCodeModal('${c.id}')">
-      <span style="width:18px;height:18px;border-radius:50%;background:${c.color};flex-shrink:0;display:inline-block;"></span>
-      <span style="font-weight:600;font-size:14px;flex:1;">${escapeHtml(c.label)}</span>
-      ${c.description?`<span style="font-size:12px;color:var(--ink-soft);flex:2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.description)}</span>`:""}
-      <span style="font-size:12px;color:var(--ink-softer);">${n} extrait${n>1?"s":""}</span>
-    </div>`;
-  }).join("");
+
+  // Rendu en arborescence
+  function renderCodeNode(parentId, depth) {
+    const children = codes.filter(c => (c.parentId||"") === (parentId||""));
+    if (!children.length) return "";
+    return children.map(c => {
+      const n = (biblio.extracts||[]).filter(e => (e.codes||[]).includes(c.id)).length;
+      const hasSub = codes.some(x => x.parentId === c.id);
+      const collapsed = _codeCollapsed.has(c.id);
+      return `<div style="padding-left:${depth*20}px;">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);cursor:pointer;" onclick="openCodeModal('${c.id}')">
+          ${hasSub ? `<span onclick="event.stopPropagation();toggleCodeCollapse('${c.id}')" style="font-size:10px;color:var(--ink-soft);width:12px;flex-shrink:0;">${collapsed?"▶":"▼"}</span>` : `<span style="width:12px;flex-shrink:0;"></span>`}
+          <span style="width:16px;height:16px;border-radius:50%;background:${c.color};flex-shrink:0;"></span>
+          <span style="font-weight:600;font-size:14px;flex:1;">${escapeHtml(c.label)}</span>
+          ${c.description?`<span style="font-size:12px;color:var(--ink-soft);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.description)}</span>`:""}
+          <span style="font-size:11px;color:var(--ink-softer);flex-shrink:0;">${n} extrait${n!==1?"s":""}</span>
+        </div>
+        ${collapsed ? "" : renderCodeNode(c.id, depth+1)}
+      </div>`;
+    }).join("");
+  }
+
+  el.innerHTML = renderCodeNode("", 0) || `<p style="color:var(--ink-soft);text-align:center;padding:20px;">Aucun code racine.</p>`;
 }
-function openCodeModal(id) {
-  const biblio = state.work.biblio || _biblioDef();
-  const c = id ? (biblio.codes||[]).find(x => x.id === id) : null;
+
+const _codeCollapsed = new Set();
+function toggleCodeCollapse(id) {
+  if (_codeCollapsed.has(id)) _codeCollapsed.delete(id);
+  else _codeCollapsed.add(id);
+  renderBiblioCodes();
+}
+
+function openCodeModal(id, defaultParentId) {
+  const biblio = _getActiveBiblio() || _biblioDef();
+  const codes = biblio.codes || [];
+  const c = id ? codes.find(x => x.id === id) : null;
   document.getElementById("codeModalTitle").textContent = c ? "Modifier le code" : "Nouveau code";
   document.getElementById("codeModalId").value = id || "";
   document.getElementById("codeModalLabel").value = c?.label || "";
   document.getElementById("codeModalDesc").value = c?.description || "";
   selectCodeColor(c?.color || "#c9b6f0");
+  // Sélecteur de parent
+  const parentSel = document.getElementById("codeModalParent");
+  if (parentSel) {
+    parentSel.innerHTML = '<option value="">— Aucun (code racine) —</option>' +
+      codes.filter(x => x.id !== id).map(x =>
+        `<option value="${x.id}"${(c?.parentId||defaultParentId||"")=== x.id?" selected":""}>${"　".repeat(_codeDepth(x.id, codes))}${escapeHtml(x.label)}</option>`
+      ).join("");
+  }
   const delBtn = document.getElementById("codeModalDeleteBtn");
   if (delBtn) delBtn.style.display = c ? "inline-block" : "none";
   document.getElementById("codeModal").classList.add("open");
 }
+
+function _codeDepth(id, codes, d=0) {
+  const c = codes.find(x => x.id === id);
+  if (!c || !c.parentId || d > 5) return d;
+  return _codeDepth(c.parentId, codes, d+1);
+}
+
 function closeCodeModal() { document.getElementById("codeModal").classList.remove("open"); }
+
 function saveCode() {
-  const b = _getActiveBiblio() || _biblioDef(); _setActiveBiblio(b);
+  const projects = _getBiblioProjects();
+  const p = projects.find(x => x.id === _biblioProjectId) || projects[0];
+  if (!p) { alert("Aucun projet sélectionné."); return; }
+  if (!p.biblio) p.biblio = _biblioDef();
+  if (!p.biblio.codes) p.biblio.codes = [];
   const id = document.getElementById("codeModalId").value;
   const label = document.getElementById("codeModalLabel").value.trim();
   if (!label) { alert("L'intitulé est obligatoire."); return; }
-  const data = { id: id || "code" + Date.now(), label, color: document.getElementById("codeModalColor").value, description: document.getElementById("codeModalDesc").value.trim() };
-  if (id) { const i = (b.codes||[]).findIndex(c=>c.id===id); if(i>=0) b.codes[i]=data; }
-  else    { if(!b.codes) b.codes=[]; b.codes.push(data); }
+  const parentId = document.getElementById("codeModalParent")?.value || "";
+  const data = {
+    id: id || "code" + Date.now(), label,
+    color: document.getElementById("codeModalColor").value,
+    description: document.getElementById("codeModalDesc").value.trim(),
+    parentId: parentId || "",
+  };
+  if (id) { const i = p.biblio.codes.findIndex(c=>c.id===id); if(i>=0) p.biblio.codes[i]=data; }
+  else    { p.biblio.codes.push(data); }
   saveState(); closeCodeModal(); renderBiblioCodes();
 }
+
 function deleteCode() {
   const id = document.getElementById("codeModalId").value;
-  if (!id || !confirm("Supprimer ce code ? Les extraits associés le perdront.")) return;
-  const b = _getActiveBiblio() || _biblioDef();
-  b.codes = (b.codes||[]).filter(c => c.id !== id);
-  (b.extracts||[]).forEach(e => { e.codes = (e.codes||[]).filter(cid => cid !== id); });
-  _setActiveBiblio(b);
+  if (!id || !confirm("Supprimer ce code et ses sous-codes ? Les extraits associés le perdront.")) return;
+  const projects = _getBiblioProjects();
+  const p = projects.find(x => x.id === _biblioProjectId) || projects[0];
+  if (!p?.biblio) return;
+  // Supprimer le code et tous ses descendants
+  function getDescendantIds(cid) {
+    const children = (p.biblio.codes||[]).filter(c => c.parentId === cid).map(c => c.id);
+    return [cid, ...children.flatMap(getDescendantIds)];
+  }
+  const toDelete = new Set(getDescendantIds(id));
+  p.biblio.codes = (p.biblio.codes||[]).filter(c => !toDelete.has(c.id));
+  (p.biblio.extracts||[]).forEach(e => { e.codes = (e.codes||[]).filter(cid => !toDelete.has(cid)); });
   saveState(); closeCodeModal(); renderBiblioCodes();
 }
 
@@ -11012,13 +11073,18 @@ function openExtractModal(id) {
   // Code picker
   const selectedCodes = e?.codes || [];
   const picker = document.getElementById("extractCodePicker");
-  picker.innerHTML = (biblio.codes||[]).length
-    ? (biblio.codes||[]).map(c => {
-        const on = selectedCodes.includes(c.id);
-        return `<button onclick="toggleExtractCode('${c.id}',this)" data-code="${c.id}" data-selected="${on?'1':'0'}"
-          style="font-size:12px;padding:4px 10px;border-radius:20px;border:1.5px solid ${c.color};background:${on?c.color+"55":"white"};color:var(--ink);cursor:pointer;font-family:inherit;font-weight:${on?700:400};">
-          ${escapeHtml(c.label)}</button>`;
-      }).join("")
+  const allCodes = biblio.codes||[];
+  function renderPickerCodeNode(parentId, depth) {
+    return allCodes.filter(c => (c.parentId||"") === (parentId||"")).map(c => {
+      const on = selectedCodes.includes(c.id);
+      const indent = depth > 0 ? `margin-left:${depth*14}px;` : "";
+      return `<button onclick="toggleExtractCode('${c.id}',this)" data-code="${c.id}" data-selected="${on?'1':'0'}"
+        style="font-size:12px;padding:4px 10px;border-radius:20px;border:1.5px solid ${c.color};background:${on?c.color+"55":"white"};color:var(--ink);cursor:pointer;font-family:inherit;font-weight:${on?700:400};${indent}">${escapeHtml(c.label)}</button>
+      ${renderPickerCodeNode(c.id, depth+1)}`;
+    }).join("");
+  }
+  picker.innerHTML = allCodes.length
+    ? renderPickerCodeNode("", 0) || `<span style="font-size:12px;color:var(--ink-softer);">Crée d'abord des codes dans l'onglet 🏷️ Codes.</span>`
     : `<span style="font-size:12px;color:var(--ink-softer);">Crée d'abord des codes dans l'onglet 🏷️ Codes.</span>`;
   const delBtn = document.getElementById("extractModalDeleteBtn");
   if (delBtn) delBtn.style.display = e ? "inline-block" : "none";
