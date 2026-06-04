@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v212</title>
+<title>Mon Tableau de Vie 🌿 · v213</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9693,7 +9693,9 @@ async function saveGoogleCal() {
   const proxies = [
     u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
     u => `https://thingproxy.freeboard.io/fetch/${u}`,
+    u => `https://cors-anywhere.herokuapp.com/${u}`,
   ];
   let text = null;
   for (const proxy of proxies) {
@@ -9747,17 +9749,19 @@ async function syncGoogleCal(silent = false) {
   const proxies = [
     u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
     u => `https://thingproxy.freeboard.io/fetch/${u}`,
+    u => `https://cors-anywhere.herokuapp.com/${u}`,
   ];
   let text = null;
   for (const proxy of proxies) {
     try {
-      const r = await fetch(proxy(url), { signal: AbortSignal.timeout(10000) });
+      const r = await fetch(proxy(url), { signal: AbortSignal.timeout(15000) });
       if (r.ok) { text = await r.text(); break; }
     } catch (_) { /* essaie le proxy suivant */ }
   }
   if (!text) {
-    showToast("❌ Sync impossible — vérifie l'URL ou réessaie plus tard");
+    showToast("❌ Sync agenda impossible — tous les proxies ont échoué. Réessaie dans quelques minutes ou reconfigurez l'URL iCal.");
     return;
   }
   try {
