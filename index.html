@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v234</title>
+<title>Mon Tableau de Vie 🌿 · v235</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2163,6 +2163,7 @@
               <option value="article">📄 Article</option>
               <option value="chapter">📑 Chapitre</option>
               <option value="report">📋 Rapport</option>
+              <option value="thesis">🎓 Thèse</option>
               <option value="other">📎 Autre</option>
             </select>
           </div>
@@ -2955,6 +2956,7 @@
           <option value="article">📄 Article</option>
           <option value="chapter">📑 Chapitre</option>
           <option value="report">📋 Rapport</option>
+          <option value="thesis">🎓 Thèse</option>
           <option value="other">📎 Autre</option>
         </select>
       </div>
@@ -10550,7 +10552,7 @@ function switchBiblioPanel(panel) {
 }
 
 // ── Refs ─────────────────────────────────────────────────────
-const REF_TYPE_ICON = { book:"📗", article:"📄", chapter:"📑", report:"📋", other:"📎" };
+const REF_TYPE_ICON = { book:"📗", article:"📄", chapter:"📑", report:"📋", thesis:"🎓", other:"📎" };
 const REF_STATUS = { "to-read":"📌 À lire", "reading":"📖 En cours", "read":"✅ Lu" };
 
 function renderBiblioRefs() {
@@ -11100,7 +11102,7 @@ async function syncZotero() {
   // Traite une liste d'items et les ajoute à b.refs
   function processItems(items, sourceName) {
     let added = 0, updated = 0;
-    const typeMap = { book:"book", journalArticle:"article", bookSection:"chapter", report:"report" };
+    const typeMap = { book:"book", journalArticle:"article", bookSection:"chapter", report:"report", thesis:"thesis", dissertation:"thesis" };
     items.forEach(item => {
       const d = item.data;
       if (!d || !d.title) return;
