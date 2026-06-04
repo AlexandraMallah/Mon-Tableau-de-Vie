@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v227</title>
+<title>Mon Tableau de Vie 🌿 · v228</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10761,54 +10761,73 @@ function renderExtractRefPicker() {
   const el = document.getElementById("extractRefPickerTree");
   if (!el) return;
   const selectedId = document.getElementById("extractModalRef").value;
-  const bg = (id) => selectedId===id ? "var(--lavender-soft)" : "transparent";
-
-  if (search) {
-    const filtered = refs.filter(r =>
-      (r.title||"").toLowerCase().includes(search) ||
-      (r.authors||"").toLowerCase().includes(search)
-    ).slice(0, 40);
-    el.innerHTML = filtered.length
-      ? filtered.map(r => refItem(r, 0)).join("")
-      : "<p style='font-size:13px;color:var(--ink-softer);padding:8px;'>Aucun résultat</p>";
-    return;
-  }
 
   function refItem(r, depth) {
-    const title = escapeHtml(r.title||"Sans titre");
-    const authors = r.authors ? ` — ${escapeHtml(r.authors)}${r.year?" ("+r.year+")":""}` : "";
+    const isSel = selectedId === r.id;
+    const bg = isSel ? "var(--lavender-soft)" : "transparent";
     return `<div onclick="selectExtractRef('${r.id}')"
-      style="padding:5px 10px 5px ${depth*12+16}px;border-radius:8px;cursor:pointer;font-size:13px;background:${bg(r.id)};"
+      style="padding:5px 12px 5px ${depth*14+20}px;border-radius:8px;cursor:pointer;font-size:13px;background:${bg};font-weight:${isSel?600:400};"
       onmouseover="this.style.background='var(--lavender-soft)'"
-      onmouseout="this.style.background='${bg(r.id)}'">
-      ${title}<span style="font-size:11px;color:var(--ink-softer);">${authors}</span>
+      onmouseout="this.style.background='${bg}'">
+      ${escapeHtml(r.title||"Sans titre")}
+      ${r.authors||r.year?`<span style="font-size:11px;color:var(--ink-softer);"> — ${escapeHtml(r.authors||"")}${r.year?" ("+r.year+")":""}</span>`:""}
     </div>`;
   }
 
+  // Mode recherche : liste filtrée
+  if (search) {
+    const filtered = refs.filter(r =>
+      (r.title||"").toLowerCase().includes(search) ||
+      (r.authors||"").toLowerCase().includes(search) ||
+      (r.year||"").includes(search)
+    ).slice(0, 50);
+    el.innerHTML = filtered.length
+      ? filtered.map(r => refItem(r, 0)).join("")
+      : `<p style='font-size:13px;color:var(--ink-softer);padding:8px;'>Aucun résultat pour "${escapeHtml(search)}"</p>`;
+    return;
+  }
+
+  // Mode arbre : collections + refs directes
   function renderPickerNode(parentKey, depth) {
     const children = cols.filter(c => (c.parentKey||"") === (parentKey||"") && !_biblioHidden.has(c.key));
-    if (!children.length && depth === 0) return refs.slice(0,20).map(r=>refItem(r,0)).join("");
-    return sorted.map(c => {
+
+    // Pas de collections : montrer les refs directement
+    if (!children.length) {
+      if (depth === 0) return refs.slice(0, 30).map(r => refItem(r, 0)).join("") +
+        (refs.length > 30 ? `<p style='font-size:12px;color:var(--ink-softer);padding:4px 8px;'>...et ${refs.length-30} autres. Utilise la recherche ↑</p>` : "");
+      // Refs appartenant à cette collection (via parentKey)
+      const colRefs = refs.filter(r => (r.zoteroCollections||[]).includes(parentKey));
+      return colRefs.map(r => refItem(r, depth)).join("");
+    }
+
+    let html = "";
+    for (const c of children) {
       const open = !_pickerCollapsed.has(c.key);
-      const cRefs = refs.filter(r => {
+      const allColRefs = refs.filter(r => {
         const dk = getAllDescendantKeys(c.key, cols);
         return (r.zoteroCollections||[]).some(k => dk.has(k));
       });
-      return `<div>
+      const directRefs = refs.filter(r => (r.zoteroCollections||[]).includes(c.key));
+      const subCols = cols.filter(x => (x.parentKey||"") === c.key);
+
+      html += `<div>
         <div onclick="togglePickerCollapse('${c.key}')"
-          style="display:flex;align-items:center;gap:5px;padding:4px 8px 4px ${depth*12+8}px;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink-soft);border-radius:6px;"
+          style="display:flex;align-items:center;gap:5px;padding:5px 8px 5px ${depth*14+8}px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-soft);border-radius:8px;"
           onmouseover="this.style.background='#f0eeff'" onmouseout="this.style.background='transparent'">
-          <span style="font-size:10px;">${open?"▼":"▶"}</span>
+          <span style="font-size:11px;">${open?"▼":"▶"}</span>
           <span>${c.isGroupRoot?"🗂️":"📁"}</span>
           <span style="flex:1;">${escapeHtml(c.name)}</span>
-          <span style="font-size:10px;color:var(--ink-softer);">${cRefs.length}</span>
+          <span style="font-size:11px;color:var(--ink-softer);">${allColRefs.length}</span>
         </div>
-        ${open ? renderPickerNode(c.key, depth+1) : ""}
+        ${open ? renderPickerNode(c.key, depth+1) +
+          directRefs.filter(r => !subCols.some(sc => (r.zoteroCollections||[]).includes(sc.key)))
+            .map(r => refItem(r, depth+1)).join("") : ""}
       </div>`;
-    }).join("");
+    }
+    return html;
   }
 
-  el.innerHTML = renderPickerNode("", 0) || "<p style='font-size:13px;color:var(--ink-softer);padding:8px;'>Aucune référence</p>";
+  el.innerHTML = renderPickerNode("", 0) || `<p style='font-size:13px;color:var(--ink-softer);padding:8px;'>Aucune référence — synchronise Zotero d'abord.</p>`;
 }
 
 const _pickerCollapsed = new Set();
