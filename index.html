@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v203</title>
+<title>Mon Tableau de Vie 🌿 · v204</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1552,6 +1552,15 @@
   .trend-metric-btn.active { background:var(--lavender-soft); border-color:var(--lavender); color:var(--ink); font-weight:600; }
 
   /* ---- Notes Travail ---- */
+  /* Biblio nav tabs */
+  .biblio-tab {
+    padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--line);
+    background: white; color: var(--ink-soft); font-size: 13px; cursor: pointer;
+    font-family: inherit; transition: all 0.15s; white-space: nowrap;
+  }
+  .biblio-tab:hover { background: var(--lavender-soft); border-color: var(--lavender); }
+  .biblio-tab.active { background: var(--lavender-soft); border-color: var(--lilac); color: var(--ink); font-weight: 600; }
+
   .note-tb-btn {
     padding: 3px 9px; border-radius: 6px; border: 1px solid var(--line);
     background: white; color: var(--ink); font-size: 12px; cursor: pointer;
@@ -2096,13 +2105,22 @@
 
   <!-- Sub: Bibliographie -->
     <div class="sub-view" data-sub="biblio">
+      <!-- Sélecteur de projet -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <select id="biblioProjectSelect" onchange="switchBiblioProject(this.value)"
+          style="flex:1;min-width:160px;padding:8px 12px;border:1.5px solid var(--lavender);border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;color:var(--ink);background:var(--lavender-soft);">
+        </select>
+        <button onclick="addBiblioProject()" style="padding:7px 12px;border-radius:10px;border:1.5px solid var(--lavender);background:white;color:var(--lilac);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Projet</button>
+        <button onclick="renameBiblioProject()" style="padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;">✎</button>
+        <button onclick="deleteBiblioProject()" style="padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:white;color:#c75b4d;font-size:12px;cursor:pointer;font-family:inherit;">✕</button>
+      </div>
       <!-- Mini-nav interne -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;" id="biblioNav">
-        <button class="sub-tab active" data-biblio="refs" onclick="switchBiblioPanel('refs')">📚 Références</button>
-        <button class="sub-tab" data-biblio="extracts" onclick="switchBiblioPanel('extracts')">✏️ Extraits</button>
-        <button class="sub-tab" data-biblio="codes" onclick="switchBiblioPanel('codes')">🏷️ Codes</button>
-        <button class="sub-tab" data-biblio="bycode" onclick="switchBiblioPanel('bycode')">🔍 Vue par code</button>
-        <button class="sub-tab" data-biblio="zotero" onclick="switchBiblioPanel('zotero')" style="margin-left:auto;">⚙️ Zotero</button>
+        <button class="biblio-tab active" data-biblio="refs" onclick="switchBiblioPanel('refs')">📚 Références</button>
+        <button class="biblio-tab" data-biblio="extracts" onclick="switchBiblioPanel('extracts')">✏️ Extraits</button>
+        <button class="biblio-tab" data-biblio="codes" onclick="switchBiblioPanel('codes')">🏷️ Codes</button>
+        <button class="biblio-tab" data-biblio="bycode" onclick="switchBiblioPanel('bycode')">🔍 Vue par code</button>
+        <button class="biblio-tab" data-biblio="zotero" onclick="switchBiblioPanel('zotero')" style="margin-left:auto;">⚙️ Zotero</button>
       </div>
 
       <!-- Panel : Références -->
@@ -3891,6 +3909,7 @@ function migrate(s) {
   if (!s.work) s.work = {};
   if (!s.work.workNotes) s.work.workNotes = [];
   if (!s.work.biblio) s.work.biblio = { refs: [], codes: [], extracts: [], zoteroUserId: '', zoteroApiKey: '' };
+  if (!s.work.biblioProjects) s.work.biblioProjects = [];
   return s;
 }
 function saveState() {
@@ -10121,13 +10140,105 @@ function _biblioDef() {
 }
 
 // ── Panel navigation ─────────────────────────────────────────
+// ── Projets Biblio ───────────────────────────────────────────
+let _biblioProjectId = null; // projet actif
+
+function _biblioDef() {
+  return { refs: [], codes: [], extracts: [], zoteroUserId: "", zoteroApiKey: "" };
+}
+
+function _getBiblioProjects() {
+  if (!state.work.biblioProjects) state.work.biblioProjects = [];
+  return state.work.biblioProjects;
+}
+
+function _getActiveBiblio() {
+  const projects = _getBiblioProjects();
+  if (!projects.length) return null;
+  const p = projects.find(p => p.id === _biblioProjectId) || projects[0];
+  _biblioProjectId = p.id;
+  return p.biblio || _biblioDef();
+}
+
+function _setActiveBiblio(biblio) {
+  const projects = _getBiblioProjects();
+  const p = projects.find(p => p.id === _biblioProjectId);
+  if (p) p.biblio = biblio;
+}
+
+function renderBiblioProjectSelect() {
+  const projects = _getBiblioProjects();
+  const sel = document.getElementById("biblioProjectSelect");
+  if (!sel) return;
+  if (!projects.length) {
+    sel.innerHTML = '<option value="">— Aucun projet —</option>';
+    return;
+  }
+  sel.innerHTML = projects.map(p =>
+    `<option value="${p.id}"${p.id === _biblioProjectId ? " selected" : ""}>${escapeHtml(p.name)}</option>`
+  ).join("");
+  if (!_biblioProjectId) _biblioProjectId = projects[0].id;
+}
+
+function switchBiblioProject(id) {
+  _biblioProjectId = id;
+  switchBiblioPanel(_biblioPanel || "refs");
+}
+
+function addBiblioProject() {
+  const name = prompt("Nom du projet bibliographique :");
+  if (!name?.trim()) return;
+  if (!state.work.biblioProjects) state.work.biblioProjects = [];
+  const id = "bproj" + Date.now();
+  state.work.biblioProjects.push({ id, name: name.trim(), biblio: _biblioDef() });
+  _biblioProjectId = id;
+  saveState();
+  renderBiblioProjectSelect();
+  switchBiblioPanel("refs");
+}
+
+function renameBiblioProject() {
+  const projects = _getBiblioProjects();
+  const p = projects.find(x => x.id === _biblioProjectId);
+  if (!p) return;
+  const name = prompt("Nouveau nom :", p.name);
+  if (!name?.trim()) return;
+  p.name = name.trim();
+  saveState();
+  renderBiblioProjectSelect();
+}
+
+function deleteBiblioProject() {
+  const projects = _getBiblioProjects();
+  const p = projects.find(x => x.id === _biblioProjectId);
+  if (!p) return;
+  if (!confirm(`Supprimer le projet "${p.name}" et toutes ses données ?`)) return;
+  state.work.biblioProjects = projects.filter(x => x.id !== _biblioProjectId);
+  _biblioProjectId = state.work.biblioProjects[0]?.id || null;
+  saveState();
+  renderBiblioProjectSelect();
+  switchBiblioPanel("refs");
+}
+
 let _biblioPanel = "refs";
 function switchBiblioPanel(panel) {
   _biblioPanel = panel;
+  renderBiblioProjectSelect();
+  // Guard : s'il n'y a pas de projet, afficher message
+  const projects = _getBiblioProjects();
+  if (!projects.length && panel !== "zotero") {
+    ["refs","extracts","codes","bycode","zotero"].forEach(p => {
+      const el = document.getElementById("biblioPanel-" + p);
+      if (el) el.style.display = "none";
+    });
+    const refsEl = document.getElementById("biblioPanel-refs");
+    if (refsEl) { refsEl.style.display = ""; refsEl.innerHTML = '<div class="card"><p style="text-align:center;padding:24px;color:var(--ink-soft);font-size:14px;">Crée un projet avec le bouton <strong>+ Projet</strong> pour commencer.</p></div>'; }
+    return;
+  }
   ["refs","extracts","codes","bycode","zotero"].forEach(p => {
     const el = document.getElementById("biblioPanel-" + p);
     if (el) el.style.display = p === panel ? "" : "none";
-    const btn = document.querySelector(`[data-biblio="${p}"]`);
+    const btn = document.querySelector(`.biblio-tab[data-biblio="${p}"]`);
     if (btn) btn.classList.toggle("active", p === panel);
   });
   if (panel === "refs")     renderBiblioRefs();
@@ -10142,7 +10253,7 @@ const REF_TYPE_ICON = { book:"📗", article:"📄", chapter:"📑", report:"�
 const REF_STATUS = { "to-read":"📌 À lire", "reading":"📖 En cours", "read":"✅ Lu" };
 
 function renderBiblioRefs() {
-  const biblio = state.work.biblio || _biblioDef();
+  const biblio = _getActiveBiblio() || _biblioDef();
   const search = (document.getElementById("biblioSearch")?.value || "").toLowerCase();
   const filterStatus = document.getElementById("biblioFilterStatus")?.value || "";
   const filterType   = document.getElementById("biblioFilterType")?.value   || "";
@@ -10200,8 +10311,7 @@ function openRefModal(id) {
 }
 function closeRefModal() { document.getElementById("refModal").classList.remove("open"); }
 function saveRef() {
-  if (!state.work.biblio) state.work.biblio = _biblioDef();
-  const b = state.work.biblio;
+  const b = _getActiveBiblio() || _biblioDef(); _setActiveBiblio(b);
   const id = document.getElementById("refModalId").value;
   const title = document.getElementById("refModalTitle2").value.trim();
   if (!title) { alert("Le titre est obligatoire."); return; }
@@ -10225,9 +10335,10 @@ function saveRef() {
 function deleteRef() {
   const id = document.getElementById("refModalId").value;
   if (!id || !confirm("Supprimer cette référence et tous ses extraits ?")) return;
-  const b = state.work.biblio;
+  const b = _getActiveBiblio() || _biblioDef();
   b.refs     = (b.refs||[]).filter(r => r.id !== id);
   b.extracts = (b.extracts||[]).filter(e => e.refId !== id);
+  _setActiveBiblio(b);
   saveState(); closeRefModal(); renderBiblioRefs();
 }
 
@@ -10241,7 +10352,7 @@ function selectCodeColor(color) {
   });
 }
 function renderBiblioCodes() {
-  const biblio = state.work.biblio || _biblioDef();
+  const biblio = _getActiveBiblio() || _biblioDef();
   const codes = biblio.codes || [];
   const countEl = document.getElementById("biblioCodeCount");
   if (countEl) countEl.textContent = `(${codes.length})`;
@@ -10275,8 +10386,7 @@ function openCodeModal(id) {
 }
 function closeCodeModal() { document.getElementById("codeModal").classList.remove("open"); }
 function saveCode() {
-  if (!state.work.biblio) state.work.biblio = _biblioDef();
-  const b = state.work.biblio;
+  const b = _getActiveBiblio() || _biblioDef(); _setActiveBiblio(b);
   const id = document.getElementById("codeModalId").value;
   const label = document.getElementById("codeModalLabel").value.trim();
   if (!label) { alert("L'intitulé est obligatoire."); return; }
@@ -10288,15 +10398,16 @@ function saveCode() {
 function deleteCode() {
   const id = document.getElementById("codeModalId").value;
   if (!id || !confirm("Supprimer ce code ? Les extraits associés le perdront.")) return;
-  const b = state.work.biblio;
+  const b = _getActiveBiblio() || _biblioDef();
   b.codes = (b.codes||[]).filter(c => c.id !== id);
   (b.extracts||[]).forEach(e => { e.codes = (e.codes||[]).filter(cid => cid !== id); });
+  _setActiveBiblio(b);
   saveState(); closeCodeModal(); renderBiblioCodes();
 }
 
 // ── Extraits ──────────────────────────────────────────────────
 function populateBiblioExtractFilters() {
-  const biblio = state.work.biblio || _biblioDef();
+  const biblio = _getActiveBiblio() || _biblioDef();
   const refSel  = document.getElementById("biblioExtractFilterRef");
   const codeSel = document.getElementById("biblioExtractFilterCode");
   if (refSel) {
@@ -10313,7 +10424,7 @@ function populateBiblioExtractFilters() {
   }
 }
 function renderBiblioExtracts() {
-  const biblio = state.work.biblio || _biblioDef();
+  const biblio = _getActiveBiblio() || _biblioDef();
   const filterRef  = document.getElementById("biblioExtractFilterRef")?.value  || "";
   const filterCode = document.getElementById("biblioExtractFilterCode")?.value || "";
   let exts = biblio.extracts || [];
@@ -10342,7 +10453,7 @@ function renderBiblioExtracts() {
   }).join("");
 }
 function openExtractModal(id) {
-  const biblio = state.work.biblio || _biblioDef();
+  const biblio = _getActiveBiblio() || _biblioDef();
   const e = id ? (biblio.extracts||[]).find(x => x.id === id) : null;
   document.getElementById("extractModalTitle").textContent = e ? "Modifier l'extrait" : "Nouvel extrait";
   document.getElementById("extractModalId").value = id || "";
@@ -10378,8 +10489,7 @@ function toggleExtractCode(codeId, btn) {
 }
 function closeExtractModal() { document.getElementById("extractModal").classList.remove("open"); }
 function saveExtract() {
-  if (!state.work.biblio) state.work.biblio = _biblioDef();
-  const b = state.work.biblio;
+  const b = _getActiveBiblio() || _biblioDef(); _setActiveBiblio(b);
   const id = document.getElementById("extractModalId").value;
   const text = document.getElementById("extractModalText").value.trim();
   if (!text) { alert("Le passage est obligatoire."); return; }
@@ -10407,13 +10517,15 @@ function saveExtract() {
 function deleteExtract() {
   const id = document.getElementById("extractModalId").value;
   if (!id || !confirm("Supprimer cet extrait ?")) return;
-  state.work.biblio.extracts = (state.work.biblio.extracts||[]).filter(e => e.id !== id);
+  const b = _getActiveBiblio() || _biblioDef();
+  b.extracts = (b.extracts||[]).filter(e => e.id !== id);
+  _setActiveBiblio(b);
   saveState(); closeExtractModal(); renderBiblioExtracts();
 }
 
 // ── Vue par code ──────────────────────────────────────────────
 function populateBiblioByCodeSelect() {
-  const biblio = state.work.biblio || _biblioDef();
+  const biblio = _getActiveBiblio() || _biblioDef();
   const sel = document.getElementById("biblioByCodeSelect");
   if (!sel) return;
   const prev = sel.value;
@@ -10425,7 +10537,7 @@ function populateBiblioByCodeSelect() {
   sel.value = prev;
 }
 function renderBiblioByCode() {
-  const biblio = state.work.biblio || _biblioDef();
+  const biblio = _getActiveBiblio() || _biblioDef();
   const codeId = document.getElementById("biblioByCodeSelect")?.value || "";
   const el = document.getElementById("biblioByCodeContent");
   if (!el) return;
@@ -10460,7 +10572,8 @@ function renderBiblioByCode() {
 
 // ── Zotero ────────────────────────────────────────────────────
 function loadZoteroConfig() {
-  const b = state.work.biblio || _biblioDef();
+  if (!state.work.biblio) state.work.biblio = _biblioDef();
+  const b = state.work.biblio;
   const uidEl = document.getElementById("zoteroUserId");
   const keyEl = document.getElementById("zoteroApiKey");
   if (uidEl) uidEl.value = b.zoteroUserId || "";
