@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v243</title>
+<title>Mon Tableau de Vie 🌿 · v244</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -11024,11 +11024,11 @@ function populateBiblioExtractFilters() {
   }
 }
 function renderBiblioExtracts() {
-  const biblio = _getGlobalBiblio();
-  const projectBiblio = _getActiveBiblio() || _biblioDef();
+  const biblio = _getGlobalBiblio();           // refs (global)
+  const projectBiblio = _getActiveBiblio() || _biblioDef(); // extraits + codes (projet)
   const filterRef  = document.getElementById("biblioExtractFilterRef")?.value  || "";
   const filterCode = document.getElementById("biblioExtractFilterCode")?.value || "";
-  let exts = biblio.extracts || [];
+  let exts = projectBiblio.extracts || [];     // ← extraits du projet, PAS du global
   if (filterRef)  exts = exts.filter(e => e.refId === filterRef);
   if (filterCode) exts = exts.filter(e => (e.codes||[]).includes(filterCode));
   const countEl = document.getElementById("biblioExtractCount");
@@ -11041,7 +11041,7 @@ function renderBiblioExtracts() {
   }
   el.innerHTML = exts.map(e => {
     const ref = (biblio.refs||[]).find(r => r.id === e.refId);
-    const codes = (e.codes||[]).map(cid => (biblio.codes||[]).find(c=>c.id===cid)).filter(Boolean);
+    const codes = (e.codes||[]).map(cid => (projectBiblio.codes||[]).find(c=>c.id===cid)).filter(Boolean);
     return `<div style="padding:12px 14px;border-bottom:1px solid var(--line);">
       <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;">
         <div style="display:flex;gap:6px;flex-wrap:wrap;flex:1;">
