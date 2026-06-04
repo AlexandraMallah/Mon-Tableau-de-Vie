@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v239</title>
+<title>Mon Tableau de Vie 🌿 · v240</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -11015,7 +11015,7 @@ function openExtractModal(id) {
   picker.innerHTML = (biblio.codes||[]).length
     ? (biblio.codes||[]).map(c => {
         const on = selectedCodes.includes(c.id);
-        return `<button onclick="toggleExtractCode('${c.id}',this)" data-code="${c.id}"
+        return `<button onclick="toggleExtractCode('${c.id}',this)" data-code="${c.id}" data-selected="${on?'1':'0'}"
           style="font-size:12px;padding:4px 10px;border-radius:20px;border:1.5px solid ${c.color};background:${on?c.color+"55":"white"};color:var(--ink);cursor:pointer;font-family:inherit;font-weight:${on?700:400};">
           ${escapeHtml(c.label)}</button>`;
       }).join("")
@@ -11130,11 +11130,13 @@ function clearExtractRef() {
 }
 
 function toggleExtractCode(codeId, btn) {
-  const biblio = state.work.biblio || _biblioDef();
+  const biblio = _getActiveBiblio() || _biblioDef();
   const c = (biblio.codes||[]).find(x=>x.id===codeId);
-  const on = btn.style.fontWeight === "700";
+  const on = btn.dataset.selected === "1";
+  btn.dataset.selected = on ? "0" : "1";
   btn.style.fontWeight = on ? "400" : "700";
   btn.style.background = on ? "white" : (c?.color||"#c9b6f0")+"55";
+  if (c?.color) btn.style.borderColor = c.color;
 }
 function closeExtractModal() { document.getElementById("extractModal").classList.remove("open"); }
 function saveExtract() {
@@ -11147,7 +11149,7 @@ function saveExtract() {
   // Codes sélectionnés
   const codes = [];
   document.querySelectorAll("#extractCodePicker button").forEach(btn => {
-    if (btn.style.fontWeight === "700") codes.push(btn.dataset.code);
+    if (btn.dataset.selected === "1") codes.push(btn.dataset.code);
   });
   const data = {
     id: id || "ext" + Date.now(),
@@ -11429,7 +11431,8 @@ async function syncZotero() {
   }
   b.collections = Array.from(colByKey.values());
 
-  _setActiveBiblio(b);
+  // NE PAS appeler _setActiveBiblio(b) : on écrit directement dans state.work.biblio (global)
+  // Appeler _setActiveBiblio écraserait les codes/extraits du projet avec la biblio globale vide
   saveState();
   renderBiblioCollectionTree();
   renderBiblioRefs();
