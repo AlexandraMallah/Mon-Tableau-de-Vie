@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v226</title>
+<title>Mon Tableau de Vie 🌿 · v227</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10272,29 +10272,68 @@ let _biblioDragKey = null;
 function biblioDragStart(e, key) {
   _biblioDragKey = key;
   e.dataTransfer.effectAllowed = "move";
+  e.currentTarget.style.opacity = "0.5";
+}
+
+function _clearDragStyles() {
+  document.querySelectorAll("[data-biblio-drag]").forEach(el => {
+    el.style.borderTop = "";
+    el.style.borderBottom = "";
+    el.style.opacity = "";
+  });
 }
 
 function biblioDragOver(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = "move";
-  e.currentTarget.style.outline = "2px solid var(--lavender)";
+  _clearDragStyles();
+  // Détermine si on est dans la moitié haute ou basse de l'élément
+  const rect = e.currentTarget.getBoundingClientRect();
+  const mid  = rect.top + rect.height / 2;
+  if (e.clientY < mid) {
+    e.currentTarget.style.borderTop    = "2px solid var(--lilac)";
+    e.currentTarget.style.borderBottom = "";
+    e.currentTarget.dataset.dropPos    = "before";
+  } else {
+    e.currentTarget.style.borderBottom = "2px solid var(--lilac)";
+    e.currentTarget.style.borderTop    = "";
+    e.currentTarget.dataset.dropPos    = "after";
+  }
+}
+
+function biblioDragLeave(e) {
+  e.currentTarget.style.borderTop    = "";
+  e.currentTarget.style.borderBottom = "";
+}
+
+function biblioDragEnd(e) {
+  _clearDragStyles();
+  e.currentTarget.style.opacity = "";
 }
 
 function biblioDrop(e, targetKey) {
   e.preventDefault();
-  e.currentTarget.style.outline = "";
-  if (!_biblioDragKey || _biblioDragKey === targetKey) return;
+  const pos = e.currentTarget.dataset.dropPos || "before";
+  _clearDragStyles();
+  if (!_biblioDragKey || _biblioDragKey === targetKey) { _biblioDragKey = null; return; }
   const b = _getActiveBiblio() || _biblioDef();
   if (!b.collectionOrder) {
-    // Initialiser l'ordre à partir de l'ordre actuel
     b.collectionOrder = (b.collections||[]).filter(c => !c.parentKey || c.parentKey === "").map(c => c.key);
   }
   const order = b.collectionOrder;
+  // Ajouter les clés manquantes
+  const rootCols = (b.collections||[]).filter(c => !c.parentKey || c.parentKey === "");
+  rootCols.forEach(c => { if (!order.includes(c.key)) order.push(c.key); });
+
   const fromIdx = order.indexOf(_biblioDragKey);
-  const toIdx   = order.indexOf(targetKey);
-  if (fromIdx < 0 || toIdx < 0) return;
+  let toIdx = order.indexOf(targetKey);
+  if (fromIdx < 0 || toIdx < 0) { _biblioDragKey = null; return; }
+
   order.splice(fromIdx, 1);
-  order.splice(toIdx, 0, _biblioDragKey);
+  toIdx = order.indexOf(targetKey); // recalculer après suppression
+  const insertAt = pos === "after" ? toIdx + 1 : toIdx;
+  order.splice(insertAt, 0, _biblioDragKey);
+
   _setActiveBiblio(b);
   saveState();
   renderBiblioCollectionTree();
@@ -10353,7 +10392,7 @@ function renderBiblioCollectionTree() {
       const refCount  = (biblio.refs||[]).filter(r => (r.zoteroCollections||[]).some(k => descKeys.has(k))).length;
       const bg = active ? "var(--lavender-soft)" : "transparent";
       const dragAttrs = depth === 0
-        ? `draggable="true" ondragstart="biblioDragStart(event,'${c.key}')" ondragover="biblioDragOver(event)" ondrop="biblioDrop(event,'${c.key}')" ondragleave="this.style.outline=''" style="padding-left:0;"`
+        ? `draggable="true" ondragstart="biblioDragStart(event,'${c.key}')" ondragover="biblioDragOver(event)" ondragleave="biblioDragLeave(event)" ondragend="biblioDragEnd(event)" ondrop="biblioDrop(event,'${c.key}')" data-biblio-drag="1" style="padding-left:0;cursor:grab;"`
         : `style="padding-left:${depth*14}px;"`;
       return `<div ${dragAttrs}>
         <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:8px;cursor:pointer;font-size:13px;background:${bg};"
