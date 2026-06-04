@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v238</title>
+<title>Mon Tableau de Vie 🌿 · v239</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -11045,15 +11045,22 @@ function renderExtractRefPicker() {
     </div>`;
   }
 
-  // Mode recherche : liste filtrée
+  // Mode recherche : liste filtrée + dédupliquée par titre+auteur+année
   if (search) {
     const filtered = refs.filter(r =>
       (r.title||"").toLowerCase().includes(search) ||
       (r.authors||"").toLowerCase().includes(search) ||
       (r.year||"").includes(search)
-    ).slice(0, 50);
-    el.innerHTML = filtered.length
-      ? filtered.map(r => refItem(r, 0)).join("")
+    );
+    // Déduplication : garder seulement la première occurrence par titre+auteur+année
+    const seen = new Set();
+    const deduped = filtered.filter(r => {
+      const key = `${(r.title||"").toLowerCase().trim()}|${(r.authors||"").toLowerCase().trim()}|${r.year||""}`;
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    }).slice(0, 50);
+    el.innerHTML = deduped.length
+      ? deduped.map(r => refItem(r, 0)).join("")
       : `<p style='font-size:13px;color:var(--ink-softer);padding:8px;'>Aucun résultat pour "${escapeHtml(search)}"</p>`;
     return;
   }
