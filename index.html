@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v197</title>
+<title>Mon Tableau de Vie 🌿 · v198</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7968,7 +7968,7 @@ function renderMoneyCatChart() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d < end && tx.type === "expense") totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
+    if (d >= start && d < end && tx.type === "expense" && !tx.reimbursable) totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>ce mois"); return; }
@@ -8114,7 +8114,7 @@ function renderBudgetFeedback() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d < end && tx.type === "expense")
+    if (d >= start && d < end && tx.type === "expense" && !tx.reimbursable)
       totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
   }
 
