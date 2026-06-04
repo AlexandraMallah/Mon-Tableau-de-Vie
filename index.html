@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v193</title>
+<title>Mon Tableau de Vie 🌿 · v194</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2277,10 +2277,16 @@
           <button id="txTypeSavings" class="savings" onclick="setTxType('savings')">💰 Épargne</button>
           <button id="txTypeSavingsOut" class="savings-out" onclick="setTxType('savings-out')">🏦→💳 Retrait</button>
         </div>
-        <label id="txReimbursableWrap" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin-bottom:6px;cursor:pointer;">
-          <input type="checkbox" id="txReimbursable" style="width:15px;height:15px;cursor:pointer;" onchange="toggleMissionField('txMissionWrap', this.checked)" />
-          💼 Frais pro — remboursé par le boulot
-        </label>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:6px;">
+          <label id="txReimbursableWrap" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;">
+            <input type="checkbox" id="txReimbursable" style="width:15px;height:15px;cursor:pointer;" onchange="toggleMissionField('txMissionWrap', this.checked)" />
+            💼 Frais pro — remboursé par le boulot
+          </label>
+          <label id="txFixedChargeWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;">
+            <input type="checkbox" id="txFixedCharge" style="width:15px;height:15px;cursor:pointer;" />
+            🏠 Charge fixe (loyer, abonnement…)
+          </label>
+        </div>
         <div id="txMissionWrap" style="display:none;margin-bottom:6px;">
           <input type="text" id="txMission" list="missionList" placeholder="Mission / déplacement (ex : Conférence MHT Amsterdam)"
             style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);box-sizing:border-box;" />
@@ -2893,10 +2899,16 @@
     <input type="date" id="txModalDate" />
     <label>Note</label>
     <input type="text" id="txModalNote" placeholder="Optionnel" />
-    <label id="txModalReimbursableWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin-top:4px;cursor:pointer;">
-      <input type="checkbox" id="txModalReimbursable" style="width:15px;height:15px;cursor:pointer;" onchange="toggleMissionField('txModalMissionWrap', this.checked)" />
-      💼 Frais pro — remboursé par le boulot
-    </label>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;">
+      <label id="txModalReimbursableWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;">
+        <input type="checkbox" id="txModalReimbursable" style="width:15px;height:15px;cursor:pointer;" onchange="toggleMissionField('txModalMissionWrap', this.checked)" />
+        💼 Frais pro — remboursé par le boulot
+      </label>
+      <label id="txModalFixedChargeWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;">
+        <input type="checkbox" id="txModalFixedCharge" style="width:15px;height:15px;cursor:pointer;" />
+        🏠 Charge fixe
+      </label>
+    </div>
     <div id="txModalMissionWrap" style="display:none;margin-top:6px;">
       <input type="text" id="txModalMission" list="missionList" placeholder="Mission / déplacement"
         style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);box-sizing:border-box;" />
@@ -6996,15 +7008,17 @@ function setTxType(t) {
   document.getElementById("txTypeSavings").classList.toggle("active", t === "savings");
   document.getElementById("txTypeExternal").classList.toggle("active", t === "external");
   document.getElementById("txTypeSavingsOut").classList.toggle("active", t === "savings-out");
-  // Afficher le toggle frais pro uniquement pour les dépenses
+  // Afficher le toggle frais pro + charge fixe uniquement pour les dépenses
   const wrap = document.getElementById("txReimbursableWrap");
+  const fcWrap = document.getElementById("txFixedChargeWrap");
+  const show = (t === "expense" || t === "external");
   if (wrap) {
-    const show = (t === "expense" || t === "external");
     wrap.style.display = show ? "flex" : "none";
-    if (!show) {
-      document.getElementById("txReimbursable").checked = false;
-      toggleMissionField("txMissionWrap", false);
-    }
+    if (!show) { document.getElementById("txReimbursable").checked = false; toggleMissionField("txMissionWrap", false); }
+  }
+  if (fcWrap) {
+    fcWrap.style.display = show ? "flex" : "none";
+    if (!show) document.getElementById("txFixedCharge").checked = false;
   }
   populateTxCategories();
 }
@@ -7415,7 +7429,9 @@ function addTransaction() {
   const reimbursableEl = document.getElementById("txReimbursable");
   const reimbursable = reimbursableEl?.checked && (txType === "expense" || txType === "external") ? true : false;
   const mission = reimbursable ? (document.getElementById("txMission")?.value.trim() || "") : "";
-  state.transactions.unshift({ id: "tx" + Date.now(), date, type: txType, amount, category, note, reimbursable, mission });
+  const fixedChargeEl = document.getElementById("txFixedCharge");
+  const fixedCharge = fixedChargeEl?.checked && (txType === "expense" || txType === "external") ? true : false;
+  state.transactions.unshift({ id: "tx" + Date.now(), date, type: txType, amount, category, note, reimbursable, mission, fixedCharge });
   document.getElementById("txAmount").value = "";
   document.getElementById("txNote").value = "";
   if (reimbursableEl) reimbursableEl.checked = false;
@@ -7448,6 +7464,8 @@ function openTxModal(id) {
   setTxModalType(tx.type, tx.category);
   const modalReimb = document.getElementById("txModalReimbursable");
   if (modalReimb) modalReimb.checked = !!tx.reimbursable;
+  const modalFc = document.getElementById("txModalFixedCharge");
+  if (modalFc) modalFc.checked = !!tx.fixedCharge;
   const modalMissionEl = document.getElementById("txModalMission");
   if (modalMissionEl) modalMissionEl.value = tx.mission || "";
   toggleMissionField("txModalMissionWrap", !!tx.reimbursable);
@@ -7483,9 +7501,12 @@ function setTxModalType(t, presetCategory) {
     sel.innerHTML = PRO_CATEGORIES.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
     sel.value = presetCategory;
   }
-  // Afficher le toggle frais pro uniquement pour les dépenses
+  // Afficher les toggles frais pro + charge fixe uniquement pour les dépenses
   const modalWrap = document.getElementById("txModalReimbursableWrap");
-  if (modalWrap) modalWrap.style.display = (t === "expense" || t === "external") ? "flex" : "none";
+  const modalFcWrap = document.getElementById("txModalFixedChargeWrap");
+  const showModal = (t === "expense" || t === "external");
+  if (modalWrap) modalWrap.style.display = showModal ? "flex" : "none";
+  if (modalFcWrap) modalFcWrap.style.display = showModal ? "flex" : "none";
 }
 function saveTxFromModal() {
   const id = document.getElementById("txModalId").value;
@@ -7508,6 +7529,8 @@ function saveTxFromModal() {
   const modalReimb = document.getElementById("txModalReimbursable");
   tx.reimbursable = modalReimb?.checked && (txModalType === "expense" || txModalType === "external") ? true : false;
   tx.mission = tx.reimbursable ? (document.getElementById("txModalMission")?.value.trim() || "") : "";
+  const modalFc = document.getElementById("txModalFixedCharge");
+  tx.fixedCharge = modalFc?.checked && (txModalType === "expense" || txModalType === "external") ? true : false;
   saveState();
   closeTxModal();
   renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
@@ -7586,7 +7609,7 @@ function renderTxList() {
       <div class="tx-row">
         <div class="tx-dot" style="background:${dotColor}"></div>
         <div class="tx-info">
-          <div class="tx-cat">${escapeHtml(tx.category)}${tx.reimbursable ? ' <span style="font-size:11px;background:#fff3e0;color:#dc7014;border-radius:6px;padding:1px 5px;font-weight:600;">💼 frais pro</span>' : ''}</div>
+          <div class="tx-cat">${escapeHtml(tx.category)}${tx.reimbursable ? ' <span style="font-size:11px;background:#fff3e0;color:#dc7014;border-radius:6px;padding:1px 5px;font-weight:600;">💼 frais pro</span>' : ''}${tx.fixedCharge ? ' <span style="font-size:11px;background:#f0eeff;color:#7c5cbf;border-radius:6px;padding:1px 5px;font-weight:600;">🏠 fixe</span>' : ''}</div>
           <div class="tx-note">${escapeHtml(tx.note || "—")}${tx.reimbursedAt ? ' ✅' : ''}</div>
         </div>
         <div class="tx-amount ${tx.type}">${sign} ${Math.abs(tx.amount).toFixed(2)} €</div>
@@ -8016,21 +8039,23 @@ function renderBudgetGauge() {
   const now = new Date();
 
   // Budget auto = revenus − épargne nette du mois
-  const fixedCharges = state.fixedCharges || 0;
-  let income = 0, savings = 0, savingsOut = 0, spentRaw = 0;
+  let income = 0, savings = 0, savingsOut = 0, spentRaw = 0, fixedTotal = 0;
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
     if (d < start || d >= end) continue;
     if (tx.type === "income")       income     += tx.amount;
     if (tx.type === "savings")      savings    += tx.amount;
     if (tx.type === "savings-out")  savingsOut += tx.amount;
-    if (tx.type === "expense" && !tx.reimbursable) spentRaw += tx.amount;
+    if ((tx.type === "expense" || tx.type === "external") && !tx.reimbursable) {
+      spentRaw += tx.amount;
+      if (tx.fixedCharge) fixedTotal += tx.amount;
+    }
   }
   // Dépenses hors charges fixes (pour la jauge)
-  const spent     = Math.max(0, spentRaw - fixedCharges);
+  const spent     = Math.max(0, spentRaw - fixedTotal);
   // Restant = solde courant réel (ce qu'il y a vraiment en banque)
   const remaining = balanceCourant();
-  const budget    = spent + remaining + fixedCharges; // total disponible = dépensé + ce qu'il reste
+  const budget    = spent + remaining + fixedTotal; // total disponible = dépensé + ce qu'il reste
 
   if (budget <= 0 && income === 0) {
     el.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);padding:6px 0;">
@@ -8073,7 +8098,7 @@ function renderBudgetGauge() {
       <span>Jour <strong>${daysElapsed}</strong>/${totalDays} · <strong>${daysLeft}</strong> jours restants</span>
       <span>Idéal : ${dailyIdeal.toFixed(0)} €/j · Rythme actuel : <strong style="color:${dailyActual > dailyIdeal * 1.1 ? "#f59e0b" : "var(--ink)"};">${dailyActual.toFixed(0)} €/j</strong></span>
     </div>
-    ${fixedCharges > 0 ? `<div style="margin-top:8px;font-size:12px;color:var(--ink-softer);border-top:1px solid var(--line);padding-top:8px;">🏠 Charges fixes exclues de la jauge : <strong>${fixedCharges.toFixed(0)} €/mois</strong> · Dépenses totales réelles : ${spentRaw.toFixed(0)} €</div>` : ""}`;
+    ${fixedTotal > 0 ? `<div style="margin-top:8px;font-size:12px;color:var(--ink-softer);border-top:1px solid var(--line);padding-top:8px;">🏠 Charges fixes exclues : <strong>${fixedTotal.toFixed(0)} €</strong> · Dépenses totales réelles ce mois : ${spentRaw.toFixed(0)} €</div>` : ""}`;
 }
 function renderBudgetFeedback() {
   const el = document.getElementById("budgetFeedback");
