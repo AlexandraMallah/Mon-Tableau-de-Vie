@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v261</title>
+<title>Mon Tableau de Vie 🌿 · v262</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10918,12 +10918,7 @@ const REF_TYPE_ICON = { book:"📗", article:"📄", chapter:"📑", report:"�
 const REF_STATUS = { "to-read":"📌 À lire", "reading":"📖 En cours", "read":"✅ Lu" };
 
 function renderBiblioRefs() {
-  if (!_getBiblioProjects().length) {
-    const el = document.getElementById("biblioRefList");
-    if (el) el.innerHTML = '<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:24px;">Crée un <strong>+ Projet</strong> pour commencer.</p>';
-    return;
-  }
-  const biblio = _getGlobalBiblio();
+  const biblio = _getGlobalBiblio(); // refs globales, pas besoin de projet
   const search = (document.getElementById("biblioSearch")?.value || "").toLowerCase();
   const filterStatus = document.getElementById("biblioFilterStatus")?.value || "";
   const filterType   = document.getElementById("biblioFilterType")?.value   || "";
@@ -11658,7 +11653,7 @@ function renderBiblioByCode() {
 function renderZoteroSources() {
   const el = document.getElementById("zoteroSourcesList");
   if (!el) return;
-  const b = _getActiveBiblio() || _biblioDef();
+  const b = _getGlobalBiblio(); // refs = biblio globale
   const refs = b.refs || [];
   if (!refs.length) { el.innerHTML = '<p style="font-size:13px;color:var(--ink-softer);">Aucune référence importée.</p>'; return; }
 
