@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v310</title>
+<title>Mon Tableau de Vie 🌿 · v311</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9721,7 +9721,8 @@ const PILLAR_DEFS = [
   {
     id: "vie-pratique", name: "Vie pratique", emoji: "🏠", color: "#efb8c8", bg: "var(--rose-soft)",
     metrics: [
-      { type: "groceries-active", label: "Liste courses active" },
+      { type: "groceries-done", label: "Courses à jour" },
+      { type: "meal-plan-active", label: "Planning repas fait", target: 3 },
       { type: "plants-uptodate", label: "Plantes arrosées" },
     ]
   },
@@ -9860,6 +9861,12 @@ function computeMetric(m) {
     const net = savings - savingsOut;
     return { score: Math.min(1, Math.max(0, net) / m.target), value: net.toFixed(0) + " € net", label: m.label };
   }
+  if (m.type === "groceries-done") {
+    const open = state.domestique?.groceries?.filter(g => !g.checked).length || 0;
+    // Liste vide = courses faites = top ; liste avec articles = à faire
+    const score = open === 0 ? 1 : Math.max(0, 1 - open / 10);
+    return { score, value: open === 0 ? "à jour ✓" : open + " articles restants", label: m.label };
+  }
   if (m.type === "groceries-active") {
     const events = state.domestique?.groceryEvents || [];
     const open = state.domestique?.groceries?.filter(g => !g.checked).length || 0;
@@ -9872,6 +9879,20 @@ function computeMetric(m) {
     const late = chores.filter(c => choreStatus(c).state === "late").length;
     const score = 1 - (late / chores.length);
     return { score, value: late === 0 ? "à jour ✓" : late + " en retard", label: m.label };
+  }
+  if (m.type === "meal-plan-active") {
+    // Vérifier combien de créneaux repas sont renseignés pour la semaine courante
+    const now = new Date(); now.setHours(0,0,0,0);
+    let filled = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now); d.setDate(d.getDate() + i);
+      const key = d.toISOString().slice(0,10);
+      const plan = state.domestique?.mealPlan?.[key] || {};
+      if (plan.midi || plan.soir) filled++;
+    }
+    const target = m.target || 3;
+    const score = Math.min(1, filled / target);
+    return { score, value: filled + "/7 jours planifiés", label: m.label };
   }
   if (m.type === "plants-uptodate") {
     const plants = state.domestique?.plants || [];
