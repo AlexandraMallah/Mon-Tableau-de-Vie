@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v270</title>
+<title>Mon Tableau de Vie 🌿 · v271</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -12815,9 +12815,12 @@ function renderPlants() {
           <button class="dom-del" onclick="deletePlant('${p.id}')" title="Supprimer">✕</button>
         </div>
       </div>`).join("");
-  // Auto-resize des textareas de notes déjà remplies
-  target.querySelectorAll(".plant-notes-input").forEach(ta => {
-    if (ta.value) { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; }
+  // Auto-resize des textareas de notes — différé pour laisser le navigateur calculer les dimensions
+  requestAnimationFrame(() => {
+    target.querySelectorAll(".plant-notes-input").forEach(ta => {
+      ta.style.height = "auto";
+      ta.style.height = Math.max(ta.scrollHeight, 20) + "px";
+    });
   });
 }
 function addPlant() {
