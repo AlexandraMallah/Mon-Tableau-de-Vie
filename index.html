@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v312</title>
+<title>Mon Tableau de Vie 🌿 · v313</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4281,16 +4281,24 @@ function migrate(s) {
 function _restoreShortcutsBackup() {
   try {
     const backup = localStorage.getItem("tableau_shortcuts");
-    if (backup && (!state.shortcuts || !state.shortcuts.length)) {
-      state.shortcuts = JSON.parse(backup);
+    if (backup) {
+      const parsed = JSON.parse(backup);
+      // Toujours prendre la liste la plus longue (= la plus récente config utilisateur)
+      if (parsed.length > (state.shortcuts?.length || 0)) {
+        state.shortcuts = parsed;
+      }
     }
   } catch(e) {}
 }
 
 function saveState() {
   state.lastModified = Date.now();
-  window._lastLocalSave = Date.now(); // protection anti-écrasement Firebase
+  window._lastLocalSave = Date.now();
   localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  // Backup séparé des raccourcis à chaque sauvegarde
+  if (state.shortcuts?.length) {
+    try { localStorage.setItem("tableau_shortcuts", JSON.stringify(state.shortcuts)); } catch(e) {}
+  }
   _fbQueueSave();
 }
 let state = loadState();
