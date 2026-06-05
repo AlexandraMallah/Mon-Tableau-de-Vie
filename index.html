@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v297</title>
+<title>Mon Tableau de Vie 🌿 · v298</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1813,13 +1813,26 @@
       <div class="modal" style="max-width:440px;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
         <h2 style="margin:0 0 14px;">🍽️ Qu'est-ce que tu as mangé ?</h2>
         <input type="hidden" id="foodEntryId" />
-        <label>Aliment / repas</label>
-        <input type="text" id="foodEntryName" placeholder="ex : salade, chocolat, poulet rôti…"
-          oninput="searchFoodCalories(this.value)" />
-        <div id="foodCalSuggestions" style="display:none;background:white;border:1px solid var(--line);border-radius:10px;margin-top:4px;max-height:140px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.08);"></div>
-        <label style="margin-top:8px;">Heure</label>
-        <input type="time" id="foodEntryTime" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;width:100%;box-sizing:border-box;" />
-        <label style="margin-top:10px;">Pourquoi tu as mangé ?</label>
+        <div style="display:flex;gap:8px;margin-bottom:2px;">
+          <div style="flex:1;">
+            <label>Nom du plat / repas</label>
+            <input type="text" id="foodEntryName" placeholder="ex : Latte maison, salade, poulet…" />
+          </div>
+          <div>
+            <label>Heure</label>
+            <input type="time" id="foodEntryTime" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;width:120px;" />
+          </div>
+        </div>
+
+        <!-- Ingrédients -->
+        <label style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;">
+          <span>Ingrédients <span style="font-size:11px;color:var(--ink-softer);">(optionnel — pour calcul auto)</span></span>
+          <button onclick="addFoodIngredient()" style="padding:3px 10px;border-radius:8px;border:1.5px dashed var(--line);background:transparent;font-size:12px;cursor:pointer;color:var(--ink-soft);font-family:inherit;">+ Ajouter</button>
+        </label>
+        <div id="foodIngredientsList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px;"></div>
+        <div style="font-size:12px;color:var(--orange);font-weight:600;text-align:right;min-height:18px;" id="foodIngCalTotal"></div>
+
+        <label style="margin-top:8px;">Pourquoi tu as mangé ?</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;" id="foodReasonPicker">
           <button onclick="selectFoodReason('🤤 Vraie faim')" class="note-tb-btn" data-r="🤤 Vraie faim">🤤 Vraie faim</button>
           <button onclick="selectFoodReason('😰 Stress')" class="note-tb-btn" data-r="😰 Stress">😰 Stress</button>
@@ -1831,15 +1844,15 @@
         <input type="hidden" id="foodEntryReason" />
         <div style="display:flex;gap:10px;align-items:flex-end;margin-top:8px;">
           <div style="flex:1;">
-            <label>Calories (optionnel)</label>
+            <label>Calories totales</label>
             <div style="display:flex;align-items:center;gap:6px;">
-              <input type="number" id="foodEntryCalories" placeholder="ex: 350" min="0" max="5000" step="10"
+              <input type="number" id="foodEntryCalories" placeholder="auto ou manuel" min="0" max="9999" step="1"
                 style="flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" />
               <span style="font-size:13px;color:var(--ink-soft);">kcal</span>
             </div>
           </div>
           <div style="flex:1;">
-            <label>Note rapide (optionnel)</label>
+            <label>Note rapide</label>
             <input type="text" id="foodEntryNote" placeholder="Comment tu te sens après ?" />
           </div>
         </div>
@@ -7160,9 +7173,12 @@ function openFoodEntry(id) {
   if (!d.foodLog) d.foodLog = [];
   const e = id ? d.foodLog.find(x => x.id === id) : null;
   document.getElementById("foodEntryId").value = id || "";
+  if (!id) { _foodIngredients = []; renderFoodIngredients(); }
   document.getElementById("foodEntryName").value = e?.name || "";
   document.getElementById("foodEntryNote").value = e?.note || "";
   document.getElementById("foodEntryCalories").value = e?.calories > 0 ? e.calories : "";
+  _foodIngredients = JSON.parse(JSON.stringify(e?.ingredients||[]));
+  renderFoodIngredients();
   document.getElementById("foodEntryReason").value = e?.reason || "";
   // Heure par défaut = maintenant
   const now = new Date();
@@ -7180,6 +7196,72 @@ function openFoodEntry(id) {
 }
 
 let _foodCalTimer = null;
+let _foodIngredients = []; // liste des ingrédients de l'entrée en cours
+
+function addFoodIngredient(ing) {
+  ing = ing || { id: 'fi'+Date.now(), name: '', qty: '', unit: 'g', kcal: 0 };
+  _foodIngredients.push(ing);
+  renderFoodIngredients();
+}
+
+function renderFoodIngredients() {
+  const list = document.getElementById("foodIngredientsList");
+  if (!list) return;
+  list.innerHTML = _foodIngredients.map((ing, i) => `
+    <div style="display:flex;gap:6px;align-items:center;">
+      <input type="text" value="${escapeHtml(ing.name)}" placeholder="Ingrédient…"
+        oninput="_foodIngredients[${i}].name=this.value;searchIngCalories(${i},this.value+''+_foodIngredients[${i}].qty+_foodIngredients[${i}].unit)"
+        style="flex:2;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+      <input type="number" value="${ing.qty||''}" placeholder="Qté" min="0"
+        oninput="_foodIngredients[${i}].qty=this.value;updateIngTotal()"
+        style="width:60px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+      <select onchange="_foodIngredients[${i}].unit=this.value;updateIngTotal()"
+        style="padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;background:white;">
+        <option value="g"${ing.unit==='g'?' selected':''}>g</option>
+        <option value="ml"${ing.unit==='ml'?' selected':''}>ml</option>
+        <option value="cl"${ing.unit==='cl'?' selected':''}>cl</option>
+      </select>
+      <span style="font-size:11px;color:var(--orange);font-weight:600;min-width:50px;" id="ingCal_${i}">${ing.kcal>0?ing.kcal+' kcal':''}</span>
+      <button onclick="_foodIngredients.splice(${i},1);renderFoodIngredients();updateIngTotal()"
+        style="padding:4px 8px;border-radius:7px;border:1px solid var(--line);background:white;cursor:pointer;color:var(--ink-softer);">✕</button>
+    </div>`).join("");
+  updateIngTotal();
+}
+
+async function searchIngCalories(idx, query) {
+  if (!query || query.length < 2) return;
+  const { name, grams } = _parseFoodQuery(query);
+  if (!name) return;
+  clearTimeout(_foodCalTimer);
+  _foodCalTimer = setTimeout(async () => {
+    try {
+      const res = await fetch('https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(name)+'&action=process&json=1&page_size=1&fields=product_name,nutriments&lc=fr');
+      const data = await res.json();
+      const p = (data.products||[]).find(x => x.nutriments?.["energy-kcal_100g"] > 0);
+      if (!p) return;
+      const kcal100 = p.nutriments["energy-kcal_100g"];
+      const ing = _foodIngredients[idx];
+      if (!ing) return;
+      const qty = parseFloat(ing.qty) || (grams||100);
+      const mult = ing.unit === 'cl' ? 10 : 1;
+      ing.kcal100g = kcal100;
+      ing.kcal = Math.round(kcal100 * qty * mult / 100);
+      const el = document.getElementById('ingCal_'+idx);
+      if (el) el.textContent = ing.kcal + ' kcal';
+      updateIngTotal();
+    } catch(e) {}
+  }, 700);
+}
+
+function updateIngTotal() {
+  const total = _foodIngredients.reduce((s,i) => s+(i.kcal||0), 0);
+  const el = document.getElementById("foodIngCalTotal");
+  if (el) el.textContent = total > 0 ? 'Total ingrédients : '+total+' kcal' : '';
+  // Mettre à jour le champ calories si non modifié manuellement
+  const calEl = document.getElementById("foodEntryCalories");
+  if (calEl && total > 0) calEl.value = total;
+}
+
 
 // Extrait la quantité en grammes d'une chaîne (ex: "poulet 200g" → {name:"poulet", grams:200})
 function _parseFoodQuery(query) {
@@ -7257,6 +7339,7 @@ function saveFoodEntry() {
     reason: document.getElementById("foodEntryReason").value,
     note: document.getElementById("foodEntryNote").value.trim(),
     calories: parseInt(document.getElementById("foodEntryCalories")?.value)||0,
+    ingredients: JSON.parse(JSON.stringify(_foodIngredients)),
   };
   if (id) {
     const i = d.foodLog.findIndex(x => x.id === id);
