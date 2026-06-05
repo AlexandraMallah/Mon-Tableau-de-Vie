@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v274</title>
+<title>Mon Tableau de Vie 🌿 · v275</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2849,6 +2849,18 @@
       <div class="journal-past" id="journalPast"></div>
     </div>
   </section>
+</div>
+
+<!-- Modal détail événement calendrier -->
+<div class="modal-bg" id="calEventDetailModal" onclick="if(event.target===this)closeCalEventDetail()">
+  <div class="modal" style="max-width:420px;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+    <button onclick="closeCalEventDetail()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-softer);">✕</button>
+    <div id="calEventDetailIcon" style="font-size:24px;margin-bottom:6px;"></div>
+    <h2 id="calEventDetailTitle" style="margin:0 0 8px;font-size:18px;padding-right:30px;"></h2>
+    <div id="calEventDetailMeta" style="font-size:13px;color:var(--ink-soft);margin-bottom:10px;display:flex;flex-direction:column;gap:4px;"></div>
+    <div id="calEventDetailDesc" style="font-size:14px;color:var(--ink);line-height:1.6;white-space:pre-wrap;"></div>
+    <div id="calEventDetailActions" style="margin-top:16px;"></div>
+  </div>
 </div>
 
 <!-- ========= MODALS ========= -->
@@ -9733,12 +9745,14 @@ function renderCalendar() {
     const isWeekend = dow === 0 || dow === 6;
     const eventsHtml = dayEvents.slice(0, 3).map(e => {
       const inline = (e.type === "ics" && e.color) ? ` style="background:${hexToRgba(e.color, 0.22)};border-left-color:${e.color};"` : "";
-      return `<div class="cal-event ${e.type}"${inline} title="${escapeHtml(e.title)}">${escapeHtml(e.title)}</div>`;
+      return `<div class="cal-event ${e.type}"${inline} title="${escapeHtml(e.title)}"
+        onclick="event.stopPropagation();openCalEventDetail('${e.id}','${dateKey}')"
+        style="${(e.type === "ics" && e.color)?`background:${hexToRgba(e.color, 0.22)};border-left-color:${e.color};`:""}cursor:pointer;">${escapeHtml(e.title)}</div>`;
     }).join("");
     const moreCount = dayEvents.length - 3;
-    const moreHtml = moreCount > 0 ? `<div class="cal-event more">+ ${moreCount} de plus</div>` : "";
+    const moreHtml = moreCount > 0 ? `<div class="cal-event more" onclick="event.stopPropagation();showCalDayDetails('${dateKey}');document.getElementById('calDayList').scrollIntoView({behavior:'smooth'})" style="cursor:pointer;">+ ${moreCount} de plus</div>` : "";
     html += `
-      <div class="cal-day ${isToday ? "today" : ""} ${isWeekend ? "weekend" : ""}" onclick="showCalDayDetails('${dateKey}')">
+      <div class="cal-day ${isToday ? "today" : ""} ${isWeekend ? "weekend" : ""}" onclick="showCalDayDetails('${dateKey}');document.getElementById('calDayList').scrollIntoView({behavior:'smooth'})">
         <div class="cal-day-num">${d}</div>
         ${eventsHtml}${moreHtml}
       </div>`;
@@ -9754,6 +9768,33 @@ function renderCalendar() {
 
   renderCalUpcoming();
 }
+function openCalEventDetail(eventId, dateKey) {
+  const allEvents = getAllCalEvents();
+  const e = allEvents.find(x => x.id === eventId) || allEvents.find(x => x.date === dateKey);
+  if (!e) { showCalDayDetails(dateKey); return; }
+  document.getElementById("calEventDetailIcon").textContent =
+    e.type === "manual" ? "📅" : e.type === "task" ? "📌" : e.type === "plant" ? "🌱" : "📋";
+  document.getElementById("calEventDetailTitle").textContent = e.title || "Événement";
+  // Meta
+  const timeStr = e.time ? (e.endTime ? `🕐 ${e.time} – ${e.endTime}` : `🕐 ${e.time}`) : "";
+  const [y,m,d] = e.date.split("-").map(Number);
+  const dateStr = new Date(y,m-1,d).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+  const loc = e.location ? `📍 ${e.location}` : "";
+  const src = e.source ? `📂 ${e.source}` : "";
+  document.getElementById("calEventDetailMeta").innerHTML =
+    [`📆 ${dateStr}`, timeStr, loc, src].filter(Boolean).map(s => `<span>${escapeHtml(s)}</span>`).join("");
+  document.getElementById("calEventDetailDesc").textContent = e.description || "";
+  // Actions
+  const editBtn = e.type === "manual"
+    ? `<button onclick="closeCalEventDetail();openManualEventModal('${e.date}','${e.id}')" class="btn-soft" style="font-size:13px;">✏️ Modifier</button>`
+    : "";
+  document.getElementById("calEventDetailActions").innerHTML = editBtn;
+  document.getElementById("calEventDetailModal").classList.add("open");
+}
+function closeCalEventDetail() {
+  document.getElementById("calEventDetailModal").classList.remove("open");
+}
+
 function showCalDayDetails(dateKey) {
   const events = getAllCalEvents().filter(e => e.date === dateKey);
   const [y, m, d] = dateKey.split("-").map(Number);
