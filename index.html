@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v295</title>
+<title>Mon Tableau de Vie 🌿 · v296</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1814,7 +1814,9 @@
         <h2 style="margin:0 0 14px;">🍽️ Qu'est-ce que tu as mangé ?</h2>
         <input type="hidden" id="foodEntryId" />
         <label>Aliment / repas</label>
-        <input type="text" id="foodEntryName" placeholder="ex : salade, chocolat, repas complet…" />
+        <input type="text" id="foodEntryName" placeholder="ex : salade, chocolat, poulet rôti…"
+          oninput="searchFoodCalories(this.value)" />
+        <div id="foodCalSuggestions" style="display:none;background:white;border:1px solid var(--line);border-radius:10px;margin-top:4px;max-height:140px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.08);"></div>
         <label style="margin-top:8px;">Heure</label>
         <input type="time" id="foodEntryTime" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;width:100%;box-sizing:border-box;" />
         <label style="margin-top:10px;">Pourquoi tu as mangé ?</label>
@@ -7175,6 +7177,42 @@ function openFoodEntry(id) {
   if (del) del.style.display = e ? "inline-block" : "none";
   document.getElementById("foodEntryModal").classList.add("open");
   setTimeout(() => document.getElementById("foodEntryName").focus(), 50);
+}
+
+let _foodCalTimer = null;
+async function searchFoodCalories(query) {
+  const sug = document.getElementById("foodCalSuggestions");
+  if (!query || query.length < 2) { if (sug) sug.style.display = "none"; return; }
+  clearTimeout(_foodCalTimer);
+  _foodCalTimer = setTimeout(async () => {
+    try {
+      // Utilise Open Food Facts (100% gratuit, pas de clé API)
+      const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&action=process&json=1&page_size=5&fields=product_name,nutriments,brands&lc=fr`);
+      const data = await res.json();
+      const products = (data.products||[]).filter(p => p.nutriments?.["energy-kcal_100g"] > 0);
+      if (!products.length) { sug.style.display = "none"; return; }
+      sug.innerHTML = products.map(p => {
+        const kcal100 = Math.round(p.nutriments["energy-kcal_100g"]);
+        const name = p.product_name || query;
+        return `<div onclick="applyCal('${escapeHtml(name.slice(0,50))}', ${kcal100})"
+          style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--line);"
+          onmouseover="this.style.background='var(--lavender-soft)'"
+          onmouseout="this.style.background='white'">
+          <span style="font-weight:500;">${escapeHtml(name.slice(0,50))}</span>
+          <span style="float:right;font-size:12px;color:var(--orange);font-weight:600;">${kcal100} kcal/100g</span>
+        </div>`;
+      }).join("") + `<div style="padding:6px 12px;font-size:11px;color:var(--ink-softer);text-align:center;">Source : Open Food Facts · Adapte les kcal à ta portion</div>`;
+      sug.style.display = "block";
+    } catch(e) { sug.style.display = "none"; }
+  }, 600);
+}
+
+function applyCal(name, kcal100) {
+  document.getElementById("foodEntryName").value = name;
+  // Laisser l'utilisateur saisir sa portion → on met kcal/100g comme base
+  const calInput = document.getElementById("foodEntryCalories");
+  if (calInput && !calInput.value) calInput.value = kcal100;
+  document.getElementById("foodCalSuggestions").style.display = "none";
 }
 
 function closeFoodEntry() { document.getElementById("foodEntryModal").classList.remove("open"); }
