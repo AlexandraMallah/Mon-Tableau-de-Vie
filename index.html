@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v277</title>
+<title>Mon Tableau de Vie 🌿 · v278</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -11545,7 +11545,7 @@ function renderExtractRefPicker() {
           <span style="flex:1;">${escapeHtml(c.name)}</span>
           <span style="font-size:11px;color:var(--ink-softer);">${allColRefs.length}</span>
         </div>
-        ${open ? renderPickerNode(c.id, depth+1) : ""}
+        ${(open && c.key) ? renderPickerNode(c.key, depth+1) : ""}
       </div>`;
     }
     return html;
