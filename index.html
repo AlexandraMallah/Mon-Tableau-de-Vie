@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v269</title>
+<title>Mon Tableau de Vie 🌿 · v270</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2713,17 +2713,17 @@
           <input type="file" id="icsFilePlants" accept=".ics" style="display:none;" onchange="detectPlantsFromICS(event)" />
         </div>
         <p style="color:var(--ink-soft);font-size:13px;margin:-8px 0 12px;">🟢 récemment arrosée · 🟠 bientôt · 🔴 a soif ! · Importe ton Google Agenda (.ics) pour détecter tes plantes automatiquement.</p>
-        <div style="display:grid;grid-template-columns:60px 1fr 140px auto;gap:8px;margin-bottom:14px;background:#faf8fd;padding:12px;border-radius:14px;align-items:center;">
-          <input type="text" id="newPlantEmoji" placeholder="🪴" style="padding:10px 8px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:16px;color:var(--ink);background:white;text-align:center;" />
-          <input type="text" id="newPlantName" placeholder="Nom de la plante" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;" />
-          <select id="newPlantFreq" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;background:#faf8fd;padding:12px;border-radius:14px;align-items:center;">
+          <input type="text" id="newPlantEmoji" placeholder="🪴" style="width:52px;flex-shrink:0;padding:10px 8px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:16px;color:var(--ink);background:white;text-align:center;" />
+          <input type="text" id="newPlantName" placeholder="Nom de la plante" style="flex:1;min-width:120px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;" />
+          <select id="newPlantFreq" style="flex-shrink:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;">
             <option value="2">Tous les 2 j</option>
             <option value="3">Tous les 3 j</option>
             <option value="7" selected>Hebdo</option>
             <option value="14">Bimensuel</option>
             <option value="30">Mensuel</option>
           </select>
-          <button class="btn-primary" onclick="addPlant()">Ajouter</button>
+          <button class="btn-primary" onclick="addPlant()" style="flex-shrink:0;">Ajouter</button>
         </div>
         <div id="plantsWeekBar"></div>
         <div id="plantsList"></div>
