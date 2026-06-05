@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v300</title>
+<title>Mon Tableau de Vie 🌿 · v301</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1644,6 +1644,7 @@
       <button class="btn-icon" id="importBtn" onclick="importData()">↙ Importer</button>
       <button class="btn-icon" id="settingsBtn" onclick="openSettings()">⚙ Personnaliser</button>
       <button class="btn-icon" onclick="openGestionModal()" style="background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
+      <button class="btn-icon" onclick="openShortcutsEditor()" title="Gérer les raccourcis" style="background:var(--lavender-soft);">⚡</button>
       <button class="btn-icon" id="syncSignInBtn" onclick="signInWithGoogle()" style="background:linear-gradient(135deg,#e8f0fe,#d2e3fc);color:#1a73e8;font-weight:600;">☁️ Connexion</button>
       <div class="sync-row">
         <div id="syncUserAvatar" style="display:none;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:var(--shadow);font-size:13px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
@@ -1651,6 +1652,9 @@
       </div>
     </div>
   </header>
+
+  <!-- Barre de raccourcis -->
+  <div id="shortcutsBar" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0;margin-bottom:4px;min-height:0;"></div>
 
   <div id="seedBanner" class="seed-banner" style="display:none;">
     <div class="seed-banner-text">
@@ -4232,7 +4236,8 @@ function migrate(s) {
     if (s.work.biblioProjects) {
       s.work.biblioProjects.forEach(p => {
         if (!p.biblio) return;
-        if ((p.biblio.refs||[]).length > 0) {
+        if (!s.shortcuts) s.shortcuts = [];
+  if ((p.biblio.refs||[]).length > 0) {
           const existingKeys = new Set((s.work.biblio.refs||[]).map(r => r.zoteroKey || r.id).filter(Boolean));
           (p.biblio.refs||[]).forEach(r => {
             const k = r.zoteroKey || r.id;
@@ -14325,6 +14330,113 @@ function loadInitialData() {
 }
 
 /* ========= MAIN ========= */
+/* ========= RACCOURCIS ========= */
+const SHORTCUT_CATALOG = [
+  // Onglets principaux
+  { id:"s_today",  label:"Aujourd'hui", emoji:"📅", action:"tab", tab:"today" },
+  { id:"s_work",   label:"Travail",     emoji:"💼", action:"tab", tab:"work" },
+  { id:"s_health", label:"Santé",       emoji:"🩺", action:"tab", tab:"health" },
+  { id:"s_money",  label:"Finances",    emoji:"💰", action:"tab", tab:"money" },
+  { id:"s_dom",    label:"Domestique",  emoji:"🏠", action:"tab", tab:"domestic" },
+  { id:"s_cal",    label:"Calendrier",  emoji:"📅", action:"tab", tab:"calendar" },
+  { id:"s_journal",label:"Journal",     emoji:"📔", action:"tab", tab:"journal" },
+  { id:"s_act",    label:"Activités",   emoji:"🏃", action:"tab", tab:"activities" },
+  // Sous-onglets
+  { id:"s_biblio", label:"Biblio",      emoji:"📖", action:"subtab", tab:"work", sub:"biblio" },
+  { id:"s_notes",  label:"Notes",       emoji:"📓", action:"subtab", tab:"work", sub:"notes" },
+  { id:"s_tasks",  label:"Mes tâches",  emoji:"✅", action:"subtab", tab:"work", sub:"tasks" },
+  { id:"s_cuisine",label:"Cuisine",     emoji:"🍳", action:"subtab", tab:"domestic", sub:"cuisine" },
+  { id:"s_repas",  label:"Repas",       emoji:"🍽️", action:"subtab", tab:"domestic", sub:"meals" },
+  { id:"s_courses",label:"Courses",     emoji:"🛒", action:"subtab", tab:"domestic", sub:"groceries" },
+  // Actions rapides
+  { id:"s_newtx",  label:"+ Transaction", emoji:"💳", action:"fn", fn:"() => { document.querySelector('[data-view=money]')?.click(); setTimeout(()=>document.getElementById('txAmount')?.focus(),300); }" },
+  { id:"s_newext", label:"+ Extrait",   emoji:"✏️", action:"fn", fn:"openExtractModal" },
+  { id:"s_newtask",label:"+ Tâche",     emoji:"📌", action:"fn", fn:"() => { document.querySelector('[data-view=work]')?.click(); setTimeout(()=>document.getElementById('newTaskName')?.focus(),300); }" },
+  { id:"s_newrec", label:"+ Recette",   emoji:"🧑‍🍳", action:"fn", fn:"openRecipeModal" },
+  { id:"s_foodlog",label:"+ Repas mangé", emoji:"🍴", action:"fn", fn:"openFoodEntry" },
+];
+
+function renderShortcutsBar() {
+  if (!state.shortcuts) state.shortcuts = [];
+  const bar = document.getElementById("shortcutsBar");
+  if (!bar) return;
+  if (!state.shortcuts.length) { bar.style.display = "none"; return; }
+  bar.style.display = "flex";
+  bar.innerHTML = state.shortcuts.map((sc, i) => {
+    const cat = SHORTCUT_CATALOG.find(c => c.id === sc.id);
+    if (!cat) return "";
+    return `<button onclick="runShortcut('${sc.id}')"
+      draggable="true"
+      ondragstart="scDragStart(event,${i})"
+      ondragover="scDragOver(event)"
+      ondrop="scDrop(event,${i})"
+      style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1.5px solid var(--lavender);background:var(--lavender-soft);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--ink);">
+      ${cat.emoji} ${escapeHtml(cat.label)}
+      <span onclick="event.stopPropagation();removeShortcut('${sc.id}')" style="opacity:0.5;margin-left:2px;font-size:11px;">✕</span>
+    </button>`;
+  }).join("");
+}
+
+let _scDragIdx = null;
+function scDragStart(e, i) { _scDragIdx = i; e.dataTransfer.effectAllowed = "move"; }
+function scDragOver(e) { e.preventDefault(); }
+function scDrop(e, toIdx) {
+  e.preventDefault();
+  if (_scDragIdx === null || _scDragIdx === toIdx) return;
+  const arr = state.shortcuts;
+  const item = arr.splice(_scDragIdx, 1)[0];
+  arr.splice(toIdx, 0, item);
+  saveState(); renderShortcutsBar(); _scDragIdx = null;
+}
+
+function runShortcut(id) {
+  const cat = SHORTCUT_CATALOG.find(c => c.id === id);
+  if (!cat) return;
+  if (cat.action === "tab") {
+    document.querySelector(`[data-view="${cat.tab}"]`)?.click();
+  } else if (cat.action === "subtab") {
+    document.querySelector(`[data-view="${cat.tab}"]`)?.click();
+    setTimeout(() => document.querySelector(`[data-sub="${cat.sub}"]`)?.click(), 200);
+  } else if (cat.action === "fn") {
+    try { eval(cat.fn)(); } catch(e) { try { window[cat.fn]?.(); } catch(e2){} }
+  }
+}
+
+function removeShortcut(id) {
+  state.shortcuts = (state.shortcuts||[]).filter(s => s.id !== id);
+  saveState(); renderShortcutsBar();
+}
+
+function openShortcutsEditor() {
+  if (!state.shortcuts) state.shortcuts = [];
+  const current = new Set(state.shortcuts.map(s => s.id));
+  const modal = document.createElement("div");
+  modal.style.cssText = "position:fixed;inset:0;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center;";
+  modal.innerHTML = `<div style="background:white;border-radius:20px;padding:24px;max-width:480px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 12px 48px rgba(60,50,80,.22);">
+    <h2 style="margin:0 0 6px;">⚡ Raccourcis</h2>
+    <p style="font-size:13px;color:var(--ink-soft);margin:0 0 16px;">Coche les raccourcis à afficher en haut.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      ${SHORTCUT_CATALOG.map(cat => `
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 10px;border-radius:10px;background:#faf8fd;">
+          <input type="checkbox" ${current.has(cat.id)?"checked":""} onchange="toggleShortcut('${cat.id}',this.checked)"
+            style="width:16px;height:16px;cursor:pointer;" />
+          <span style="font-size:16px;">${cat.emoji}</span>
+          <span style="font-size:14px;font-weight:500;">${escapeHtml(cat.label)}</span>
+        </label>`).join("")}
+    </div>
+    <button onclick="this.closest('[style*=position]').remove()" style="margin-top:16px;width:100%;padding:10px;border-radius:10px;border:none;background:var(--lilac);color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Fermer</button>
+  </div>`;
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
+}
+
+function toggleShortcut(id, on) {
+  if (!state.shortcuts) state.shortcuts = [];
+  if (on) { if (!state.shortcuts.find(s=>s.id===id)) state.shortcuts.push({id}); }
+  else state.shortcuts = state.shortcuts.filter(s => s.id !== id);
+  saveState(); renderShortcutsBar();
+}
+
 function renderAll() {
   renderHeader();
   renderTodayView();
