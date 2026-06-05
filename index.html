@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v266</title>
+<title>Mon Tableau de Vie 🌿 · v267</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -11863,8 +11863,9 @@ async function syncZotero() {
   b.collections = Array.from(colByKey.values());
 
   // NE PAS appeler _setActiveBiblio(b) : on écrit directement dans state.work.biblio (global)
-  // Appeler _setActiveBiblio écraserait les codes/extraits du projet avec la biblio globale vide
   saveState();
+  // Sauvegarder IMMÉDIATEMENT dans Firebase (sans le délai de 2.5s)
+  _fbSaveNow().catch(() => {});
   _biblioActiveCollection = ""; // reset filtre après sync
   renderBiblioCollectionTree();
   renderBiblioRefs();
