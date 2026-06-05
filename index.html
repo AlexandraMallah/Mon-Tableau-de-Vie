@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v304</title>
+<title>Mon Tableau de Vie 🌿 · v305</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7225,7 +7225,12 @@ function renderFoodIngredients() {
       <input type="text" value="${escapeHtml(ing.portion||'')}" placeholder="400ml"
         oninput="_foodIngredients[${i}].portion=this.value;searchIngCalories(${i},_foodIngredients[${i}].name+' '+this.value)"
         style="width:70px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:center;" />
-      <span style="font-size:11px;color:var(--orange);font-weight:600;min-width:48px;text-align:right;" id="ingCal_${i}">${ing.kcal>0?ing.kcal+' kcal':''}</span>
+      <div style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
+        <input type="number" value="${ing.kcal>0?ing.kcal:''}" placeholder="kcal" min="0" max="9999"
+          oninput="_foodIngredients[${i}].kcal=parseInt(this.value)||0;updateIngTotal()"
+          style="width:55px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;color:var(--orange);font-weight:600;text-align:center;" />
+        <span style="font-size:11px;color:var(--ink-softer);">kcal</span>
+      </div>
       <button onclick="_foodIngredients.splice(${i},1);renderFoodIngredients();updateIngTotal()"
         style="padding:4px 8px;border-radius:7px;border:1px solid var(--line);background:white;cursor:pointer;color:var(--ink-softer);">✕</button>
     </div>`).join("");
@@ -7253,8 +7258,8 @@ async function searchIngCalories(idx, query) {
       const mult = portionUnit === 'cl' ? 10 : 1;
       ing.kcal100g = kcal100;
       ing.kcal = Math.round(kcal100 * grams2 * mult / 100);
-      const el = document.getElementById('ingCal_'+idx);
-      if (el) el.textContent = ing.kcal + ' kcal';
+      // Mettre à jour le champ kcal de l'ingrédient
+      renderFoodIngredients(); // re-render pour mettre à jour les champs
       updateIngTotal();
     } catch(e) {}
   }, 700);
