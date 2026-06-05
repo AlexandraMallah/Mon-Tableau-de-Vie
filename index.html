@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v285</title>
+<title>Mon Tableau de Vie 🌿 · v286</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -11850,6 +11850,7 @@ function saveExtract() {
   }
 
   saveState();
+  _fbSaveNow().catch(()=>{}); // sauvegarde Firebase immédiate
   showToast(`✅ Extrait sauvegardé${codes.length ? " (" + codes.length + " code" + (codes.length>1?"s":"") + ")" : ""}`);
   closeExtractModal();
   populateBiblioExtractFilters(); renderBiblioExtracts();
