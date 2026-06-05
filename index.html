@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v296</title>
+<title>Mon Tableau de Vie 🌿 · v297</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7180,38 +7180,57 @@ function openFoodEntry(id) {
 }
 
 let _foodCalTimer = null;
+
+// Extrait la quantité en grammes d'une chaîne (ex: "poulet 200g" → {name:"poulet", grams:200})
+function _parseFoodQuery(query) {
+  const match = query.match(/(\d+\.?\d*)\s*(g|gr|kg|ml|cl|l)/i);
+  if (!match) return { name: query.trim(), grams: null };
+  let grams = parseFloat(match[1]);
+  const unit = match[2].toLowerCase();
+  if (unit === "kg") grams *= 1000;
+  else if (unit === "cl") grams *= 10;
+  else if (unit === "l") grams *= 1000;
+  const name = query.replace(match[0], "").trim();
+  return { name: name || query.trim(), grams };
+}
+
 async function searchFoodCalories(query) {
   const sug = document.getElementById("foodCalSuggestions");
   if (!query || query.length < 2) { if (sug) sug.style.display = "none"; return; }
   clearTimeout(_foodCalTimer);
   _foodCalTimer = setTimeout(async () => {
     try {
-      // Utilise Open Food Facts (100% gratuit, pas de clé API)
-      const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&action=process&json=1&page_size=5&fields=product_name,nutriments,brands&lc=fr`);
+      const { name: searchName, grams } = _parseFoodQuery(query);
+      const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(searchName)}&action=process&json=1&page_size=5&fields=product_name,nutriments&lc=fr`);
       const data = await res.json();
       const products = (data.products||[]).filter(p => p.nutriments?.["energy-kcal_100g"] > 0);
       if (!products.length) { sug.style.display = "none"; return; }
       sug.innerHTML = products.map(p => {
         const kcal100 = Math.round(p.nutriments["energy-kcal_100g"]);
-        const name = p.product_name || query;
-        return `<div onclick="applyCal('${escapeHtml(name.slice(0,50))}', ${kcal100})"
+        const name = p.product_name || searchName;
+        const kcalPortion = grams ? Math.round(kcal100 * grams / 100) : null;
+        const calLabel = kcalPortion
+          ? `<span style="color:var(--green);font-weight:700;">${kcalPortion} kcal</span><span style="color:var(--ink-softer);font-size:11px;"> pour ${grams}g</span>`
+          : `<span style="color:var(--orange);">${kcal100} kcal/100g</span>`;
+        const calToApply = kcalPortion || kcal100;
+        return `<div onclick="applyCal('${escapeHtml(name.slice(0,50))}', ${calToApply})"
           style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--line);"
           onmouseover="this.style.background='var(--lavender-soft)'"
           onmouseout="this.style.background='white'">
           <span style="font-weight:500;">${escapeHtml(name.slice(0,50))}</span>
-          <span style="float:right;font-size:12px;color:var(--orange);font-weight:600;">${kcal100} kcal/100g</span>
+          <span style="float:right;">${calLabel}</span>
         </div>`;
-      }).join("") + `<div style="padding:6px 12px;font-size:11px;color:var(--ink-softer);text-align:center;">Source : Open Food Facts · Adapte les kcal à ta portion</div>`;
+      }).join("") + `<div style="padding:5px 12px;font-size:11px;color:var(--ink-softer);text-align:center;">
+        ${grams ? `Calculé pour ${grams}g · ` : ""}Source : Open Food Facts
+      </div>`;
       sug.style.display = "block";
     } catch(e) { sug.style.display = "none"; }
   }, 600);
 }
 
-function applyCal(name, kcal100) {
-  document.getElementById("foodEntryName").value = name;
-  // Laisser l'utilisateur saisir sa portion → on met kcal/100g comme base
+function applyCal(name, kcal) {
   const calInput = document.getElementById("foodEntryCalories");
-  if (calInput && !calInput.value) calInput.value = kcal100;
+  if (calInput && !calInput.value) calInput.value = kcal;
   document.getElementById("foodCalSuggestions").style.display = "none";
 }
 
