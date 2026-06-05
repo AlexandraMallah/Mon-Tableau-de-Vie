@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v309</title>
+<title>Mon Tableau de Vie 🌿 · v310</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1772,6 +1772,17 @@
               <button data-v="3">⚡</button><button data-v="4">🔥</button>
               <button data-v="5">🌟</button>
             </div>
+          </div>
+          <div class="wb-block">
+            <label>Ventre</label>
+            <div class="scale" id="bellyScale">
+              <button data-v="0" title="Aucune douleur">😌</button>
+              <button data-v="1" title="Légère gêne">😕</button>
+              <button data-v="2" title="Inconfort modéré">😣</button>
+              <button data-v="3" title="Douleur forte">😖</button>
+              <button data-v="4" title="Très forte douleur">🤢</button>
+            </div>
+            <div class="sleepquality-label" id="bellyLabel"></div>
           </div>
         </div>
         <div id="journalMoodToday" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);">
@@ -4296,6 +4307,7 @@ function getToday() {
     if (d.gratitude === undefined) d.gratitude = "";
     if (d.highlight === undefined) d.highlight = "";
     if (d.pillTaken === undefined) d.pillTaken = false;
+    if (d.belly === undefined) d.belly = null;
     if (!d.foodLog) d.foodLog = [];
     if (d.foodMood === undefined) d.foodMood = "";
   }
@@ -4654,6 +4666,10 @@ function renderWellbeing() {
   document.querySelectorAll("#moodScale button").forEach(b => b.classList.toggle("active", Number(b.dataset.v) === today.mood));
   document.querySelectorAll("#energyScale button").forEach(b => b.classList.toggle("active", Number(b.dataset.v) === today.energy));
   document.querySelectorAll("#sleepQualityScale button").forEach(b => b.classList.toggle("active", b.dataset.v === today.sleepQuality));
+  document.querySelectorAll("#bellyScale button").forEach(b => b.classList.toggle("active", Number(b.dataset.v) === (today.belly ?? -1)));
+  const bellyLbls = ["Ventre ok 😌","Légère gêne 😕","Inconfort 😣","Douleur 😖","Très douloureux 🤢"];
+  const bellyLbl = document.getElementById("bellyLabel");
+  if (bellyLbl) bellyLbl.textContent = today.belly != null ? bellyLbls[today.belly] || "" : "";
   const sqLbl = document.getElementById("sleepQualityLabel");
   if (sqLbl) sqLbl.textContent = today.sleepQuality ? sleepQualityLabel(today.sleepQuality) : "";
   // Émotions détectées dans le journal du jour
@@ -4700,6 +4716,14 @@ function renderWellbeing() {
 function setupWellbeing() {
   document.querySelectorAll("#moodScale button").forEach(b => {
     b.onclick = () => { getToday().mood = Number(b.dataset.v); saveState(); renderTodayView(); };
+  });
+  document.querySelectorAll("#bellyScale button").forEach(b => {
+    b.addEventListener("click", () => {
+      const v = Number(b.dataset.v);
+      const today = getToday();
+      today.belly = today.belly === v ? null : v;
+      saveState(); renderWellbeing();
+    });
   });
   document.querySelectorAll("#energyScale button").forEach(b => {
     b.onclick = () => { getToday().energy = Number(b.dataset.v); saveState(); renderTodayView(); };
