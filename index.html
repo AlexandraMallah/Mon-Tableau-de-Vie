@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v308</title>
+<title>Mon Tableau de Vie 🌿 · v309</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3981,6 +3981,7 @@ const DEFAULT_STATE = {
   contacts: [],
   admin: { missions:[], abonnement:[], congesConfig:{ droitsCA:27, droitsRTT:20 }, congesPeriodes:[] },
   _trendGoals: {},
+  shortcuts: [],
 };
 
 function loadState() {
@@ -14509,7 +14510,9 @@ function toggleShortcut(id, on) {
   if (!state.shortcuts) state.shortcuts = [];
   if (on) { if (!state.shortcuts.find(s=>s.id===id)) state.shortcuts.push({id}); }
   else state.shortcuts = state.shortcuts.filter(s => s.id !== id);
-  saveState(); renderShortcutsBar();
+  saveState();
+  _fbSaveNow().catch(()=>{}); // sauvegarde immédiate
+  renderShortcutsBar();
 }
 
 function renderAll() {
@@ -14632,7 +14635,10 @@ async function _fbLoad() {
       const localTs  = state.lastModified || 0;
       const remoteTs = remote.lastModified || 0;
       if (remoteTs > localTs) {
+        // Préserver les raccourcis locaux si le remote n'en a pas
+        const savedShortcuts = state.shortcuts?.length ? state.shortcuts : null;
         state = migrate({ ...DEFAULT_STATE, ...remote });
+        if (savedShortcuts && !state.shortcuts?.length) state.shortcuts = savedShortcuts;
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
         renderAll();
         // Re-rendre la biblio et les raccourcis
