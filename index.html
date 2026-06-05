@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v307</title>
+<title>Mon Tableau de Vie 🌿 · v308</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -12187,19 +12187,32 @@ function renderExtractCodeSearch() {
     dropdown.style.display = "block";
     return;
   }
-  // Afficher avec indentation selon parentId
-  dropdown.innerHTML = filtered.map(c => {
-    const depth = _codeDepth(c.id, allCodes);
+  // Trier les codes en ordre arborescent (parent d'abord, enfants ensuite)
+  function buildCodeTree(parentId, depth) {
+    return filtered.filter(c => (c.parentId||"") === (parentId||"")).flatMap(c => {
+      const selected = _extractSelectedCodeIds.includes(c.id);
+      const row = `<div onclick="selectExtractCode('${c.id}')"
+        style="padding:7px 12px 7px ${depth*16+12}px;cursor:pointer;font-size:13px;background:${selected?"var(--lavender-soft)":"transparent"};display:flex;align-items:center;gap:8px;"
+        onmouseover="this.style.background='var(--lavender-soft)'"
+        onmouseout="this.style.background='${selected?"var(--lavender-soft)":"transparent"}'">
+        <span style="width:12px;height:12px;border-radius:50%;background:${c.color};flex-shrink:0;"></span>
+        <span style="flex:1;">${escapeHtml(c.label)}</span>
+        ${selected ? '<span style="font-size:11px;color:var(--lilac);">✓</span>' : ""}
+      </div>`;
+      return [row, ...buildCodeTree(c.id, depth+1)];
+    });
+  }
+  dropdown.innerHTML = (search ? filtered.map(c => {
     const selected = _extractSelectedCodeIds.includes(c.id);
     return `<div onclick="selectExtractCode('${c.id}')"
-      style="padding:7px 12px 7px ${depth*14+12}px;cursor:pointer;font-size:13px;background:${selected?"var(--lavender-soft)":"transparent"};display:flex;align-items:center;gap:8px;"
+      style="padding:7px 12px;cursor:pointer;font-size:13px;background:${selected?"var(--lavender-soft)":"transparent"};display:flex;align-items:center;gap:8px;"
       onmouseover="this.style.background='var(--lavender-soft)'"
       onmouseout="this.style.background='${selected?"var(--lavender-soft)":"transparent"}'">
       <span style="width:12px;height:12px;border-radius:50%;background:${c.color};flex-shrink:0;"></span>
       <span style="flex:1;">${escapeHtml(c.label)}</span>
       ${selected ? '<span style="font-size:11px;color:var(--lilac);">✓</span>' : ""}
     </div>`;
-  }).join("");
+  }) : buildCodeTree("", 0)).join("");
   dropdown.style.display = "block";
 }
 
