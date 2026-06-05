@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v281</title>
+<title>Mon Tableau de Vie 🌿 · v282</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2187,14 +2187,16 @@
             <h2 style="margin:0;">✏️ Extraits codés <span class="count" id="biblioExtractCount"></span></h2>
             <button class="btn-primary" onclick="openExtractModal()">+ Ajouter un extrait</button>
           </div>
-          <!-- Filtre par référence -->
+          <!-- Filtres extraits -->
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+            <input type="text" id="biblioExtractSearch" placeholder="🔍 Texte, auteur, annotation…" oninput="renderBiblioExtracts()"
+              style="flex:2;min-width:180px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;" />
             <select id="biblioExtractFilterRef" onchange="renderBiblioExtracts()"
-              style="flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:white;">
+              style="flex:1;min-width:160px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:white;">
               <option value="">Toutes les références</option>
             </select>
             <select id="biblioExtractFilterCode" onchange="renderBiblioExtracts()"
-              style="flex:1;min-width:160px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:white;">
+              style="flex:1;min-width:140px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:white;">
               <option value="">Tous les codes</option>
             </select>
           </div>
@@ -11406,11 +11408,23 @@ function populateBiblioExtractFilters() {
 function renderBiblioExtracts() {
   const biblio = _getGlobalBiblio();           // refs (global)
   const projectBiblio = _getActiveBiblio() || _biblioDef(); // extraits + codes (projet)
-  const filterRef  = document.getElementById("biblioExtractFilterRef")?.value  || "";
-  const filterCode = document.getElementById("biblioExtractFilterCode")?.value || "";
-  let exts = projectBiblio.extracts || [];     // ← extraits du projet, PAS du global
-  if (filterRef)  exts = exts.filter(e => e.refId === filterRef);
-  if (filterCode) exts = exts.filter(e => (e.codes||[]).includes(filterCode));
+  const filterRef    = document.getElementById("biblioExtractFilterRef")?.value   || "";
+  const filterCode   = document.getElementById("biblioExtractFilterCode")?.value  || "";
+  const filterSearch = (document.getElementById("biblioExtractSearch")?.value || "").toLowerCase().trim();
+  let exts = projectBiblio.extracts || [];
+  if (filterRef)   exts = exts.filter(e => e.refId === filterRef);
+  if (filterCode)  exts = exts.filter(e => (e.codes||[]).includes(filterCode));
+  if (filterSearch) {
+    const globalRefs = biblio.refs || [];
+    exts = exts.filter(e => {
+      const ref = globalRefs.find(r => r.id === e.refId);
+      return (e.text||"").toLowerCase().includes(filterSearch)
+          || (e.note||"").toLowerCase().includes(filterSearch)
+          || (e.page||"").includes(filterSearch)
+          || (ref?.title||"").toLowerCase().includes(filterSearch)
+          || (ref?.authors||"").toLowerCase().includes(filterSearch);
+    });
+  }
   const countEl = document.getElementById("biblioExtractCount");
   if (countEl) countEl.textContent = `(${exts.length})`;
   const el = document.getElementById("biblioExtractList");
@@ -11655,12 +11669,17 @@ function selectExtractCode(cid) {
   const srch = document.getElementById("extractCodeSearch"); if (srch) srch.value = "";
 }
 
-// Fermer dropdown si clic ailleurs
+// Fermer dropdown codes si clic n'importe où hors du dropdown
 document.addEventListener("click", e => {
-  const search = document.getElementById("extractCodeSearch");
   const dropdown = document.getElementById("extractCodeDropdown");
-  if (search && dropdown && !search.contains(e.target) && !dropdown.contains(e.target)) {
+  if (!dropdown) return;
+  const search = document.getElementById("extractCodeSearch");
+  const isInsideDropdown = dropdown.contains(e.target);
+  const isInsideSearch = search && search.contains(e.target);
+  if (!isInsideDropdown && !isInsideSearch) {
     dropdown.style.display = "none";
+    // Vider la recherche si on clique ailleurs (optionnel, plus naturel)
+    // if (search) search.value = "";
   }
 });
 
