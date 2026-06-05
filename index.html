@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v315</title>
+<title>Mon Tableau de Vie 🌿 · v316</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -14497,18 +14497,23 @@ const SHORTCUT_CATALOG = [
 ];
 
 function renderShortcutsBar() {
-  if (!state.shortcuts) state.shortcuts = [];
-  // Lire le backup si state est vide (protection contre Firebase)
-  if (!state.shortcuts.length) {
-    try {
-      const bk = localStorage.getItem("tableau_shortcuts");
-      if (bk) { state.shortcuts = JSON.parse(bk); }
-    } catch(e) {}
-  }
   const bar = document.getElementById("shortcutsBar");
   if (!bar) return;
-  if (!state.shortcuts.length) { bar.style.display = "none"; return; }
-  const scHtml = state.shortcuts.map((sc, i) => {
+  // Lire DIRECTEMENT depuis la clé dédiée (jamais depuis state qui peut être écrasé)
+  let shortcuts = [];
+  try {
+    const bk = localStorage.getItem("tableau_shortcuts");
+    if (bk) shortcuts = JSON.parse(bk);
+  } catch(e) {}
+  // Sync avec state pour la cohérence
+  if (shortcuts.length && (!state.shortcuts || !state.shortcuts.length)) {
+    state.shortcuts = shortcuts;
+  } else if (state.shortcuts?.length) {
+    shortcuts = state.shortcuts;
+    try { localStorage.setItem("tableau_shortcuts", JSON.stringify(shortcuts)); } catch(e) {}
+  }
+  if (!shortcuts.length) { bar.style.display = "none"; return; }
+  const scHtml = shortcuts.map((sc, i) => {
     const cat = SHORTCUT_CATALOG.find(c => c.id === sc.id);
     if (!cat) return "";
     return `<button onclick="runShortcut('${sc.id}')"
