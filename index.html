@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v272</title>
+<title>Mon Tableau de Vie 🌿 · v273</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3170,8 +3170,8 @@
 </div>
 
 <!-- Modal Recette -->
-<div class="modal-bg" id="recipeModal" onclick="if(event.target===this)closeRecipeModal()">
-  <div class="modal" style="max-width:600px;max-height:90vh;overflow-y:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+<div class="modal-bg" id="recipeModal">
+  <div class="modal" style="max-width:600px;max-height:90vh;overflow-y:auto;">
     <h2 id="recipeModalTitle">Nouvelle recette</h2>
     <input type="hidden" id="recipeModalId" />
     <div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:0;">
