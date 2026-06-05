@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v280</title>
+<title>Mon Tableau de Vie 🌿 · v281</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -11746,15 +11746,30 @@ function populateBiblioByCodeSelect() {
   sel.value = prev;
 }
 function renderBiblioByCode() {
-  const biblio = _getGlobalBiblio();
-  const projectBiblio = _getActiveBiblio() || _biblioDef();
+  const biblio = _getGlobalBiblio();              // refs
+  const projectBiblio = _getActiveBiblio() || _biblioDef(); // codes + extraits
+  const allCodes = projectBiblio.codes || [];
   const codeId = document.getElementById("biblioByCodeSelect")?.value || "";
   const el = document.getElementById("biblioByCodeContent");
   if (!el) return;
   if (!codeId) { el.innerHTML = ""; return; }
-  const code = (biblio.codes||[]).find(c=>c.id===codeId);
+  const code = allCodes.find(c=>c.id===codeId);  // ← chercher dans le projet
   if (!code) return;
-  const exts = (projectBiblio.extracts||[]).filter(e=>(e.codes||[]).includes(codeId));
+
+  // Collecter tous les IDs descendants (sous-codes inclus)
+  function getDescendantCodeIds(id) {
+    const ids = new Set([id]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      allCodes.forEach(c => {
+        if (ids.has(c.parentId) && !ids.has(c.id)) { ids.add(c.id); changed = true; }
+      });
+    }
+    return ids;
+  }
+  const codeIds = getDescendantCodeIds(codeId);
+  const exts = (projectBiblio.extracts||[]).filter(e=>(e.codes||[]).some(cid=>codeIds.has(cid)));
   if (!exts.length) {
     el.innerHTML = `<div class="card"><p style="color:var(--ink-soft);text-align:center;padding:20px;">Aucun extrait codé "${code.label}" pour l'instant.</p></div>`;
     return;
