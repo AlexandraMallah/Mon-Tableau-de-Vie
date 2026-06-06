@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v316</title>
+<title>Mon Tableau de Vie 🌿 · v319</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2378,7 +2378,7 @@
     </div>
     <div class="card" style="margin-top:14px;">
       <h2>🧬 Balance hormonale — 7 derniers jours</h2>
-      <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 14px;">Hormones stimulées par tes activités, tes repas, tes moments sociaux et tes accomplissements.</p>
+      <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 14px;">Hormones stimulées par tes activités, tes repas, tes moments sociaux, tes soins bien-être et tes accomplissements.</p>
       <div id="hormonesContent"></div>
     </div>
     <div class="card" style="margin-top:14px;">
@@ -4277,32 +4277,13 @@ function migrate(s) {
   } catch(migErr) { console.warn("[migration biblio]", migErr); }
   return s;
 }
-// Restaurer les raccourcis depuis leur sauvegarde dédiée si nécessaire
-function _restoreShortcutsBackup() {
-  try {
-    const backup = localStorage.getItem("tableau_shortcuts");
-    if (backup) {
-      const parsed = JSON.parse(backup);
-      // Toujours prendre la liste la plus longue (= la plus récente config utilisateur)
-      if (parsed.length > (state.shortcuts?.length || 0)) {
-        state.shortcuts = parsed;
-      }
-    }
-  } catch(e) {}
-}
-
 function saveState() {
   state.lastModified = Date.now();
   window._lastLocalSave = Date.now();
   localStorage.setItem(STORE_KEY, JSON.stringify(state));
-  // Backup séparé des raccourcis à chaque sauvegarde
-  if (state.shortcuts?.length) {
-    try { localStorage.setItem("tableau_shortcuts", JSON.stringify(state.shortcuts)); } catch(e) {}
-  }
   _fbQueueSave();
 }
 let state = loadState();
-_restoreShortcutsBackup(); // récupérer les raccourcis si écrasés
 
 /* ========= UTILS ========= */
 function todayKey(d = new Date()) {
@@ -6673,6 +6654,8 @@ function computeHormones() {
   HORMONES.forEach(h => { res[h.id] = { score: 0, sources: [], days: [] }; });
 
   const socialRe = /ami|amie|copain|copine|soirée|apéro|sortie|famille|maman|papa|parents|frère|sœur|soeur|frangine|frangin|mamie|papi|déjeuner|dejeuner|dîner|diner|brunch|repas|goûter|gouter|lunch|picnic|pique-nique|anniversaire|fête|fete/i;
+  // Soins bien-être (calendrier) → comptent en sérotonine (détente) et ocytocine (toucher/soin)
+  const wellnessRe = /massage|spa|sauna|hammam|thalasso|cure|soin|réflexo|reflexo|relaxation|kiné|kine|ostéo|osteo|esthéti|estheti|institut|manucure|onglerie/i;
 
   for (const d of last7) {
     const dk     = todayKey(d);
@@ -6700,16 +6683,18 @@ function computeHormones() {
     const hasJournal  = (entry.journal || "").trim().length > 0;
     const hasGoodMood = (entry.mood || 0) >= 4;
     const serActs     = state.activities.filter(a => acts[a.id] && (a.hormones || []).includes("serotonine"));
-    const serReasons  = [...(hasJournal?["journal"]:[]), ...(hasGoodMood?[`humeur ${entry.mood}/5`]:[]), ...serActs.map(a=>a.name)];
+    const wellEvs     = state.calEvents.filter(e => e.date === dk && wellnessRe.test(e.title || ""));
+    const serReasons  = [...(hasJournal?["journal"]:[]), ...(hasGoodMood?[`humeur ${entry.mood}/5`]:[]), ...serActs.map(a=>a.name), ...wellEvs.map(e=>e.title||"soin")];
     const serActive   = serReasons.length > 0;
     res.serotonine.days.push({ dk, label, active: serActive, reasons: serReasons });
     if (serActive) { res.serotonine.score++; serReasons.slice(0,2).forEach(r => res.serotonine.sources.push(r)); }
 
-    // — Ocytocine (événements calendrier ce jour)
+    // — Ocytocine (événements calendrier ce jour : sociaux + soins bien-être)
     const socEvs    = state.calEvents.filter(e => e.date === dk && socialRe.test(e.title || ""));
-    const ocyActive = socEvs.length > 0;
-    res.ocytocine.days.push({ dk, label, active: ocyActive, reasons: socEvs.map(e => e.title || "événement social") });
-    if (ocyActive) { res.ocytocine.score++; socEvs.slice(0,2).forEach(e => res.ocytocine.sources.push(e.title||"social")); }
+    const ocyEvs    = [...socEvs, ...wellEvs];
+    const ocyActive = ocyEvs.length > 0;
+    res.ocytocine.days.push({ dk, label, active: ocyActive, reasons: ocyEvs.map(e => e.title || "événement social") });
+    if (ocyActive) { res.ocytocine.score++; ocyEvs.slice(0,2).forEach(e => res.ocytocine.sources.push(e.title||"social")); }
   }
 
   Object.values(res).forEach(r => { r.sources = [...new Set(r.sources)].slice(0,3); });
@@ -7443,6 +7428,11 @@ function renderFoodLog() {
   if (!el) return;
   if (!list.length) {
     el.innerHTML = '<p style="color:var(--ink-softer);font-size:13px;text-align:center;padding:10px;">Aucune entrée — clique + Ajouter pour commencer</p>';
+    // Journée vide → effacer le total et l'alerte (sinon ils restent collés de la veille)
+    const totalEl = document.getElementById("foodCalDayTotal");
+    if (totalEl) totalEl.textContent = "";
+    const alertEl = document.getElementById("foodCalAlert");
+    if (alertEl) alertEl.style.display = "none";
     return;
   }
   const sorted = [...list].sort((a,b) => (a.time||"").localeCompare(b.time||""));
@@ -14499,19 +14489,7 @@ const SHORTCUT_CATALOG = [
 function renderShortcutsBar() {
   const bar = document.getElementById("shortcutsBar");
   if (!bar) return;
-  // Lire DIRECTEMENT depuis la clé dédiée (jamais depuis state qui peut être écrasé)
-  let shortcuts = [];
-  try {
-    const bk = localStorage.getItem("tableau_shortcuts");
-    if (bk) shortcuts = JSON.parse(bk);
-  } catch(e) {}
-  // Sync avec state pour la cohérence
-  if (shortcuts.length && (!state.shortcuts || !state.shortcuts.length)) {
-    state.shortcuts = shortcuts;
-  } else if (state.shortcuts?.length) {
-    shortcuts = state.shortcuts;
-    try { localStorage.setItem("tableau_shortcuts", JSON.stringify(shortcuts)); } catch(e) {}
-  }
+  const shortcuts = state.shortcuts || [];
   if (!shortcuts.length) { bar.style.display = "none"; return; }
   const scHtml = shortcuts.map((sc, i) => {
     const cat = SHORTCUT_CATALOG.find(c => c.id === sc.id);
@@ -14526,17 +14504,8 @@ function renderShortcutsBar() {
       <span onclick="event.stopPropagation();removeShortcut('${sc.id}')" style="opacity:0.5;margin-left:2px;font-size:11px;">✕</span>
     </button>`;
   }).join("");
-  if (scHtml) {
-    // Bon HTML généré → on le cache ET on l'affiche
-    try { localStorage.setItem("tableau_shortcuts_html", scHtml); } catch(e) {}
-    bar.innerHTML = scHtml;
-    bar.style.display = "flex";
-  } else {
-    // Fallback : utiliser le HTML mis en cache
-    const cached = localStorage.getItem("tableau_shortcuts_html");
-    if (cached) { bar.innerHTML = cached; bar.style.display = "flex"; }
-    else { bar.style.display = "none"; }
-  }
+  bar.innerHTML = scHtml;
+  bar.style.display = scHtml ? "flex" : "none";
 }
 
 let _scDragIdx = null;
@@ -14596,10 +14565,7 @@ function toggleShortcut(id, on) {
   if (!state.shortcuts) state.shortcuts = [];
   if (on) { if (!state.shortcuts.find(s=>s.id===id)) state.shortcuts.push({id}); }
   else state.shortcuts = state.shortcuts.filter(s => s.id !== id);
-  // Sauvegarder aussi dans une clé séparée pour survie aux rechargements SW
-  try { localStorage.setItem("tableau_shortcuts", JSON.stringify(state.shortcuts)); } catch(e) {}
   saveState();
-  _fbSaveNow().catch(()=>{}); // sauvegarde immédiate
   renderShortcutsBar();
 }
 
@@ -14723,17 +14689,15 @@ async function _fbLoad() {
       const localTs  = state.lastModified || 0;
       const remoteTs = remote.lastModified || 0;
       if (remoteTs > localTs) {
-        // Toujours préserver les raccourcis locaux (priorité au local)
-        const savedShortcuts = state.shortcuts?.length ? [...state.shortcuts] : null;
-        state = migrate({ ...DEFAULT_STATE, ...remote });
-        // Les raccourcis locaux ont toujours la priorité sur Firebase
-        if (savedShortcuts?.length) state.shortcuts = savedShortcuts;
+        const merged = migrate({ ...DEFAULT_STATE, ...remote });
+        // Garde-fou : ne jamais perdre les raccourcis locaux si le cloud n'en a pas
+        if ((!merged.shortcuts || !merged.shortcuts.length) && state.shortcuts?.length) merged.shortcuts = state.shortcuts;
+        state = merged;
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
         renderAll();
         // Re-rendre la biblio et les raccourcis
         try { renderBiblioCollectionTree(); } catch(e) {}
         try { renderBiblioRefs(); } catch(e) {}
-        renderShortcutsBar();
         renderShortcutsBar();
         showToast("✨ Données chargées depuis le cloud !");
       } else if (localTs > remoteTs) {
@@ -14767,9 +14731,10 @@ function _fbListen() {
     }
     // Ne met à jour que si les données distantes sont vraiment plus récentes
     if (remoteTs > localTs + 3000) {
-      const savedSC = state.shortcuts?.length ? [...state.shortcuts] : null;
-      state = migrate({ ...DEFAULT_STATE, ...remote });
-      if (savedSC?.length) state.shortcuts = savedSC; // préserver les raccourcis locaux
+      const merged = migrate({ ...DEFAULT_STATE, ...remote });
+      // Garde-fou : ne jamais perdre les raccourcis locaux si le cloud n'en a pas
+      if ((!merged.shortcuts || !merged.shortcuts.length) && state.shortcuts?.length) merged.shortcuts = state.shortcuts;
+      state = merged;
       localStorage.setItem(STORE_KEY, JSON.stringify(state));
       renderAll();
       renderShortcutsBar();
