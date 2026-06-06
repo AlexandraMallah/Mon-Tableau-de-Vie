@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v335</title>
+<title>Mon Tableau de Vie 🌿 · v336</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2486,15 +2486,20 @@
           </div>
         </div>
         <div style="height:14px;"></div>
-        <div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;">
-          <button class="sub-tab active" id="bodyMetricWeight" onclick="switchBodyMetric('weight')">Poids</button>
-          <button class="sub-tab" id="bodyMetricFat" onclick="switchBodyMetric('bodyFat')">Masse grasse</button>
-          <button class="sub-tab" id="bodyMetricMuscle" onclick="switchBodyMetric('muscleMass')">Masse maigre</button>
+        <div class="grid-two-eq" style="margin-bottom:0;">
+          <div>
+            <div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;">
+              <button class="sub-tab active" id="bodyMetricWeight" onclick="switchBodyMetric('weight')">Poids</button>
+              <button class="sub-tab" id="bodyMetricFat" onclick="switchBodyMetric('bodyFat')">Masse grasse</button>
+              <button class="sub-tab" id="bodyMetricMuscle" onclick="switchBodyMetric('muscleMass')">Masse maigre</button>
+            </div>
+            <div class="chart-wrap" style="height:210px;"><canvas id="bodyChart"></canvas></div>
+          </div>
+          <div>
+            <h2 style="margin:0 0 10px;text-align:center;font-size:15px;">🔥 Apport calorique 30 jours</h2>
+            <div class="chart-wrap" style="height:210px;"><canvas id="calorieChart"></canvas></div>
+          </div>
         </div>
-        <div class="chart-wrap"><canvas id="bodyChart"></canvas></div>
-        <div style="height:18px;"></div>
-        <h2>🔥 Apport calorique 30 jours</h2>
-        <div class="chart-wrap tall"><canvas id="calorieChart"></canvas></div>
       </div>
 
     <!-- 🌿 Forme & énergie -->
