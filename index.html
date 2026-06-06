@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v327</title>
+<title>Mon Tableau de Vie 🌿 · v328</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3363,7 +3363,10 @@
   <div class="modal" style="max-width:600px;max-height:90vh;overflow-y:auto;">
     <h2 id="recipeModalTitle">Nouvelle recette</h2>
     <input type="hidden" id="recipeModalId" />
-    <div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:0;">
+    <div style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;margin-bottom:0;">
+      <div><label>Emoji</label>
+        <input type="text" id="recipeModalEmoji" placeholder="🍽️" maxlength="2"
+          style="width:54px;padding:9px 8px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:18px;text-align:center;" /></div>
       <div><label>Nom de la recette *</label>
         <input type="text" id="recipeModalName" placeholder="ex : Poulet rôti" /></div>
       <div><label>Portions</label>
@@ -7478,7 +7481,7 @@ function renderRecipePickList() {
     const k = recipeKcal(r);
     const sel = r.id === _rpSelectedId;
     return `<div onclick="selectRecipePick('${r.id}')" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;align-items:center;background:${sel?'var(--lavender-soft)':'transparent'};">
-      <span style="font-size:13px;font-weight:${sel?'700':'500'};color:var(--ink);">${escapeHtml(r.name)}</span>
+      <span style="font-size:13px;font-weight:${sel?'700':'500'};color:var(--ink);">${recipeEmoji(r)} ${escapeHtml(r.name)}</span>
       <span style="font-size:11px;color:var(--ink-soft);white-space:nowrap;">${k.total>0?k.per+' kcal/port.':'— kcal'}</span>
     </div>`;
   }).join("");
@@ -11191,7 +11194,7 @@ function _renderRecipeList() {
   el.innerHTML = filtered.map(r => `
     <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;border-bottom:1px solid var(--line);cursor:pointer;" onclick="openRecipeModal('${r.id}')">
       <div style="flex:1;min-width:0;">
-        <div style="font-weight:600;font-size:14px;">${escapeHtml(r.name)}</div>
+        <div style="font-weight:600;font-size:14px;">${recipeEmoji(r)} ${escapeHtml(r.name)}</div>
         <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">
           👥 ${r.servings} portion${r.servings>1?"s":""} · ${(r.ingredients||[]).length} ingrédient${(r.ingredients||[]).length>1?"s":""}${recipeKcal(r).total>0?` · 🔥 ${recipeKcal(r).per} kcal/portion`:""}
         </div>
@@ -11205,6 +11208,7 @@ function openRecipeModal(id) {
   document.getElementById("recipeModalTitle").textContent = r ? "Modifier la recette" : "Nouvelle recette";
   document.getElementById("recipeModalId").value = id || "";
   document.getElementById("recipeModalName").value = r?.name || "";
+  document.getElementById("recipeModalEmoji").value = r?.emoji || "";
   document.getElementById("recipeModalServings").value = r?.servings || 4;
   document.getElementById("recipeModalNotes").value = r?.notes || "";
   renderRecipeCategoryTabs();
@@ -11246,6 +11250,28 @@ function recipeKcal(r) {
   return { total, per };
 }
 
+// Emoji déduit automatiquement du nom de la recette
+function autoRecipeEmoji(name) {
+  const n = (name || "").toLowerCase();
+  const map = [
+    [/poulet|volaille|dinde/, "🍗"], [/boeuf|bœuf|steak|burger|hamburger/, "🥩"],
+    [/porc|jambon|lardon|bacon|saucisse/, "🥓"], [/saumon|poisson|thon|cabillaud|truite|crevette|fruits? de mer/, "🐟"],
+    [/poke|bowl/, "🥣"], [/salade|crudité/, "🥗"], [/soupe|velouté|veloute|potage/, "🍲"],
+    [/pâtes|pates|spaghetti|lasagne|nouilles|ramen/, "🍝"], [/pizza/, "🍕"],
+    [/risotto|riz/, "🍚"], [/curry/, "🍛"], [/tacos|burrito|wrap|fajita/, "🌮"],
+    [/sandwich|croque|tartine|toast/, "🥪"], [/oeuf|œuf|omelette/, "🥚"],
+    [/tarte|quiche/, "🥧"], [/crêpe|crepe|pancake|gaufre/, "🥞"],
+    [/pavlova|gâteau|gateau|dessert|cake|brownie|cookie|muffin|tiramisu/, "🍰"],
+    [/glace|sorbet/, "🍨"], [/chocolat/, "🍫"], [/avocat|guacamole/, "🥑"],
+    [/fromage|raclette|fondue/, "🧀"], [/smoothie|jus|boisson/, "🥤"],
+    [/sushi|nem|wok|asiat/, "🥢"], [/mangue|fraise|fruit|baies|rouges?/, "🍓"],
+    [/légume|legume|ratatouille|gratin|soja|tofu/, "🥦"], [/pain/, "🍞"],
+  ];
+  for (const [re, emo] of map) if (re.test(n)) return emo;
+  return "🍽️";
+}
+function recipeEmoji(r) { return r.emoji || autoRecipeEmoji(r.name); }
+
 // Met à jour l'affichage "Total recette · par portion" dans la modale recette
 function updateRecipeTotals() {
   const el = document.getElementById("recipeTotals");
@@ -11266,6 +11292,7 @@ function saveRecipe() {
   const servings = parseInt(document.getElementById("recipeModalServings").value) || 4;
   const notes = document.getElementById("recipeModalNotes").value.trim();
   const category = document.getElementById("recipeModalCategory")?.value || "";
+  const emoji = document.getElementById("recipeModalEmoji").value.trim() || autoRecipeEmoji(name);
   const ingredients = [];
   document.querySelectorAll("#recipeIngredientsList > div").forEach(row => {
     const qty  = row.querySelector(".rec-ing-qty")?.value.trim();
@@ -11274,7 +11301,7 @@ function saveRecipe() {
     const kcal = parseInt(row.querySelector(".rec-ing-kcal")?.value) || 0;
     if (name2) ingredients.push({ id: "ing"+Date.now()+Math.random().toString(36).slice(2,5), quantity: qty||"", unit: unit||"", name: name2, kcal });
   });
-  const data = { id: id||"rec"+Date.now(), name, servings, category, ingredients, notes, createdAt: new Date().toISOString() };
+  const data = { id: id||"rec"+Date.now(), name, emoji, servings, category, ingredients, notes, createdAt: new Date().toISOString() };
   if (id) { const i = state.domestique.recipes.findIndex(r=>r.id===id); if(i>=0) state.domestique.recipes[i]=data; }
   else     state.domestique.recipes.unshift(data);
   saveState(); closeRecipeModal(); renderRecipes();
@@ -11365,7 +11392,7 @@ function renderMealRecipeList() {
     const k = recipeKcal(r);
     return `<div onclick="pickMealRecipe('${r.id}')" style="padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;align-items:center;">
       <div style="min-width:0;">
-        <div style="font-size:14px;font-weight:600;color:var(--ink);">${escapeHtml(r.name)}</div>
+        <div style="font-size:14px;font-weight:600;color:var(--ink);">${recipeEmoji(r)} ${escapeHtml(r.name)}</div>
         <div style="font-size:11px;color:var(--ink-soft);">👥 ${r.servings} portion${r.servings>1?'s':''}${r.category?` · ${escapeHtml(r.category)}`:''}</div>
       </div>
       <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;">${k.total>0?'🔥 '+k.per+' kcal':'—'}</span>
