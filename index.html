@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v329</title>
+<title>Mon Tableau de Vie 🌿 · v330</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -248,6 +248,8 @@
   .scale button:hover { background: var(--lavender-soft); transform: translateY(-1px); }
   .scale.mood button.active { background: var(--pink-soft); border-color: var(--pink); }
   .scale.energy button.active { background: var(--peach-soft); border-color: var(--peach); }
+  .scale.belly button.active { background: var(--lavender-soft); border-color: var(--lavender); }
+  .scale button:focus { outline: none; }
   .scale.sleepquality { grid-template-columns: repeat(3, 1fr); }
   .scale.sleepquality button.active { background: var(--sky-soft); border-color: var(--sky); }
   .sleepquality-label { font-size: 11px; color: var(--sky); text-align: center; margin-top: 5px; min-height: 15px; font-weight: 500; letter-spacing: 0.01em; }
@@ -1775,7 +1777,7 @@
           </div>
           <div class="wb-block">
             <label>Ventre</label>
-            <div class="scale" id="bellyScale">
+            <div class="scale belly" id="bellyScale">
               <button data-v="0" title="Aucune douleur">😌</button>
               <button data-v="1" title="Légère gêne">😕</button>
               <button data-v="2" title="Inconfort modéré">😣</button>
