@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v333</title>
+<title>Mon Tableau de Vie 🌿 · v334</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2494,13 +2494,9 @@
         </div>
         <div class="chart-wrap"><canvas id="bodyChart"></canvas></div>
       </div>
-      <div class="card">
+      <div class="card" style="display:flex;flex-direction:column;">
         <h2>🔥 Apport calorique 30 jours</h2>
-        <div class="chart-wrap tall"><canvas id="calorieChart"></canvas></div>
-        <div style="height:18px;"></div>
-        <h2>💧 Hydratation aujourd'hui</h2>
-        <p style="color:var(--ink-soft);font-size:13px;margin:-8px 0 12px;">Clique pour ajouter un verre (objectif : 4 verres ≈ 1 L)</p>
-        <div class="water-row" id="waterRow"></div>
+        <div class="chart-wrap tall" style="flex:1;"><canvas id="calorieChart"></canvas></div>
       </div>
     </div>
 
@@ -2508,7 +2504,11 @@
     <div class="grid-two" style="margin-top:18px;">
       <div class="card">
         <h2>🌙 Bien-être 30 jours</h2>
-        <div class="chart-wrap tall"><canvas id="wellbeingChart"></canvas></div>
+        <div class="chart-wrap" style="height:230px;"><canvas id="wellbeingChart"></canvas></div>
+        <div style="height:16px;"></div>
+        <h2>💧 Hydratation aujourd'hui</h2>
+        <p style="color:var(--ink-soft);font-size:13px;margin:-8px 0 12px;">Clique pour ajouter un verre (objectif : 4 verres ≈ 1 L)</p>
+        <div class="water-row" id="waterRow"></div>
       </div>
       <div class="card">
         <div class="card-row">
