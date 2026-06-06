@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v326</title>
+<title>Mon Tableau de Vie 🌿 · v327</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1900,6 +1900,23 @@
           <div class="spacer"></div>
           <button class="secondary" onclick="closeRecipePick()">Annuler</button>
           <button class="primary" onclick="addRecipeToFood()">Ajouter</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal : choisir une recette pour un repas du planning -->
+    <div class="modal-bg" id="mealRecipePickModal" onmousedown="_mrpBdDown=event.target===this" onclick="if(event.target===this&&_mrpBdDown)closeMealRecipePick()">
+      <div class="modal" style="max-width:480px;max-height:88vh;overflow-y:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+        <h2 id="mealRecipePickTitle" style="margin:0 0 12px;">📖 Choisir une recette</h2>
+        <input type="text" id="mealRecipeSearch" placeholder="🔍 Chercher par nom…" oninput="renderMealRecipeList()"
+          style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;" />
+        <div id="mealRecipeCatFilter" style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;"></div>
+        <div id="mealRecipeKcalFilter" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;"></div>
+        <div id="mealRecipeList" style="max-height:300px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;"></div>
+        <div class="actions" style="margin-top:14px;">
+          <button class="danger" onclick="pickMealRecipe('')">Vider ce repas</button>
+          <div class="spacer"></div>
+          <button class="secondary" onclick="closeMealRecipePick()">Fermer</button>
         </div>
       </div>
     </div>
@@ -11271,24 +11288,104 @@ function deleteRecipe() {
 }
 
 // Sélectionner une recette dans un créneau repas
-function pickRecipeForMeal(dateKey, slot, slotEl) {
+/* ── Choisir une recette pour un repas du planning (fenêtre centrée) ── */
+let _mrpBdDown = false;
+let _mealPickDate = "", _mealPickSlot = "";
+let _mealCatFilter = "", _mealKcalMin = null, _mealKcalMax = null;
+
+function pickRecipeForMeal(dateKey, slot) {
   const recipes = state.domestique.recipes || [];
   if (!recipes.length) { alert("Aucune recette — crée-en une dans l'onglet 🍳 Cuisine."); return; }
-  const names = ["— Aucune recette —", ...recipes.map(r => r.name + " (" + r.servings + " portions)")];
-  const choice = prompt("Choisir une recette pour ce repas :\n" + names.map((n,i)=>i+". "+n).join("\n") + "\n\nTape le numéro :");
-  const idx = parseInt(choice);
-  if (isNaN(idx) || idx < 0 || idx > recipes.length) return;
-  if (!state.domestique.mealPlan) state.domestique.mealPlan = {};
-  if (!state.domestique.mealPlan[dateKey]) state.domestique.mealPlan[dateKey] = {};
-  if (idx === 0) {
-    state.domestique.mealPlan[dateKey][slot] = "";
-    state.domestique.mealPlan[dateKey][slot+"RecipeId"] = "";
-  } else {
-    const rec = recipes[idx-1];
-    state.domestique.mealPlan[dateKey][slot] = rec.name;
-    state.domestique.mealPlan[dateKey][slot+"RecipeId"] = rec.id;
+  _mealPickDate = dateKey; _mealPickSlot = slot;
+  _mealCatFilter = ""; _mealKcalMin = null; _mealKcalMax = null;
+  const s = document.getElementById("mealRecipeSearch"); if (s) s.value = "";
+  const t = document.getElementById("mealRecipePickTitle");
+  if (t) t.textContent = `📖 Recette — ${slot === "midi" ? "Midi" : "Soir"}`;
+  renderMealRecipeFilters();
+  renderMealRecipeList();
+  document.getElementById("mealRecipePickModal").classList.add("open");
+}
+function closeMealRecipePick() { document.getElementById("mealRecipePickModal").classList.remove("open"); }
+
+function renderMealRecipeFilters() {
+  const cats = state.domestique.recipeCategories || [];
+  const recipes = state.domestique.recipes || [];
+  // Catégories
+  const catEl = document.getElementById("mealRecipeCatFilter");
+  if (catEl) {
+    const chip = (label, val) => {
+      const active = _mealCatFilter === val;
+      return `<button onclick="_mealCatFilter='${val.replace(/'/g,"\\'")}';renderMealRecipeFilters();renderMealRecipeList()" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid ${active?'var(--lavender)':'var(--line)'};background:${active?'var(--lavender-soft)':'white'};color:var(--ink);cursor:pointer;font-family:inherit;font-weight:${active?'700':'500'};">${label}</button>`;
+    };
+    catEl.innerHTML = chip(`Toutes (${recipes.length})`, "") + cats.map(c => chip(`${escapeHtml(c)} (${recipes.filter(r=>r.category===c).length})`, escapeHtml(c))).join("");
   }
-  saveState(); renderMealWeekGrid();
+  // Calories
+  const kEl = document.getElementById("mealRecipeKcalFilter");
+  if (kEl) {
+    const presets = [["Toutes",null,null],["≤ 300",null,300],["≤ 500",null,500],["≤ 700",null,700],["> 700",701,null]];
+    const lbl = "font-size:12px;color:var(--ink-soft);";
+    const inpStyle = "width:58px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;";
+    const chips = presets.map(([l,mn,mx]) => {
+      const active = _mealKcalMin===mn && _mealKcalMax===mx;
+      return `<button onclick="setMealKcalRange(${mn},${mx})" style="font-size:12px;padding:5px 10px;border-radius:20px;border:1.5px solid ${active?'var(--lavender)':'var(--line)'};background:${active?'var(--lavender-soft)':'white'};color:var(--ink);cursor:pointer;font-family:inherit;font-weight:${active?'700':'500'};">${l}</button>`;
+    }).join("");
+    kEl.innerHTML = `<span style="${lbl}">kcal/port. :</span>${chips}<span style="${lbl}">de</span>`
+      + `<input type="number" id="mealKcalMinInput" min="0" placeholder="min" value="${_mealKcalMin??''}" oninput="applyMealKcalCustom()" style="${inpStyle}" />`
+      + `<span style="${lbl}">à</span>`
+      + `<input type="number" id="mealKcalMaxInput" min="0" placeholder="max" value="${_mealKcalMax??''}" oninput="applyMealKcalCustom()" style="${inpStyle}" />`;
+  }
+}
+function setMealKcalRange(mn, mx) { _mealKcalMin = mn; _mealKcalMax = mx; renderMealRecipeFilters(); renderMealRecipeList(); }
+function applyMealKcalCustom() {
+  const mn = document.getElementById("mealKcalMinInput")?.value;
+  const mx = document.getElementById("mealKcalMaxInput")?.value;
+  _mealKcalMin = (mn !== "" && mn != null && !isNaN(parseInt(mn))) ? parseInt(mn) : null;
+  _mealKcalMax = (mx !== "" && mx != null && !isNaN(parseInt(mx))) ? parseInt(mx) : null;
+  renderMealRecipeList();
+}
+
+function renderMealRecipeList() {
+  const el = document.getElementById("mealRecipeList");
+  if (!el) return;
+  const q = (document.getElementById("mealRecipeSearch")?.value || "").toLowerCase();
+  let recipes = state.domestique.recipes || [];
+  if (_mealCatFilter) recipes = recipes.filter(r => r.category === _mealCatFilter);
+  if (q) recipes = recipes.filter(r => r.name.toLowerCase().includes(q));
+  if (_mealKcalMin != null || _mealKcalMax != null) {
+    recipes = recipes.filter(r => {
+      const per = recipeKcal(r).per;
+      if (per <= 0) return false;
+      if (_mealKcalMin != null && per < _mealKcalMin) return false;
+      if (_mealKcalMax != null && per > _mealKcalMax) return false;
+      return true;
+    });
+  }
+  if (!recipes.length) { el.innerHTML = `<div style="padding:16px;text-align:center;color:var(--ink-softer);font-size:13px;">Aucune recette trouvée</div>`; return; }
+  el.innerHTML = recipes.map(r => {
+    const k = recipeKcal(r);
+    return `<div onclick="pickMealRecipe('${r.id}')" style="padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;align-items:center;">
+      <div style="min-width:0;">
+        <div style="font-size:14px;font-weight:600;color:var(--ink);">${escapeHtml(r.name)}</div>
+        <div style="font-size:11px;color:var(--ink-soft);">👥 ${r.servings} portion${r.servings>1?'s':''}${r.category?` · ${escapeHtml(r.category)}`:''}</div>
+      </div>
+      <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;">${k.total>0?'🔥 '+k.per+' kcal':'—'}</span>
+    </div>`;
+  }).join("");
+}
+
+function pickMealRecipe(id) {
+  if (!state.domestique.mealPlan) state.domestique.mealPlan = {};
+  if (!state.domestique.mealPlan[_mealPickDate]) state.domestique.mealPlan[_mealPickDate] = {};
+  if (!id) {
+    state.domestique.mealPlan[_mealPickDate][_mealPickSlot] = "";
+    state.domestique.mealPlan[_mealPickDate][_mealPickSlot+"RecipeId"] = "";
+  } else {
+    const rec = (state.domestique.recipes||[]).find(r => r.id === id);
+    if (!rec) return;
+    state.domestique.mealPlan[_mealPickDate][_mealPickSlot] = rec.name;
+    state.domestique.mealPlan[_mealPickDate][_mealPickSlot+"RecipeId"] = rec.id;
+  }
+  saveState(); closeMealRecipePick(); renderMealWeekGrid();
 }
 
 // Générer la liste de courses à partir des recettes du planning
@@ -12999,13 +13096,14 @@ function renderMealWeekGrid() {
     <div class="meal-day-row${isToday ? " meal-today" : ""}">
       <div class="meal-day-label">${dayShort[i%7]}<span class="meal-day-num">${dayNum}</span></div>
       <div class="meal-slot" style="position:relative;">
-        <button onclick="event.stopPropagation();pickRecipeForMeal('${key}','midi',this)" title="Choisir une recette" style="position:absolute;top:4px;right:4px;background:none;border:none;cursor:pointer;font-size:12px;opacity:0.5;">📖</button>
+        <button onclick="event.stopPropagation();pickRecipeForMeal('${key}','midi')" title="Choisir une recette" style="position:absolute;top:4px;right:4px;background:none;border:none;cursor:pointer;font-size:12px;opacity:0.5;">📖</button>
         <span class="meal-slot-label">Midi</span>
         <span class="meal-slot-value${plan.midi ? "" : " empty"}" onclick="editMealSlot('${key}','midi',this)">${plan.midi ? escapeHtml(plan.midi) : "—"}</span>
       </div>
-      <div class="meal-slot" onclick="editMealSlot('${key}','soir',this)">
+      <div class="meal-slot" style="position:relative;">
+        <button onclick="event.stopPropagation();pickRecipeForMeal('${key}','soir')" title="Choisir une recette" style="position:absolute;top:4px;right:4px;background:none;border:none;cursor:pointer;font-size:12px;opacity:0.5;">📖</button>
         <span class="meal-slot-label">Soir</span>
-        <span class="meal-slot-value${plan.soir ? "" : " empty"}">${plan.soir ? escapeHtml(plan.soir) : "—"}</span>
+        <span class="meal-slot-value${plan.soir ? "" : " empty"}" onclick="editMealSlot('${key}','soir',this)">${plan.soir ? escapeHtml(plan.soir) : "—"}</span>
       </div>
     </div>`;
   }
