@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v347</title>
+<title>Mon Tableau de Vie 🌿 · v348</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10380,6 +10380,21 @@ function _alignLastWatered(startDate, wateringDays, rrule) {
   return todayKey(lw);
 }
 
+// Jours d'affichage d'un événement : récurrence (RRULE) OU étalement sur plusieurs jours (DTEND)
+function _eventDays(ev) {
+  if (ev.rrule) return _expandEventDates(ev);
+  if (ev.endDate && ev.endDate > ev.date) {
+    const [sy, sm, sd] = ev.date.split("-").map(Number);
+    const [ey, em, ed] = ev.endDate.split("-").map(Number);
+    let last = new Date(ey, em - 1, ed);
+    if (ev.allDayEnd) last.setDate(last.getDate() - 1); // DTEND sans heure = jour suivant exclus
+    const out = []; let cur = new Date(sy, sm - 1, sd); let g = 0;
+    while (cur <= last && g++ < 120) { out.push(todayKey(cur)); cur.setDate(cur.getDate() + 1); }
+    return out.length ? out : [ev.date];
+  }
+  return [ev.date];
+}
+
 function getAllCalEvents() {
   const events = [];
   // Tasks deadlines + événements prévus
@@ -10437,7 +10452,7 @@ function getAllCalEvents() {
       sourceId: ev.sourceId,
       description: ev.description || "",
     };
-    const dates = ev.rrule ? _expandEventDates(ev) : [ev.date];
+    const dates = _eventDays(ev);
     for (const dt of dates) {
       events.push({ ...base, date: dt, id: dates.length > 1 ? ev.id + "@" + dt : ev.id });
     }
@@ -10846,6 +10861,7 @@ async function saveGoogleCal() {
     state.calEvents.push(...parsed.events.filter(p => !/arros/i.test(p.title || "")).map(p => ({
       id: "gcal-" + (p.uid || (Date.now() + Math.random().toString(36).slice(2,6))),
       title: p.title || "(Sans titre)", date: p.date, time: p.time || "",
+      endDate: p.endDate || null, endTime: p.endTime || "", allDayEnd: !!p.allDayEnd,
       location: p.location || "", description: p.description || "",
       sourceId: srcId, rrule: p.rrule || null,
       color: gcalColorToHex(p.color) || null,
@@ -10906,6 +10922,7 @@ async function syncGoogleCal(silent = false) {
     const newEvts = parsed.events.filter(p => !/arros/i.test(p.title || "")).map(p => ({
       id: "gcal-" + (p.uid || (Date.now() + Math.random().toString(36).slice(2, 6))),
       title: p.title || "(Sans titre)", date: p.date, time: p.time || "",
+      endDate: p.endDate || null, endTime: p.endTime || "", allDayEnd: !!p.allDayEnd,
       location: p.location || "", description: p.description || "",
       sourceId: srcId, rrule: p.rrule || null,
       color: gcalColorToHex(p.color) || null,
@@ -10975,6 +10992,21 @@ function parseICS(text) {
           }
         }
       }
+      else if (key === "DTEND") {
+        const m = val.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?/);
+        if (m) {
+          const [, yy, mo, dd, hh, mi, ss, z] = m;
+          cur.allDayEnd = (hh == null); // DTEND sans heure = exclusif (jour suivant) selon iCal
+          if (hh != null && z) {
+            const dt = new Date(Date.UTC(+yy, +mo - 1, +dd, +hh, +mi, +(ss || 0)));
+            cur.endDate = todayKey(dt);
+            cur.endTime = String(dt.getHours()).padStart(2, "0") + ":" + String(dt.getMinutes()).padStart(2, "0");
+          } else {
+            cur.endDate = `${yy}-${mo}-${dd}`;
+            if (hh != null) cur.endTime = `${hh}:${mi}`;
+          }
+        }
+      }
       else if (key === "DESCRIPTION") cur.description = val.replace(/\\n/g, "\n").replace(/\\,/g, ",").trim();
       else if (key === "LOCATION") cur.location = val;
       else if (key === "RRULE") cur.rrule = val;
@@ -11021,6 +11053,8 @@ document.getElementById("icsFile")?.addEventListener("change", e => {
         title: p.title || "(Sans titre)",
         date: p.date,
         time: p.time || "",
+        endDate: p.endDate || null, endTime: p.endTime || "", allDayEnd: !!p.allDayEnd,
+        rrule: p.rrule || null,
         location: p.location || "",
         description: p.description || "",
       }));
