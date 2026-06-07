@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v348</title>
+<title>Mon Tableau de Vie 🌿 · v349</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10834,17 +10834,18 @@ async function saveGoogleCal() {
   result.style.background = "var(--lavender-soft)";
   result.innerHTML = "⏳ Connexion en cours…";
   const proxies = [
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
     u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     u => `https://thingproxy.freeboard.io/fetch/${u}`,
     u => `https://cors-anywhere.herokuapp.com/${u}`,
   ];
   let text = null;
+  const bustedUrl = url + (url.includes("?") ? "&" : "?") + "_cb=" + Date.now();
   for (const proxy of proxies) {
     try {
-      const r = await fetch(proxy(url));
-      if (r.ok) { text = await r.text(); break; }
+      const r = await fetch(proxy(bustedUrl), { cache: "no-store" });
+      if (r.ok) { const tx = await r.text(); if (/BEGIN:VEVENT/i.test(tx)) { text = tx; break; } }
     } catch (_) {}
   }
   try {
@@ -10891,9 +10892,9 @@ async function syncGoogleCal(silent = false) {
   if (!silent) showToast("🔄 Synchronisation Google Agenda…");
   // Proxies CORS testés en cascade
   const proxies = [
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
     u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     u => `https://thingproxy.freeboard.io/fetch/${u}`,
     u => `https://cors-anywhere.herokuapp.com/${u}`,
   ];
@@ -10903,7 +10904,7 @@ async function syncGoogleCal(silent = false) {
   for (const proxy of proxies) {
     try {
       const r = await fetch(proxy(bustedUrl), { signal: AbortSignal.timeout(15000), cache: "no-store" });
-      if (r.ok) { text = await r.text(); break; }
+      if (r.ok) { const tx = await r.text(); if (/BEGIN:VEVENT/i.test(tx)) { text = tx; break; } }
     } catch (_) { /* essaie le proxy suivant */ }
   }
   if (!text) {
@@ -13959,15 +13960,15 @@ async function detectPlantsFromGoogle() {
   if (!url) { document.getElementById("icsFilePlants")?.click(); return; }
   showToast("🔍 Détection des plantes depuis Google Agenda…");
   const proxies = [
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
     u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     u => `https://thingproxy.freeboard.io/fetch/${u}`,
   ];
   const busted = url + (url.includes("?") ? "&" : "?") + "_cb=" + Date.now();
   let text = null;
   for (const proxy of proxies) {
-    try { const r = await fetch(proxy(busted), { signal: AbortSignal.timeout(15000), cache: "no-store" }); if (r.ok) { text = await r.text(); break; } } catch (_) {}
+    try { const r = await fetch(proxy(busted), { signal: AbortSignal.timeout(15000), cache: "no-store" }); if (r.ok) { const tx = await r.text(); if (/BEGIN:VEVENT/i.test(tx)) { text = tx; break; } } } catch (_) {}
   }
   if (!text) { showToast("❌ Impossible de lire Google Agenda. Réessaie ou utilise un fichier .ics."); return; }
   try { _runPlantDetection(parseICS(text)); } catch (err) { alert("Erreur de lecture : " + err.message); }
