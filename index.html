@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v350</title>
+<title>Mon Tableau de Vie 🌿 · v351</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -6767,12 +6767,14 @@ function computeHormones() {
     res.serotonine.days.push({ dk, label, active: serActive, reasons: serReasons });
     if (serActive) { res.serotonine.score++; serReasons.slice(0,2).forEach(r => res.serotonine.sources.push(r)); }
 
-    // — Ocytocine (événements calendrier ce jour : sociaux + soins bien-être)
+    // — Ocytocine (événements calendrier sociaux + soins bien-être + activités sociales)
     const socEvs    = state.calEvents.filter(e => e.date === dk && socialRe.test(e.title || ""));
-    const ocyEvs    = [...socEvs, ...wellEvs];
-    const ocyActive = ocyEvs.length > 0;
-    res.ocytocine.days.push({ dk, label, active: ocyActive, reasons: ocyEvs.map(e => e.title || "événement social") });
-    if (ocyActive) { res.ocytocine.score++; ocyEvs.slice(0,2).forEach(e => res.ocytocine.sources.push(e.title||"social")); }
+    const socialActRe = /danse|dance|cours|club|groupe|équipe|equipe|chorale|chant|théâtre|theatre|atelier|collectif|zumba|salsa|bénévol|benevol/i;
+    const ocyActs   = state.activities.filter(a => acts[a.id] && (socialActRe.test(a.name) || (a.hormones || []).includes("ocytocine")));
+    const ocyReasons = [...socEvs.map(e => e.title || "événement social"), ...wellEvs.map(e => e.title || "soin"), ...ocyActs.map(a => a.name)];
+    const ocyActive = ocyReasons.length > 0;
+    res.ocytocine.days.push({ dk, label, active: ocyActive, reasons: ocyReasons });
+    if (ocyActive) { res.ocytocine.score++; ocyReasons.slice(0,2).forEach(r => res.ocytocine.sources.push(r)); }
   }
 
   Object.values(res).forEach(r => { r.sources = [...new Set(r.sources)].slice(0,3); });
