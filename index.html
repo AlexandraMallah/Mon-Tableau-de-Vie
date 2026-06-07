@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v337</title>
+<title>Mon Tableau de Vie 🌿 · v338</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3387,9 +3387,12 @@
 </div>
 
 <!-- Modal Recette -->
-<div class="modal-bg" id="recipeModal">
-  <div class="modal" style="max-width:600px;max-height:90vh;overflow-y:auto;">
-    <h2 id="recipeModalTitle">Nouvelle recette</h2>
+<div class="modal-bg" id="recipeModal" onmousedown="_recBdDown=event.target===this" onclick="if(event.target===this&&_recBdDown)closeRecipeModal()">
+  <div class="modal" style="max-width:600px;max-height:90vh;overflow-y:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <h2 id="recipeModalTitle" style="margin:0;">Nouvelle recette</h2>
+      <button onclick="closeRecipeModal()" title="Fermer" style="background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:var(--ink-soft);padding:4px 6px;">✕</button>
+    </div>
     <input type="hidden" id="recipeModalId" />
     <div style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;margin-bottom:0;">
       <div><label>Emoji</label>
@@ -11355,6 +11358,7 @@ function openRecipeModal(id) {
   updateRecipeTotals();
   document.getElementById("recipeModal").classList.add("open");
 }
+let _recBdDown = false;
 function closeRecipeModal() { document.getElementById("recipeModal").classList.remove("open"); }
 
 function addRecipeIngredient(ing) {
