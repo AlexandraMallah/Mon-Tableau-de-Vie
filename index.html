@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v343</title>
+<title>Mon Tableau de Vie 🌿 · v344</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10354,6 +10354,32 @@ function _expandEventDates(ev) {
   return out.length ? [...new Set(out)] : [ev.date];
 }
 
+// Cale la date du "dernier arrosage" pour que le prochain calculé tombe sur le prochain jour prévu par Google
+function _alignLastWatered(startDate, wateringDays, rrule) {
+  if (!startDate || !wateringDays) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  let occ = [];
+  if (rrule) {
+    occ = _expandEventDates({ date: startDate, rrule }).map(s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); });
+  }
+  if (!occ.length) {
+    const [y, m, d] = startDate.split("-").map(Number);
+    let cur = new Date(y, m - 1, d);
+    const end = new Date(today); end.setDate(end.getDate() + wateringDays + 1);
+    let g = 0;
+    while (cur <= end && g++ < 5000) { occ.push(new Date(cur)); cur.setDate(cur.getDate() + wateringDays); }
+  }
+  occ.sort((a, b) => a - b);
+  let nextDue = occ.find(d => d >= today);
+  if (!nextDue) {
+    nextDue = occ.length ? new Date(occ[occ.length - 1]) : new Date(today);
+    let g = 0;
+    while (nextDue < today && g++ < 5000) nextDue.setDate(nextDue.getDate() + wateringDays);
+  }
+  const lw = new Date(nextDue); lw.setDate(lw.getDate() - wateringDays);
+  return todayKey(lw);
+}
+
 function getAllCalEvents() {
   const events = [];
   // Tasks deadlines + événements prévus
@@ -10817,7 +10843,7 @@ async function saveGoogleCal() {
     const srcId = "src-gcal";
     if (!state.calSources.find(s => s.id === srcId))
       state.calSources.push({ id: srcId, name: "Google Agenda", color: "#aee0c8", importedAt: new Date().toISOString() });
-    state.calEvents.push(...parsed.events.map(p => ({
+    state.calEvents.push(...parsed.events.filter(p => !/arros/i.test(p.title || "")).map(p => ({
       id: "gcal-" + (p.uid || (Date.now() + Math.random().toString(36).slice(2,6))),
       title: p.title || "(Sans titre)", date: p.date, time: p.time || "",
       location: p.location || "", description: p.description || "",
@@ -10877,7 +10903,7 @@ async function syncGoogleCal(silent = false) {
     if (!state.calSources.find(s => s.id === srcId)) {
       state.calSources.push({ id: srcId, name: "Google Agenda", color: "#aee0c8", importedAt: new Date().toISOString() });
     }
-    const newEvts = parsed.events.map(p => ({
+    const newEvts = parsed.events.filter(p => !/arros/i.test(p.title || "")).map(p => ({
       id: "gcal-" + (p.uid || (Date.now() + Math.random().toString(36).slice(2, 6))),
       title: p.title || "(Sans titre)", date: p.date, time: p.time || "",
       location: p.location || "", description: p.description || "",
@@ -10989,7 +11015,7 @@ document.getElementById("icsFile")?.addEventListener("change", e => {
         state.calSources.push(source);
       }
       // Injecte les nouveaux events
-      const newEvents = result.events.map(p => ({
+      const newEvents = result.events.filter(p => !/arros/i.test(p.title || "")).map(p => ({
         id: "ics" + Date.now() + Math.random().toString(36).slice(2, 6),
         sourceId: source.id,
         title: p.title || "(Sans titre)",
@@ -13961,6 +13987,7 @@ function detectPlantsFromICS(event) {
         emoji: p.emoji || "🪴",
         wateringDays: p.wateringDays || 7,
         lastDate: p.lastDate,
+        rrule: p.rrule || null,
         alreadyExists: existing.has(p.name.toLowerCase()),
         notes: p.description || "",
       }));
@@ -14016,18 +14043,21 @@ function confirmImportPlants() {
     const wateringDays = Number(document.getElementById(`pdFreq${i}`)?.value) || p.wateringDays;
     const notes = document.getElementById(`pdNotes${i}`)?.value.trim() || "";
     if (!name) return;
+    // Cale le dernier arrosage sur le planning Google pour que le prochain tombe le bon jour
+    const alignedLast = _alignLastWatered(p.lastDate, wateringDays, p.rrule);
     // Vérifie si déjà présente (au cas où elle a été dé-cochée par l'alreadyExists mais re-cochée)
     const exists = state.domestique.plants.find(x => x.name.toLowerCase() === name.toLowerCase());
     if (exists) {
-      // Met à jour la fréquence et les notes
+      // Met à jour la fréquence, les notes et recale sur Google
       exists.wateringDays = wateringDays;
       exists.emoji = emoji;
       exists.notes = notes;
+      exists.lastWatered = alignedLast;
     } else {
       state.domestique.plants.push({
         id: "pl" + Date.now() + Math.random().toString(36).slice(2, 5),
         name, emoji, wateringDays, notes,
-        lastWatered: null,
+        lastWatered: alignedLast,
       });
     }
     imported++;
