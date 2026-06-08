@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v359</title>
+<title>Mon Tableau de Vie 🌿 · v360</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -8413,7 +8413,7 @@ function renderReimbursable() {
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button onclick="markGroupClaimed(${JSON.stringify(txs.map(t => t.id))}, '${missionDateId}')"
-              style="padding:5px 12px;border-radius:7px;border:1.5px solid #d97706;background:#fff7ed;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;">⏳ Tout lancer</button>
+              style="padding:5px 12px;border-radius:7px;border:1.5px solid #d97706;background:#fff7ed;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;">⏳ Tout lancé</button>
             <button onclick="confirmGroupReimbursed(${JSON.stringify(txs.map(t => t.id))}, '${missionDateId}', ${JSON.stringify(key || '')})"
               style="padding:5px 12px;border-radius:7px;border:none;background:#10b981;color:white;font-size:12px;font-weight:600;cursor:pointer;">✅ Tout reçu</button>
             <button onclick="document.getElementById('${missionDateId}_form').style.display='none'"
@@ -8489,7 +8489,7 @@ function renderReimbursable() {
 
 function toggleGroupReimb(id) {
   const form = document.getElementById(id + "_form");
-  if (form) form.style.display = form.style.display === "none" ? "flex" : "none";
+  if (form) form.style.display = form.style.display === "none" ? "block" : "none";
 }
 function _createReimbIncomeTx(dateIso, reimbAmount, note) {
   // Crée une transaction Revenu pour le remboursement reçu
