@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v354</title>
+<title>Mon Tableau de Vie 🌿 · v355</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1901,7 +1901,7 @@
         <div class="actions" style="margin-top:14px;">
           <div class="spacer"></div>
           <button class="secondary" onclick="closeRecipePick()">Annuler</button>
-          <button class="primary" onclick="addRecipeToFood()">Ajouter</button>
+          <button class="primary" onclick="addRecipeToFood()">Continuer ›</button>
         </div>
       </div>
     </div>
@@ -7547,13 +7547,14 @@ function addRecipeToFood() {
     kcal: Math.round((Number(i.kcal) || 0) * factor),
     fromRecipe: true
   }));
-  const d = getToday();
-  if (!d.foodLog) d.foodLog = [];
-  const now = new Date();
-  const time = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
   const label = rec.name + (portions !== 1 ? ` (${portions} portion${portions > 1 ? "s" : ""})` : "");
-  d.foodLog.push({ id: "fl" + Date.now(), name: label, time, reason: "", note: "", calories: cal, ingredients, recipeId: rec.id, portions });
-  saveState(); closeRecipePick(); renderFoodLog();
+  // Pré-remplir la fenêtre "Qu'est-ce que tu as mangé ?" pour compléter (raison, note) avant d'enregistrer
+  closeRecipePick();
+  openFoodEntry();
+  document.getElementById("foodEntryName").value = label;
+  _foodIngredients = ingredients;
+  renderFoodIngredients();
+  document.getElementById("foodEntryCalories").value = cal; // calories de la recette (prioritaires)
 }
 
 function renderFoodLog() {
