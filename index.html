@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v368</title>
+<title>Mon Tableau de Vie 🌿 · v369</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -12707,9 +12707,7 @@ function openCodeModal(id, defaultParentId) {
   const parentSel = document.getElementById("codeModalParent");
   if (parentSel) {
     parentSel.innerHTML = '<option value="">— Aucun (code racine) —</option>' +
-      codes.filter(x => x.id !== id).map(x =>
-        `<option value="${x.id}"${(c?.parentId||defaultParentId||"")=== x.id?" selected":""}>${"　".repeat(_codeDepth(x.id, codes))}${escapeHtml(x.label)}</option>`
-      ).join("");
+      _codeParentOptions(codes, id, (c?.parentId || defaultParentId || "")).join("");
   }
   const delBtn = document.getElementById("codeModalDeleteBtn");
   if (delBtn) delBtn.style.display = c ? "inline-block" : "none";
@@ -12720,6 +12718,15 @@ function _codeDepth(id, codes, d=0) {
   const c = codes.find(x => x.id === id);
   if (!c || !c.parentId || d > 5) return d;
   return _codeDepth(c.parentId, codes, d+1);
+}
+
+// Options du menu "Code parent" en ordre arborescent + décalage par niveau
+// (exclut le code édité et tout son sous-arbre pour éviter les boucles)
+function _codeParentOptions(codes, excludeId, selectedId, parentId = "", depth = 0) {
+  return codes.filter(x => (x.parentId || "") === parentId && x.id !== excludeId).flatMap(x => [
+    `<option value="${x.id}"${selectedId === x.id ? " selected" : ""}>${"　".repeat(depth)}${depth ? "↳ " : ""}${escapeHtml(x.label)}</option>`,
+    ..._codeParentOptions(codes, excludeId, selectedId, x.id, depth + 1)
+  ]);
 }
 
 function closeCodeModal() { document.getElementById("codeModal").classList.remove("open"); }
