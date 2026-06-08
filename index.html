@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v356</title>
+<title>Mon Tableau de Vie 🌿 · v357</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4045,7 +4045,7 @@ const DEFAULT_STATE = {
   ],
   categories: ["Alimentation", "Logement", "Transport", "Loisirs", "Cadeau", "Sport", "Esthétique", "Santé", "Travail", "Abonnements audiovisuels", "Abonnement IA", "Autre"],
   incomeCategories: ["Salaire (postdoc)", "Salaire (vacations)", "Prime", "Remboursement", "Catsitting", "Autre revenu"],
-  savingsCategories: ["Livret A", "LEP", "PEA", "Compte épargne", "Assurance vie", "Autre épargne"],
+  savingsCategories: ["Livret A", "LEP", "PEA", "Compte épargne", "Assurance vie", "Frais annuels / Projets", "Autre épargne"],
   candidatureTypes: ["MCF", "MSCA", "CNRS", "ERC ACCESS"],
   contactRoles: ["Mentor", "Collaborateur", "Jury", "Rencontré en conf", "Famille", "Ami"],
   goals: [],
@@ -4090,6 +4090,7 @@ function migrate(s) {
   // Ajout des nouvelles catégories de revenus manquantes
   if (!s.incomeCategories.includes("Catsitting")) s.incomeCategories.splice(-1, 0, "Catsitting"); // avant "Autre revenu"
   s.savingsCategories = s.savingsCategories || DEFAULT_STATE.savingsCategories;
+  if (!s.savingsCategories.includes("Frais annuels / Projets")) s.savingsCategories.splice(-1, 0, "Frais annuels / Projets"); // avant "Autre épargne"
   s.candidatureTypes = s.candidatureTypes || DEFAULT_STATE.candidatureTypes;
   s.contactRoles = s.contactRoles || DEFAULT_STATE.contactRoles;
   s.goals = s.goals || [];
