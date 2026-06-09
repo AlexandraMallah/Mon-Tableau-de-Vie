@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v373</title>
+<title>Mon Tableau de Vie 🌿 · v374</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2845,7 +2845,8 @@
               <option value="soir">🌙 Soir</option>
               <option value="midi">☀️ Midi</option>
             </select>
-            <select id="newMealEventRecipe" onchange="onMealEventRecipePick()" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;"></select>
+            <input id="newMealEventRecipe" list="mealEventRecipeList" oninput="onMealEventRecipePick()" placeholder="🔍 Recette (tape ou choisis)…" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;" />
+            <datalist id="mealEventRecipeList"></datalist>
           </div>
           <div style="display:flex;gap:8px;">
             <button class="btn-primary" onclick="addMealEvent()">Créer</button>
@@ -13902,18 +13903,26 @@ function showAddMealEventForm() {
   form.style.display = "";
   const d = document.getElementById("newMealEventDate");
   if (d && !d.value) d.value = todayKey();
-  // Peupler le sélecteur de recettes
-  const rsel = document.getElementById("newMealEventRecipe");
-  if (rsel) {
+  // Peupler la liste de recettes (recherche par frappe + déroulant)
+  const dl = document.getElementById("mealEventRecipeList");
+  if (dl) {
     const recipes = state.domestique?.recipes || [];
-    rsel.innerHTML = '<option value="">— Recette (optionnel) —</option>' +
-      recipes.map(r => `<option value="${r.id}">${typeof recipeEmoji === "function" ? recipeEmoji(r) + " " : ""}${escapeHtml(r.name)}</option>`).join("");
+    dl.innerHTML = recipes.map(r => `<option value="${escapeHtml((typeof recipeEmoji === "function" ? recipeEmoji(r) + " " : "") + r.name)}"></option>`).join("");
   }
   document.getElementById("newMealEventName")?.focus();
 }
+// Retrouve la recette à partir du texte tapé/choisi (avec ou sans emoji)
+function _mealEventRecipeFromInput() {
+  const val = (document.getElementById("newMealEventRecipe")?.value || "").trim();
+  if (!val) return null;
+  const recipes = state.domestique?.recipes || [];
+  return recipes.find(r => {
+    const withEmoji = (typeof recipeEmoji === "function" ? recipeEmoji(r) + " " : "") + r.name;
+    return val === withEmoji || val.toLowerCase() === r.name.toLowerCase();
+  }) || null;
+}
 function onMealEventRecipePick() {
-  const rsel = document.getElementById("newMealEventRecipe");
-  const rec = (state.domestique?.recipes || []).find(r => r.id === rsel?.value);
+  const rec = _mealEventRecipeFromInput();
   if (rec) document.getElementById("newMealEventName").value = rec.name; // pré-remplit le nom
 }
 function hideMealEventForm() {
@@ -13924,7 +13933,7 @@ function addMealEvent() {
   const name = document.getElementById("newMealEventName")?.value.trim();
   const date = document.getElementById("newMealEventDate")?.value || todayKey();
   const slot = document.getElementById("newMealEventSlot")?.value || "soir";
-  const recipeId = document.getElementById("newMealEventRecipe")?.value || "";
+  const recipeId = _mealEventRecipeFromInput()?.id || "";
   if (!name) return;
   if (!state.domestique.mealEvents) state.domestique.mealEvents = [];
   state.domestique.mealEvents.unshift({ id: "me" + Date.now(), name, date, slot, recipeId, dishes: [], groceryEventId: null });
