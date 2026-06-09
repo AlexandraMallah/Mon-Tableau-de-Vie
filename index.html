@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v374</title>
+<title>Mon Tableau de Vie 🌿 · v375</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13721,6 +13721,10 @@ let _expandedDishes   = new Set(); // "mealId-dishId" → plat ouvert
 function renderMealEvents() {
   const target = document.getElementById("mealEventsList");
   if (!target) return;
+  // Datalist recettes (utilisée par le formulaire ET l'édition inline)
+  const dl = document.getElementById("mealEventRecipeList");
+  if (dl) dl.innerHTML = (state.domestique?.recipes || []).map(r => `<option value="${escapeHtml((typeof recipeEmoji === "function" ? recipeEmoji(r) + " " : "") + r.name)}"></option>`).join("");
+  const recipeNameOf = id => { const r = (state.domestique?.recipes || []).find(x => x.id === id); return r ? ((typeof recipeEmoji === "function" ? recipeEmoji(r) + " " : "") + r.name) : ""; };
   const events = state.domestique.mealEvents || [];
   if (!events.length) {
     target.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px 0;">Aucun repas planifié encore — crée ton premier dîner, brunch ou repas entre amis ✨</p>`;
@@ -13784,17 +13788,25 @@ function renderMealEvents() {
 
     // En-tête : mode édition ou affichage
     const editing = _editingMealEvent === ev.id;
+    const slotLabel = (ev.slot === "midi") ? "☀️ Midi" : "🌙 Soir";
     const headerHtml = editing
       ? `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
            <input type="text" value="${escapeHtml(ev.name)}" id="edit-meal-name-${ev.id}"
              style="flex:1;min-width:120px;padding:7px 10px;border:1.5px solid var(--lavender);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;" />
            <input type="date" value="${ev.date || ""}" id="edit-meal-date-${ev.id}"
              style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;" />
+           <select id="edit-meal-slot-${ev.id}" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;background:white;">
+             <option value="soir"${ev.slot !== "midi" ? " selected" : ""}>🌙 Soir</option>
+             <option value="midi"${ev.slot === "midi" ? " selected" : ""}>☀️ Midi</option>
+           </select>
+           <input id="edit-meal-recipe-${ev.id}" list="mealEventRecipeList" value="${escapeHtml(recipeNameOf(ev.recipeId))}" placeholder="🔍 Recette (optionnel)"
+             style="flex:1;min-width:140px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;" />
            <button class="btn-primary" style="padding:7px 12px;" onclick="saveMealEventEdit('${ev.id}')">✓</button>
            <button class="btn-soft" style="padding:7px 10px;" onclick="cancelMealEventEdit()">✕</button>
          </div>`
       : `<div class="meal-event-header">
            <div class="meal-event-name">${escapeHtml(ev.name)}</div>
+           <span style="font-size:11px;background:var(--lavender-soft);color:var(--ink);border-radius:8px;padding:2px 8px;white-space:nowrap;">${slotLabel}</span>
            <span class="meal-event-date">${formatDeadline(ev.date) || ev.date || ""}</span>
            <button class="btn-icon" style="padding:3px 7px;font-size:11px;" onclick="startMealEventEdit('${ev.id}')" title="Modifier">✏️</button>
            <button class="meal-event-del" onclick="deleteMealEvent('${ev.id}')" title="Supprimer">✕</button>
@@ -13806,14 +13818,39 @@ function renderMealEvents() {
       <div style="margin-bottom:10px;">${groceryBandeau}</div>
       ${dishesHtml}
       <div style="display:flex;gap:6px;margin-top:10px;">
-        <input type="text" placeholder="Ajouter un plat…" id="dish-input-${ev.id}"
+        <input type="text" placeholder="Ajouter un plat (tu mettras les ingrédients dedans)…" id="dish-input-${ev.id}"
           onkeydown="if(event.key==='Enter'){addMealDish('${ev.id}',this.value);this.value='';}"
           style="flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
         <button class="btn-soft" style="padding:7px 10px;font-size:12px;flex-shrink:0;"
           onclick="(function(){const i=document.getElementById('dish-input-${ev.id}');addMealDish('${ev.id}',i.value);i.value='';})()">+</button>
       </div>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <input type="text" placeholder="🍳 …ou ajouter une recette comme plat" id="dish-recipe-${ev.id}" list="mealEventRecipeList"
+          onkeydown="if(event.key==='Enter'){addMealDishFromRecipeInput('${ev.id}');}"
+          style="flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+        <button class="btn-soft" style="padding:7px 10px;font-size:12px;flex-shrink:0;" onclick="addMealDishFromRecipeInput('${ev.id}')">+ recette</button>
+      </div>
     </div>`;
   }).join("");
+}
+function addMealDishFromRecipeInput(eventId) {
+  const inp = document.getElementById("dish-recipe-" + eventId);
+  const val = (inp?.value || "").trim();
+  if (!val) return;
+  const recipes = state.domestique?.recipes || [];
+  const rec = recipes.find(r => val === ((typeof recipeEmoji === "function" ? recipeEmoji(r) + " " : "") + r.name) || val.toLowerCase() === r.name.toLowerCase());
+  if (!rec) { showToast("Recette introuvable — choisis-la dans la liste."); return; }
+  const ev = (state.domestique.mealEvents || []).find(e => e.id === eventId);
+  if (!ev) return;
+  _addRecipeDishTo(ev, rec);
+  // auto-ajout des ingrédients à la liste de courses si liée
+  if (ev.groceryEventId) {
+    const dish = ev.dishes[ev.dishes.length - 1];
+    (dish.ingredients || []).forEach(ing => state.domestique.groceries.push({ id: "g" + Date.now() + Math.random().toString(36).slice(2, 5), eventId: ev.groceryEventId, name: ing, checked: false }));
+    renderGroceries();
+  }
+  if (inp) inp.value = "";
+  saveState(); renderMealEvents();
 }
 
 /* Édition du nom/date d'un repas */
@@ -13826,17 +13863,33 @@ function cancelMealEventEdit() { _editingMealEvent = null; renderMealEvents(); }
 function saveMealEventEdit(id) {
   const ev = (state.domestique.mealEvents || []).find(e => e.id === id);
   if (!ev) return;
+  const oldDate = ev.date, oldSlot = ev.slot || "soir";
   const name = document.getElementById(`edit-meal-name-${id}`)?.value.trim();
   const date = document.getElementById(`edit-meal-date-${id}`)?.value;
+  const slot = document.getElementById(`edit-meal-slot-${id}`)?.value;
+  // Recette : on résout le texte du champ vers une recette
+  const recVal = (document.getElementById(`edit-meal-recipe-${id}`)?.value || "").trim();
+  const recipes = state.domestique?.recipes || [];
+  const rec = recVal ? recipes.find(r => recVal === ((typeof recipeEmoji === "function" ? recipeEmoji(r) + " " : "") + r.name) || recVal.toLowerCase() === r.name.toLowerCase()) : null;
   if (name) ev.name = name;
   if (date) ev.date = date;
-  // Si une liste de courses est liée, sync son nom aussi
+  if (slot) ev.slot = slot;
+  // Changement de recette → met à jour le plat-recette
+  if (rec && rec.id !== ev.recipeId) {
+    ev.dishes = (ev.dishes || []).filter(d => !d.fromRecipeId); // retire l'ancien plat-recette
+    _addRecipeDishTo(ev, rec);
+    ev.recipeId = rec.id;
+  } else if (!recVal && ev.recipeId) {
+    ev.dishes = (ev.dishes || []).filter(d => !d.fromRecipeId);
+    ev.recipeId = "";
+  }
   if (ev.groceryEventId) {
     const gev = state.domestique.groceryEvents.find(g => g.id === ev.groceryEventId);
     if (gev && name) gev.name = name;
   }
+  _syncMealEventToPlan(ev, oldDate, oldSlot); // synchronise le planning (gère le déplacement)
   _editingMealEvent = null;
-  saveState(); renderMealEvents(); renderGroceries();
+  saveState(); renderMealEvents(); renderGroceries(); try { renderMealWeekGrid(); } catch (e) {}
 }
 
 /* Toggle ouverture d'un plat */
@@ -13936,22 +13989,44 @@ function addMealEvent() {
   const recipeId = _mealEventRecipeFromInput()?.id || "";
   if (!name) return;
   if (!state.domestique.mealEvents) state.domestique.mealEvents = [];
-  state.domestique.mealEvents.unshift({ id: "me" + Date.now(), name, date, slot, recipeId, dishes: [], groceryEventId: null });
-  // Inscrit aussi dans le planning de la semaine (créneau midi/soir)
-  if (!state.domestique.mealPlan) state.domestique.mealPlan = {};
-  if (!state.domestique.mealPlan[date]) state.domestique.mealPlan[date] = {};
-  state.domestique.mealPlan[date][slot] = name;
-  state.domestique.mealPlan[date][slot + "RecipeId"] = recipeId;
+  const ev = { id: "me" + Date.now(), name, date, slot, recipeId, dishes: [], groceryEventId: null };
+  // Si une recette est choisie, l'importer comme 1er plat (avec ses ingrédients)
+  const rec = _mealEventRecipeFromInput();
+  if (rec) _addRecipeDishTo(ev, rec);
+  state.domestique.mealEvents.unshift(ev);
+  _syncMealEventToPlan(ev);
   document.getElementById("newMealEventName").value = "";
   document.getElementById("newMealEventRecipe").value = "";
   hideMealEventForm();
   saveState(); renderMealEvents(); try { renderMealWeekGrid(); } catch (e) {}
 }
+// Crée/place l'entrée du planning de la semaine pour un repas (retire l'ancienne place si déplacé)
+function _syncMealEventToPlan(ev, oldDate, oldSlot) {
+  if (!state.domestique.mealPlan) state.domestique.mealPlan = {};
+  if (oldDate && oldSlot) {
+    const p = state.domestique.mealPlan[oldDate];
+    if (p && p[oldSlot] === ev.name) { delete p[oldSlot]; delete p[oldSlot + "RecipeId"]; }
+  }
+  if (!state.domestique.mealPlan[ev.date]) state.domestique.mealPlan[ev.date] = {};
+  state.domestique.mealPlan[ev.date][ev.slot || "soir"] = ev.name;
+  state.domestique.mealPlan[ev.date][(ev.slot || "soir") + "RecipeId"] = ev.recipeId || "";
+}
+function _removeMealEventFromPlan(ev) {
+  const p = state.domestique.mealPlan?.[ev.date];
+  if (p && p[ev.slot || "soir"] === ev.name) { delete p[ev.slot || "soir"]; delete p[(ev.slot || "soir") + "RecipeId"]; }
+}
+// Ajoute une recette comme plat (avec ses ingrédients) à un repas
+function _addRecipeDishTo(ev, rec) {
+  if (!ev.dishes) ev.dishes = [];
+  const ings = (rec.ingredients || []).map(i => [i.quantity, i.unit, i.name].filter(Boolean).join(" ").trim()).filter(Boolean);
+  ev.dishes.push({ id: "dish" + Date.now() + Math.random().toString(36).slice(2, 5), name: rec.name, ingredients: ings, fromRecipeId: rec.id });
+}
 function deleteMealEvent(id) {
   const ev = (state.domestique.mealEvents || []).find(e => e.id === id);
   if (!ev || !confirm(`Supprimer « ${ev.name} » ?`)) return;
+  _removeMealEventFromPlan(ev);
   state.domestique.mealEvents = state.domestique.mealEvents.filter(e => e.id !== id);
-  saveState(); renderMealEvents();
+  saveState(); renderMealEvents(); try { renderMealWeekGrid(); } catch (e) {}
 }
 function createGroceryFromMeal(mealEventId) {
   const ev = (state.domestique.mealEvents || []).find(e => e.id === mealEventId);
