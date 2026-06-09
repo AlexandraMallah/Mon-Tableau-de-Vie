@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v376</title>
+<title>Mon Tableau de Vie 🌿 · v377</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -6947,6 +6947,12 @@ function renderSportPlanning() {
   const monday = new Date(now); monday.setDate(now.getDate() - dowOffset);
 
   const hasActs = state.activities.length > 0;
+  // Activités "salle de sport" (sinon repli sur toutes les activités)
+  const gymActs = state.activities.filter(a => /salle|gym|muscu|fitness|crossfit|sport/i.test(a.name));
+  const gymList = gymActs.length ? gymActs : state.activities;
+  const wentGym = dk => gymList.some(a => state.history[dk]?.activities?.[a.id]);
+  // Déplacement (étranger / colloque / Valenciennes…) → pas de sport possible, même le week-end
+  const awayRe = /valenciennes|colloque|conf[ée]rence|congr[èe]s|s[ée]minaire|d[ée]placement|voyage|\b[ée]tranger\b|abroad/i;
 
   // Construit les 2 semaines calendaires (sem. courante + suivante)
   const buildWeek = (weekOffset) => {
@@ -6958,13 +6964,16 @@ function renderSportPlanning() {
       const evCount = dayEvs.length;
       const isPast   = day < now;
       const isToday  = dk === todayDk;
-      const hasSport = hasActs && state.activities.some(a => state.history[dk]?.activities?.[a.id]);
-      // Bloque le créneau sport si : événement journée entière (time==="") OU événement en soirée (time>="18:00")
-      const blockingEv = dayEvs.find(e => e.time === "" || (e.time && e.time >= "18:00"));
+      const isWeekend = (day.getDay() === 0 || day.getDay() === 6);
+      const hasSport = hasActs && wentGym(dk);
+      // Déplacement → bloque tous les jours ; soirée (≥18h) → bloque seulement en semaine
+      const awayEv    = dayEvs.find(e => awayRe.test((e.title || "") + " " + (e.location || "")));
+      const eveningEv = dayEvs.find(e => e.time && e.time >= "18:00");
+      const blockingEv = awayEv || (!isWeekend ? eveningEv : null);
       const isBlocked  = !!blockingEv;
-      const blockReason = blockingEv ? (blockingEv.title || "").slice(0, 20) : "";
-      const blockType   = blockingEv ? (blockingEv.time === "" ? "journée" : "soirée") : "";
-      days.push({ day, dk, evCount, isPast, isToday, hasSport, dayIdx: d, isBlocked, blockReason, blockType });
+      const blockType   = awayEv ? "déplacement" : (blockingEv ? "soirée" : "");
+      const blockReason = blockingEv ? (blockingEv.title || (awayEv ? "déplacement" : "soirée")).slice(0, 20) : "";
+      days.push({ day, dk, evCount, isPast, isToday, hasSport, dayIdx: d, isBlocked, blockReason, blockType, isWeekend });
     }
     return days;
   };
@@ -7025,9 +7034,10 @@ function renderSportPlanning() {
       } else if (d.isPast) {
         bg = "#f1f5f9"; icon = "—"; sub = "";
       } else if (d.isBlocked) {
-        // Soirée ou journée bloquée par un événement — pas de sport possible
-        bg = "#ede9f4"; icon = "🔒";
-        sub = d.blockReason || (d.blockType === "journée" ? "journée prise" : "soirée prise");
+        // Déplacement (✈️) ou soirée prise (🌙) — pas de salle possible
+        bg = d.blockType === "déplacement" ? "#fde8e8" : "#ede9f4";
+        icon = d.blockType === "déplacement" ? "✈️" : "🌙";
+        sub = d.blockReason || (d.blockType === "déplacement" ? "déplacement" : "soirée prise");
       } else if (weekRecs.has(d.dk)) {
         // Jour recommandé — couleur selon charge
         bg = d.evCount === 0 ? "#e8f8f0" : d.evCount <= 2 ? "#e8f4e8" : "#fef3c7";
@@ -7053,7 +7063,7 @@ function renderSportPlanning() {
   let daysSinceLast = 0;
   for (let i = 0; i < 14; i++) {
     const d = new Date(now); d.setDate(now.getDate() - i);
-    if (hasActs && state.activities.some(a => state.history[todayKey(d)]?.activities?.[a.id])) break;
+    if (hasActs && wentGym(todayKey(d))) break;
     daysSinceLast++;
   }
   let alertHtml = "";
