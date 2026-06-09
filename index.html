@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v378</title>
+<title>Mon Tableau de Vie 🌿 · v379</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -6952,7 +6952,7 @@ function renderSportPlanning() {
   const gymList = gymActs.length ? gymActs : state.activities;
   const wentGym = dk => gymList.some(a => state.history[dk]?.activities?.[a.id]);
   // Déplacement (étranger / colloque / Valenciennes…) → pas de sport possible, même le week-end
-  const awayRe = /valenciennes|colloque|conf[ée]rence|congr[èe]s|s[ée]minaire|d[ée]placement|voyage|\b[ée]tranger\b|abroad/i;
+  const awayRe = /valenciennes|marseille|colloque|conf[ée]rence|congr[èe]s|s[ée]minaire|d[ée]placement|voyage|\b[ée]tranger\b|abroad|\btrain\b|\btgv\b|\bter\b|\bsncf\b|\bvol\b|\bavion\b|a[ée]roport|\bgare\b|navette/i;
 
   // Construit les 2 semaines calendaires (sem. courante + suivante)
   const buildWeek = (weekOffset) => {
@@ -6960,7 +6960,8 @@ function renderSportPlanning() {
     for (let d = 0; d < 7; d++) {
       const day = new Date(monday); day.setDate(monday.getDate() + weekOffset * 7 + d);
       const dk = todayKey(day);
-      const dayEvs = state.calEvents.filter(e => e.date === dk);
+      // Inclut les événements sur plusieurs jours (colloque 17→19) et récurrents qui couvrent ce jour
+      const dayEvs = state.calEvents.filter(e => { try { return _eventDays(e).includes(dk); } catch (_) { return e.date === dk; } });
       const evCount = dayEvs.length;
       const isPast   = day < now;
       const isToday  = dk === todayDk;
