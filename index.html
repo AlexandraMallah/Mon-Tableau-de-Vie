@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v381</title>
+<title>Mon Tableau de Vie 🌿 · v382</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -6969,7 +6969,7 @@ function renderSportPlanning() {
       const hasSport = hasActs && wentGym(dk);
       // Déplacement → bloque tous les jours ; soirée (≥18h) → bloque seulement en semaine
       const awayEv    = dayEvs.find(e => awayRe.test((e.title || "") + " " + (e.location || "")));
-      const eveningEv = dayEvs.find(e => e.time && e.time >= "18:00");
+      const eveningEv = dayEvs.find(e => (e.time && e.time >= "18:00") || /\bd[îi]ner|\bsouper|soir[ée]e|ap[ée]ro/i.test(e.title || ""));
       const blockingEv = awayEv || (!isWeekend ? eveningEv : null);
       const isBlocked  = !!blockingEv;
       const blockType   = awayEv ? "déplacement" : (blockingEv ? "soirée" : "");
