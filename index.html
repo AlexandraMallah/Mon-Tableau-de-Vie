@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v387</title>
+<title>Mon Tableau de Vie 🌿 · v388</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2500,6 +2500,7 @@
           <div>
             <h2 style="margin:0 0 10px;text-align:center;font-size:15px;">🔥 Apport calorique 30 jours</h2>
             <div class="chart-wrap" style="height:210px;"><canvas id="calorieChart"></canvas></div>
+            <div id="calorieAvg" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;"></div>
           </div>
         </div>
       </div>
@@ -8151,6 +8152,43 @@ function renderCalorieChart() {
       },
     },
   });
+
+  // ───── Moyennes semaine / mois (jours renseignés uniquement) ─────
+  const avgEl = document.getElementById("calorieAvg");
+  if (avgEl) {
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    // Lundi de la semaine en cours
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const calOf = dk => {
+      const log = state.history[dk]?.foodLog || [];
+      const tot = log.reduce((s, e) => s + (e.calories || 0), 0);
+      return tot > 0 ? tot : null;
+    };
+    const avgSince = start => {
+      const vals = [];
+      for (let d = new Date(start); d <= now; d.setDate(d.getDate() + 1)) {
+        const v = calOf(todayKey(d));
+        if (v != null) vals.push(v);
+      }
+      if (!vals.length) return null;
+      return { avg: Math.round(vals.reduce((s, v) => s + v, 0) / vals.length), n: vals.length };
+    };
+    const wk = avgSince(monday), mo = avgSince(firstOfMonth);
+    const card = (emoji, label, res) => {
+      if (!res) return `<div style="flex:1;min-width:120px;background:var(--bg-soft,#faf7ff);border:1px solid var(--line);border-radius:12px;padding:9px 12px;text-align:center;">
+          <div style="font-size:12px;color:var(--ink-softer);">${emoji} ${label}</div>
+          <div style="font-size:15px;font-weight:700;color:var(--ink-soft);margin-top:2px;">—</div>
+          <div style="font-size:10px;color:var(--ink-softer);">aucune saisie</div></div>`;
+      const col = res.avg > limit ? "#d97777" : "#3f9e78";
+      return `<div style="flex:1;min-width:120px;background:var(--bg-soft,#faf7ff);border:1px solid var(--line);border-radius:12px;padding:9px 12px;text-align:center;">
+          <div style="font-size:12px;color:var(--ink-softer);">${emoji} ${label}</div>
+          <div style="font-size:18px;font-weight:700;color:${col};margin-top:2px;">${res.avg.toLocaleString("fr-FR")} <span style="font-size:11px;font-weight:600;">kcal/j</span></div>
+          <div style="font-size:10px;color:var(--ink-softer);">moyenne sur ${res.n} j renseigné${res.n > 1 ? "s" : ""}</div></div>`;
+    };
+    avgEl.innerHTML = card("📅", "Cette semaine", wk) + card("🗓️", "Ce mois", mo);
+  }
 }
 
 /* ========= TREND PREDICTION ========= */
