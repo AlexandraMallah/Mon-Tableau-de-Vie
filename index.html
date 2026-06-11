@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v383</title>
+<title>Mon Tableau de Vie 🌿 · v384</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -8020,55 +8020,60 @@ function renderWellbeingCorrelations() {
   const el = document.getElementById("wellbeingCorrel");
   if (!el) return;
   const dks = Object.keys(state.history || {});
-  const corr = getMetric => {
+  // Les 4 variables (de = formulation "plus DE …" ; ventre : valeur haute = douleur)
+  const vars = [
+    { key: "sleep",  icon: "😴", name: "Sommeil", de: "de sommeil",            get: h => h.sleep },
+    { key: "energy", icon: "⚡", name: "Énergie", de: "d'énergie",             get: h => h.energy },
+    { key: "mood",   icon: "🙂", name: "Humeur",  de: "de bonne humeur",       get: h => h.mood },
+    { key: "belly",  icon: "🤰", name: "Ventre",  de: "de douleur au ventre",  get: h => h.belly },
+  ];
+  const corr = (getA, getB) => {
     const pairs = [];
     for (const dk of dks) {
       const h = state.history[dk]; if (!h) continue;
-      const s = h.sleep, m = getMetric(h);
-      if (s != null && s !== "" && m != null && m !== "") pairs.push([Number(s), Number(m)]);
+      const a = getA(h), b = getB(h);
+      if (a != null && a !== "" && b != null && b !== "") pairs.push([Number(a), Number(b)]);
     }
     return { r: _pearson(pairs), n: pairs.length };
   };
-  // belly: 0 = ok, 4 = très douloureux (donc une valeur haute = mauvais)
-  const items = [
-    { icon: "⚡", name: "Énergie", color: "#f7c9a3", get: h => h.energy, good: r => r > 0,
-      pos: "Plus tu dors, plus tu as d'énergie", neg: "Étonnant : plus tu dors, moins tu as d'énergie" },
-    { icon: "🙂", name: "Humeur", color: "#f5b6c9", get: h => h.mood, good: r => r > 0,
-      pos: "Plus tu dors, meilleure est ton humeur", neg: "Étonnant : plus tu dors, moins bonne humeur" },
-    { icon: "🤰", name: "Ventre", color: "#c9b6f0", get: h => h.belly, good: r => r < 0,
-      pos: "Plus tu dors, moins tu as mal au ventre", neg: "Étonnant : plus tu dors, plus tu as mal au ventre" },
-  ];
   const strengthLabel = a => a < 0.2 ? "négligeable" : a < 0.4 ? "léger" : a < 0.6 ? "modéré" : a < 0.8 ? "fort" : "très fort";
+
+  // Toutes les paires
+  const rows = [];
+  for (let i = 0; i < vars.length; i++) for (let j = i + 1; j < vars.length; j++) {
+    const A = vars[i], B = vars[j];
+    const { r, n } = corr(A.get, B.get);
+    rows.push({ A, B, r, n });
+  }
+  // Tri : liens les plus forts d'abord (données suffisantes en haut)
+  rows.sort((x, y) => (y.r === null ? -1 : Math.abs(y.r)) - (x.r === null ? -1 : Math.abs(x.r)));
+
   let html = "";
-  for (const it of items) {
-    const { r, n } = corr(it.get);
+  for (const row of rows) {
+    const { A, B, r, n } = row;
+    const title = `${A.icon} ${A.name} ↔ ${B.icon} ${B.name}`;
     if (r === null) {
-      html += `<div style="padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-softer);">${it.icon} <strong>${it.name}</strong> — pas assez de données (${n} nuit${n > 1 ? "s" : ""} comparable${n > 1 ? "s" : ""}, il en faut au moins 5)</div>`;
+      html += `<div style="padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-softer);">${title} — pas assez de données (${n})</div>`;
       continue;
     }
     const a = Math.abs(r);
     const strong = strengthLabel(a);
-    // pour le ventre, r<0 = bon ; pour les autres, r>0 = bon
-    const isGood = it.good(r);
-    let phrase;
-    if (a < 0.2) phrase = `Pas de lien net avec ton sommeil`;
-    else phrase = isGood ? it.pos : it.neg;
-    const col = a < 0.2 ? "var(--ink-soft)" : isGood ? "#16a34a" : "#d97706";
-    const barColor = it.color;
+    const phrase = a < 0.2 ? "Pas de lien net" : `Plus ${A.de}, ${r > 0 ? "plus" : "moins"} ${B.de}`;
+    const col = a < 0.2 ? "var(--ink-soft)" : (r > 0 ? "#7c5cbf" : "#d97706");
     const barW = Math.round(a * 100);
     html += `
-      <div style="padding:10px 0;border-bottom:1px solid var(--line);">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;">
-          <span style="font-weight:600;">${it.icon} ${it.name}</span>
-          <span style="color:${col};font-weight:600;">${phrase}</span>
+      <div style="padding:9px 0;border-bottom:1px solid var(--line);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;flex-wrap:wrap;">
+          <span style="font-weight:600;">${title}</span>
+          <span style="color:${col};font-weight:600;font-size:12px;">${phrase}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:5px;">
-          <div style="flex:1;background:var(--line);height:7px;border-radius:999px;overflow:hidden;"><div style="width:${barW}%;height:100%;background:${barColor};"></div></div>
-          <span style="font-size:11px;color:var(--ink-softer);white-space:nowrap;">lien ${strong} · ${n} nuits</span>
+          <div style="flex:1;background:var(--line);height:7px;border-radius:999px;overflow:hidden;"><div style="width:${barW}%;height:100%;background:${r > 0 ? "#c9b6f0" : "#f7c9a3"};"></div></div>
+          <span style="font-size:11px;color:var(--ink-softer);white-space:nowrap;">lien ${strong} · ${n} j</span>
         </div>
       </div>`;
   }
-  html += `<p style="font-size:11px;color:var(--ink-softer);margin-top:10px;">💡 Corrélation ≠ cause : ça montre une tendance sur tes données, pas une preuve. Plus tu remplis tes nuits et ton bien-être, plus c'est fiable.</p>`;
+  html += `<p style="font-size:11px;color:var(--ink-softer);margin-top:10px;">💜 lien dans le même sens · 🧡 sens inverse · 💡 corrélation ≠ cause : c'est une tendance sur tes données, pas une preuve. Plus tu remplis, plus c'est fiable.</p>`;
   el.innerHTML = html;
 }
 
