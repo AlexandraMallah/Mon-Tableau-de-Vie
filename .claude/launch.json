@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tableau",
+      "runtimeExecutable": "ruby",
+      "runtimeArgs": ["-e", "require 'webrick'; s=WEBrick::HTTPServer.new(:Port=>7823,:DocumentRoot=>'/tmp',:Logger=>WEBrick::Log.new('/dev/null'),:AccessLog=>[]); trap('INT'){s.shutdown}; s.start"],
+      "port": 7823
+    },
+    {
+      "name": "mockups",
+      "runtimeExecutable": "ruby",
+      "runtimeArgs": ["-e", "require 'webrick'; s=WEBrick::HTTPServer.new(:Port=>7824,:DocumentRoot=>'/Users/alexandramallah/Documents/Mon-Tableau-de-Vie',:Logger=>WEBrick::Log.new('/dev/null'),:AccessLog=>[]); trap('INT'){s.shutdown}; s.start"],
+      "port": 7824
+    }
+  ]
+}

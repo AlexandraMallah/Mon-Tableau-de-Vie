@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v386</title>
+<title>Mon Tableau de Vie 🌿 · v387</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -8038,10 +8038,10 @@ function renderWellbeingCorrelations() {
   const dks = Object.keys(state.history || {});
   // Les 4 variables (de = formulation "plus DE …" ; ventre : valeur haute = douleur)
   const vars = [
-    { key: "sleep",  icon: "😴", name: "Sommeil", de: "de sommeil",            get: h => h.sleep },
-    { key: "energy", icon: "⚡", name: "Énergie", de: "d'énergie",             get: h => h.energy },
-    { key: "mood",   icon: "🙂", name: "Humeur",  de: "de bonne humeur",       get: h => h.mood },
-    { key: "belly",  icon: "🤰", name: "Ventre",  de: "de douleur au ventre",  get: h => h.belly },
+    { key: "sleep",  icon: "😴", name: "Sommeil", de: "de sommeil",            color: "#7bb0e0", x: 220, y: 46,  get: h => h.sleep },
+    { key: "energy", icon: "⚡", name: "Énergie", de: "d'énergie",             color: "#eab560", x: 384, y: 156, get: h => h.energy },
+    { key: "mood",   icon: "🙂", name: "Humeur",  de: "de bonne humeur",       color: "#e890b0", x: 220, y: 256, get: h => h.mood },
+    { key: "belly",  icon: "🤰", name: "Ventre",  de: "de douleur au ventre",  color: "#b29ae3", x: 56,  y: 156, get: h => h.belly },
   ];
   const corr = (getA, getB) => {
     const pairs = [];
@@ -8064,7 +8064,35 @@ function renderWellbeingCorrelations() {
   // Tri : liens les plus forts d'abord (données suffisantes en haut)
   rows.sort((x, y) => (y.r === null ? -1 : Math.abs(y.r)) - (x.r === null ? -1 : Math.abs(x.r)));
 
-  let html = "";
+  // ───────── Réseau visuel (SVG animé) ─────────
+  let edges = "", ei = 0;
+  for (const row of rows) {
+    const { A, B, r, n } = row;
+    const begin = (ei++ * 0.09).toFixed(2);
+    if (r === null || Math.abs(r) < 0.2) {
+      const t = r === null ? `pas assez de données (${n} j)` : "pas de lien net";
+      edges += `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#e4def0" stroke-width="1.5" stroke-dasharray="2 5" stroke-linecap="round"><title>${A.name} ↔ ${B.name} : ${t}</title></line>`;
+      continue;
+    }
+    const a = Math.abs(r);
+    const col = r > 0 ? "#9a7ad6" : "#e0904a";
+    const w = (2 + a * 9).toFixed(1);
+    const op = (0.35 + a * 0.5).toFixed(2);
+    const phrase = `Plus ${A.de}, ${r > 0 ? "plus" : "moins"} ${B.de}`;
+    edges += `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="${col}" stroke-width="${w}" opacity="${op}" stroke-linecap="round" style="cursor:default;"><title>${phrase} — lien ${strengthLabel(a)} (${n} j)</title>`
+      + `<animate attributeName="opacity" from="0" to="${op}" dur="0.55s" begin="${begin}s" fill="freeze"/>`
+      + `<animate attributeName="stroke-width" from="0.5" to="${w}" dur="0.55s" begin="${begin}s" fill="freeze"/></line>`;
+  }
+  let nodesSvg = "";
+  for (const v of vars) {
+    nodesSvg += `<g>`
+      + `<circle cx="${v.x}" cy="${v.y}" r="26" fill="#fff" stroke="${v.color}" stroke-width="2.5"/>`
+      + `<text x="${v.x}" y="${v.y}" text-anchor="middle" dominant-baseline="central" font-size="21">${v.icon}</text>`
+      + `<text x="${v.x}" y="${v.y + 43}" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">${v.name}</text>`
+      + `</g>`;
+  }
+  let html = `<svg viewBox="0 0 440 308" style="width:100%;max-width:430px;display:block;margin:2px auto 12px;overflow:visible;">${edges}${nodesSvg}</svg>`;
+
   for (const row of rows) {
     const { A, B, r, n } = row;
     const title = `${A.icon} ${A.name} ↔ ${B.icon} ${B.name}`;
