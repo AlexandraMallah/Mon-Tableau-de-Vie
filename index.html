@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v382</title>
+<title>Mon Tableau de Vie 🌿 · v383</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2504,6 +2504,13 @@
         </div>
       </div>
 
+    <!-- 🔗 Corrélations sommeil ↔ bien-être -->
+    <div class="card" style="margin-top:18px;">
+      <h2>🔗 Sommeil & bien-être</h2>
+      <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 12px;">Lien entre ce que tu dors et ton humeur, ton énergie et ton ventre (sur tes données saisies).</p>
+      <div id="wellbeingCorrel"></div>
+    </div>
+
     <!-- 🌿 Forme & énergie -->
     <div class="grid-two" style="margin-top:18px;">
       <div class="card">
@@ -4574,7 +4581,7 @@ function onViewChange(view) {
   if (view === "today") maybeLoadWeather();
   if (view === "work") updateWorkTabBadges();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
-  if (view === "health") { renderBodyChart(currentBodyMetric); renderWellbeingChart(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); }
+  if (view === "health") { renderBodyChart(currentBodyMetric); renderWellbeingChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); }
   if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
@@ -7996,6 +8003,73 @@ function renderWellbeingChart() {
       },
     },
   });
+}
+
+// Corrélation de Pearson entre ce que tu dors et un indicateur de bien-être
+function _pearson(pairs) {
+  const n = pairs.length;
+  if (n < 5) return null;
+  const sx = pairs.reduce((s, p) => s + p[0], 0), sy = pairs.reduce((s, p) => s + p[1], 0);
+  const mx = sx / n, my = sy / n;
+  let num = 0, dx2 = 0, dy2 = 0;
+  for (const [x, y] of pairs) { num += (x - mx) * (y - my); dx2 += (x - mx) ** 2; dy2 += (y - my) ** 2; }
+  if (dx2 === 0 || dy2 === 0) return null;
+  return num / Math.sqrt(dx2 * dy2);
+}
+function renderWellbeingCorrelations() {
+  const el = document.getElementById("wellbeingCorrel");
+  if (!el) return;
+  const dks = Object.keys(state.history || {});
+  const corr = getMetric => {
+    const pairs = [];
+    for (const dk of dks) {
+      const h = state.history[dk]; if (!h) continue;
+      const s = h.sleep, m = getMetric(h);
+      if (s != null && s !== "" && m != null && m !== "") pairs.push([Number(s), Number(m)]);
+    }
+    return { r: _pearson(pairs), n: pairs.length };
+  };
+  // belly: 0 = ok, 4 = très douloureux (donc une valeur haute = mauvais)
+  const items = [
+    { icon: "⚡", name: "Énergie", color: "#f7c9a3", get: h => h.energy, good: r => r > 0,
+      pos: "Plus tu dors, plus tu as d'énergie", neg: "Étonnant : plus tu dors, moins tu as d'énergie" },
+    { icon: "🙂", name: "Humeur", color: "#f5b6c9", get: h => h.mood, good: r => r > 0,
+      pos: "Plus tu dors, meilleure est ton humeur", neg: "Étonnant : plus tu dors, moins bonne humeur" },
+    { icon: "🤰", name: "Ventre", color: "#c9b6f0", get: h => h.belly, good: r => r < 0,
+      pos: "Plus tu dors, moins tu as mal au ventre", neg: "Étonnant : plus tu dors, plus tu as mal au ventre" },
+  ];
+  const strengthLabel = a => a < 0.2 ? "négligeable" : a < 0.4 ? "léger" : a < 0.6 ? "modéré" : a < 0.8 ? "fort" : "très fort";
+  let html = "";
+  for (const it of items) {
+    const { r, n } = corr(it.get);
+    if (r === null) {
+      html += `<div style="padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-softer);">${it.icon} <strong>${it.name}</strong> — pas assez de données (${n} nuit${n > 1 ? "s" : ""} comparable${n > 1 ? "s" : ""}, il en faut au moins 5)</div>`;
+      continue;
+    }
+    const a = Math.abs(r);
+    const strong = strengthLabel(a);
+    // pour le ventre, r<0 = bon ; pour les autres, r>0 = bon
+    const isGood = it.good(r);
+    let phrase;
+    if (a < 0.2) phrase = `Pas de lien net avec ton sommeil`;
+    else phrase = isGood ? it.pos : it.neg;
+    const col = a < 0.2 ? "var(--ink-soft)" : isGood ? "#16a34a" : "#d97706";
+    const barColor = it.color;
+    const barW = Math.round(a * 100);
+    html += `
+      <div style="padding:10px 0;border-bottom:1px solid var(--line);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;">
+          <span style="font-weight:600;">${it.icon} ${it.name}</span>
+          <span style="color:${col};font-weight:600;">${phrase}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:5px;">
+          <div style="flex:1;background:var(--line);height:7px;border-radius:999px;overflow:hidden;"><div style="width:${barW}%;height:100%;background:${barColor};"></div></div>
+          <span style="font-size:11px;color:var(--ink-softer);white-space:nowrap;">lien ${strong} · ${n} nuits</span>
+        </div>
+      </div>`;
+  }
+  html += `<p style="font-size:11px;color:var(--ink-softer);margin-top:10px;">💡 Corrélation ≠ cause : ça montre une tendance sur tes données, pas une preuve. Plus tu remplis tes nuits et ton bien-être, plus c'est fiable.</p>`;
+  el.innerHTML = html;
 }
 
 function renderCalorieChart() {
