@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v388</title>
+<title>Mon Tableau de Vie 🌿 · v389</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -6217,6 +6217,7 @@ function toggleMilestone(i) {
   const t = _getCurrentEditTask(); if (!t) return;
   if (!t.milestones) t.milestones = [];
   t.milestones[i].done = !t.milestones[i].done;
+  t.milestones[i].doneAt = t.milestones[i].done ? todayKey() : null; // pour la dopamine (accomplissement)
   const pct = taskProgress(t);
   document.getElementById("taskEditProgress").value = pct;
   updateModalPreview(pct);
@@ -6767,9 +6768,12 @@ function computeHormones() {
 
     // — Dopamine
     const taskToday    = (state.work?.postdocTasks || []).filter(t => t.done && t.completedAt === dk);
+    // Jalons franchis ce jour-là — chaque jalon est déjà un accomplissement
+    const milestonesToday = (state.work?.postdocTasks || []).flatMap(t =>
+      (t.milestones || []).filter(m => m.done && m.doneAt === dk).map(m => m.name || "jalon"));
     const lectureToday = Number(habits["h-lecture"]) > 0;
     const dopActs      = state.activities.filter(a => acts[a.id] && (a.hormones || []).includes("dopamine"));
-    const dopReasons   = [...taskToday.map(t => `✓ ${(t.title||"tâche").slice(0,22)}`), ...(lectureToday?["lecture"]:[]), ...dopActs.map(a=>a.name)];
+    const dopReasons   = [...taskToday.map(t => `✓ ${(t.title||"tâche").slice(0,22)}`), ...milestonesToday.map(n => `◆ jalon : ${String(n).slice(0,20)}`), ...(lectureToday?["lecture"]:[]), ...dopActs.map(a=>a.name)];
     const dopActive    = dopReasons.length > 0;
     res.dopamine.days.push({ dk, label, active: dopActive, reasons: dopReasons });
     if (dopActive) { res.dopamine.score++; dopReasons.slice(0,2).forEach(r => res.dopamine.sources.push(r.replace(/^✓ /,""))); }
