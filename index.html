@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v391</title>
+<title>Mon Tableau de Vie 🌿 · v392</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4185,6 +4185,93 @@ function migrate(s) {
   s.domestique.tasks    = s.domestique.tasks    || [];
   s.domestique.recipes           = s.domestique.recipes           || [];
   s.domestique.recipeCategories  = s.domestique.recipeCategories  || [];
+  // Seed unique : 4 recettes ajoutées (juin 2026) — Apéritif + Dessert
+  if (!s.domestique._seededAperoDessert) {
+    s.domestique._seededAperoDessert = true;
+    const _ensureCat = label => {
+      const existing = s.domestique.recipeCategories.find(c => (c || "").toLowerCase() === label.toLowerCase());
+      if (existing) return existing;
+      s.domestique.recipeCategories.push(label);
+      return label;
+    };
+    const catApero   = _ensureCat("Apéritif");
+    const catDessert = _ensureCat("Dessert");
+    let _ic = 0;
+    const _ing = (quantity, unit, name, kcal) => ({ id: "ingseed" + Date.now() + "_" + (_ic++), quantity, unit, name, kcal });
+    const _seed = [
+      {
+        id: "recseed-muffins-fraise-choco", name: "Muffins fraises & chocolat blanc", emoji: "🧁",
+        servings: 6, category: catDessert,
+        ingredients: [
+          _ing("158", "g", "Farine", 575),
+          _ing("1", "c. à café", "Levure chimique", 5),
+          _ing("¼", "c. à café", "Bicarbonate de soude", 0),
+          _ing("100", "g", "Sucre", 400),
+          _ing("1", "", "Œuf (gros, à température ambiante)", 70),
+          _ing("57", "g", "Beurre doux fondu", 410),
+          _ing("1", "c. à soupe", "Huile neutre", 120),
+          _ing("75", "g", "Fraises fraîches en dés", 24),
+          _ing("1½", "c. à café", "Pâte de vanille (ou extrait)", 15),
+          _ing("120", "ml", "Babeurre (lait ribot)", 50),
+          _ing("30", "g", "Crème aigre (crème fraîche épaisse)", 58),
+          _ing("85", "g", "Pépites de chocolat blanc", 459),
+          _ing("1", "pincée", "Sel", 0),
+        ],
+        notes: "1. Préchauffe le four à 220 °C (425 °F). Prépare le moule à muffins (caissettes ou beurré).\n2. Dans un saladier, fouette le beurre fondu, l'huile et le sucre.\n3. Ajoute l'œuf et fouette 2-3 min jusqu'à ce que le mélange pâlisse.\n4. Ajoute le babeurre, la vanille et la crème aigre ; mélange.\n5. Dans un autre bol, mélange les ingrédients secs (farine, levure, bicarbonate, sel). Réserve 2 c. à soupe de ce mélange sec pour enrober les fraises.\n6. Incorpore les secs au mélange humide, sans trop travailler. Enrobe les fraises dans les 2 c. à soupe réservées, puis ajoute fraises + pépites de chocolat blanc. Ne pas trop mélanger.\n7. Laisse reposer la pâte 30 min à température ambiante — ne la remélange pas.\n8. Répartis la pâte dans les caissettes. Enfourne 5 min, puis baisse à 190 °C (375 °F) SANS ouvrir la porte et poursuis ~15 min (cure-dent propre).\n9. Laisse tiédir 5 min dans le moule, puis sur une grille.",
+      },
+      {
+        id: "recseed-bruschetta-roquette-poivron", name: "Bruschettas roquette & poivrons", emoji: "🥖",
+        servings: 4, category: catApero,
+        ingredients: [
+          _ing("1", "", "Baguette", 660),
+          _ing("3", "", "Poivrons rouges (type capia)", 78),
+          _ing("1", "gousse", "Ail", 4),
+          _ing("50", "g", "Roquette", 12),
+          _ing("100", "g", "Fromage frais (type cream cheese)", 250),
+          _ing("1", "c. à café", "Vinaigre de cidre", 3),
+          _ing("2", "c. à soupe", "Huile d'olive", 240),
+          _ing("1", "c. à soupe", "Sauce balsamique", 14),
+          _ing("", "", "Sel", 0),
+        ],
+        notes: "1. Coupe la baguette en tranches, dispose-les sur une plaque, arrose d'huile d'olive et enfourne à 200 °C pendant 5-6 min.\n2. Coupe les poivrons cuits, pelés et épépinés en fines lanières ; mets-les dans un bol avec le vinaigre, le sel, 1 c. à soupe d'huile d'olive et l'ail écrasé.\n3. Tartine chaque tranche de fromage frais, ajoute quelques feuilles de roquette puis les poivrons, et arrose d'un filet de sauce balsamique.",
+      },
+      {
+        id: "recseed-bruschetta-saumon", name: "Bruschettas au saumon", emoji: "🐟",
+        servings: 4, category: catApero,
+        ingredients: [
+          _ing("1", "", "Baguette", 660),
+          _ing("250", "g", "Saumon fumé maigre (légèrement salé)", 425),
+          _ing("100", "g", "Fromage frais (type cream cheese)", 250),
+          _ing("2", "", "Concombres", 60),
+        ],
+        notes: "⚠️ Aucune préparation n'était fournie pour cette recette — méthode reconstruite, à ajuster selon ton goût.\n\n1. Coupe la baguette en tranches et fais-les griller légèrement (four 200 °C, 5-6 min, ou grille-pain).\n2. Tartine chaque tranche de fromage frais.\n3. Ajoute de fines tranches de concombre, puis le saumon.\n4. Sers frais (optionnel : un filet de citron, un peu d'aneth).",
+      },
+      {
+        id: "recseed-bouchees-thon", name: "Bouchées au thon (toasts)", emoji: "🥪",
+        servings: 6, category: catApero,
+        ingredients: [
+          _ing("1", "boîte", "Thon (~120 g égoutté)", 150),
+          _ing("2", "c. à soupe", "Mayonnaise", 180),
+          _ing("¼", "tasse", "Oignon rouge haché", 16),
+          _ing("½", "", "Jus de citron", 5),
+          _ing("2", "c. à soupe", "Persil haché", 2),
+          _ing("1", "c. à café", "Moutarde", 5),
+          _ing("2", "c. à soupe", "Fromage frais", 60),
+          _ing("6", "tranches", "Pain de mie blanc", 420),
+          _ing("", "", "Tomates cerises", 20),
+          _ing("", "", "Laitue (pour garnir)", 5),
+          _ing("", "", "Sel & poivre", 0),
+        ],
+        notes: "1. Dans un bol, mélange le thon, la mayo, l'oignon, le jus de citron, le persil, la moutarde, le fromage frais, sel et poivre.\n2. Étale 2 grosses c. à soupe du mélange sur une tranche de pain.\n3. Recouvre d'une autre tranche et coupe en 4 carrés égaux.\n4. Pose un petit morceau de laitue sur chaque carré, puis une tomate cerise.\n5. Fixe avec un cure-dent. Régale-toi ! ✨",
+      },
+    ];
+    _seed.forEach(r => {
+      if (!s.domestique.recipes.some(x => (x.name || "").toLowerCase() === r.name.toLowerCase())) {
+        r.createdAt = new Date().toISOString();
+        s.domestique.recipes.unshift(r);
+      }
+    });
+  }
   s.domestique.mealPlan = s.domestique.mealPlan || {};
   s.domestique.mealEvents = s.domestique.mealEvents || [];
   // Migration : convertit les anciens plats (strings) en objets { id, name, ingredients }
