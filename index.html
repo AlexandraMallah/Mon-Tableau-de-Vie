@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v390</title>
+<title>Mon Tableau de Vie 🌿 · v391</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2644,6 +2644,7 @@
               <option value="repas">🍽️ Repas</option>
               <option value="taxi">🚕 Taxi</option>
               <option value="essence">⛽ Essence</option>
+              <option value="peage">🛣️ Péage</option>
             </select>
           </div>
         </div>
@@ -3872,11 +3873,13 @@
       <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Taxi (€)</label>
         <input type="number" id="admMTaxi" step="0.01" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;">
       <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Km parcourus</label>
         <input type="number" id="admMKm" step="1" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
       <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Essence (€)</label>
         <input type="number" id="admMEssence" step="0.01" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
+      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Péage (€)</label>
+        <input type="number" id="admMPeage" step="0.01" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
     </div>
     <div style="background:var(--bg-1);border-radius:10px;padding:12px;margin-bottom:12px;">
       <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;font-weight:600;">Remboursement</div>
@@ -5137,7 +5140,7 @@ function admFormatDate(d) {
 }
 
 function admMissionTotal(m) {
-  return (m.train || 0) + (m.repas || 0) + (m.taxi || 0) + (m.essence || 0);
+  return (m.train || 0) + (m.repas || 0) + (m.taxi || 0) + (m.essence || 0) + (m.peage || 0);
 }
 
 function admStatutPill(s, type) {
@@ -5180,6 +5183,7 @@ function admRenderBudget() {
       + '<td class="r">' + (m.taxi    ? admFormatEur(m.taxi)    : "-") + "</td>"
       + '<td class="r" style="color:var(--ink-soft);font-size:11px;">' + (m.km ? m.km + " km" : "-") + "</td>"
       + '<td class="r">' + (m.essence ? admFormatEur(m.essence) : "-") + "</td>"
+      + '<td class="r">' + (m.peage   ? admFormatEur(m.peage)   : "-") + "</td>"
       + '<td class="r" style="font-weight:700;">' + (tot > 0 ? admFormatEur(tot) : "-") + "</td>"
       + '<td class="r" style="color:#16a34a;">' + (m.remb ? admFormatEur(m.remb) : "-") + "</td>"
       + '<td style="font-size:11px;">' + admFormatDate(m.dateRemb) + "</td>"
@@ -5193,7 +5197,7 @@ function admRenderBudget() {
     var a = abonnement[i];
     aRows += "<tr>"
       + "<td>" + admFormatDate(a.date) + "</td>"
-      + '<td colspan="6">Abonnement Claude (IA)</td>'
+      + '<td colspan="7">Abonnement Claude (IA)</td>'
       + '<td class="r" style="font-weight:700;">' + admFormatEur(a.montant) + "</td>"
       + '<td colspan="2"></td>'
       + "<td>" + admStatutPill(a.statut) + "</td>"
@@ -5214,13 +5218,13 @@ function admRenderBudget() {
     + '<div style="font-size:13px;font-weight:700;">Missions (' + missions.length + ")</div>"
     + '<button class="btn-primary" onclick="admOpenMission()" style="font-size:12px;padding:5px 14px;">+ Ajouter</button></div>'
     + '<div class="adm-table-wrap"><table class="adm-table"><thead><tr>'
-    + "<th>Date</th><th>Lieu</th><th>Train</th><th>Repas</th><th>Taxi</th><th>Km</th><th>Essence</th><th>Total</th><th>Remb.</th><th>Date remb.</th><th>Statut</th><th></th>"
+    + "<th>Date</th><th>Lieu</th><th>Train</th><th>Repas</th><th>Taxi</th><th>Km</th><th>Essence</th><th>Péage</th><th>Total</th><th>Remb.</th><th>Date remb.</th><th>Statut</th><th></th>"
     + "</tr></thead><tbody>" + mRows + "</tbody></table></div>"
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:4px;">'
     + '<div style="font-size:13px;font-weight:700;">Abonnement Claude (' + abonnement.length + ")</div>"
     + '<button class="btn-primary" onclick="admOpenAbo()" style="font-size:12px;padding:5px 14px;">+ Ajouter</button></div>'
     + '<div class="adm-table-wrap"><table class="adm-table"><thead><tr>'
-    + '<th>Date</th><th colspan="6">Description</th><th>Montant</th><th colspan="2"></th><th>Statut</th><th></th>'
+    + '<th>Date</th><th colspan="7">Description</th><th>Montant</th><th colspan="2"></th><th>Statut</th><th></th>'
     + "</tr></thead><tbody>" + aRows + "</tbody></table></div>";
 }
 
@@ -5380,6 +5384,7 @@ function admOpenMission(id) {
   document.getElementById("admMTaxi").value    = m.taxi     || "";
   document.getElementById("admMKm").value      = m.km       || "";
   document.getElementById("admMEssence").value = m.essence  || "";
+  document.getElementById("admMPeage").value   = m.peage    || "";
   document.getElementById("admMRemb").value    = m.remb     || "";
   document.getElementById("admMDateRemb").value= m.dateRemb || "";
   document.getElementById("admMStatut").value  = m.statut   || "";
@@ -5401,6 +5406,7 @@ function admSaveMission() {
     taxi:    n(document.getElementById("admMTaxi").value),
     km:      n(document.getElementById("admMKm").value),
     essence: n(document.getElementById("admMEssence").value),
+    peage:   n(document.getElementById("admMPeage").value),
     remb:    n(document.getElementById("admMRemb").value),
     dateRemb: document.getElementById("admMDateRemb").value || null,
     statut:   document.getElementById("admMStatut").value   || null
@@ -5431,6 +5437,7 @@ function admOpenAbo(id) {
   document.getElementById("admMTaxi").value    = "";
   document.getElementById("admMKm").value      = "";
   document.getElementById("admMEssence").value = "";
+  document.getElementById("admMPeage").value   = "";
   document.getElementById("admMRemb").value    = a.montant || "";
   document.getElementById("admMDateRemb").value= "";
   document.getElementById("admMStatut").value  = a.statut  || "";
@@ -8419,7 +8426,7 @@ function addExpenseToPostdocMission(dateIso, lieu, type, amount) {
   // Fusion si une mission existe déjà le même jour au même lieu
   let m = state.admin.missions.find(mm => mm.date === dk && norm(mm.lieu) === norm(lieu));
   if (!m) {
-    m = { id: "m" + Date.now(), date: dk, lieu, train: null, repas: null, taxi: null, km: null, essence: null, remb: null, dateRemb: null, statut: "En attente" };
+    m = { id: "m" + Date.now(), date: dk, lieu, train: null, repas: null, taxi: null, km: null, essence: null, peage: null, remb: null, dateRemb: null, statut: "En attente" };
     state.admin.missions.push(m);
   }
   m[type] = (Number(m[type]) || 0) + Number(amount);
