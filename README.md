@@ -2,7 +2,7 @@
 
 Dashboard personnel PWA (Progressive Web App) — accessible depuis n'importe quel appareil, installable sur l'écran d'accueil, fonctionne hors-ligne.
 
-🔗 **[Ouvrir l'app](https://alexandramllh.github.io/Mon-Tableau-de-Vie)**
+🔗 **[Ouvrir l'app](https://alexandramallah.github.io/Mon-Tableau-de-Vie)**
 
 ---
 
@@ -75,7 +75,7 @@ Dashboard personnel PWA (Progressive Web App) — accessible depuis n'importe qu
 
 ## 🚀 Installation sur mobile
 
-1. Ouvre `alexandramllh.github.io/Mon-Tableau-de-Vie` dans **Samsung Internet** ou **Chrome**
+1. Ouvre `alexandramallah.github.io/Mon-Tableau-de-Vie` dans **Samsung Internet** ou **Chrome**
 2. Menu → **Ajouter à l'écran d'accueil**
 3. L'app s'installe comme une vraie application, fonctionne hors-ligne
 

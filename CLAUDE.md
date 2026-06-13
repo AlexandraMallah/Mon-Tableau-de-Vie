@@ -45,7 +45,7 @@ Alexandra Mallah, postdoctorante en géographie (UPHF), française. Ce dashboard
 
 **Un dashboard de vie personnel** — fichier HTML unique, auto-hébergé sur GitHub Pages.
 
-- **URL live** : https://alexandramllh.github.io/Mon-Tableau-de-Vie/
+- **URL live** : https://alexandramallah.github.io/Mon-Tableau-de-Vie/
 - **Repo GitHub** : https://github.com/AlexandraMllh/Mon-Tableau-de-Vie
 - **Fichier de travail** : `/Users/alexandramallah/Documents/Mon-Tableau-de-Vie/index.html`
 - **Version actuelle** : v256 (dans le `<title>`)
@@ -362,4 +362,4 @@ git commit -m "feat: description"
 git push origin main
 ```
 5. Incrémenter le `<title>Mon Tableau de Vie · vXX</title>` à chaque push
-6. Attendre ~2 min → https://alexandramllh.github.io/Mon-Tableau-de-Vie/ est à jour
+6. Attendre ~2 min → https://alexandramallah.github.io/Mon-Tableau-de-Vie/ est à jour
