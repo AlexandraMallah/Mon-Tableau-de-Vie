@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v394</title>
+<title>Mon Tableau de Vie 🌿 · v395</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1908,35 +1908,6 @@
       </div>
     </div>
 
-    <!-- Modal : choisir une recette pour un repas du planning -->
-    <div class="modal-bg" id="mealRecipePickModal" onmousedown="_mrpBdDown=event.target===this" onclick="if(event.target===this&&_mrpBdDown)closeMealRecipePick()">
-      <div class="modal" style="max-width:480px;max-height:88vh;overflow-y:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-        <h2 id="mealRecipePickTitle" style="margin:0 0 12px;">📖 Choisir une recette</h2>
-        <input type="text" id="mealRecipeSearch" placeholder="🔍 Chercher par nom…" oninput="renderMealRecipeList()"
-          style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;" />
-        <div id="mealRecipeCatFilter" style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;"></div>
-        <div id="mealRecipeKcalFilter" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;"></div>
-        <div id="mealRecipeList" style="max-height:300px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;"></div>
-        <div class="actions" style="margin-top:14px;">
-          <button class="danger" onclick="pickMealRecipe('')">Vider ce repas</button>
-          <div class="spacer"></div>
-          <button class="secondary" onclick="closeMealRecipePick()">Fermer</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal : détail d'une métrique de pilier -->
-    <div class="modal-bg" id="pillarDetailModal" onmousedown="_pdBdDown=event.target===this" onclick="if(event.target===this&&_pdBdDown)closePillarDetail()">
-      <div class="modal" style="max-width:440px;max-height:85vh;overflow-y:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-        <h2 id="pillarDetailTitle" style="margin:0 0 4px;">Détail</h2>
-        <div id="pillarDetailBody"></div>
-        <div class="actions" style="margin-top:14px;">
-          <div class="spacer"></div>
-          <button class="secondary" onclick="closePillarDetail()">Fermer</button>
-        </div>
-      </div>
-    </div>
-
     <!-- To-do du jour (widget partagé avec Domestique) -->
     <div class="card" style="margin-top:14px;">
       <div class="work-header" style="margin-bottom:14px;">
@@ -1951,6 +1922,35 @@
       <div class="todo-list" id="todoListToday"></div>
     </div>
   </section>
+
+  <!-- Modal : choisir une recette pour un repas du planning (hors section : utilisée depuis l'onglet Domestique) -->
+  <div class="modal-bg" id="mealRecipePickModal" onmousedown="_mrpBdDown=event.target===this" onclick="if(event.target===this&&_mrpBdDown)closeMealRecipePick()">
+    <div class="modal" style="max-width:480px;max-height:88vh;overflow-y:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+      <h2 id="mealRecipePickTitle" style="margin:0 0 12px;">📖 Choisir une recette</h2>
+      <input type="text" id="mealRecipeSearch" placeholder="🔍 Chercher par nom…" oninput="renderMealRecipeList()"
+        style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;" />
+      <div id="mealRecipeCatFilter" style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;"></div>
+      <div id="mealRecipeKcalFilter" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;"></div>
+      <div id="mealRecipeList" style="max-height:300px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;"></div>
+      <div class="actions" style="margin-top:14px;">
+        <button class="danger" onclick="pickMealRecipe('')">Vider ce repas</button>
+        <div class="spacer"></div>
+        <button class="secondary" onclick="closeMealRecipePick()">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal : détail d'une métrique de pilier (hors section : utilisée depuis l'onglet Piliers) -->
+  <div class="modal-bg" id="pillarDetailModal" onmousedown="_pdBdDown=event.target===this" onclick="if(event.target===this&&_pdBdDown)closePillarDetail()">
+    <div class="modal" style="max-width:440px;max-height:85vh;overflow-y:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+      <h2 id="pillarDetailTitle" style="margin:0 0 4px;">Détail</h2>
+      <div id="pillarDetailBody"></div>
+      <div class="actions" style="margin-top:14px;">
+        <div class="spacer"></div>
+        <button class="secondary" onclick="closePillarDetail()">Fermer</button>
+      </div>
+    </div>
+  </div>
 
   <!-- VIEW: WORK -->
   <section class="view" data-view="work">
