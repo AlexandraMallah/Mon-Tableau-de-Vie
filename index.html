@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v407</title>
+<title>Mon Tableau de Vie 🌿 · v408</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1713,7 +1713,7 @@
           <span id="weatherWind" style="white-space:nowrap;">Vent : —</span>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+      <div id="weatherControls" style="display:none;flex-direction:column;gap:4px;align-items:flex-end;">
         <button onclick="fetchWeather(true)" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.6);font-size:11px;cursor:pointer;color:var(--ink-soft);" title="Utiliser ma position (géolocalisation)">🔄 Ma position</button>
         <div id="weatherCityInput" style="display:flex;gap:4px;">
           <input type="text" id="weatherManualCity" placeholder="Ville…" style="padding:4px 8px;border:1px solid var(--line);border-radius:7px;font-size:11px;width:90px;font-family:inherit;" onkeydown="if(event.key==='Enter')fetchWeatherByCity()" />
@@ -4666,8 +4666,10 @@ async function fetchWeather(force) {
     document.getElementById("weatherFeels").textContent  = "Ressenti : " + Math.round(cur.apparent_temperature) + "°C";
     document.getElementById("weatherHumidity").textContent = "Humidité : " + cur.relative_humidity_2m + "%";
     document.getElementById("weatherWind").textContent   = "Vent : " + Math.round(cur.wind_speed_10m) + " km/h";
-    // Géoloc OK → on repasse en mode automatique (on oublie la ville fixée)
+    // Géoloc OK → on repasse en mode automatique (on oublie la ville fixée) + on masque les contrôles
     if (state.weatherCity) { state.weatherCity = ""; saveState(); }
+    const ctrl = document.getElementById("weatherControls");
+    if (ctrl) ctrl.style.display = "none";
   } catch(e) {
     // Échec géoloc. Si ce n'est PAS un clic explicite « Ma position » et qu'une ville est mémorisée,
     // on l'utilise silencieusement (pas de message d'erreur au chargement normal).
@@ -4681,9 +4683,9 @@ async function fetchWeather(force) {
       document.getElementById("weatherCity").textContent = "📍 Autoriser la localisation ou saisir une ville →";
       document.getElementById("weatherDesc").textContent = "Localisation indisponible";
     }
-    // Afficher le champ de saisie manuelle (repli)
-    const inp = document.getElementById("weatherCityInput");
-    if (inp) inp.style.display = "flex";
+    // Afficher les contrôles (Ma position + saisie ville) uniquement en cas d'échec
+    const ctrl = document.getElementById("weatherControls");
+    if (ctrl) ctrl.style.display = "flex";
   }
 }
 
