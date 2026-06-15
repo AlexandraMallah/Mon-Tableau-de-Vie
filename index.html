@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v405</title>
+<title>Mon Tableau de Vie 🌿 · v406</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4602,6 +4602,7 @@ function renderHeader() {
 }
 
 /* ========= MÉTÉO (Open-Meteo, sans clé API) ========= */
+let _geoPermWatched = false; // évite d'attacher plusieurs écouteurs sur la permission géoloc
 const WMO_ICONS = {
   0:"☀️",1:"🌤️",2:"⛅",3:"☁️",
   45:"🌫️",48:"🌫️",
@@ -4627,8 +4628,20 @@ async function fetchWeather(force) {
   // Pré-remplir le champ avec la ville mémorisée
   const inpEl = document.getElementById("weatherManualCity");
   if (inpEl && state.weatherCity && !inpEl.value) inpEl.value = state.weatherCity;
-  // Si une ville a été choisie manuellement, on l'utilise directement (sauf clic « Ma position »)
-  if (!force && state.weatherCity) { fetchWeatherByCity(); return; }
+  // État de la permission géoloc (si l'API est dispo)
+  let geoPerm = null;
+  try {
+    if (navigator.permissions) {
+      const ps = await navigator.permissions.query({ name: "geolocation" });
+      geoPerm = ps.state;
+      // Quand l'utilisatrice réautorise dans les réglages du navigateur → relance auto (sans recharger)
+      if (!_geoPermWatched) { _geoPermWatched = true; ps.onchange = () => { if (ps.state === "granted") fetchWeather(true); }; }
+    }
+  } catch (e) {}
+  // On tente la géoloc si : clic « Ma position », OU permission déjà accordée (→ auto, prioritaire sur la ville mémorisée),
+  // OU aucune ville mémorisée. Sinon on garde la ville mémorisée (évite de redemander la permission à chaque ouverture).
+  const tryGeo = force || geoPerm === "granted" || !state.weatherCity;
+  if (!tryGeo) { fetchWeatherByCity(); return; }
   document.getElementById("weatherDesc").textContent = "Chargement…";
   try {
     // 1. Géolocalisation
@@ -4656,12 +4669,19 @@ async function fetchWeather(force) {
     // Géoloc OK → on repasse en mode automatique (on oublie la ville fixée)
     if (state.weatherCity) { state.weatherCity = ""; saveState(); }
   } catch(e) {
-    // Géoloc refusée : si une ville est mémorisée, on l'utilise plutôt que d'afficher l'erreur
-    if (state.weatherCity) { fetchWeatherByCity(); return; }
-    document.getElementById("weatherDesc").textContent = "Localisation refusée";
+    // Échec géoloc. Si ce n'est PAS un clic explicite « Ma position » et qu'une ville est mémorisée,
+    // on l'utilise silencieusement (pas de message d'erreur au chargement normal).
+    if (!force && state.weatherCity) { fetchWeatherByCity(); return; }
     document.getElementById("weatherTemp").textContent = "—";
-    document.getElementById("weatherCity").textContent = "📍 Autoriser la localisation ou saisir une ville →";
-    // Afficher le champ de saisie manuelle
+    const denied = geoPerm === "denied" || (e && e.code === 1); // permission bloquée
+    if (denied) {
+      document.getElementById("weatherCity").textContent = "📍 Localisation bloquée par le navigateur";
+      document.getElementById("weatherDesc").textContent = "Pour la réactiver : 🔒 à gauche de l'adresse → Localisation → Autoriser, puis recharge";
+    } else {
+      document.getElementById("weatherCity").textContent = "📍 Autoriser la localisation ou saisir une ville →";
+      document.getElementById("weatherDesc").textContent = "Localisation indisponible";
+    }
+    // Afficher le champ de saisie manuelle (repli)
     const inp = document.getElementById("weatherCityInput");
     if (inp) inp.style.display = "flex";
   }
