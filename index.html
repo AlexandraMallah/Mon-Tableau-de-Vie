@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v408</title>
+<title>Mon Tableau de Vie 🌿 · v409</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -14039,6 +14039,7 @@ function toggleDomTaskShowDone() {
   renderDomesticTasks();
 }
 
+let _editingDomTaskId = null; // tâche domestique en cours d'édition en ligne
 function renderDomesticTasks() {
   const tasks = state.domestique.tasks || [];
   const open = tasks.filter(t => !t.done).length;
@@ -14067,6 +14068,7 @@ function renderDomesticTasks() {
   const prioIcon = { urgent: "🚨", high: "🔴", medium: "🟠", low: "⚪" };
 
   listEl.innerHTML = sorted.map(t => {
+    if (t.id === _editingDomTaskId) return _domTaskEditRow(t);
     const dlClass = deadlineClass(t.deadline);
     const dlText  = t.deadline ? `⏰ ${formatDeadline(t.deadline)}` : "";
     const catHtml = t.category ? `<span style="font-size:11px;background:var(--lavender-soft);color:var(--ink-soft);padding:2px 7px;border-radius:6px;">${escapeHtml(t.category)}</span>` : "";
@@ -14081,11 +14083,46 @@ function renderDomesticTasks() {
         </div>
         <span class="task-name">${escapeHtml(t.name)}</span>
       </div>
+      <button onclick="startEditDomesticTask('${t.id}')" title="Modifier"
+        style="flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:14px;padding:4px 6px;border-radius:6px;transition:color 0.15s;"
+        onmouseover="this.style.color='var(--lavender)'" onmouseout="this.style.color='var(--ink-softer)'">✏️</button>
       <button onclick="deleteDomesticTask('${t.id}')" title="Supprimer"
         style="flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:15px;padding:4px 6px;border-radius:6px;transition:color 0.15s;"
         onmouseover="this.style.color='#c75b4d'" onmouseout="this.style.color='var(--ink-softer)'">✕</button>
     </div>`;
   }).join("");
+}
+// Ligne d'édition en ligne d'une tâche domestique
+function _domTaskEditRow(t) {
+  const cats = ["🏠 Maison","🏥 Santé","🏛️ Admin","📞 Appels","🎁 Achats","👤 Personnel","✈️ Voyage"];
+  const catOpts = `<option value="">Catégorie…</option>` + cats.map(c => `<option value="${c}" ${t.category===c?"selected":""}>${c}</option>`).join("");
+  const prios = [["urgent","🚨 Urgent"],["high","🔴 Haute"],["medium","🟠 Moyenne"],["low","⚪ Faible"]];
+  const prioOpts = prios.map(([v,l]) => `<option value="${v}" ${t.priority===v?"selected":""}>${l}</option>`).join("");
+  const inp = "padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;color:var(--ink);background:white;";
+  return `
+    <div class="task-row" style="flex-wrap:wrap;gap:8px;align-items:center;background:#faf8fd;border-left:3px solid var(--lavender);">
+      <input type="text" id="editDomName-${t.id}" value="${escapeHtml(t.name)}" style="flex:1;min-width:160px;${inp}"
+        onkeydown="if(event.key==='Enter')saveEditDomesticTask('${t.id}');if(event.key==='Escape')cancelEditDomesticTask()" />
+      <select id="editDomCat-${t.id}" style="${inp}">${catOpts}</select>
+      <select id="editDomPrio-${t.id}" style="${inp}">${prioOpts}</select>
+      <input type="date" id="editDomDeadline-${t.id}" value="${t.deadline||""}" style="${inp}" />
+      <button class="btn-primary" onclick="saveEditDomesticTask('${t.id}')" style="padding:7px 14px;">✓ OK</button>
+      <button class="btn-soft" onclick="cancelEditDomesticTask()" style="padding:7px 12px;">Annuler</button>
+    </div>`;
+}
+function startEditDomesticTask(id) { _editingDomTaskId = id; renderDomesticTasks(); const f = document.getElementById("editDomName-"+id); if (f) { f.focus(); f.select(); } }
+function cancelEditDomesticTask() { _editingDomTaskId = null; renderDomesticTasks(); }
+function saveEditDomesticTask(id) {
+  const t = (state.domestique.tasks || []).find(x => x.id === id);
+  if (!t) { _editingDomTaskId = null; renderDomesticTasks(); return; }
+  const name = document.getElementById("editDomName-"+id)?.value.trim();
+  if (!name) { alert("Le nom ne peut pas être vide."); return; }
+  t.name     = name;
+  t.category = document.getElementById("editDomCat-"+id)?.value || "";
+  t.priority = document.getElementById("editDomPrio-"+id)?.value || "medium";
+  t.deadline = document.getElementById("editDomDeadline-"+id)?.value || "";
+  _editingDomTaskId = null;
+  saveState(); renderDomesticTasks();
 }
 
 function addDomesticTask() {
