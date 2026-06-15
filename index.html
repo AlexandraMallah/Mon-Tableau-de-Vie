@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v404</title>
+<title>Mon Tableau de Vie 🌿 · v405</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -11837,7 +11837,7 @@ function _currentMonthDates() {
   for (let d = new Date(now.getFullYear(), now.getMonth(), 1); d <= now; d.setDate(d.getDate() + 1)) dates.push(new Date(d));
   return dates;
 }
-function _renderTimeStats(target, datesOrDays, periodLabel) {
+function _renderTimeStats(target, datesOrDays, periodLabel, totalNote) {
   const dates = Array.isArray(datesOrDays) ? datesOrDays : lastDates(datesOrDays);
   const totals = _sumWorkTime(dates);
   const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0);
@@ -11845,7 +11845,8 @@ function _renderTimeStats(target, datesOrDays, periodLabel) {
     target.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucune heure saisie sur les ${periodLabel}.</p>`;
     return;
   }
-  let html = `<div style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline;"><span style="color:var(--ink-soft);font-size:13px;">Total</span><strong style="font-size:18px;">${grandTotal.toFixed(1).replace(".", ",")} h</strong></div>`;
+  const noteHtml = totalNote ? `<span style="font-size:11px;color:var(--ink-softer);font-weight:600;white-space:nowrap;">${totalNote}</span>` : "";
+  let html = `<div style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="color:var(--ink-soft);font-size:13px;">Total</span><span style="display:flex;align-items:baseline;gap:8px;">${noteHtml}<strong style="font-size:18px;">${grandTotal.toFixed(1).replace(".", ",")} h</strong></span></div>`;
   for (const c of TIME_CATS) {
     const v = totals[c.key];
     const pct = grandTotal > 0 ? Math.round((v / grandTotal) * 100) : 0;
@@ -11879,7 +11880,13 @@ function renderTimeStatsWeek() {
 }
 function renderTimeStatsMonth() {
   const t = document.getElementById("timeMonthStats");
-  if (t) _renderTimeStats(t, _currentMonthDates(), "ce mois");
+  if (!t) return;
+  const dates = _currentMonthDates();
+  // Moyenne hebdo = total du mois ramené à 7 jours (depuis le 1er jusqu'à aujourd'hui)
+  const grand = Object.values(_sumWorkTime(dates)).reduce((s, v) => s + v, 0);
+  const perWeek = dates.length ? grand / dates.length * 7 : 0;
+  const note = grand > 0 ? `≈ ${perWeek.toFixed(1).replace(".", ",")} h/sem.` : "";
+  _renderTimeStats(t, dates, "ce mois", note);
 }
 function renderTimeBarChart() {
   const canvas = document.getElementById("timeBarChart");
