@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v414</title>
+<title>Mon Tableau de Vie 🌿 · v415</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9984,7 +9984,9 @@ function renderBudgetGauge() {
     if (tx.type === "income")       income     += tx.amount;
     if (tx.type === "savings")      savings    += tx.amount;
     if (tx.type === "savings-out")  savingsOut += tx.amount;
-    if ((tx.type === "expense" || tx.type === "external") && !tx.reimbursable) {
+    // Jauge = vraies dépenses courantes seulement : type "Dépense", hors frais pro,
+    // hors "Hors compte" (external) et hors charges fixes (retirées plus bas).
+    if (tx.type === "expense" && !tx.reimbursable) {
       spentRaw += tx.amount;
       if (tx.fixedCharge) fixedTotal += tx.amount;
     }
