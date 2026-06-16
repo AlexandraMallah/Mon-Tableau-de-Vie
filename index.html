@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v410</title>
+<title>Mon Tableau de Vie 🌿 · v411</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -16306,24 +16306,26 @@ function _fbListen() {
   if (_fbUnsub) _fbUnsub();
   _fbUnsub = _fbDocRef().onSnapshot(snap => {
     if (!snap.exists) return;
+    // Ignorer nos propres écritures (écho local non encore confirmé par le serveur)
+    if (snap.metadata.hasPendingWrites) { _fbSetStatus("ok"); return; }
     const remote = snap.data().state;
     const localTs  = state.lastModified || 0;
     const remoteTs = remote.lastModified || 0;
-    // Protection : ignorer Firebase si on vient de sauvegarder localement (<15s)
+    // Ne pas écraser si on vient de saisir quelque chose localement (<5 s)
     const secsSinceLocalSave = (Date.now() - (window._lastLocalSave||0)) / 1000;
-    if (secsSinceLocalSave < 15) {
-      _fbSetStatus("ok"); return; // données locales trop récentes, ne pas écraser
-    }
-    // Ne met à jour que si les données distantes sont vraiment plus récentes
-    if (remoteTs > localTs + 3000) {
+    if (secsSinceLocalSave < 5) { _fbSetStatus("ok"); return; }
+    // Appliquer dès que la version distante (autre appareil) est plus récente
+    if (remoteTs > localTs) {
       const merged = migrate({ ...DEFAULT_STATE, ...remote });
       // Garde-fou : ne jamais perdre les raccourcis locaux si le cloud n'en a pas
       if ((!merged.shortcuts || !merged.shortcuts.length) && state.shortcuts?.length) merged.shortcuts = state.shortcuts;
       state = merged;
       localStorage.setItem(STORE_KEY, JSON.stringify(state));
       renderAll();
+      try { renderBiblioCollectionTree(); } catch(e) {}
+      try { renderBiblioRefs(); } catch(e) {}
       renderShortcutsBar();
-      showToast("🔄 Données mises à jour depuis un autre appareil");
+      showToast("🔄 Mis à jour depuis un autre appareil");
     }
     _fbSetStatus("ok");
   }, err => {
@@ -16349,6 +16351,18 @@ function _fbQueueSave() {
   clearTimeout(_fbSaveTimer);
   _fbSaveTimer = setTimeout(_fbSaveNow, 800); // réduit de 2500ms à 800ms
 }
+
+// Force l'envoi immédiat de la sauvegarde en attente (avant que le tél gèle/ferme l'onglet).
+// Crucial sur mobile : sinon les modifs restent coincées localement et ne montent jamais au cloud.
+function _fbFlushPending() {
+  if (!_fbUser || !_fbDb) return;
+  if (_fbSaveTimer) { clearTimeout(_fbSaveTimer); _fbSaveTimer = null; }
+  _fbSaveNow().catch(() => {});
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") _fbFlushPending();
+});
+window.addEventListener("pagehide", _fbFlushPending);
 
 function signInWithGoogle() {
   if (!_fbAuth) {
