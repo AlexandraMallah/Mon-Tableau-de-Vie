@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v412</title>
+<title>Mon Tableau de Vie 🌿 · v413</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -16319,14 +16319,15 @@ function _fbListen() {
     if (!snap.exists) return;
     // Ignorer nos propres écritures (écho local non encore confirmé par le serveur)
     if (snap.metadata.hasPendingWrites) { _fbSetStatus("ok"); return; }
-    const remote = snap.data().state;
-    const localTs  = state.lastModified || 0;
-    const remoteTs = remote.lastModified || 0;
-    // Ne pas écraser si on vient de saisir quelque chose localement (<5 s)
+    // Ne pas écraser si on vient de saisir quelque chose localement (<6 s) — laisse notre push partir
     const secsSinceLocalSave = (Date.now() - (window._lastLocalSave||0)) / 1000;
-    if (secsSinceLocalSave < 5) { _fbSetStatus("ok"); return; }
-    // Appliquer dès que la version distante (autre appareil) est plus récente
-    if (remoteTs > localTs) {
+    if (secsSinceLocalSave < 6) { _fbSetStatus("ok"); return; }
+    const remote = snap.data().state;
+    if (!remote) { _fbSetStatus("ok"); return; }
+    // Le cloud fait foi : on s'aligne dès que sa version diffère de la nôtre.
+    // (On NE compare PAS les horloges des appareils — elles peuvent être décalées et provoquer
+    //  un ping-pong qui décoche la pilule. La dernière écriture confirmée par le serveur gagne.)
+    if ((remote.lastModified || 0) !== (state.lastModified || 0)) {
       const merged = migrate({ ...DEFAULT_STATE, ...remote });
       // Garde-fou : ne jamais perdre les raccourcis locaux si le cloud n'en a pas
       if ((!merged.shortcuts || !merged.shortcuts.length) && state.shortcuts?.length) merged.shortcuts = state.shortcuts;
