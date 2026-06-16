@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v411</title>
+<title>Mon Tableau de Vie 🌿 · v412</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -11580,25 +11580,36 @@ async function syncGoogleCal(silent = false) {
   const url = state.googleCal?.url;
   if (!url) return;
   if (!silent) showToast("🔄 Synchronisation Google Agenda…");
-  // Proxies CORS testés en cascade
+  // Proxies CORS testés en cascade (allorigins en tête : le plus fiable en juin 2026 ;
+  // les morts — thingproxy, cors-anywhere — ont été retirés)
   const proxies = [
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://thingproxy.freeboard.io/fetch/${u}`,
-    u => `https://cors-anywhere.herokuapp.com/${u}`,
+    { build: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, json: false },
+    { build: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,          json: false },
+    { build: u => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`, json: false },
+    { build: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, json: true },
   ];
-  // Anti-cache : URL unique à chaque synchro pour éviter les copies en cache des proxies
-  const bustedUrl = url + (url.includes("?") ? "&" : "?") + "_cb=" + Date.now();
   let text = null;
-  for (const proxy of proxies) {
-    try {
-      const r = await fetch(proxy(bustedUrl), { signal: AbortSignal.timeout(15000), cache: "no-store" });
-      if (r.ok) { const tx = await r.text(); if (/BEGIN:VEVENT/i.test(tx)) { text = tx; break; } }
-    } catch (_) { /* essaie le proxy suivant */ }
+  // 2 passes : les proxies gratuits échouent souvent de façon intermittente (timeout, rate-limit)
+  for (let pass = 0; pass < 2 && !text; pass++) {
+    for (const proxy of proxies) {
+      // Anti-cache : URL unique à chaque tentative (évite les copies en cache des proxies)
+      const bustedUrl = url + (url.includes("?") ? "&" : "?") + "_cb=" + Date.now();
+      try {
+        const r = await fetch(proxy.build(bustedUrl), { signal: AbortSignal.timeout(15000), cache: "no-store" });
+        if (r.ok) {
+          let tx = await r.text();
+          if (proxy.json) { try { tx = JSON.parse(tx).contents || ""; } catch (_) { tx = ""; } }
+          if (/BEGIN:VEVENT/i.test(tx)) { text = tx; break; }
+        }
+      } catch (_) { /* proxy suivant */ }
+    }
+    if (!text && pass === 0) await new Promise(res => setTimeout(res, 1500)); // pause avant la 2e passe
   }
   if (!text) {
-    showToast("❌ Sync agenda impossible — tous les proxies ont échoué. Réessaie dans quelques minutes ou reconfigurez l'URL iCal.");
+    // En synchro automatique (silencieuse), on ne spamme pas d'erreur rouge : les événements déjà
+    // chargés restent affichés. On ne prévient que lors d'une synchro manuelle.
+    if (!silent) showToast("❌ Sync agenda impossible pour le moment — tes événements restent affichés. Réessaie dans quelques minutes.");
+    renderGcalStatus();
     return;
   }
   try {
