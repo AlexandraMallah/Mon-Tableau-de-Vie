@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v409</title>
+<title>Mon Tableau de Vie 🌿 · v410</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1961,6 +1961,23 @@
       <div class="actions" style="margin-top:14px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closePillarDetail()">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal : synchronisation cloud -->
+  <div class="modal-bg" id="syncMenuModal" onclick="if(event.target===this)closeSyncMenu()">
+    <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
+      <h2 style="margin:0 0 4px;">☁️ Synchronisation</h2>
+      <p id="syncMenuEmail" style="font-size:13px;color:var(--ink-soft);margin:0 0 14px;"></p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="secondary" onclick="cloudPull()" style="text-align:left;padding:12px 14px;">⬇️ <strong>Récupérer du cloud</strong><br><span style="font-size:12px;color:var(--ink-soft);">Remplace les données de CET appareil par celles du cloud (ex : rapatrier ce que tu as saisi sur le tél).</span></button>
+        <button class="secondary" onclick="cloudPush()" style="text-align:left;padding:12px 14px;">⬆️ <strong>Envoyer vers le cloud</strong><br><span style="font-size:12px;color:var(--ink-soft);">Remplace les données du cloud par celles de CET appareil.</span></button>
+        <button class="secondary" onclick="cloudSignOut()" style="text-align:left;padding:12px 14px;color:#c75b4d;">🚪 <strong>Se déconnecter</strong><br><span style="font-size:12px;color:var(--ink-soft);">Tes données locales restent intactes.</span></button>
+      </div>
+      <div class="actions" style="margin-top:16px;">
+        <div class="spacer"></div>
+        <button class="secondary" onclick="closeSyncMenu()">Fermer</button>
       </div>
     </div>
   </div>
@@ -16354,15 +16371,45 @@ function signInWithGoogle() {
 
 function showSyncMenu() {
   if (!_fbUser) return;
-  if (confirm(`Compte connecté : ${_fbUser.email}\n\nSe déconnecter du cloud ?\n(Tes données locales restent intactes)`)) {
-    if (_fbUnsub) _fbUnsub();
-    _fbAuth.signOut().then(() => {
-      _fbUser = null;
-      _fbSetStatus("off");
-      _fbUpdateUI(null);
-      showToast("Déconnecté du cloud");
-    });
-  }
+  const emailEl = document.getElementById("syncMenuEmail");
+  if (emailEl) emailEl.textContent = `Compte connecté : ${_fbUser.email}`;
+  document.getElementById("syncMenuModal").classList.add("open");
+}
+function closeSyncMenu() { document.getElementById("syncMenuModal").classList.remove("open"); }
+// ⬇️ Récupérer : remplace les données locales par celles du cloud
+async function cloudPull() {
+  if (!_fbUser || !_fbDb) return;
+  if (!confirm("⬇️ Récupérer les données du cloud et REMPLACER celles de cet appareil ?\n\n💡 Conseil : si tu as un doute, fais d'abord un export (⚙ Réglages).")) return;
+  try {
+    _fbSetStatus("syncing");
+    const doc = await _fbDocRef().get();
+    if (!doc.exists || !doc.data().state) { alert("Aucune donnée dans le cloud pour l'instant."); _fbSetStatus("ok"); return; }
+    state = migrate({ ...DEFAULT_STATE, ...doc.data().state });
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    closeSyncMenu();
+    showToast("⬇️ Données du cloud récupérées — rechargement…");
+    setTimeout(() => location.reload(), 700);
+  } catch (e) { alert("Erreur : " + e.message); _fbSetStatus("error"); }
+}
+// ⬆️ Envoyer : remplace les données du cloud par celles de cet appareil
+async function cloudPush() {
+  if (!_fbUser || !_fbDb) return;
+  if (!confirm("⬆️ Envoyer les données de CET appareil vers le cloud et REMPLACER celles du cloud ?")) return;
+  state.lastModified = Date.now();
+  await _fbSaveNow();
+  closeSyncMenu();
+  showToast("⬆️ Données envoyées vers le cloud");
+}
+function cloudSignOut() {
+  if (!confirm("Se déconnecter du cloud ?\n(Tes données locales restent intactes)")) return;
+  if (_fbUnsub) _fbUnsub();
+  _fbAuth.signOut().then(() => {
+    _fbUser = null;
+    _fbSetStatus("off");
+    _fbUpdateUI(null);
+    closeSyncMenu();
+    showToast("Déconnecté du cloud");
+  });
 }
 
 // ——— Init (lancé au démarrage si la config est remplie) ———
