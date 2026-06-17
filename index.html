@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v417</title>
+<title>Mon Tableau de Vie 🌿 · v418</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2743,7 +2743,8 @@
     <!-- Évolution du solde + comparaison mois -->
     <div class="grid-two-eq" style="margin-bottom:18px;">
       <div class="card">
-        <h2 style="margin:0 0 12px;">📉 Évolution du solde (3 mois)</h2>
+        <h2 style="margin:0 0 4px;">💰 Évolution du patrimoine (3 mois)</h2>
+        <p style="font-size:11px;color:var(--ink-softer);margin:0 0 10px;">Compte courant + épargne — les virements vers l'épargne ne font pas plonger la courbe.</p>
         <div class="chart-wrap" style="height:200px;"><canvas id="balanceEvolutionChart"></canvas></div>
       </div>
       <div class="card" id="monthCompareCard">
@@ -9775,18 +9776,19 @@ function renderBalanceEvolutionChart() {
     const d = new Date(today); d.setDate(d.getDate() - i);
     days.push(d);
   }
-  const base = state.accounts?.courantStart || 0;
+  // Patrimoine total = compte courant + épargne. Ainsi un virement vers l'épargne
+  // (savings / savings-out) ne fait PAS plonger la courbe : c'est juste un transfert interne.
+  const base = (state.accounts?.courantStart || 0) + (state.accounts?.epargneStart || 0);
   // Trier toutes les transactions par date
   const txSorted = [...state.transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
   const balances = days.map(day => {
     const dk = todayKey(day);
     let bal = base;
     for (const t of txSorted) {
-      if (t.date > dk) break;
+      if ((t.date || "").slice(0, 10) > dk) break; // inclut les transactions DU jour
       if (t.type === "income")       bal += t.amount;
       else if (t.type === "expense") bal -= t.amount;
-      else if (t.type === "savings") bal -= t.amount;
-      else if (t.type === "savings-out") bal += t.amount;
+      // savings / savings-out : transferts entre courant et épargne → patrimoine inchangé
     }
     return bal;
   });
