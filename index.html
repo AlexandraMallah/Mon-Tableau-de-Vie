@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v419</title>
+<title>Mon Tableau de Vie 🌿 · v420</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7010,7 +7010,7 @@ function computeHormones() {
   const res = {};
   HORMONES.forEach(h => { res[h.id] = { score: 0, sources: [], days: [] }; });
 
-  const socialRe = /ami|amie|copain|copine|soirée|apéro|sortie|famille|maman|papa|parents|frère|sœur|soeur|frangine|frangin|mamie|papi|déjeuner|dejeuner|dîner|diner|brunch|repas|goûter|gouter|lunch|picnic|pique-nique|anniversaire|fête|fete/i;
+  const socialRe = /ami|amie|copain|copine|soirée|apéro|sortie|famille|maman|papa|parents|frère|sœur|soeur|frangine|frangin|mamie|papi|déjeuner|dejeuner|\bd[ée]j(?=[\s.]|$)|dîner|diner|\bd[îi]n(?=[\s.]|$)|brunch|repas|goûter|gouter|lunch|resto|restau|picnic|pique-nique|anniversaire|fête|fete/i;
   // Soins bien-être (calendrier) → comptent en sérotonine (détente) et ocytocine (toucher/soin)
   const wellnessRe = /massage|spa|sauna|hammam|thalasso|cure|soin|réflexo|reflexo|relaxation|kiné|kine|ostéo|osteo|esthéti|estheti|institut|manucure|onglerie/i;
 
