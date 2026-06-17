@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v415</title>
+<title>Mon Tableau de Vie 🌿 · v416</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2749,23 +2749,20 @@
         <div id="monthCompareBody"></div>
       </div>
     </div>
-    <div class="grid-two-eq">
-      <div class="card">
-        <h2>Flux 6 derniers mois</h2>
-        <div id="flowLegend" class="flow-legend"></div>
-        <div class="chart-wrap"><canvas id="moneyFlowChart"></canvas></div>
-      </div>
-      <div class="card">
-        <h2>Ce mois par catégorie</h2>
-        <div class="money-charts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;">
-          <div>
-            <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses <span id="catChartDepTotal" style="color:#c75b4d;"></span></p>
-            <div class="chart-wrap" style="height:200px;"><canvas id="moneyCatChart"></canvas></div>
-          </div>
-          <div>
-            <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">+ Revenus <span id="catChartIncTotal" style="color:#4d9c7e;"></span></p>
-            <div class="chart-wrap" style="height:200px;"><canvas id="moneyIncomeCatChart"></canvas></div>
-          </div>
+    <div class="card">
+      <h2>Ce mois par catégorie</h2>
+      <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px;">
+        <div>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses <span id="catChartDepTotal" style="color:#c75b4d;"></span></p>
+          <div class="chart-wrap" style="height:200px;"><canvas id="moneyCatChart"></canvas></div>
+        </div>
+        <div>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Hors charges fixes <span id="catChartNoFixTotal" style="color:#c75b4d;"></span></p>
+          <div class="chart-wrap" style="height:200px;"><canvas id="moneyCatChartNoFixed"></canvas></div>
+        </div>
+        <div>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">+ Revenus <span id="catChartIncTotal" style="color:#4d9c7e;"></span></p>
+          <div class="chart-wrap" style="height:200px;"><canvas id="moneyIncomeCatChart"></canvas></div>
         </div>
       </div>
     </div>
@@ -9551,7 +9548,7 @@ function renderTxList() {
       </div>`;
   }).join("");
 }
-let moneyFlowChart, moneyCatChart, moneyIncomeCatChart, savingsChart, dailyExpenseChart;
+let moneyFlowChart, moneyCatChart, moneyCatChartNoFixed, moneyIncomeCatChart, savingsChart, dailyExpenseChart;
 function renderDailyExpenseChart() {
   const canvas = document.getElementById("dailyExpenseChart");
   if (!canvas) return;
@@ -9715,6 +9712,8 @@ function openDayDetail(d) {
   document.getElementById("catDetailModal").classList.add("open");
 }
 function renderMoneyFlowChart() {
+  // Bloc "Flux 6 derniers mois" retiré de l'UI → ne rien faire s'il n'existe plus
+  if (!document.getElementById("moneyFlowChart")) return;
   const months = []; const now = new Date();
   for (let i = 5; i >= 0; i--) months.push(new Date(now.getFullYear(), now.getMonth() - i, 1));
   const labels = months.map(d => d.toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }));
@@ -9895,6 +9894,7 @@ function _emptyDonutPlaceholder(wrap, text) {
      </div>`);
 }
 function renderMoneyCatChart() {
+  try { renderMoneyCatChartNoFixed(); } catch (e) {} // anneau "hors charges fixes" (toujours rafraîchi)
   if (moneyCatChart) moneyCatChart.destroy();
   const wrap = document.getElementById("moneyCatChart").parentElement;
   wrap.innerHTML = '<canvas id="moneyCatChart"></canvas>';
@@ -9936,6 +9936,53 @@ function renderMoneyCatChart() {
         tooltip: { callbacks: { label: ctx => {
           const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
           const pct = total > 0 ? Math.round((ctx.raw / total) * 100) : 0;
+          return ` ${ctx.raw.toFixed(2)} € (${pct}%)`;
+        }}},
+      },
+    },
+  });
+}
+
+// Anneau "Dépenses hors charges fixes" : comme ci-dessus mais on exclut tout ce qui est coché 🏠 fixe
+function renderMoneyCatChartNoFixed() {
+  const canvas = document.getElementById("moneyCatChartNoFixed");
+  if (!canvas) return;
+  if (moneyCatChartNoFixed) moneyCatChartNoFixed.destroy();
+  const wrap = canvas.parentElement;
+  wrap.innerHTML = '<canvas id="moneyCatChartNoFixed"></canvas>';
+
+  const [start, end] = currentMonthRange();
+  const totals = {};
+  for (const tx of state.transactions) {
+    const d = new Date(tx.date);
+    if (d >= start && d < end && tx.type === "expense" && !tx.reimbursable && !tx.fixedCharge)
+      totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
+  }
+  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  const total = entries.reduce((s,[,v]) => s+v, 0);
+  const el = document.getElementById("catChartNoFixTotal");
+  if (el) el.textContent = total > 0 ? "— " + total.toFixed(0) + " €" : "";
+  if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>hors charges fixes"); return; }
+
+  moneyCatChartNoFixed = new Chart(document.getElementById("moneyCatChartNoFixed"), {
+    type: "doughnut",
+    data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: "62%",
+      interaction: { mode: "nearest", intersect: true },
+      onClick: (evt, elements) => { if (elements.length) openCatDetail(entries[elements[0].index][0]); },
+      onHover: (evt, elements) => { evt.native.target.style.cursor = elements.length ? "pointer" : "default"; },
+      plugins: {
+        ...baseChartOpts().plugins,
+        legend: {
+          position: "right",
+          labels: { color: "#8a8499", font: { size: 11 }, boxWidth: 10, boxHeight: 10, usePointStyle: true, padding: 8 },
+          onClick: (evt, item) => openCatDetail(item.text),
+        },
+        tooltip: { callbacks: { label: ctx => {
+          const t = ctx.dataset.data.reduce((s, v) => s + v, 0);
+          const pct = t > 0 ? Math.round((ctx.raw / t) * 100) : 0;
           return ` ${ctx.raw.toFixed(2)} € (${pct}%)`;
         }}},
       },
