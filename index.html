@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v421</title>
+<title>Mon Tableau de Vie 🌿 · v422</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1602,6 +1602,7 @@
   .note-item.active { background: var(--lavender-soft); font-weight: 600; }
   #noteContentInput:empty:before { content: attr(data-placeholder); color: var(--ink-softer); pointer-events: none; }
   #refNoteContent:empty:before { content: attr(data-placeholder); color: var(--ink-softer); pointer-events: none; }
+  #noteContentInput h1 { font-size: 19px; font-weight: 800; margin: 16px 0 6px; }
   #noteContentInput h2 { font-size: 16px; font-weight: 700; margin: 14px 0 4px; }
   #noteContentInput h3 { font-size: 14px; font-weight: 600; margin: 10px 0 3px; }
   #noteContentInput ul, #noteContentInput ol { padding-left: 20px; margin: 4px 0; }
@@ -2282,8 +2283,10 @@
               <button onmousedown="event.preventDefault();noteCmd('italic')" title="Italique" class="note-tb-btn"><i>I</i></button>
               <button onmousedown="event.preventDefault();noteCmd('underline')" title="Souligné" class="note-tb-btn"><u>U</u></button>
               <div style="width:1px;background:var(--line);margin:0 2px;"></div>
-              <button onmousedown="event.preventDefault();noteCmd('h2')" title="Titre" class="note-tb-btn" style="font-weight:700;">H2</button>
-              <button onmousedown="event.preventDefault();noteCmd('h3')" title="Sous-titre" class="note-tb-btn" style="font-weight:600;font-size:11px;">H3</button>
+              <button onmousedown="event.preventDefault();noteCmd('p')" title="Texte normal (paragraphe)" class="note-tb-btn" style="font-size:11px;">¶ Normal</button>
+              <button onmousedown="event.preventDefault();noteCmd('h1')" title="Titre 1" class="note-tb-btn" style="font-weight:800;">H1</button>
+              <button onmousedown="event.preventDefault();noteCmd('h2')" title="Titre 2" class="note-tb-btn" style="font-weight:700;">H2</button>
+              <button onmousedown="event.preventDefault();noteCmd('h3')" title="Titre 3" class="note-tb-btn" style="font-weight:600;font-size:11px;">H3</button>
               <div style="width:1px;background:var(--line);margin:0 2px;"></div>
               <button onmousedown="event.preventDefault();noteCmd('ul')" title="Liste à puces" class="note-tb-btn">• —</button>
               <button onmousedown="event.preventDefault();noteCmd('ol')" title="Liste numérotée" class="note-tb-btn">1.</button>
@@ -16768,7 +16771,9 @@ function deleteNote(gid, nid) {
 
 function noteCmd(cmd) {
   _restoreNoteSelection();
-  if (cmd === "h2")          document.execCommand("formatBlock", false, "h2");
+  if (cmd === "p")           document.execCommand("formatBlock", false, "p");   // texte normal
+  else if (cmd === "h1")     document.execCommand("formatBlock", false, "h1");
+  else if (cmd === "h2")     document.execCommand("formatBlock", false, "h2");
   else if (cmd === "h3")     document.execCommand("formatBlock", false, "h3");
   else if (cmd === "ul")     document.execCommand("insertUnorderedList");
   else if (cmd === "ol")     document.execCommand("insertOrderedList");
