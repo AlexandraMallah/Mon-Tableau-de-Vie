@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v424</title>
+<title>Mon Tableau de Vie 🌿 · v425</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -16356,6 +16356,20 @@ function _fbUpdateUI(user) {
   }
 }
 
+// Le calendrier Google (calEvents) est volumineux et se retélécharge depuis Google →
+// on ne l'envoie PAS au cloud (sinon le document dépasse la limite de 1 Mo de Firestore).
+function _stateForCloud() {
+  const s = JSON.parse(JSON.stringify(state));
+  delete s.calEvents;
+  return s;
+}
+// Fusionne une version venue du cloud SANS perdre les données locales que le cloud ne stocke pas.
+function _mergeFromCloud(remote) {
+  const merged = migrate({ ...DEFAULT_STATE, ...remote });
+  merged.calEvents = state.calEvents || []; // le cloud ne contient pas le calendrier → garder le local
+  if ((!merged.shortcuts || !merged.shortcuts.length) && state.shortcuts?.length) merged.shortcuts = state.shortcuts;
+  return merged;
+}
 async function _fbLoad() {
   try {
     _fbSetStatus("syncing");
@@ -16365,10 +16379,7 @@ async function _fbLoad() {
       const localTs  = state.lastModified || 0;
       const remoteTs = remote.lastModified || 0;
       if (remoteTs > localTs) {
-        const merged = migrate({ ...DEFAULT_STATE, ...remote });
-        // Garde-fou : ne jamais perdre les raccourcis locaux si le cloud n'en a pas
-        if ((!merged.shortcuts || !merged.shortcuts.length) && state.shortcuts?.length) merged.shortcuts = state.shortcuts;
-        state = merged;
+        state = _mergeFromCloud(remote);
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
         renderAll();
         // Re-rendre la biblio et les raccourcis
@@ -16408,10 +16419,7 @@ function _fbListen() {
     // (On NE compare PAS les horloges des appareils — elles peuvent être décalées et provoquer
     //  un ping-pong qui décoche la pilule. La dernière écriture confirmée par le serveur gagne.)
     if ((remote.lastModified || 0) !== (state.lastModified || 0)) {
-      const merged = migrate({ ...DEFAULT_STATE, ...remote });
-      // Garde-fou : ne jamais perdre les raccourcis locaux si le cloud n'en a pas
-      if ((!merged.shortcuts || !merged.shortcuts.length) && state.shortcuts?.length) merged.shortcuts = state.shortcuts;
-      state = merged;
+      state = _mergeFromCloud(remote);
       localStorage.setItem(STORE_KEY, JSON.stringify(state));
       renderAll();
       try { renderBiblioCollectionTree(); } catch(e) {}
@@ -16429,7 +16437,7 @@ function _fbListen() {
 async function _fbSaveNow() {
   if (!_fbUser || !_fbDb) return;
   try {
-    await _fbDocRef().set({ state: JSON.parse(JSON.stringify(state)) });
+    await _fbDocRef().set({ state: _stateForCloud() }); // sans le calendrier Google (trop volumineux)
     _fbSetStatus("ok");
   } catch(e) {
     console.warn("[Firebase] save error", e);
@@ -16490,7 +16498,7 @@ async function cloudPull() {
     _fbSetStatus("syncing");
     const doc = await _fbDocRef().get();
     if (!doc.exists || !doc.data().state) { alert("Aucune donnée dans le cloud pour l'instant."); _fbSetStatus("ok"); return; }
-    state = migrate({ ...DEFAULT_STATE, ...doc.data().state });
+    state = _mergeFromCloud(doc.data().state); // garde le calendrier Google local
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
     closeSyncMenu();
     showToast("⬇️ Données du cloud récupérées — rechargement…");
