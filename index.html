@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v423</title>
+<title>Mon Tableau de Vie 🌿 · v424</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -16734,10 +16734,20 @@ function _noteFlushToLocalStorage() {
   if (contentEl) n.content = contentEl.innerHTML;
   n.updatedAt = new Date().toISOString();
   state.lastModified = Date.now();
+  window._lastLocalSave = Date.now(); // protège la note en cours contre un écrasement par la synchro cloud
   try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e) {}
 }
 // Protection : sauvegarde d'urgence si la page se ferme / recharge
 window.addEventListener("pagehide", _noteFlushToLocalStorage);
+window.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") _noteFlushToLocalStorage(); });
+// Sauvegarde automatique de la note ouverte toutes les 60 s (local + cloud), sans casser la frappe
+setInterval(() => {
+  if (!_currentNoteId || !document.getElementById("noteContentInput")) return;
+  _noteFlushToLocalStorage();
+  saveState(); // → localStorage + envoi cloud, sans re-render (ne perturbe pas la saisie)
+  const label = document.getElementById("noteAutoSaveLabel");
+  if (label) label.textContent = "Sauvegardé à " + new Date().toLocaleTimeString("fr-FR");
+}, 60000);
 
 function scheduleNoteSave() {
   // 1. Sauvegarde immédiate dans localStorage (pas de perte si rechargement)
