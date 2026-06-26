@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v427</title>
+<title>Mon Tableau de Vie 🌿 · v428</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -12031,7 +12031,11 @@ function _renderTimeStats(target, datesOrDays, periodLabel, totalNote) {
 function renderTimeStatsWeek() {
   const dates = _currentWeekDates(_timeWeekOffset);
   const t = document.getElementById("timeWeekStats");
-  if (t) _renderTimeStats(t, dates, _timeWeekOffset === 0 ? "cette semaine" : "cette période");
+  // Moyenne par jour = total de la semaine / nombre de jours de la période
+  const grand = Object.values(_sumWorkTime(dates)).reduce((s, v) => s + v, 0);
+  const perDay = dates.length ? grand / dates.length : 0;
+  const note = grand > 0 ? `≈ ${perDay.toFixed(1).replace(".", ",")} h/j` : "";
+  if (t) _renderTimeStats(t, dates, _timeWeekOffset === 0 ? "cette semaine" : "cette période", note);
   const title = document.getElementById("timeWeekTitle");
   if (title) {
     if (_timeWeekOffset === 0) title.textContent = "📊 Cette semaine";
