@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v426</title>
+<title>Mon Tableau de Vie 🌿 · v427</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2762,7 +2762,11 @@
       </div>
     </div>
     <div class="card">
-      <h2>Ce mois par catégorie</h2>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <button class="day-nav-btn" onclick="moneyCatMonthNav(-1)" title="Mois précédent">◀</button>
+        <h2 id="moneyCatTitle" style="margin:0;flex:1;">Par catégorie · Ce mois</h2>
+        <button class="day-nav-btn" id="moneyCatNext" onclick="moneyCatMonthNav(1)" title="Mois suivant" disabled>▶</button>
+      </div>
       <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:8px;align-items:start;">
         <div>
           <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses <span id="catChartDepTotal" style="color:#c75b4d;"></span></p>
@@ -9289,6 +9293,34 @@ function populateTxCategories() {
   sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("") + _txCatExtraOptions();
 }
 // Mois financier : du 26 du mois précédent au 25 du mois courant (cycle salaire)
+// Navigation des anneaux "par catégorie" : 0 = mois courant, -1 = mois précédent, etc.
+let _moneyCatMonthOffset = 0;
+function _moneyCatRange() {
+  const [s, e] = currentMonthRange();
+  if (!_moneyCatMonthOffset) return [s, e];
+  return [
+    new Date(s.getFullYear(), s.getMonth() + _moneyCatMonthOffset, s.getDate()),
+    new Date(e.getFullYear(), e.getMonth() + _moneyCatMonthOffset, e.getDate()),
+  ];
+}
+function _moneyCatMonthLabel() {
+  if (_moneyCatMonthOffset === 0) return "Ce mois";
+  const [, e] = _moneyCatRange();
+  const d = new Date(e); d.setDate(d.getDate() - 1); // dernier jour de la période (cycle 26→25)
+  return d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+}
+function _updateMoneyCatTitle() {
+  const t = document.getElementById("moneyCatTitle");
+  if (t) t.textContent = "Par catégorie · " + _moneyCatMonthLabel();
+  const nb = document.getElementById("moneyCatNext");
+  if (nb) nb.disabled = _moneyCatMonthOffset >= 0; // pas de futur
+}
+function moneyCatMonthNav(delta) {
+  _moneyCatMonthOffset = Math.min(0, _moneyCatMonthOffset + delta);
+  renderMoneyCatChart();        // rafraîchit aussi l'anneau "hors charges fixes"
+  renderMoneyIncomeCatChart();
+  _updateMoneyCatTitle();
+}
 function currentMonthRange() {
   const now = new Date();
   const day = now.getDate();
@@ -9930,11 +9962,12 @@ function _catLegendHtml(entries) {
 }
 function renderMoneyCatChart() {
   try { renderMoneyCatChartNoFixed(); } catch (e) {} // anneau "hors charges fixes" (toujours rafraîchi)
+  try { _updateMoneyCatTitle(); } catch (e) {}
   if (moneyCatChart) moneyCatChart.destroy();
   const wrap = document.getElementById("moneyCatChart").parentElement;
   wrap.innerHTML = '<canvas id="moneyCatChart"></canvas>';
 
-  const [start, end] = currentMonthRange();
+  const [start, end] = _moneyCatRange();
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
@@ -9984,7 +10017,7 @@ function renderMoneyCatChartNoFixed() {
   const wrap = canvas.parentElement;
   wrap.innerHTML = '<canvas id="moneyCatChartNoFixed"></canvas>';
 
-  const [start, end] = currentMonthRange();
+  const [start, end] = _moneyCatRange();
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
@@ -10357,7 +10390,7 @@ function renderMoneyIncomeCatChart() {
   const wrap = document.getElementById("moneyIncomeCatChart").parentElement;
   wrap.innerHTML = '<canvas id="moneyIncomeCatChart"></canvas>';
 
-  const [start, end] = currentMonthRange();
+  const [start, end] = _moneyCatRange();
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
