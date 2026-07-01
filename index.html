@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v429</title>
+<title>Mon Tableau de Vie 🌿 · v431</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -12075,7 +12075,7 @@ function renderTimeStatsMonth() {
   // Moyenne hebdo = total du mois ramené à 7 jours
   const grand = Object.values(_sumWorkTime(dates)).reduce((s, v) => s + v, 0);
   const perWeek = dates.length ? grand / dates.length * 7 : 0;
-  const note = grand > 0 ? `≈ ${perWeek.toFixed(1).replace(".", ",")} h/sem.` : "";
+  const note = grand > 0 && dates.length >= 7 ? `≈ ${perWeek.toFixed(1).replace(".", ",")} h/sem.` : "";
   _renderTimeStats(t, dates, _timeMonthOffset === 0 ? "ce mois" : "ce mois-là", note);
   // Titre + bouton suivant
   const title = document.getElementById("timeMonthTitle");
