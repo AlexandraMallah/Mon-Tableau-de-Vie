@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v437</title>
+<title>Mon Tableau de Vie 🌿 · v439</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2130,7 +2130,13 @@
         <div class="chart-wrap" style="height:260px;"><canvas id="timeBarChart"></canvas></div>
       </div>
       <div class="card">
-        <h2>Répartition sur 30 jours</h2>
+        <div class="card-row" style="margin-bottom:10px;">
+          <h2 style="margin:0;" id="timeDonutTitle">Répartition sur 30 jours</h2>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button onclick="timeDonutNav(-1)" style="background:none;border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;color:var(--ink-soft);">◀</button>
+            <button onclick="timeDonutNav(1)" id="timeDonutNext" style="background:none;border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;color:var(--ink-soft);">▶</button>
+          </div>
+        </div>
         <div class="chart-wrap" style="height:240px;"><canvas id="timeDonutChart"></canvas></div>
       </div>
     </div>
@@ -11945,6 +11951,7 @@ const TIME_CATS = [
   { key: "autre",        label: "Autre",        emoji: "🔧", color: "#f5c842", bg: "#fdf6d8" },
 ];
 let timeBarChart, timeDonutChart;
+let _timeDonutOffset = 0; // 0 = 30 derniers jours, -1 = période précédente, etc.
 
 function getTimeDateKey() {
   const i = document.getElementById("timeWorkDate");
@@ -12177,11 +12184,34 @@ function renderTimeBarChart() {
     },
   });
 }
+function timeDonutNav(dir) {
+  _timeDonutOffset += dir;
+  if (_timeDonutOffset > 0) _timeDonutOffset = 0;
+  renderTimeDonutChart();
+}
+function _timeDonutDates() {
+  const end = new Date();
+  end.setDate(end.getDate() + _timeDonutOffset * 30);
+  const arr = [];
+  for (let i = 29; i >= 0; i--) { const d = new Date(end); d.setDate(end.getDate() - i); arr.push(d); }
+  return arr;
+}
+function _timeDonutLabel() {
+  if (_timeDonutOffset === 0) return "Répartition sur 30 jours";
+  const dates = _timeDonutDates();
+  const s = dates[0].toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  const e = dates[dates.length - 1].toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  return `Répartition · ${s} – ${e}`;
+}
 function renderTimeDonutChart() {
   const canvas = document.getElementById("timeDonutChart");
   if (!canvas) return;
   const wrap = canvas.parentElement;
-  const dates = lastDates(30);
+  const titleEl = document.getElementById("timeDonutTitle");
+  if (titleEl) titleEl.textContent = _timeDonutLabel();
+  const nextBtn = document.getElementById("timeDonutNext");
+  if (nextBtn) nextBtn.disabled = _timeDonutOffset === 0;
+  const dates = _timeDonutDates();
   const totals = _sumWorkTime(dates);
   const labels = TIME_CATS.map(c => `${c.emoji} ${c.label}`);
   const data = TIME_CATS.map(c => totals[c.key]);
@@ -12190,7 +12220,7 @@ function renderTimeDonutChart() {
   if (timeDonutChart) timeDonutChart.destroy();
   if (grand === 0) {
     wrap.innerHTML = `<canvas id="timeDonutChart"></canvas>`;
-    _emptyDonutPlaceholder(wrap, "Aucune heure<br>sur 30 jours");
+    _emptyDonutPlaceholder(wrap, "Aucune heure<br>sur cette période");
     return;
   }
   timeDonutChart = new Chart(document.getElementById("timeDonutChart"), {
