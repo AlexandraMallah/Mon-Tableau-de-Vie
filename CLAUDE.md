@@ -48,7 +48,7 @@ Alexandra Mallah, postdoctorante en géographie (UPHF), française. Ce dashboard
 - **URL live** : https://alexandramallah.github.io/Mon-Tableau-de-Vie/
 - **Repo GitHub** : https://github.com/AlexandraMllh/Mon-Tableau-de-Vie
 - **Fichier de travail** : `/Users/alexandramallah/Documents/Mon-Tableau-de-Vie/index.html`
-- **Version actuelle** : v256 (dans le `<title>`)
+- **Version actuelle** : v433 (dans le `<title>`)
 - **Taille** : ~12000 lignes
 
 ---
@@ -306,6 +306,7 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 - `controllerchange` → `window.location.href = '/Mon-Tableau-de-Vie/?_r=' + Date.now()` (PAS `location.reload()` — ne marche pas en PWA Samsung)
 - Cache avec `ignoreSearch: true` au fallback (gère `?_cb=timestamp`)
 - `_noteFlushToLocalStorage()` appelé avant tout reload
+- **`index.html` exclu du précache** (`ASSETS` dans `sw.js`) — sinon le SW stocke une version périmée pendant l'install et la sert même après activation. `index.html` est toujours fetché avec `cache: 'no-cache'` dans le handler fetch.
 
 ### Icônes PWA
 - `apple-touch-icon` dans `<head>` pour iOS (pas le manifest)
@@ -332,6 +333,7 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 | Icône PWA pas mise à jour | iOS lit `apple-touch-icon` dans `<head>`, pas le manifest. Renommer le fichier icône à chaque changement. |
 | Notes perdues au rechargement SW | `_noteFlushToLocalStorage()` + `pagehide` listener |
 | SW bloqué en cache HTTP | `{ updateViaCache: 'none' }` + `reg.update()` |
+| SW sert une vieille version après mise à jour | `index.html` exclu du précache dans `sw.js` — il ne faut JAMAIS l'ajouter dans `ASSETS` |
 
 ---
 
