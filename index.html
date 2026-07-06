@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v434</title>
+<title>Mon Tableau de Vie 🌿 · v435</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2725,7 +2725,12 @@
     </div>
     <div class="card" id="externalCard" style="margin-bottom:18px;display:none;">
       <div class="card-row" style="margin-bottom:10px;">
-        <h2 style="margin:0;">🧾 Hors compte — ce mois</h2>
+        <h2 style="margin:0;">🧾 Hors compte</h2>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button onclick="externalNav(-1)" style="background:none;border:1px solid var(--line);border-radius:8px;padding:3px 10px;cursor:pointer;font-size:15px;">◀</button>
+          <span id="externalMonthLabel" style="font-size:13px;color:var(--ink-soft);min-width:80px;text-align:center;"></span>
+          <button id="externalNavNext" onclick="externalNav(1)" style="background:none;border:1px solid var(--line);border-radius:8px;padding:3px 10px;cursor:pointer;font-size:15px;">▶</button>
+        </div>
         <span id="externalTotal" style="font-size:14px;font-weight:700;color:var(--ink-soft);"></span>
       </div>
       <p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">Ces dépenses ne passent pas par ton compte courant — elles n'impactent pas la jauge budget.</p>
@@ -8799,12 +8804,27 @@ function setTxType(t) {
   populateTxCategories();
 }
 function renderMoney() { populateTxCategories(); populateMissionList(); renderMoneySummary(); renderBudgetGauge(); renderExternalSummary(); renderTxList(); renderReimbursable(); renderSavings(); renderAccounts(); renderForecast(); renderDailyExpenseChart(); }
+let _externalMonthOffset = 0;
+function externalNav(delta) {
+  _externalMonthOffset = Math.min(0, _externalMonthOffset + delta);
+  renderExternalSummary();
+}
 function renderExternalSummary() {
   const card = document.getElementById("externalCard");
   const listEl = document.getElementById("externalList");
   const totalEl = document.getElementById("externalTotal");
   if (!card || !listEl) return;
-  const [start, end] = currentMonthRange();
+  // Plage du mois selon offset
+  const now = new Date();
+  const first = new Date(now.getFullYear(), now.getMonth() + _externalMonthOffset, 1);
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + _externalMonthOffset + 1, 0);
+  const start = first;
+  const end = new Date(lastDay.getFullYear(), lastDay.getMonth(), lastDay.getDate() + 1);
+  // Label mois
+  const labelEl = document.getElementById("externalMonthLabel");
+  if (labelEl) labelEl.textContent = first.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const nextBtn = document.getElementById("externalNavNext");
+  if (nextBtn) nextBtn.disabled = _externalMonthOffset >= 0;
   const txs = state.transactions.filter(tx => {
     const d = new Date(tx.date);
     return tx.type === "external" && d >= start && d < end;
