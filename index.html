@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v439</title>
+<title>Mon Tableau de Vie 🌿 · v441</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2130,14 +2130,22 @@
         <div class="chart-wrap" style="height:260px;"><canvas id="timeBarChart"></canvas></div>
       </div>
       <div class="card">
-        <div class="card-row" style="margin-bottom:10px;">
-          <h2 style="margin:0;" id="timeDonutTitle">Répartition sur 30 jours</h2>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <button onclick="timeDonutNav(-1)" style="background:none;border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;color:var(--ink-soft);">◀</button>
-            <button onclick="timeDonutNav(1)" id="timeDonutNext" style="background:none;border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;color:var(--ink-soft);">▶</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div>
+            <div class="card-row" style="margin-bottom:8px;">
+              <h2 style="margin:0;font-size:14px;" id="timeDonutTitle">Sur 30 jours</h2>
+              <div style="display:flex;gap:4px;align-items:center;">
+                <button onclick="timeDonutNav(-1)" style="background:none;border:1px solid var(--border);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;color:var(--ink-soft);">◀</button>
+                <button onclick="timeDonutNav(1)" id="timeDonutNext" style="background:none;border:1px solid var(--border);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;color:var(--ink-soft);">▶</button>
+              </div>
+            </div>
+            <div class="chart-wrap" style="height:220px;"><canvas id="timeDonutChart"></canvas></div>
+          </div>
+          <div>
+            <h2 style="margin:0 0 8px;font-size:14px;">Depuis toujours</h2>
+            <div class="chart-wrap" style="height:220px;"><canvas id="timeDonutAllChart"></canvas></div>
           </div>
         </div>
-        <div class="chart-wrap" style="height:240px;"><canvas id="timeDonutChart"></canvas></div>
       </div>
     </div>
 
@@ -11950,7 +11958,7 @@ const TIME_CATS = [
   { key: "candidatures", label: "Candidatures", emoji: "📋", color: "#72c4a2", bg: "#e6f7f1" },
   { key: "autre",        label: "Autre",        emoji: "🔧", color: "#f5c842", bg: "#fdf6d8" },
 ];
-let timeBarChart, timeDonutChart;
+let timeBarChart, timeDonutChart, timeDonutAllChart;
 let _timeDonutOffset = 0; // 0 = 30 derniers jours, -1 = période précédente, etc.
 
 function getTimeDateKey() {
@@ -12026,6 +12034,16 @@ function renderTimeView() {
   renderTimeStatsMonth();
   renderTimeBarChart();
   renderTimeDonutChart();
+  renderTimeDonutAllChart();
+}
+function _sumWorkTimeAll() {
+  const totals = {};
+  for (const c of TIME_CATS) totals[c.key] = 0;
+  for (const key of Object.keys(state.history)) {
+    const wt = getWorkTime(key);
+    for (const c of TIME_CATS) totals[c.key] += Number(wt[c.key]) || 0;
+  }
+  return totals;
 }
 function _sumWorkTime(dates) {
   const totals = {};
@@ -12224,6 +12242,35 @@ function renderTimeDonutChart() {
     return;
   }
   timeDonutChart = new Chart(document.getElementById("timeDonutChart"), {
+    type: "doughnut",
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] },
+    options: {
+      ...baseChartOpts(), cutout: "60%",
+      plugins: { ...baseChartOpts().plugins,
+        legend: { position: "right", labels: { color: "#8a8499", font: { size: 12 }, boxWidth: 10, boxHeight: 10, usePointStyle: true, padding: 10 } },
+        tooltip: { ...baseChartOpts().plugins.tooltip,
+          callbacks: { label: ctx => ctx.label + ": " + ctx.parsed.toFixed(1).replace(".", ",") + " h (" + Math.round(ctx.parsed/grand*100) + "%)" },
+        },
+      },
+    },
+  });
+}
+function renderTimeDonutAllChart() {
+  const canvas = document.getElementById("timeDonutAllChart");
+  if (!canvas) return;
+  const wrap = canvas.parentElement;
+  const totals = _sumWorkTimeAll();
+  const labels = TIME_CATS.map(c => `${c.emoji} ${c.label}`);
+  const data = TIME_CATS.map(c => totals[c.key]);
+  const colors = TIME_CATS.map(c => c.color);
+  const grand = data.reduce((s, v) => s + v, 0);
+  if (timeDonutAllChart) timeDonutAllChart.destroy();
+  if (grand === 0) {
+    wrap.innerHTML = `<canvas id="timeDonutAllChart"></canvas>`;
+    _emptyDonutPlaceholder(wrap, "Aucune heure<br>enregistrée");
+    return;
+  }
+  timeDonutAllChart = new Chart(document.getElementById("timeDonutAllChart"), {
     type: "doughnut",
     data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] },
     options: {
