@@ -1,14 +1,13 @@
 // Service Worker — Mon Tableau de Vie
-const CACHE = "mon-tableau-v1783331374";
+const CACHE = "mon-tableau-v1783332385";
+// index.html exclu du précache — toujours servi network-first avec no-cache
 const ASSETS = [
-  "/Mon-Tableau-de-Vie/",
-  "/Mon-Tableau-de-Vie/index.html",
   "/Mon-Tableau-de-Vie/manifest.json",
   "/Mon-Tableau-de-Vie/icon-192.png",
   "/Mon-Tableau-de-Vie/icon-512.png"
 ];
 
-// Installation : mise en cache des ressources principales
+// Installation : mise en cache des ressources statiques (pas index.html)
 self.addEventListener("install", e => {
   e.waitUntil(
     caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
