@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v442</title>
+<title>Mon Tableau de Vie 🌿 · v444</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9939,21 +9939,20 @@ function renderMonthComparison() {
   const el = document.getElementById("monthCompareBody");
   const lbl = document.getElementById("monthCompareLabel");
   if (!el) return;
-  const now = new Date();
-  const mThis  = new Date(now.getFullYear(), now.getMonth(), 1);
-  const mPrev  = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const mPrev2 = new Date(now.getFullYear(), now.getMonth(), 1); // fin mois précédent
+  const [mThis, mThis2] = currentMonthRange();
+  const mPrev  = new Date(mThis.getFullYear(), mThis.getMonth() - 1, 26);
+  const mPrev2 = new Date(mThis);
   const sum = (from, to, type) =>
     state.transactions.filter(t => { const d = new Date(t.date); return d >= from && d < to && t.type === type; })
     .reduce((s, t) => s + t.amount, 0);
-  const nowLabel   = mThis.toLocaleDateString("fr-FR", { month:"long" });
-  const prevLabel  = mPrev.toLocaleDateString("fr-FR", { month:"long" });
+  const nowLabel  = new Date(mThis.getFullYear(), mThis.getMonth() + 1, 1).toLocaleDateString("fr-FR", { month:"long" });
+  const prevLabel = new Date(mThis.getFullYear(), mThis.getMonth(), 1).toLocaleDateString("fr-FR", { month:"long" });
   if (lbl) lbl.textContent = `${prevLabel} → ${nowLabel}`;
   const rows = [
-    { label: "Dépenses",  icon: "−", colorN: "#c75b4d", n: sum(mThis, new Date(now.getFullYear(), now.getMonth()+1, 1), "expense"), p: sum(mPrev, mPrev2, "expense") },
-    { label: "Revenus",   icon: "+", colorN: "#4d9c7e", n: sum(mThis, new Date(now.getFullYear(), now.getMonth()+1, 1), "income"),  p: sum(mPrev, mPrev2, "income") },
-    { label: "Épargne",   icon: "💰", colorN: "#7c5cbf", n: sum(mThis, new Date(now.getFullYear(), now.getMonth()+1, 1), "savings"), p: sum(mPrev, mPrev2, "savings") },
-    { label: "Hors cpt.", icon: "🧾", colorN: "#c08a4d", n: sum(mThis, new Date(now.getFullYear(), now.getMonth()+1, 1), "external"), p: sum(mPrev, mPrev2, "external") },
+    { label: "Dépenses",  icon: "−", colorN: "#c75b4d", n: sum(mThis, mThis2, "expense"),  p: sum(mPrev, mPrev2, "expense") },
+    { label: "Revenus",   icon: "+", colorN: "#4d9c7e", n: sum(mThis, mThis2, "income"),   p: sum(mPrev, mPrev2, "income") },
+    { label: "Épargne",   icon: "💰", colorN: "#7c5cbf", n: sum(mThis, mThis2, "savings"),  p: sum(mPrev, mPrev2, "savings") },
+    { label: "Hors cpt.", icon: "🧾", colorN: "#c08a4d", n: sum(mThis, mThis2, "external"), p: sum(mPrev, mPrev2, "external") },
   ];
   el.innerHTML = rows.map(r => {
     const diff = r.n - r.p;
