@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v444</title>
+<title>Mon Tableau de Vie 🌿 · v446</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -8823,15 +8823,13 @@ function renderExternalSummary() {
   const listEl = document.getElementById("externalList");
   const totalEl = document.getElementById("externalTotal");
   if (!card || !listEl) return;
-  // Plage du mois selon offset
-  const now = new Date();
-  const first = new Date(now.getFullYear(), now.getMonth() + _externalMonthOffset, 1);
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + _externalMonthOffset + 1, 0);
-  const start = first;
-  const end = new Date(lastDay.getFullYear(), lastDay.getMonth(), lastDay.getDate() + 1);
+  // Plage du mois selon offset (cycle 26-25)
+  const [s0, e0] = currentMonthRange();
+  const start = new Date(s0.getFullYear(), s0.getMonth() + _externalMonthOffset, 26);
+  const end   = new Date(e0.getFullYear(), e0.getMonth() + _externalMonthOffset, 26);
   // Label mois
   const labelEl = document.getElementById("externalMonthLabel");
-  if (labelEl) labelEl.textContent = first.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  if (labelEl) labelEl.textContent = end.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   const nextBtn = document.getElementById("externalNavNext");
   if (nextBtn) nextBtn.disabled = _externalMonthOffset >= 0;
   const txs = state.transactions.filter(tx => {
@@ -10311,12 +10309,13 @@ function renderForecast() {
   const now = new Date();
   const N_MAX = 6; // on regarde au max 6 mois en arrière
 
-  // Construire les plages des N_MAX derniers mois complets
+  // Construire les plages des N_MAX derniers cycles 26-25 complets
+  const [s0, e0] = currentMonthRange();
   const allMonths = [];
   for (let i = N_MAX; i >= 1; i--) {
-    const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const end   = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-    allMonths.push({ start, end, label: start.toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }) });
+    const start = new Date(s0.getFullYear(), s0.getMonth() - i, 26);
+    const end   = new Date(e0.getFullYear(), e0.getMonth() - i, 26);
+    allMonths.push({ start, end, label: end.toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }) });
   }
 
   // Garder uniquement les mois ayant au moins une dépense
@@ -10376,8 +10375,7 @@ function renderForecast() {
     : { label: "faible", color: "#94a3b8", bg: "#f1f5f9" };
 
   // Label mois prochain
-  const nextMonthLabel = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-    .toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const nextMonthLabel = e0.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   const periodLabel = n > 1
     ? `${usedMonths[0].label} → ${usedMonths[n - 1].label}`
     : usedMonths[0].label;
