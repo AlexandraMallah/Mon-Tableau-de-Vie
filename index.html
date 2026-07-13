@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v451</title>
+<title>Mon Tableau de Vie 🌿 · v453</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2129,6 +2129,14 @@
         <h2>14 derniers jours</h2>
         <div class="chart-wrap" style="height:260px;"><canvas id="timeBarChart"></canvas></div>
       </div>
+      <div class="card" style="margin-bottom:18px;">
+        <details>
+          <summary style="cursor:pointer;font-size:14px;font-weight:600;color:var(--ink);list-style:none;display:flex;align-items:center;gap:6px;">
+            <span>📅 Jours fériés & jours non travaillés</span>
+          </summary>
+          <div id="holidaysCardContent" style="margin-top:12px;"></div>
+        </details>
+      </div>
       <div class="card">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
           <div>
@@ -4227,6 +4235,7 @@ function migrate(s) {
   if (typeof s.accounts.courantStart !== "number") s.accounts.courantStart = 0;
   if (typeof s.accounts.epargneStart !== "number") s.accounts.epargneStart = 0;
   if (typeof s.accounts.monthlyBudget !== "number") s.accounts.monthlyBudget = 0;
+  s.customHolidays = s.customHolidays || [];
   s.calEvents = s.calEvents || [];
   s.calSources = s.calSources || [];
   s.googleCal = s.googleCal || { url: "", lastSync: null };
@@ -12032,6 +12041,7 @@ function renderTimeView() {
   renderTimeBarChart();
   renderTimeDonutChart();
   renderTimeDonutAllChart();
+  renderHolidaysCard();
 }
 function _sumWorkTimeAll() {
   const totals = {};
@@ -12133,6 +12143,113 @@ function renderTimeStatsWeek() {
   const nextBtn = document.getElementById("timeWeekNext");
   if (nextBtn) nextBtn.disabled = _timeWeekOffset >= 0; // pas de futur
 }
+/* ===== JOURS FÉRIÉS ===== */
+function _easterDate(y) {
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100;
+  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(y, month - 1, day);
+}
+function _joursFeriesFR(y) {
+  const easter = _easterDate(y);
+  const add = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const fmt = d => d.toISOString().slice(0, 10);
+  return new Set([
+    `${y}-01-01`, // Jour de l'An
+    fmt(add(easter, 1)),  // Lundi de Pâques
+    `${y}-05-01`, // Fête du Travail
+    `${y}-05-08`, // Victoire 1945
+    fmt(add(easter, 39)), // Ascension
+    fmt(add(easter, 50)), // Lundi de Pentecôte
+    `${y}-07-14`, // Fête Nationale
+    `${y}-08-15`, // Assomption
+    `${y}-11-01`, // Toussaint
+    `${y}-11-11`, // Armistice
+    `${y}-12-25`, // Noël
+  ]);
+}
+function _isHoliday(dk) {
+  const y = parseInt(dk.slice(0, 4));
+  if (_isHoliday._cache?.[y]?.has(dk)) return true;
+  if (!_isHoliday._cache) _isHoliday._cache = {};
+  if (!_isHoliday._cache[y]) _isHoliday._cache[y] = _joursFeriesFR(y);
+  return _isHoliday._cache[y].has(dk) || (state.customHolidays || []).includes(dk);
+}
+function _holidayName(dk) {
+  const y = parseInt(dk.slice(0, 4));
+  const easter = _easterDate(y);
+  const fmt = d => d.toISOString().slice(0, 10);
+  const add = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const names = {
+    [`${y}-01-01`]: "Jour de l'An",
+    [fmt(add(easter, 1))]: "Lundi de Pâques",
+    [`${y}-05-01`]: "Fête du Travail",
+    [`${y}-05-08`]: "Victoire 1945",
+    [fmt(add(easter, 39))]: "Ascension",
+    [fmt(add(easter, 50))]: "Lundi de Pentecôte",
+    [`${y}-07-14`]: "Fête Nationale",
+    [`${y}-08-15`]: "Assomption",
+    [`${y}-11-01`]: "Toussaint",
+    [`${y}-11-11`]: "Armistice",
+    [`${y}-12-25`]: "Noël",
+  };
+  return names[dk] || "Personnalisé";
+}
+function addCustomHoliday() {
+  const input = document.getElementById("customHolidayInput");
+  const dk = input?.value;
+  if (!dk) return;
+  if (!state.customHolidays) state.customHolidays = [];
+  if (!state.customHolidays.includes(dk)) {
+    state.customHolidays.push(dk);
+    saveState();
+    _isHoliday._cache = {}; // invalider le cache
+  }
+  input.value = "";
+  renderHolidaysCard();
+}
+function removeCustomHoliday(dk) {
+  state.customHolidays = (state.customHolidays || []).filter(d => d !== dk);
+  saveState();
+  _isHoliday._cache = {};
+  renderHolidaysCard();
+}
+function renderHolidaysCard() {
+  const el = document.getElementById("holidaysCardContent");
+  if (!el) return;
+  const y = new Date().getFullYear();
+  const feries = _joursFeriesFR(y);
+  const feriesList = [...feries].sort().map(dk => {
+    const d = new Date(dk).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;color:var(--ink-soft);">
+      <span>📅 ${d} — ${_holidayName(dk)}</span>
+    </div>`;
+  }).join("");
+  const custom = (state.customHolidays || []).sort().map(dk => {
+    const d = new Date(dk).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;color:var(--ink);">
+      <span>✏️ ${d}</span>
+      <button onclick="removeCustomHoliday('${dk}')" style="background:none;border:none;cursor:pointer;font-size:12px;color:#c75b4d;padding:2px 6px;">✕</button>
+    </div>`;
+  }).join("");
+  el.innerHTML = `
+    <div style="margin-bottom:10px;">
+      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 6px;">Jours fériés français ${y} (automatiques)</p>
+      ${feriesList}
+    </div>
+    ${custom ? `<div style="margin-bottom:10px;border-top:1px solid var(--line);padding-top:8px;">
+      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 6px;">Jours ajoutés manuellement</p>
+      ${custom}
+    </div>` : ""}
+    <div style="display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);padding-top:10px;">
+      <input type="date" id="customHolidayInput" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+      <button onclick="addCustomHoliday()" class="btn-soft" style="font-size:13px;padding:6px 12px;">+ Ajouter</button>
+    </div>`;
+}
 function renderTimeStatsMonth() {
   const t = document.getElementById("timeMonthStats");
   if (!t) return;
@@ -12142,15 +12259,21 @@ function renderTimeStatsMonth() {
   let d0 = new Date(dates[0]);
   const dow0 = (d0.getDay() + 6) % 7; // 0=lundi
   if (dow0 > 0) d0.setDate(d0.getDate() + (7 - dow0)); // premier lundi dans la période
-  let completedWeeks = 0, weeklyHours = 0;
+  let completedWeeks = 0, weeklyHoursNorm = 0;
   while (true) {
     const week = Array.from({ length: 7 }, (_, i) => { const x = new Date(d0); x.setDate(d0.getDate() + i); return todayKey(x); });
     if (!week.every(dk => dateSet.has(dk))) break;
     completedWeeks++;
-    for (const dk of week) { const wt = getWorkTime(dk); for (const c of TIME_CATS) weeklyHours += Number(wt[c.key]) || 0; }
+    // Heures réelles de la semaine
+    let hoursThisWeek = 0;
+    for (const dk of week) { const wt = getWorkTime(dk); for (const c of TIME_CATS) hoursThisWeek += Number(wt[c.key]) || 0; }
+    // Jours fériés en semaine (lun-ven) → jours ouvrés effectifs
+    const holidays = week.filter(dk => { const dow = new Date(dk).getDay(); return dow >= 1 && dow <= 5 && _isHoliday(dk); }).length;
+    const workingDays = Math.max(1, 5 - holidays);
+    weeklyHoursNorm += hoursThisWeek / workingDays * 5; // ramener à l'équivalent 5j
     d0.setDate(d0.getDate() + 7);
   }
-  const note = completedWeeks > 0 ? `≈ ${(weeklyHours / completedWeeks).toFixed(1).replace(".", ",")} h/sem.` : "";
+  const note = completedWeeks > 0 ? `≈ ${(weeklyHoursNorm / completedWeeks).toFixed(1).replace(".", ",")} h/sem.` : "";
   _renderTimeStats(t, dates, _timeMonthOffset === 0 ? "ce mois" : "ce mois-là", note);
   // Titre + bouton suivant
   const title = document.getElementById("timeMonthTitle");
