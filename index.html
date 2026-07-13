@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v449</title>
+<title>Mon Tableau de Vie 🌿 · v451</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2142,7 +2142,7 @@
             <div class="chart-wrap" style="height:220px;"><canvas id="timeDonutChart"></canvas></div>
           </div>
           <div>
-            <h2 style="margin:0 0 8px;font-size:14px;">Depuis toujours</h2>
+            <h2 style="margin:0 0 8px;font-size:14px;" id="timeDonutAllTitle">Depuis toujours</h2>
             <div class="chart-wrap" style="height:220px;"><canvas id="timeDonutAllChart"></canvas></div>
           </div>
         </div>
@@ -12266,6 +12266,16 @@ function renderTimeDonutAllChart() {
   const canvas = document.getElementById("timeDonutAllChart");
   if (!canvas) return;
   const wrap = canvas.parentElement;
+  // Trouver la première date avec du temps de travail
+  const allKeys = Object.keys(state.history).filter(k => {
+    const wt = getWorkTime(k);
+    return TIME_CATS.some(c => Number(wt[c.key]) > 0);
+  }).sort();
+  const titleEl = document.getElementById("timeDonutAllTitle");
+  if (titleEl && allKeys.length) {
+    const firstDate = new Date(allKeys[0]).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+    titleEl.textContent = `Depuis le ${firstDate}`;
+  }
   const totals = _sumWorkTimeAll();
   const labels = TIME_CATS.map(c => `${c.emoji} ${c.label}`);
   const data = TIME_CATS.map(c => totals[c.key]);
