@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v459</title>
+<title>Mon Tableau de Vie 🌿 · v461</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -8317,6 +8317,31 @@ function renderBodyChart(metric) {
       scales: {
         x: { grid: { display: false }, ticks: { color: "#8a8499", maxTicksLimit: 6 } },
         y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " " + cfg.unit }, min: cfg.min, max: cfg.max },
+      },
+      plugins: {
+        ...baseChartOpts().plugins,
+        tooltip: {
+          ...baseChartOpts().plugins.tooltip,
+          callbacks: {
+            title: ctx => ctx[0].label,
+            label: () => null,
+            afterBody: ctx => {
+              const dk = todayKey(dates[ctx[0].dataIndex]);
+              const h = state.history[dk] || {};
+              const lines = [];
+              if (h.weight) lines.push(`⚖️ Poids : ${h.weight} kg`);
+              if (h.bodyFat) {
+                const pct = h.weight ? ` (${(h.bodyFat/h.weight*100).toFixed(1)}%)` : "";
+                lines.push(`🟠 Masse grasse : ${h.bodyFat} kg${pct}`);
+              }
+              if (h.muscleMass) {
+                const pct = h.weight ? ` (${(h.muscleMass/h.weight*100).toFixed(1)}%)` : "";
+                lines.push(`🟢 Masse maigre : ${h.muscleMass} kg${pct}`);
+              }
+              return lines.length ? lines : ["Pas de données"];
+            },
+          },
+        },
       },
     },
   });
