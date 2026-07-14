@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v453</title>
+<title>Mon Tableau de Vie 🌿 · v455</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2537,8 +2537,8 @@
         <div style="background:#faf8fd;padding:12px;border-radius:14px;margin-bottom:14px;">
           <div class="health-inputs-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
             <input type="number" id="weightInput" placeholder="Poids (kg)" step="0.1" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
-            <input type="number" id="bodyFatInput" placeholder="M. grasse (%)" step="0.1" max="100" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
-            <input type="number" id="muscleMassInput" placeholder="M. maigre (%)" step="0.1" max="100" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+            <input type="number" id="bodyFatInput" placeholder="M. grasse (kg)" step="0.1" max="40" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+            <input type="number" id="muscleMassInput" placeholder="M. maigre (kg)" step="0.1" max="60" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
           </div>
           <div class="health-date-row" style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;">
             <label style="font-size:13px;color:var(--ink-soft);">📅 Date :</label>
@@ -7456,8 +7456,8 @@ function switchBodyMetric(metric) {
 }
 const METRIC_CONFIG = {
   weight: { label: "Poids", unit: "kg", color: "#b4d4f1", bg: "rgba(180,212,241,0.18)", min: 45, max: 65 },
-  bodyFat: { label: "Masse grasse", unit: "%", color: "#f5b6c9", bg: "rgba(245,182,201,0.18)", min: 0, max: 25 },
-  muscleMass: { label: "Masse maigre", unit: "%", color: "#aee0c8", bg: "rgba(174,224,200,0.18)", min: 0, max: 60 },
+  bodyFat: { label: "Masse grasse", unit: "kg", color: "#f5b6c9", bg: "rgba(245,182,201,0.18)", min: 0, max: 40 },
+  muscleMass: { label: "Masse maigre", unit: "kg", color: "#aee0c8", bg: "rgba(174,224,200,0.18)", min: 20, max: 60 },
 };
 function findRecentMetric(metric, daysAgo) {
   const target = new Date(); target.setDate(target.getDate() - daysAgo);
@@ -8511,8 +8511,8 @@ const TREND_METRICS = [
   { key: "sleep",      label: "Sommeil",        unit: "h",   color: "#c9b6f0", goalDir: "up"   },
   { key: "energy",     label: "Énergie",        unit: "/5",  color: "#aee0c8", goalDir: "up"   },
   { key: "mood",       label: "Humeur",         unit: "/5",  color: "#f7c9a3", goalDir: "up"   },
-  { key: "bodyFat",    label: "Masse grasse",   unit: "%",   color: "#f5b6c9", goalDir: "down" },
-  { key: "muscleMass", label: "Masse maigre",   unit: "%",   color: "#aee0c8", goalDir: "up"   },
+  { key: "bodyFat",    label: "Masse grasse",   unit: "kg",  color: "#f5b6c9", goalDir: "down" },
+  { key: "muscleMass", label: "Masse maigre",   unit: "kg",  color: "#aee0c8", goalDir: "up"   },
 ];
 
 function linReg(points) {
@@ -15966,7 +15966,7 @@ function applyPatch(p) {
     if (dailyData.sleep !== undefined) { t.sleep = dailyData.sleep; summary.push(`Sommeil : ${dailyData.sleep} h`); }
     if (dailyData.energy !== undefined) { t.energy = dailyData.energy; summary.push(`Énergie : ${dailyData.energy}/5`); }
     if (dailyData.weight !== undefined) { t.weight = dailyData.weight; summary.push(`Poids : ${dailyData.weight} kg`); }
-    if (dailyData.bodyFat !== undefined) { t.bodyFat = dailyData.bodyFat; summary.push(`Masse grasse : ${dailyData.bodyFat} %`); }
+    if (dailyData.bodyFat !== undefined) { t.bodyFat = dailyData.bodyFat; summary.push(`Masse grasse : ${dailyData.bodyFat} kg`); }
     if (dailyData.muscleMass !== undefined) { t.muscleMass = dailyData.muscleMass; summary.push(`Masse musculaire : ${dailyData.muscleMass} kg`); }
     if (dailyData.steps !== undefined) {
       const stepsH = getStepsHabit();
