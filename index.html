@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v457</title>
+<title>Mon Tableau de Vie 🌿 · v459</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7488,8 +7488,23 @@ function renderHealth() {
     }
   };
   renderMetric("weight", "Today", "kg");
-  renderMetric("bodyFat", "Today", "kg");
-  renderMetric("muscleMass", "Today", "kg");
+  // Masse grasse et maigre : afficher kg + % calculé depuis le poids du jour
+  const w = today.weight;
+  ["bodyFat", "muscleMass"].forEach(key => {
+    const elToday = document.getElementById(key + "Today");
+    const elTrend = document.getElementById(key + "Trend");
+    if (!elToday) return;
+    const cur = today[key];
+    const pct = (cur && w) ? ` <span style="font-size:11px;color:var(--ink-soft);font-weight:400;">(${(cur/w*100).toFixed(1)}%)</span>` : "";
+    elToday.innerHTML = cur ? `${cur}<span class="stat-unit">kg</span>${pct}` : "—";
+    if (!elTrend) return;
+    const old = findRecentMetric(key, 30);
+    if (cur && old) {
+      const diff = (cur - old).toFixed(1);
+      const sign = diff > 0 ? "+" : "";
+      elTrend.textContent = `${sign}${diff} kg vs 30j`;
+    } else { elTrend.textContent = ""; }
+  });
   renderWater();
   renderStepsStats();
   renderSkincare();
