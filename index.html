@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v465</title>
+<title>Mon Tableau de Vie 🌿 · v466</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -12424,7 +12424,14 @@ function renderTimeDonutChart() {
       plugins: { ...baseChartOpts().plugins,
         legend: { position: "right", labels: { color: "#8a8499", font: { size: 12 }, boxWidth: 10, boxHeight: 10, usePointStyle: true, padding: 10 } },
         tooltip: { ...baseChartOpts().plugins.tooltip,
-          callbacks: { label: ctx => ctx.label + ": " + ctx.parsed.toFixed(1).replace(".", ",") + " h (" + Math.round(ctx.parsed/grand*100) + "%)" },
+          callbacks: {
+            label: ctx => ctx.label + " : " + ctx.parsed.toFixed(1).replace(".", ",") + " h (" + Math.round(ctx.parsed/grand*100) + "%)",
+            afterLabel: ctx => {
+              const nbWeeks = dates.length / 7;
+              const hSem = ctx.parsed / nbWeeks;
+              return "≈ " + hSem.toFixed(1).replace(".", ",") + " h/sem. sur la période";
+            },
+          },
         },
       },
     },
