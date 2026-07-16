@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v464</title>
+<title>Mon Tableau de Vie 🌿 · v465</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -12170,9 +12170,9 @@ function renderTimeStatsWeek() {
   // Moyenne par jour = total / jours ouvrés non fériés écoulés
   const grand = Object.values(_sumWorkTime(dates)).reduce((s, v) => s + v, 0);
   const workedDays = dates.filter(dk => {
-    const d = typeof dk === "string" ? new Date(dk) : dk;
-    const key = typeof dk === "string" ? dk : todayKey(dk);
-    return d.getDay() >= 1 && d.getDay() <= 5 && !_isHoliday(key);
+    const key = todayKey(dk instanceof Date ? dk : new Date(dk));
+    const dow = new Date(key).getDay();
+    return dow >= 1 && dow <= 5 && !_isHoliday(key);
   }).length;
   const perDay = workedDays ? grand / workedDays : 0;
   const note = grand > 0 ? `≈ ${perDay.toFixed(1).replace(".", ",")} h/j` : "";
