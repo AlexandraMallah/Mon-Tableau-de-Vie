@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v476</title>
+<title>Mon Tableau de Vie 🌿 · v477</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4282,6 +4282,7 @@ function migrate(s) {
   s.subscriptions = s.subscriptions || [];
   s.accounts = s.accounts || { courantStart: 0, epargneStart: 0 };
   s.accounts.savingsBreakdown = s.accounts.savingsBreakdown || {};
+  s.savingsLocked = s.savingsLocked || {};
   if (typeof s.accounts.courantStart !== "number") s.accounts.courantStart = 0;
   if (typeof s.accounts.epargneStart !== "number") s.accounts.epargneStart = 0;
   if (typeof s.accounts.monthlyBudget !== "number") s.accounts.monthlyBudget = 0;
@@ -8826,7 +8827,8 @@ function _activeTxCatList() {
   const isPro = document.getElementById("txReimbursable")?.checked && txType === "expense";
   if (isPro) return null;
   if (txType === "income") return state.incomeCategories;
-  if (txType === "savings" || txType === "savings-out") return state.savingsCategories;
+  if (txType === "savings") return state.savingsCategories;
+  if (txType === "savings-out") return (state.savingsCategories || []).filter(c => !(state.savingsLocked || {})[c]);
   return state.categories; // dépense + hors compte
 }
 function _txCatExtraOptions() {
@@ -8872,7 +8874,8 @@ function _refreshModalCategories(isPro) {
   const isExpense = (txModalType === "expense" || txModalType === "external");
   const list = (isPro && isExpense) ? PRO_CATEGORIES
              : txModalType === "income" ? state.incomeCategories
-             : (txModalType === "savings" || txModalType === "savings-out") ? state.savingsCategories
+             : txModalType === "savings" ? state.savingsCategories
+             : txModalType === "savings-out" ? (state.savingsCategories || []).filter(c => !(state.savingsLocked || {})[c])
              : state.categories;
   const prev = sel.value;
   sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
@@ -10132,22 +10135,34 @@ function renderSavings() {
   if (!el || cats.length === 0) return;
   const maxBal = Math.max(...Object.values(balByCat), 1);
   const COLORS = ["#9b72d4","#5bbcb8","#f5a623","#4a90d9","#e07bbd","#7cba6d"];
+  const lockedMap = state.savingsLocked || {};
   el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:4px;">` +
     cats.map((cat, i) => {
       const bal = balByCat[cat] || 0;
       const pct = Math.max(0, Math.round(bal / maxBal * 100));
       const color = COLORS[i % COLORS.length];
+      const locked = !!lockedMap[cat];
       const startVal = (breakdown[cat] !== undefined) ? breakdown[cat] : (cat === defaultCat ? (state.accounts.epargneStart || 0) : 0);
-      return `<div style="display:grid;grid-template-columns:90px 1fr 90px 28px;align-items:center;gap:8px;">
+      return `<div style="display:grid;grid-template-columns:90px 1fr 90px 52px;align-items:center;gap:8px;">
         <span style="font-size:12.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(cat)}</span>
         <div style="height:6px;background:var(--line);border-radius:3px;overflow:hidden;">
           <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;transition:width .4s;"></div>
         </div>
         <span style="font-size:13px;font-weight:700;color:${color};text-align:right;font-variant-numeric:tabular-nums;">${bal.toFixed(0)} €</span>
-        <button onclick="editSavingsStart('${escapeHtml(cat)}')" title="Modifier le solde initial" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.45;padding:0;line-height:1;">✏️</button>
+        <div style="display:flex;gap:2px;">
+          <button onclick="editSavingsStart('${escapeHtml(cat)}')" title="Modifier le solde initial" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.45;padding:0;line-height:1;">✏️</button>
+          <button onclick="toggleSavingsLock('${escapeHtml(cat)}')" title="${locked ? 'Déverrouiller ce compte' : 'Verrouiller ce compte (aucun retrait possible)'}" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;line-height:1;opacity:${locked ? '1' : '0.3'};">${locked ? '🔒' : '🔓'}</button>
+        </div>
       </div>`;
     }).join("") + `</div>`;
 }
+function toggleSavingsLock(cat) {
+  if (!state.savingsLocked) state.savingsLocked = {};
+  state.savingsLocked[cat] = !state.savingsLocked[cat];
+  saveState();
+  renderSavings();
+}
+
 function editSavingsStart(cat) {
   const cur = (state.accounts.savingsBreakdown || {})[cat] || 0;
   const val = prompt(`Solde de départ pour "${cat}" (€) :\n(Utilisé pour initialiser ce compte avant le début du suivi)`, cur);
@@ -10210,10 +10225,10 @@ function toggleVirementEpargne() {
   if (isOpen) { panel.style.display = "none"; return; }
   // Populate selects
   const cats = state.savingsCategories || [];
-  ["virFrom", "virTo"].forEach(id => {
-    const sel = document.getElementById(id);
-    sel.innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
-  });
+  const locked = state.savingsLocked || {};
+  const unlocked = cats.filter(c => !locked[c]);
+  document.getElementById("virFrom").innerHTML = unlocked.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  document.getElementById("virTo").innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
   // Default: from first, to second
   if (cats.length > 1) document.getElementById("virTo").value = cats[1];
   document.getElementById("virDate").value = new Date().toISOString().slice(0, 10);
