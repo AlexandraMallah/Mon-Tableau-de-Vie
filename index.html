@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v482</title>
+<title>Mon Tableau de Vie 🌿 · v483</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4295,6 +4295,9 @@ function migrate(s) {
   s.accounts = s.accounts || { courantStart: 0, epargneStart: 0 };
   s.accounts.savingsBreakdown = s.accounts.savingsBreakdown || {};
   s.savingsLocked = s.savingsLocked || {};
+  // Migration : si la somme des soldes déclarés dépasse epargneStart, on aligne
+  const _bdSum = Object.values(s.accounts.savingsBreakdown).reduce((a, v) => a + v, 0);
+  if (_bdSum > (s.accounts.epargneStart || 0)) s.accounts.epargneStart = _bdSum;
   if (typeof s.accounts.courantStart !== "number") s.accounts.courantStart = 0;
   if (typeof s.accounts.epargneStart !== "number") s.accounts.epargneStart = 0;
   if (typeof s.accounts.monthlyBudget !== "number") s.accounts.monthlyBudget = 0;
