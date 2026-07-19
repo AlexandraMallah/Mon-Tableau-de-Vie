@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v468</title>
+<title>Mon Tableau de Vie 🌿 · v469</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3746,6 +3746,12 @@
         <input type="checkbox" id="txModalReimbursable" style="width:15px;height:15px;cursor:pointer;" onchange="toggleMissionField('txModalMissionWrap', this.checked)" />
         💼 Frais pro — remboursé par le boulot
       </label>
+      <div id="txModalDirectSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
+        🏦 Versé directement sur :
+        <select id="txModalDirectSavings" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
+          <option value="">— Compte courant (défaut)</option>
+        </select>
+      </div>
       <label id="txModalFixedChargeWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;">
         <input type="checkbox" id="txModalFixedCharge" style="width:15px;height:15px;cursor:pointer;" />
         🏠 Charge fixe
@@ -9305,7 +9311,7 @@ function balanceCourant() {
   const start = state.accounts?.courantStart || 0;
   let income = 0, expense = 0, savings = 0, savingsOut = 0;
   for (const t of state.transactions) {
-    if (t.type === "income")       income    += t.amount;
+    if (t.type === "income" && !t.directSavingsAccount) income += t.amount;
     else if (t.type === "expense") expense   += t.amount;
     else if (t.type === "savings") savings   += t.amount;
     else if (t.type === "savings-out") savingsOut += t.amount;
@@ -9314,9 +9320,10 @@ function balanceCourant() {
 }
 function balanceEpargne() {
   const start = state.accounts?.epargneStart || 0;
+  const directIncome = state.transactions.filter(t => t.type === "income" && t.directSavingsAccount).reduce((s, t) => s + t.amount, 0);
   const savings    = state.transactions.filter(t => t.type === "savings").reduce((s, t) => s + t.amount, 0);
   const savingsOut = state.transactions.filter(t => t.type === "savings-out").reduce((s, t) => s + t.amount, 0);
-  return start + savings - savingsOut;
+  return start + savings + directIncome - savingsOut;
 }
 function renderAccounts() {
   const c = balanceCourant();
@@ -9482,7 +9489,9 @@ function addTransaction() {
     const type = document.getElementById("txMissionType")?.value || "train";
     if (lieu) { addExpenseToPostdocMission(date, lieu, type, amount); postdocMission = true; }
   }
-  state.transactions.unshift({ id: "tx" + Date.now(), date, type: txType, amount, category, note, reimbursable, mission, fixedCharge, exceptional, postdocMission });
+  const directSavEl = document.getElementById("txDirectSavings");
+  const directSavingsAccount = (txType === "income" && directSavEl?.value) ? directSavEl.value : "";
+  state.transactions.unshift({ id: "tx" + Date.now(), date, type: txType, amount, category, note, reimbursable, mission, fixedCharge, exceptional, postdocMission, directSavingsAccount });
   document.getElementById("txAmount").value = "";
   document.getElementById("txNote").value = "";
   if (reimbursableEl) reimbursableEl.checked = false;
@@ -9529,6 +9538,8 @@ function openTxModal(id) {
   toggleMissionField("txModalMissionWrap", !!tx.reimbursable);
   // Recharger les catégories APRÈS avoir coché frais pro (pour afficher pro cats)
   if (tx.reimbursable) setTxModalType(txModalType, tx.category);
+  const directSavEl = document.getElementById("txModalDirectSavings");
+  if (directSavEl && tx.type === "income" && tx.directSavingsAccount) directSavEl.value = tx.directSavingsAccount;
   document.getElementById("txModal").classList.add("open");
 }
 function closeTxModal() { document.getElementById("txModal").classList.remove("open"); }
@@ -9567,6 +9578,13 @@ function setTxModalType(t, presetCategory) {
   if (modalFcWrap) modalFcWrap.style.display = showModal ? "flex" : "none";
   const modalExcWrap = document.getElementById("txModalExceptionalWrap");
   if (modalExcWrap) modalExcWrap.style.display = showModal ? "flex" : "none";
+  const directWrap = document.getElementById("txModalDirectSavingsWrap");
+  if (directWrap) directWrap.style.display = t === "income" ? "flex" : "none";
+  const directSel = document.getElementById("txModalDirectSavings");
+  if (directSel && t === "income") {
+    directSel.innerHTML = `<option value="">— Compte courant (défaut)</option>` +
+      (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  }
 }
 function saveTxFromModal() {
   const id = document.getElementById("txModalId").value;
@@ -9593,6 +9611,8 @@ function saveTxFromModal() {
   tx.fixedCharge = modalFc?.checked && (txModalType === "expense" || txModalType === "external") ? true : false;
   const modalExc = document.getElementById("txModalExceptional");
   tx.exceptional = modalExc?.checked && (txModalType === "expense" || txModalType === "external") ? true : false;
+  const directSav = document.getElementById("txModalDirectSavings");
+  tx.directSavingsAccount = (txModalType === "income" && directSav?.value) ? directSav.value : "";
   saveState();
   closeTxModal();
   renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
@@ -10045,9 +10065,9 @@ function renderSavings() {
   const defaultCat = cats.includes("LEP") ? "LEP" : (cats[0] || "LEP");
   const txDelta = {};
   state.transactions.forEach(t => {
-    if (!t.category) return;
-    if (t.type === "savings") txDelta[t.category] = (txDelta[t.category] || 0) + t.amount;
-    else if (t.type === "savings-out") txDelta[t.category] = (txDelta[t.category] || 0) - t.amount;
+    if (t.type === "savings" && t.category) txDelta[t.category] = (txDelta[t.category] || 0) + t.amount;
+    else if (t.type === "savings-out" && t.category) txDelta[t.category] = (txDelta[t.category] || 0) - t.amount;
+    else if (t.type === "income" && t.directSavingsAccount) txDelta[t.directSavingsAccount] = (txDelta[t.directSavingsAccount] || 0) + t.amount;
   });
   // epargneStart va au compte par défaut si pas encore configuré par compte
   const totalBreakdownStart = Object.values(breakdown).reduce((s, v) => s + v, 0);
