@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v475</title>
+<title>Mon Tableau de Vie 🌿 · v476</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4226,7 +4226,7 @@ const DEFAULT_STATE = {
   ],
   categories: ["Alimentation", "Logement", "Transport", "Loisirs", "Cadeau", "Sport", "Esthétique", "Santé", "Travail", "Abonnements audiovisuels", "Abonnement IA", "Autre"],
   incomeCategories: ["Salaire (postdoc)", "Salaire (vacations)", "Prime", "Remboursement", "Catsitting", "Autre revenu"],
-  savingsCategories: ["Livret A", "LEP", "PEA", "Compte épargne", "Assurance vie", "Frais annuels / Projets", "Autre épargne"],
+  savingsCategories: ["Livret A", "LEP", "PEA", "ETF", "BoursoBank", "Compte épargne", "Assurance vie", "Frais annuels / Projets", "Autre épargne"],
   candidatureTypes: ["MCF", "MSCA", "CNRS", "ERC ACCESS"],
   contactRoles: ["Mentor", "Collaborateur", "Jury", "Rencontré en conf", "Famille", "Ami"],
   goals: [],
@@ -4273,6 +4273,8 @@ function migrate(s) {
   s.savingsCategories = s.savingsCategories || DEFAULT_STATE.savingsCategories;
   if (!s.savingsCategories.includes("Frais annuels / Projets")) s.savingsCategories.splice(-1, 0, "Frais annuels / Projets");
   if (!s.savingsCategories.includes("Livret A")) s.savingsCategories.unshift("Livret A");
+  if (!s.savingsCategories.includes("ETF")) s.savingsCategories.splice(s.savingsCategories.indexOf("PEA") + 1, 0, "ETF");
+  if (!s.savingsCategories.includes("BoursoBank")) s.savingsCategories.splice(s.savingsCategories.indexOf("ETF") + 1, 0, "BoursoBank");
   s.candidatureTypes = s.candidatureTypes || DEFAULT_STATE.candidatureTypes;
   s.contactRoles = s.contactRoles || DEFAULT_STATE.contactRoles;
   s.goals = s.goals || [];
