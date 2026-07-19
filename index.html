@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v478</title>
+<title>Mon Tableau de Vie 🌿 · v479</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9584,8 +9584,12 @@ function addTransaction() {
   if (postdocMission) { try { admRender(); } catch(e) {} } // rafraîchit le tableau missions
   renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
-function deleteTx(id) {
+function deleteTx(id, silent) {
   state.transactions = state.transactions.filter(t => t.id !== id);
+  if (!silent) { saveState(); renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
+}
+function deleteVirement(virId) {
+  state.transactions = state.transactions.filter(t => t.virementId !== virId);
   saveState();
   renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
@@ -9781,7 +9785,31 @@ function renderTxList() {
     document.getElementById("txList").innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucun résultat pour "${escapeHtml(search)}".</p>`;
     return;
   }
+  const seenVirIds = new Set();
   document.getElementById("txList").innerHTML = list.map(tx => {
+    // Grouper les virements inter-épargne : n'afficher qu'une seule ligne par paire
+    if (tx.virementId) {
+      if (seenVirIds.has(tx.virementId)) return ""; // déjà rendu via l'autre moitié
+      seenVirIds.add(tx.virementId);
+      const d = new Date(tx.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+      const from = tx.virFrom || "?", to = tx.virTo || "?";
+      const label = tx.note || `Virement ${from} → ${to}`;
+      // trouver l'id des deux transactions pour suppression groupée
+      const pair = state.transactions.filter(t => t.virementId === tx.virementId);
+      const delIds = pair.map(t => `'${t.id}'`).join(",");
+      return `
+      <div class="tx-row" style="background:var(--lavender-soft);border-radius:10px;margin-bottom:2px;">
+        <div class="tx-dot" style="background:#c9b6f0"></div>
+        <div class="tx-info">
+          <div class="tx-cat" style="color:#6b4d99;">⇄ ${escapeHtml(from)} → ${escapeHtml(to)}</div>
+          <div class="tx-note">${escapeHtml(label)}</div>
+        </div>
+        <div class="tx-amount savings" style="color:#6b4d99;">${Math.abs(tx.amount).toFixed(2)} €</div>
+        <div class="tx-date">${d}</div>
+        <button class="tx-edit" style="visibility:hidden;">✎</button>
+        <button class="tx-del" onclick="deleteVirement('${tx.virementId}')" title="Supprimer">✕</button>
+      </div>`;
+    }
     const d = new Date(tx.date);
     const dateStr = d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
     const sign = tx.type === "income"      ? "+"
@@ -10285,13 +10313,14 @@ function submitVirementEpargne() {
   const dateIso = new Date(date + "T12:00:00").toISOString();
   const label = note || `Virement ${from} → ${to}`;
   const mkId = () => "tx" + Date.now() + Math.random().toString(36).slice(2, 6);
+  const virId = "vir" + Date.now();
   state.transactions.unshift({
     id: mkId(), date: dateIso, type: "savings-out",
-    amount: amt, category: from, note: label,
+    amount: amt, category: from, note: label, virementId: virId, virFrom: from, virTo: to,
   });
   state.transactions.unshift({
     id: mkId(), date: dateIso, type: "savings",
-    amount: amt, category: to, note: label,
+    amount: amt, category: to, note: label, virementId: virId, virFrom: from, virTo: to,
   });
   document.getElementById("virementEpargnePanel").style.display = "none";
   saveState();
