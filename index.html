@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v477</title>
+<title>Mon Tableau de Vie 🌿 · v478</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2713,6 +2713,12 @@
               <option value="">— Compte courant (défaut)</option>
             </select>
           </div>
+          <div id="txFromSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
+            🏦 Prélevé sur :
+            <select id="txFromSavings" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
+              <option value="">— Compte courant (défaut)</option>
+            </select>
+          </div>
         </div>
         <div id="txMissionWrap" style="display:none;margin-bottom:6px;">
           <input type="text" id="txMission" list="missionList" placeholder="Mission / déplacement (ex : Conférence MHT Amsterdam)"
@@ -3788,6 +3794,12 @@
       <div id="txModalDirectSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
         🏦 Versé directement sur :
         <select id="txModalDirectSavings" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
+          <option value="">— Compte courant (défaut)</option>
+        </select>
+      </div>
+      <div id="txModalFromSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
+        🏦 Prélevé sur :
+        <select id="txModalFromSavings" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
           <option value="">— Compte courant (défaut)</option>
         </select>
       </div>
@@ -8920,6 +8932,15 @@ function setTxType(t) {
       (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
   }
   if (directSel && t !== "income") directSel.value = "";
+  const fromWrap = document.getElementById("txFromSavingsWrap");
+  const fromSel  = document.getElementById("txFromSavings");
+  const isExpense = (t === "expense" || t === "external");
+  if (fromWrap) fromWrap.style.display = isExpense ? "flex" : "none";
+  if (fromSel && isExpense) {
+    fromSel.innerHTML = `<option value="">— Compte courant (défaut)</option>` +
+      (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  }
+  if (fromSel && !isExpense) fromSel.value = "";
   populateTxCategories();
 }
 function renderMoney() { populateTxCategories(); populateMissionList(); renderMoneySummary(); renderBudgetGauge(); renderExternalSummary(); renderTxList(); renderReimbursable(); renderSavings(); renderAccounts(); renderForecast(); renderDailyExpenseChart(); }
@@ -9365,7 +9386,7 @@ function balanceCourant() {
   let income = 0, expense = 0, savings = 0, savingsOut = 0;
   for (const t of state.transactions) {
     if (t.type === "income" && !t.directSavingsAccount) income += t.amount;
-    else if (t.type === "expense") expense   += t.amount;
+    else if (t.type === "expense" && !t.fromSavingsAccount) expense += t.amount;
     else if (t.type === "savings") savings   += t.amount;
     else if (t.type === "savings-out") savingsOut += t.amount;
   }
@@ -9376,7 +9397,8 @@ function balanceEpargne() {
   const directIncome = state.transactions.filter(t => t.type === "income" && t.directSavingsAccount).reduce((s, t) => s + t.amount, 0);
   const savings    = state.transactions.filter(t => t.type === "savings").reduce((s, t) => s + t.amount, 0);
   const savingsOut = state.transactions.filter(t => t.type === "savings-out").reduce((s, t) => s + t.amount, 0);
-  return start + savings + directIncome - savingsOut;
+  const fromSavExp = state.transactions.filter(t => t.fromSavingsAccount && (t.type === "expense" || t.type === "external")).reduce((s, t) => s + t.amount, 0);
+  return start + savings + directIncome - savingsOut - fromSavExp;
 }
 function renderAccounts() {
   const c = balanceCourant();
@@ -9544,7 +9566,9 @@ function addTransaction() {
   }
   const directSavEl = document.getElementById("txDirectSavings");
   const directSavingsAccount = (txType === "income" && directSavEl?.value) ? directSavEl.value : "";
-  state.transactions.unshift({ id: "tx" + Date.now(), date, type: txType, amount, category, note, reimbursable, mission, fixedCharge, exceptional, postdocMission, directSavingsAccount });
+  const fromSavEl = document.getElementById("txFromSavings");
+  const fromSavingsAccount = ((txType === "expense" || txType === "external") && fromSavEl?.value) ? fromSavEl.value : "";
+  state.transactions.unshift({ id: "tx" + Date.now(), date, type: txType, amount, category, note, reimbursable, mission, fixedCharge, exceptional, postdocMission, directSavingsAccount, fromSavingsAccount });
   document.getElementById("txAmount").value = "";
   document.getElementById("txNote").value = "";
   if (reimbursableEl) reimbursableEl.checked = false;
@@ -9593,6 +9617,8 @@ function openTxModal(id) {
   if (tx.reimbursable) setTxModalType(txModalType, tx.category);
   const directSavEl = document.getElementById("txModalDirectSavings");
   if (directSavEl && tx.type === "income" && tx.directSavingsAccount) directSavEl.value = tx.directSavingsAccount;
+  const fromSavEl = document.getElementById("txModalFromSavings");
+  if (fromSavEl && (tx.type === "expense" || tx.type === "external") && tx.fromSavingsAccount) fromSavEl.value = tx.fromSavingsAccount;
   document.getElementById("txModal").classList.add("open");
 }
 function closeTxModal() { document.getElementById("txModal").classList.remove("open"); }
@@ -9638,6 +9664,14 @@ function setTxModalType(t, presetCategory) {
     directSel.innerHTML = `<option value="">— Compte courant (défaut)</option>` +
       (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
   }
+  const fromWrap = document.getElementById("txModalFromSavingsWrap");
+  const fromSel  = document.getElementById("txModalFromSavings");
+  const isExp = (t === "expense" || t === "external");
+  if (fromWrap) fromWrap.style.display = isExp ? "flex" : "none";
+  if (fromSel && isExp) {
+    fromSel.innerHTML = `<option value="">— Compte courant (défaut)</option>` +
+      (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  }
 }
 function saveTxFromModal() {
   const id = document.getElementById("txModalId").value;
@@ -9666,6 +9700,8 @@ function saveTxFromModal() {
   tx.exceptional = modalExc?.checked && (txModalType === "expense" || txModalType === "external") ? true : false;
   const directSav = document.getElementById("txModalDirectSavings");
   tx.directSavingsAccount = (txModalType === "income" && directSav?.value) ? directSav.value : "";
+  const fromSav = document.getElementById("txModalFromSavings");
+  tx.fromSavingsAccount = ((txModalType === "expense" || txModalType === "external") && fromSav?.value) ? fromSav.value : "";
   saveState();
   closeTxModal();
   renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
@@ -10121,6 +10157,7 @@ function renderSavings() {
     if (t.type === "savings" && t.category) txDelta[t.category] = (txDelta[t.category] || 0) + t.amount;
     else if (t.type === "savings-out" && t.category) txDelta[t.category] = (txDelta[t.category] || 0) - t.amount;
     else if (t.type === "income" && t.directSavingsAccount) txDelta[t.directSavingsAccount] = (txDelta[t.directSavingsAccount] || 0) + t.amount;
+    if (t.fromSavingsAccount && (t.type === "expense" || t.type === "external")) txDelta[t.fromSavingsAccount] = (txDelta[t.fromSavingsAccount] || 0) - t.amount;
   });
   // epargneStart va au compte par défaut si pas encore configuré par compte
   const totalBreakdownStart = Object.values(breakdown).reduce((s, v) => s + v, 0);
