@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v485</title>
+<title>Mon Tableau de Vie 🌿 · v486</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10068,7 +10068,8 @@ function renderBalanceEvolutionChart() {
   }
   // Patrimoine total = compte courant + épargne. Ainsi un virement vers l'épargne
   // (savings / savings-out) ne fait PAS plonger la courbe : c'est juste un transfert interne.
-  const base = (state.accounts?.courantStart || 0) + (state.accounts?.epargneStart || 0);
+  const breakdownSum = Object.values(state.accounts?.savingsBreakdown || {}).reduce((s, v) => s + v, 0);
+  const base = (state.accounts?.courantStart || 0) + (state.accounts?.epargneStart || 0) + breakdownSum;
   // Trier toutes les transactions par date
   const txSorted = [...state.transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
   const balances = days.map(day => {
