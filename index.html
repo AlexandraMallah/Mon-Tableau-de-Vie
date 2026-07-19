@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v467</title>
+<title>Mon Tableau de Vie 🌿 · v468</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2770,6 +2770,7 @@
           <strong id="savingsMonth" style="color:#6b4d99;font-size:22px;font-weight:700;">+0,00 €</strong>
         </div>
       </div>
+      <div id="savingsBreakdown" style="margin-bottom:14px;"></div>
       <p style="color:var(--ink-soft);font-size:13px;margin:0 0 12px;">Pour ajouter une mise de côté : formulaire « Nouvelle transaction » au-dessus → choisis <strong>💰 Épargne</strong>. Pour modéliser un retrait, mets un montant négatif.</p>
       <div class="chart-wrap" style="height:200px;"><canvas id="savingsChart"></canvas></div>
     </div>
@@ -4232,6 +4233,7 @@ function migrate(s) {
   s.transactions = s.transactions || [];
   s.subscriptions = s.subscriptions || [];
   s.accounts = s.accounts || { courantStart: 0, epargneStart: 0 };
+  s.accounts.savingsBreakdown = s.accounts.savingsBreakdown || {};
   if (typeof s.accounts.courantStart !== "number") s.accounts.courantStart = 0;
   if (typeof s.accounts.epargneStart !== "number") s.accounts.epargneStart = 0;
   if (typeof s.accounts.monthlyBudget !== "number") s.accounts.monthlyBudget = 0;
@@ -10029,6 +10031,64 @@ function renderSavings() {
   const thisMonth = thisMonthIn - thisMonthOut;
   document.getElementById("savingsTotal").textContent = total.toFixed(2) + " €";
   document.getElementById("savingsMonth").textContent = (thisMonth >= 0 ? "+" : "") + thisMonth.toFixed(2) + " €";
+
+  // Répartition par compte
+  const breakdown = state.accounts.savingsBreakdown || {};
+  const cats = [...new Set([
+    ...Object.keys(breakdown),
+    ...state.transactions.filter(t => t.type === "savings" || t.type === "savings-out").map(t => t.category).filter(Boolean),
+    ...(state.savingsCategories || []),
+  ])].filter(Boolean);
+
+  // Solde par compte = solde de départ configuré + mouvements transactions
+  // epargneStart est alloué au premier compte ou à "LEP" par défaut
+  const defaultCat = cats.includes("LEP") ? "LEP" : (cats[0] || "LEP");
+  const txDelta = {};
+  state.transactions.forEach(t => {
+    if (!t.category) return;
+    if (t.type === "savings") txDelta[t.category] = (txDelta[t.category] || 0) + t.amount;
+    else if (t.type === "savings-out") txDelta[t.category] = (txDelta[t.category] || 0) - t.amount;
+  });
+  // epargneStart va au compte par défaut si pas encore configuré par compte
+  const totalBreakdownStart = Object.values(breakdown).reduce((s, v) => s + v, 0);
+  const epargneStartResidue = (state.accounts.epargneStart || 0) - totalBreakdownStart;
+  const balByCat = {};
+  cats.forEach(c => {
+    balByCat[c] = (breakdown[c] || 0) + (txDelta[c] || 0);
+    if (c === defaultCat) balByCat[c] += epargneStartResidue;
+  });
+
+  const el = document.getElementById("savingsBreakdown");
+  if (!el || cats.length === 0) return;
+  const maxBal = Math.max(...Object.values(balByCat), 1);
+  const COLORS = ["#9b72d4","#5bbcb8","#f5a623","#4a90d9","#e07bbd","#7cba6d"];
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:4px;">` +
+    cats.map((cat, i) => {
+      const bal = balByCat[cat] || 0;
+      const pct = Math.max(0, Math.round(bal / maxBal * 100));
+      const color = COLORS[i % COLORS.length];
+      const startVal = (breakdown[cat] !== undefined) ? breakdown[cat] : (cat === defaultCat ? (state.accounts.epargneStart || 0) : 0);
+      return `<div style="display:grid;grid-template-columns:90px 1fr 90px 28px;align-items:center;gap:8px;">
+        <span style="font-size:12.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(cat)}</span>
+        <div style="height:6px;background:var(--line);border-radius:3px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;transition:width .4s;"></div>
+        </div>
+        <span style="font-size:13px;font-weight:700;color:${color};text-align:right;font-variant-numeric:tabular-nums;">${bal.toFixed(0)} €</span>
+        <button onclick="editSavingsStart('${escapeHtml(cat)}')" title="Modifier le solde initial" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.45;padding:0;line-height:1;">✏️</button>
+      </div>`;
+    }).join("") + `</div>`;
+}
+function editSavingsStart(cat) {
+  const cur = (state.accounts.savingsBreakdown || {})[cat] || 0;
+  const val = prompt(`Solde de départ pour "${cat}" (€) :\n(Utilisé pour initialiser ce compte avant le début du suivi)`, cur);
+  if (val === null) return;
+  const n = parseFloat(val.replace(",", "."));
+  if (isNaN(n)) return;
+  if (!state.accounts.savingsBreakdown) state.accounts.savingsBreakdown = {};
+  state.accounts.savingsBreakdown[cat] = n;
+  // Réduire epargneStart du même montant pour éviter double compte
+  // (epargneStart résiduel = epargneStart - somme des breakdown configurés)
+  saveState(); renderSavings();
 }
 function renderSavingsChart() {
   if (savingsChart) savingsChart.destroy();
