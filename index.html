@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v469</title>
+<title>Mon Tableau de Vie 🌿 · v470</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2773,6 +2773,7 @@
       <div id="savingsBreakdown" style="margin-bottom:14px;"></div>
       <p style="color:var(--ink-soft);font-size:13px;margin:0 0 12px;">Pour ajouter une mise de côté : formulaire « Nouvelle transaction » au-dessus → choisis <strong>💰 Épargne</strong>. Pour modéliser un retrait, mets un montant négatif.</p>
       <div class="chart-wrap" style="height:200px;"><canvas id="savingsChart"></canvas></div>
+      <div id="savingsDetailPanel" style="display:none;margin-top:12px;border-top:1px solid var(--line);padding-top:12px;"></div>
     </div>
     <div class="card" style="margin-bottom:14px;">
       <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
@@ -10132,13 +10133,50 @@ function renderSavingsChart() {
     data: { labels, datasets: [{ label: "Mis de côté", data, backgroundColor: "#c9b6f0", borderRadius: 8 }] },
     options: {
       ...baseChartOpts(),
-      plugins: { ...baseChartOpts().plugins, legend: { display: false } },
+      onClick: (_, els) => { if (els.length) _showSavingsDetail(periods[els[0].index]); },
+      plugins: { ...baseChartOpts().plugins, legend: { display: false },
+        tooltip: { ...baseChartOpts().plugins.tooltip, callbacks: { footer: () => "Cliquer pour le détail" } },
+      },
       scales: {
         x: { grid: { display: false }, ticks: { color: "#8a8499" } },
         y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " €" }, beginAtZero: true },
       },
     },
   });
+}
+function _showSavingsDetail({ start, end, label }) {
+  const panel = document.getElementById("savingsDetailPanel");
+  if (!panel) return;
+  const txs = state.transactions.filter(t => {
+    const d = new Date(t.date);
+    return d >= start && d < end && (t.type === "savings" || t.type === "savings-out" || (t.type === "income" && t.directSavingsAccount));
+  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+  const monthLabel = label.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const rows = txs.map(t => {
+    const d = new Date(t.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+    const isSavingsOut = t.type === "savings-out";
+    const isDirectIncome = t.type === "income" && t.directSavingsAccount;
+    const sign = isSavingsOut ? "−" : "+";
+    const color = isSavingsOut ? "#e07878" : "#6b4d99";
+    let from_to = "";
+    if (isSavingsOut) from_to = `<span style="color:var(--ink-soft);font-size:11px;">${t.category || "épargne"} → courant</span>`;
+    else if (isDirectIncome) from_to = `<span style="color:var(--ink-soft);font-size:11px;">direct → ${t.directSavingsAccount}</span>`;
+    else from_to = `<span style="color:var(--ink-soft);font-size:11px;">courant → ${t.category || "épargne"}</span>`;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);gap:8px;">
+      <div>
+        <span style="font-size:12px;color:var(--ink-soft);margin-right:8px;">${d}</span>
+        <span style="font-size:13px;font-weight:500;">${escapeHtml(t.note || t.category || "—")}</span>
+        <br/>${from_to}
+      </div>
+      <span style="font-size:14px;font-weight:700;color:${color};white-space:nowrap;">${sign}${t.amount.toFixed(0)} €</span>
+    </div>`;
+  }).join("");
+  panel.style.display = "block";
+  panel.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <span style="font-size:13px;font-weight:600;color:var(--ink);">Détail · ${monthLabel}</span>
+    <button onclick="document.getElementById('savingsDetailPanel').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--ink-soft);line-height:1;">×</button>
+  </div>
+  ${rows || '<p style="font-size:13px;color:var(--ink-soft);text-align:center;padding:8px 0;">Aucun mouvement ce mois.</p>'}`;
 }
 function _emptyDonutPlaceholder(wrap, text) {
   wrap.insertAdjacentHTML("beforeend",
