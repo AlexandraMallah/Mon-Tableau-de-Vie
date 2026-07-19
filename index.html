@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v484</title>
+<title>Mon Tableau de Vie 🌿 · v485</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10219,7 +10219,7 @@ function renderSavings() {
         <div style="height:6px;background:var(--line);border-radius:3px;overflow:hidden;">
           <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;transition:width .4s;"></div>
         </div>
-        <span style="font-size:13px;font-weight:700;color:${color};text-align:right;font-variant-numeric:tabular-nums;">${bal.toFixed(0)} €</span>
+        <span style="font-size:13px;font-weight:700;color:${color};text-align:right;font-variant-numeric:tabular-nums;">${bal.toFixed(2)} €</span>
         <div style="display:flex;gap:2px;">
           <button onclick="editSavingsStart('${escapeHtml(cat)}')" title="Modifier le solde initial" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.45;padding:0;line-height:1;">✏️</button>
           <button onclick="toggleSavingsLock('${escapeHtml(cat)}')" title="${locked ? 'Déverrouiller ce compte' : 'Verrouiller ce compte (aucun retrait possible)'}" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;line-height:1;opacity:${locked ? '1' : '0.3'};">${locked ? '🔒' : '🔓'}</button>
