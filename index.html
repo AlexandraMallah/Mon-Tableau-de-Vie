@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v487</title>
+<title>Mon Tableau de Vie 🌿 · v488</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -12614,26 +12614,19 @@ function renderTimeStatsMonth() {
   const t = document.getElementById("timeMonthStats");
   if (!t) return;
   const dates = _monthDatesFor(_timeMonthOffset);
-  // Moyenne hebdo sur semaines lun-dim complètes uniquement
-  const dateSet = new Set(dates.map(d => todayKey(d)));
-  let d0 = new Date(dates[0]);
-  const dow0 = (d0.getDay() + 6) % 7; // 0=lundi
-  if (dow0 > 0) d0.setDate(d0.getDate() + (7 - dow0)); // premier lundi dans la période
-  let completedWeeks = 0, weeklyHoursNorm = 0;
-  while (true) {
-    const week = Array.from({ length: 7 }, (_, i) => { const x = new Date(d0); x.setDate(d0.getDate() + i); return todayKey(x); });
-    if (!week.every(dk => dateSet.has(dk))) break;
-    completedWeeks++;
-    // Heures réelles de la semaine
-    let hoursThisWeek = 0;
-    for (const dk of week) { const wt = getWorkTime(dk); for (const c of TIME_CATS) hoursThisWeek += Number(wt[c.key]) || 0; }
-    // Jours fériés en semaine (lun-ven) → jours ouvrés effectifs
-    const holidays = week.filter(dk => { const dow = new Date(dk).getDay(); return dow >= 1 && dow <= 5 && _isHoliday(dk); }).length;
-    const workingDays = Math.max(1, 5 - holidays);
-    weeklyHoursNorm += hoursThisWeek / workingDays * 5; // ramener à l'équivalent 5j
-    d0.setDate(d0.getDate() + 7);
+  // Moyenne hebdo prorata : jours écoulés (jusqu'à aujourd'hui ou fin de période) ÷ 7
+  const today = new Date(); today.setHours(0,0,0,0);
+  const periodEnd = dates[dates.length - 1];
+  const elapsed = dates.filter(d => d <= today);
+  const elapsedDays = elapsed.length;
+  let totalHours = 0;
+  for (const d of elapsed) {
+    const dk = todayKey(d);
+    const wt = getWorkTime(dk);
+    for (const c of TIME_CATS) totalHours += Number(wt[c.key]) || 0;
   }
-  const note = completedWeeks > 0 ? `≈ ${(weeklyHoursNorm / completedWeeks).toFixed(1).replace(".", ",")} h/sem.` : "";
+  const nbWeeksExact = elapsedDays / 7;
+  const note = nbWeeksExact > 0 ? `≈ ${(totalHours / nbWeeksExact).toFixed(1).replace(".", ",")} h/sem.` : "";
   _renderTimeStats(t, dates, _timeMonthOffset === 0 ? "ce mois" : "ce mois-là", note);
   // Titre + bouton suivant
   const title = document.getElementById("timeMonthTitle");
