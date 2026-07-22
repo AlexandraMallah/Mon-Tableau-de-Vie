@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v488</title>
+<title>Mon Tableau de Vie 🌿 · v489</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4303,6 +4303,10 @@ function migrate(s) {
     }
     s.accounts.epargneStart = 0;
     s.accounts._epargneStartMigrated = true;
+  }
+  // Migration : après migration, epargneStart doit rester 0 (bug editSavingsStart v482)
+  if (s.accounts._epargneStartMigrated && (s.accounts.epargneStart || 0) !== 0) {
+    s.accounts.epargneStart = 0;
   }
   if (typeof s.accounts.courantStart !== "number") s.accounts.courantStart = 0;
   if (typeof s.accounts.epargneStart !== "number") s.accounts.epargneStart = 0;
@@ -10242,10 +10246,7 @@ function editSavingsStart(cat) {
   const n = parseFloat(val.replace(",", "."));
   if (isNaN(n)) return;
   if (!state.accounts.savingsBreakdown) state.accounts.savingsBreakdown = {};
-  const diff = n - cur;
   state.accounts.savingsBreakdown[cat] = n;
-  // Ajuster epargneStart pour que le total reflète le nouveau solde déclaré
-  state.accounts.epargneStart = (state.accounts.epargneStart || 0) + diff;
   saveState(); renderSavings();
 }
 function renderSavingsChart() {
