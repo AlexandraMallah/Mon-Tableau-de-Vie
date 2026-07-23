@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v492</title>
+<title>Mon Tableau de Vie 🌿 · v493</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -154,6 +154,15 @@
     background: var(--lilac-soft); border-color: transparent;
     color: var(--ink); font-weight: 600;
   }
+  .food-tab {
+    background: transparent; border: 1px solid var(--line); color: var(--ink-soft);
+    padding: 6px 14px; border-radius: 999px; cursor: pointer;
+    font-size: 13px; transition: all 0.2s; font-family: inherit;
+  }
+  .food-tab:hover { color: var(--ink); background: white; }
+  .food-tab.active { background: var(--mint-soft); border-color: transparent; color: var(--ink); font-weight: 600; }
+  .food-view { display: none; }
+  .food-view.active { display: block; }
   .sub-tab-badge {
     position: absolute; top: -4px; right: -4px;
     width: 10px; height: 10px;
@@ -2910,10 +2919,8 @@
     <div class="sub-tabs">
       <button class="sub-tab active" data-sub="todo">📋 To-do du jour</button>
       <button class="sub-tab" data-sub="domtasks">🗒️ Tâches</button>
-      <button class="sub-tab" data-sub="meals">🍽️ Repas</button>
-      <button class="sub-tab" data-sub="groceries">🛒 Courses</button>
+      <button class="sub-tab" data-sub="alimentation">🥗 Alimentation</button>
       <button class="sub-tab" data-sub="plants">🌱 Plantes</button>
-      <button class="sub-tab" data-sub="cuisine">🍳 Cuisine</button>
     </div>
 
     <!-- Sub: To-do du jour -->
@@ -2973,7 +2980,13 @@
     </div>
 
     <!-- Sub: Planning de repas -->
-    <div class="sub-view" data-sub="meals">
+    <div class="sub-view" data-sub="alimentation">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="food-tab active" data-food="meals" onclick="switchFoodTab('meals')">🍽️ Repas</button>
+        <button class="food-tab" data-food="groceries" onclick="switchFoodTab('groceries')">🛒 Courses</button>
+        <button class="food-tab" data-food="cuisine" onclick="switchFoodTab('cuisine')">🍳 Cuisine</button>
+      </div>
+      <div class="food-view active" data-food="meals">
       <!-- Navigation semaine -->
       <div class="meal-week-nav">
         <button class="btn-soft" onclick="generateMealGroceries()" style="font-size:12px;margin-right:8px;">🛒 Générer la liste de courses</button>
@@ -3017,10 +3030,9 @@
         </div>
         <div id="mealEventsList"></div>
       </div>
-    </div>
+      </div><!-- end food-view meals -->
 
-    <!-- Sub: Courses -->
-    <div class="sub-view" data-sub="groceries">
+      <div class="food-view" data-food="groceries">
       <div class="grocery-layout">
         <!-- LEFT — listes d'événements + global -->
         <div>
@@ -3050,8 +3062,59 @@
           </div>
         </div>
       </div>
-    </div>
+      </div><!-- end food-view groceries -->
 
+      <div class="food-view" data-food="cuisine">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="work-header">
+          <h2 style="margin:0;">🍳 Mes recettes <span class="count" id="recipeCount"></span></h2>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-soft" onclick="manageRecipeCategories()" style="font-size:12px;">⚙️ Catégories</button>
+            <button class="btn-primary" onclick="openRecipeModal()">+ Recette</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px;" id="recipeCategoryTabs"></div>
+        <div id="recipeCatAddPanel" style="display:none;background:#faf8fd;border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="recipeCatNewInput" placeholder="Nouvelle catégorie…"
+              style="flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;"
+              onkeydown="if(event.key==='Enter')addRecipeCategory()" />
+            <button onclick="addRecipeCategory()" class="btn-primary" style="font-size:13px;padding:7px 12px;">+ Ajouter</button>
+            <button onclick="document.getElementById('recipeCatAddPanel').style.display='none'" style="padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:white;cursor:pointer;font-size:12px;color:var(--ink-soft);">✕</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <input type="text" id="recipeSearch" placeholder="🔍 Chercher une recette…" oninput="renderRecipes()"
+            style="flex:1;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;" />
+        </div>
+        <div id="recipeKcalChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center;"></div>
+        <div id="recipeList"></div>
+      </div>
+      <!-- kcal aliments -->
+      <div class="card">
+        <div class="work-header" style="margin-bottom:12px;">
+          <h2 style="margin:0;">🔢 Kcal aliments</h2>
+          <button class="btn-primary" onclick="openFoodKcalForm()">+ Ajouter</button>
+        </div>
+        <p style="color:var(--ink-soft);font-size:12px;margin:-8px 0 12px;">Note les kcal d'aliments ou préparations avec leurs ingrédients (ex: Ube Latte → 10g Ube, 250ml lait…)</p>
+        <div id="foodKcalAddForm" style="display:none;background:#faf8fd;padding:12px;border-radius:14px;margin-bottom:12px;border:1px solid var(--line);">
+          <input type="text" id="fkName" placeholder="Nom (ex: Ube Latte)" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);margin-bottom:8px;" />
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <input type="number" id="fkKcal" placeholder="Kcal totaux" min="0" step="1" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+            <input type="text" id="fkPortion" placeholder="Portion (ex: 1 verre, 300 ml)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+          </div>
+          <p style="font-size:12px;color:var(--ink-soft);margin:0 0 6px;">Ingrédients (optionnel) :</p>
+          <div id="fkIngredients" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+          <button onclick="addFkIngredientRow()" style="font-size:12px;color:var(--lavender);background:none;border:none;cursor:pointer;padding:0;margin-bottom:10px;">+ Ajouter un ingrédient</button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-primary" onclick="saveFoodKcal()">Enregistrer</button>
+            <button class="btn-soft" onclick="closeFoodKcalForm()">Annuler</button>
+          </div>
+        </div>
+        <div id="foodKcalList"></div>
+      </div>
+      </div><!-- end food-view cuisine -->
+    </div><!-- end sub-view alimentation -->
 
     <!-- Sub: Plantes -->
     <div class="sub-view" data-sub="plants">
@@ -3076,36 +3139,6 @@
         </div>
         <div id="plantsWeekBar"></div>
         <div id="plantsList"></div>
-      </div>
-    </div>
-  <!-- Sub: Cuisine -->
-    <div class="sub-view" data-sub="cuisine">
-      <div class="card">
-        <div class="work-header">
-          <h2 style="margin:0;">🍳 Mes recettes <span class="count" id="recipeCount"></span></h2>
-          <div style="display:flex;gap:6px;">
-            <button class="btn-soft" onclick="manageRecipeCategories()" style="font-size:12px;">⚙️ Catégories</button>
-            <button class="btn-primary" onclick="openRecipeModal()">+ Recette</button>
-          </div>
-        </div>
-        <!-- Onglets catégories + ajout inline -->
-        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px;" id="recipeCategoryTabs"></div>
-        <!-- Panneau ajout catégorie (masqué par défaut) -->
-        <div id="recipeCatAddPanel" style="display:none;background:#faf8fd;border-radius:10px;padding:10px 12px;margin-bottom:12px;display:none;">
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="text" id="recipeCatNewInput" placeholder="Nouvelle catégorie…"
-              style="flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;"
-              onkeydown="if(event.key==='Enter')addRecipeCategory()" />
-            <button onclick="addRecipeCategory()" class="btn-primary" style="font-size:13px;padding:7px 12px;">+ Ajouter</button>
-            <button onclick="document.getElementById('recipeCatAddPanel').style.display='none'" style="padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:white;cursor:pointer;font-size:12px;color:var(--ink-soft);">✕</button>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-bottom:10px;">
-          <input type="text" id="recipeSearch" placeholder="🔍 Chercher une recette…" oninput="renderRecipes()"
-            style="flex:1;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;" />
-        </div>
-        <div id="recipeKcalChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center;"></div>
-        <div id="recipeList"></div>
       </div>
     </div>
 
@@ -4378,6 +4411,7 @@ function migrate(s) {
   s.domestique.plants = s.domestique.plants || [];
   s.domestique.tasks    = s.domestique.tasks    || [];
   s.domestique.recipes           = s.domestique.recipes           || [];
+  s.domestique.foodKcal          = s.domestique.foodKcal          || [];
   s.domestique.recipeCategories  = s.domestique.recipeCategories  || [];
   // Seed unique : 4 recettes ajoutées (juin 2026) — Apéritif + Dessert
   if (!s.domestique._seededAperoDessert) {
@@ -12949,7 +12983,7 @@ function deleteTodoItem(id) {
   _renderAllTodo();
 }
 
-function renderDomestique() { renderTodo(); renderDomesticTasks(); renderMealPlan(); renderGroceries(); renderPlants(); renderRecipes(); }
+function renderDomestique() { renderTodo(); renderDomesticTasks(); renderMealPlan(); renderGroceries(); renderPlants(); renderRecipes(); renderFoodKcal(); }
 
 /* ========= CUISINE — RECETTES ========= */
 let _recipeCategoryFilter = "";
@@ -13209,6 +13243,76 @@ function deleteRecipe() {
   saveState(); closeRecipeModal(); renderRecipes();
 }
 
+/* ---- Alimentation inner tabs ---- */
+function switchFoodTab(tab) {
+  document.querySelectorAll('.food-tab').forEach(b => b.classList.toggle('active', b.dataset.food === tab));
+  document.querySelectorAll('.food-view').forEach(v => v.classList.toggle('active', v.dataset.food === tab));
+}
+
+/* ---- Kcal aliments ---- */
+function openFoodKcalForm() {
+  document.getElementById('fkName').value = '';
+  document.getElementById('fkKcal').value = '';
+  document.getElementById('fkPortion').value = '';
+  document.getElementById('fkIngredients').innerHTML = '';
+  document.getElementById('foodKcalAddForm').style.display = 'block';
+  document.getElementById('fkName').focus();
+}
+function closeFoodKcalForm() { document.getElementById('foodKcalAddForm').style.display = 'none'; }
+function addFkIngredientRow(name='', qty='', kcal='') {
+  const row = document.createElement('div');
+  row.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:6px;align-items:center;';
+  row.innerHTML = `
+    <input type="text" placeholder="Ingrédient (ex: lait entier)" value="${escapeHtml(name)}" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+    <input type="text" placeholder="Qté (ex: 250ml)" value="${escapeHtml(qty)}" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+    <input type="number" placeholder="Kcal" value="${kcal}" min="0" step="1" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+    <button onclick="this.closest('div').remove()" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);">✕</button>`;
+  document.getElementById('fkIngredients').appendChild(row);
+}
+function saveFoodKcal() {
+  const name = document.getElementById('fkName').value.trim();
+  if (!name) return;
+  const kcal = parseFloat(document.getElementById('fkKcal').value) || 0;
+  const portion = document.getElementById('fkPortion').value.trim();
+  const rows = document.getElementById('fkIngredients').querySelectorAll('div');
+  const ingredients = [];
+  rows.forEach(r => {
+    const inputs = r.querySelectorAll('input');
+    const n = inputs[0]?.value.trim(), q = inputs[1]?.value.trim(), k = parseFloat(inputs[2]?.value) || 0;
+    if (n) ingredients.push({ name: n, qty: q, kcal: k });
+  });
+  const totalKcal = kcal || ingredients.reduce((s, i) => s + i.kcal, 0);
+  if (!state.domestique.foodKcal) state.domestique.foodKcal = [];
+  state.domestique.foodKcal.unshift({ id: 'fk-' + Date.now(), name, kcal: totalKcal, portion, ingredients, createdAt: new Date().toISOString() });
+  saveState(); closeFoodKcalForm(); renderFoodKcal();
+}
+function deleteFoodKcal(id) {
+  if (!confirm('Supprimer cet aliment ?')) return;
+  state.domestique.foodKcal = (state.domestique.foodKcal || []).filter(f => f.id !== id);
+  saveState(); renderFoodKcal();
+}
+function renderFoodKcal() {
+  const el = document.getElementById('foodKcalList');
+  if (!el) return;
+  const items = state.domestique.foodKcal || [];
+  if (!items.length) { el.innerHTML = '<p style="color:var(--ink-soft);font-size:13px;text-align:center;margin:16px 0;">Aucun aliment enregistré</p>'; return; }
+  el.innerHTML = items.map(f => {
+    const ingHtml = (f.ingredients || []).length ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">${
+      f.ingredients.map(i => `<span style="font-size:11px;background:var(--bg-2);border-radius:6px;padding:2px 7px;color:var(--ink-soft);">${escapeHtml(i.name)}${i.qty ? ' · ' + escapeHtml(i.qty) : ''}${i.kcal ? ' · ' + i.kcal + ' kcal' : ''}</span>`).join('')
+    }</div>` : '';
+    return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13.5px;font-weight:600;color:var(--ink);">${escapeHtml(f.name)}${f.portion ? `<span style="font-weight:400;color:var(--ink-soft);font-size:12px;"> — ${escapeHtml(f.portion)}</span>` : ''}</div>
+        ${ingHtml}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-left:10px;flex-shrink:0;">
+        <span style="font-size:14px;font-weight:700;color:#e07bbd;">${f.kcal} kcal</span>
+        <button onclick="deleteFoodKcal('${f.id}')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--ink-soft);opacity:0.5;padding:0;">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 // Sélectionner une recette dans un créneau repas
 /* ── Choisir une recette pour un repas du planning (fenêtre centrée) ── */
 let _mrpBdDown = false;
@@ -13352,7 +13456,8 @@ function generateMealGroceries() {
   saveState();
   showToast(`🛒 ${Object.keys(aggregated).length} ingrédients ajoutés aux courses !`);
   // Aller aux courses
-  document.querySelector('[data-sub="groceries"]')?.click();
+  document.querySelector('[data-sub="alimentation"]')?.click();
+  setTimeout(() => switchFoodTab('groceries'), 50);
 }
 
 /* ============================================================
@@ -15494,8 +15599,8 @@ function createGroceryFromMeal(mealEventId) {
   saveState(); renderMealEvents(); renderGroceries();
 }
 function switchToGroceriesFor(groceryEventId) {
-  const btn = document.querySelector('.sub-tab[data-sub="groceries"]');
-  if (btn) btn.click();
+  document.querySelector('.sub-tab[data-sub="alimentation"]')?.click();
+  setTimeout(() => switchFoodTab('groceries'), 50);
   setTimeout(() => {
     const el = document.querySelector(`[data-gev-id="${groceryEventId}"]`);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
