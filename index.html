@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v506</title>
+<title>Mon Tableau de Vie 🌿 · v507</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7854,6 +7854,7 @@ function renderFoodIngredients() {
         style="flex:3;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
       <input type="text" value="${escapeHtml(ing.portion||'')}" placeholder="ex: 10g"
         oninput="_foodIngredients[${i}].portion=this.value;_updateFoodIngKcal(${i},this)"
+        onchange="_foodIngredients[${i}].portion=this.value;_updateFoodIngKcal(${i},this)"
         style="width:70px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:center;" />
       <div style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
         <input type="number" value="${ing.kcal>0?ing.kcal:''}" placeholder="kcal" min="0" max="9999"
