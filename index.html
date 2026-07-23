@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v500</title>
+<title>Mon Tableau de Vie 🌿 · v501</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3098,10 +3098,13 @@
         </div>
         <p style="color:var(--ink-soft);font-size:12px;margin:-8px 0 12px;">Note les kcal d'aliments ou préparations avec leurs ingrédients (ex: Ube Latte → 10g Ube, 250ml lait…)</p>
         <div id="foodKcalAddForm" style="display:none;background:#faf8fd;padding:12px;border-radius:14px;margin-bottom:12px;border:1px solid var(--line);">
-          <input type="text" id="fkName" placeholder="Nom (ex: Ube Latte)" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);margin-bottom:8px;" />
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <input type="text" id="fkName" placeholder="Nom (ex: Huile d'olive)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+            <input type="text" id="fkBrand" placeholder="Marque (ex: Monoprix Bio)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
             <input type="number" id="fkKcal" placeholder="Kcal totaux" min="0" step="1" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
-            <input type="text" id="fkPortion" placeholder="Portion (ex: 1 verre, 300 ml)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+            <input type="text" id="fkPortion" placeholder="Portion (ex: 10g, 250ml)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
           </div>
           <p style="font-size:12px;color:var(--ink-soft);margin:0 0 6px;">Ingrédients (optionnel) :</p>
           <div id="fkIngredients" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
@@ -13447,6 +13450,7 @@ function switchFoodTab(tab) {
 /* ---- Kcal aliments ---- */
 function openFoodKcalForm() {
   document.getElementById('fkName').value = '';
+  document.getElementById('fkBrand').value = '';
   document.getElementById('fkKcal').value = '';
   document.getElementById('fkPortion').value = '';
   document.getElementById('fkIngredients').innerHTML = '';
@@ -13467,6 +13471,7 @@ function addFkIngredientRow(name='', qty='', kcal='') {
 function saveFoodKcal() {
   const name = document.getElementById('fkName').value.trim();
   if (!name) return;
+  const brand = document.getElementById('fkBrand').value.trim();
   const kcal = parseFloat(document.getElementById('fkKcal').value) || 0;
   const portion = document.getElementById('fkPortion').value.trim();
   const rows = document.getElementById('fkIngredients').querySelectorAll('div');
@@ -13478,7 +13483,7 @@ function saveFoodKcal() {
   });
   const totalKcal = kcal || ingredients.reduce((s, i) => s + i.kcal, 0);
   if (!state.domestique.foodKcal) state.domestique.foodKcal = [];
-  state.domestique.foodKcal.unshift({ id: 'fk-' + Date.now(), name, kcal: totalKcal, portion, ingredients, createdAt: new Date().toISOString() });
+  state.domestique.foodKcal.unshift({ id: 'fk-' + Date.now(), name, brand, kcal: totalKcal, portion, ingredients, createdAt: new Date().toISOString() });
   saveState(); closeFoodKcalForm(); renderFoodKcal();
 }
 function deleteFoodKcal(id) {
@@ -13497,7 +13502,7 @@ function renderFoodKcal() {
     }</div>` : '';
     return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);">
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13.5px;font-weight:600;color:var(--ink);">${escapeHtml(f.name)}${f.portion ? `<span style="font-weight:400;color:var(--ink-soft);font-size:12px;"> — ${escapeHtml(f.portion)}</span>` : ''}</div>
+        <div style="font-size:13.5px;font-weight:600;color:var(--ink);">${escapeHtml(f.name)}${f.brand ? `<span style="font-weight:400;color:var(--ink-soft);font-size:12px;"> · ${escapeHtml(f.brand)}</span>` : ''}${f.portion ? `<span style="font-weight:400;color:var(--ink-soft);font-size:12px;"> — ${escapeHtml(f.portion)}</span>` : ''}</div>
         ${ingHtml}
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:10px;flex-shrink:0;">
