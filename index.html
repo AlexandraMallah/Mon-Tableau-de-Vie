@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v501</title>
+<title>Mon Tableau de Vie 🌿 · v502</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13448,12 +13448,16 @@ function switchFoodTab(tab) {
 }
 
 /* ---- Kcal aliments ---- */
-function openFoodKcalForm() {
-  document.getElementById('fkName').value = '';
-  document.getElementById('fkBrand').value = '';
-  document.getElementById('fkKcal').value = '';
-  document.getElementById('fkPortion').value = '';
+let _fkEditId = null;
+function openFoodKcalForm(id) {
+  _fkEditId = id || null;
+  const f = id ? (state.domestique.foodKcal || []).find(x => x.id === id) : null;
+  document.getElementById('fkName').value = f?.name || '';
+  document.getElementById('fkBrand').value = f?.brand || '';
+  document.getElementById('fkKcal').value = f?.kcal || '';
+  document.getElementById('fkPortion').value = f?.portion || '';
   document.getElementById('fkIngredients').innerHTML = '';
+  (f?.ingredients || []).forEach(i => addFkIngredientRow(i.name, i.qty, i.kcal));
   document.getElementById('foodKcalAddForm').style.display = 'block';
   document.getElementById('fkName').focus();
 }
@@ -13483,7 +13487,12 @@ function saveFoodKcal() {
   });
   const totalKcal = kcal || ingredients.reduce((s, i) => s + i.kcal, 0);
   if (!state.domestique.foodKcal) state.domestique.foodKcal = [];
-  state.domestique.foodKcal.unshift({ id: 'fk-' + Date.now(), name, brand, kcal: totalKcal, portion, ingredients, createdAt: new Date().toISOString() });
+  if (_fkEditId) {
+    const i = state.domestique.foodKcal.findIndex(x => x.id === _fkEditId);
+    if (i >= 0) state.domestique.foodKcal[i] = { ...state.domestique.foodKcal[i], name, brand, kcal: totalKcal, portion, ingredients };
+  } else {
+    state.domestique.foodKcal.unshift({ id: 'fk-' + Date.now(), name, brand, kcal: totalKcal, portion, ingredients, createdAt: new Date().toISOString() });
+  }
   saveState(); closeFoodKcalForm(); renderFoodKcal();
 }
 function deleteFoodKcal(id) {
@@ -13507,6 +13516,7 @@ function renderFoodKcal() {
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:10px;flex-shrink:0;">
         <span style="font-size:14px;font-weight:700;color:#e07bbd;">${f.kcal} kcal</span>
+        <button onclick="openFoodKcalForm('${f.id}')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--ink-soft);opacity:0.5;padding:0;">✏️</button>
         <button onclick="deleteFoodKcal('${f.id}')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--ink-soft);opacity:0.5;padding:0;">🗑️</button>
       </div>
     </div>`;
