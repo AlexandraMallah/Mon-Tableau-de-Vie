@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v508</title>
+<title>Mon Tableau de Vie 🌿 · v509</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7816,10 +7816,19 @@ function openFoodEntry(id) {
   document.getElementById("foodEntryCalories").value = e?.calories > 0 ? e.calories : "";
   _foodIngredients = JSON.parse(JSON.stringify(e?.ingredients||[]));
   renderFoodIngredients();
-  // Recalculer les calories avec les données corrigées
-  _foodIngredients.forEach((ing,i) => {
-    if (ing.name && ing.portion && !ing.fromRecipe) searchIngCalories(i, ing.name+" "+ing.portion);
+  // Recalculer les calories avec les données locales (nom seul pour la lookup)
+  _foodIngredients.forEach((ing, i) => {
+    if (!ing.name || ing.fromRecipe) return;
+    const local = _lookupLocalFood(ing.name);
+    if (local) {
+      if (!ing.portion) ing.portion = local.portion;
+      ing.kcal = _prorateFoodKcal(local, ing.portion);
+      ing._unitLabel = local.unitLabel;
+    } else if (ing.portion) {
+      searchIngCalories(i, ing.name + ' ' + ing.portion); // fallback OpenFoodFacts
+    }
   });
+  renderFoodIngredients();
   document.getElementById("foodEntryReason").value = e?.reason || "";
   // Heure par défaut = maintenant
   const now = new Date();
@@ -13379,12 +13388,13 @@ function _updateFoodIngKcal(idx, portionInput) {
   if (!ing) return;
   const local = _lookupLocalFood(ing.name || '');
   if (local) {
-    ing._unitLabel = local.unitLabel; // conserver le label pour le placeholder
+    ing._unitLabel = local.unitLabel;
     const newKcal = _prorateFoodKcal(local, portionInput.value);
     ing.kcal = newKcal;
-    // Mettre à jour seulement le champ kcal de cette ligne
-    const row = portionInput.closest('div');
-    const kcalInput = row?.querySelector('input[type="number"]');
+    // Cibler le champ kcal par index (plus fiable que closest())
+    const list = document.getElementById('foodIngredientsList');
+    const rows = list ? list.querySelectorAll(':scope > div') : [];
+    const kcalInput = rows[idx] ? rows[idx].querySelector('input[type="number"]') : null;
     if (kcalInput) kcalInput.value = newKcal;
     updateIngTotal();
   } else {
