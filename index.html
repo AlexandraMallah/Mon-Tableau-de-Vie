@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v493</title>
+<title>Mon Tableau de Vie 🌿 · v494</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10356,10 +10356,12 @@ function openSavingsAccountModal(cat) {
       const amtStr = (sign >= 0 ? "+" : "−") + Math.abs(t.amount).toFixed(2) + " €";
       const amtColor = sign >= 0 ? "#5bbcb8" : "#e07bbd";
       const dateStr = t.date ? new Date(t.date).toLocaleDateString("fr-FR", {day:"numeric",month:"short",year:"numeric"}) : "";
+      const mainLabel = label && label !== cat ? label : typeLabel;
+      const subLabel = (label && label !== cat) ? (typeLabel + (dateStr ? ' · ' + dateStr : '')) : dateStr;
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--bg-1);border-radius:8px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(label || typeLabel)}</div>
-          <div style="font-size:11px;color:var(--ink-soft);">${escapeHtml(typeLabel)}${dateStr ? ' · ' + dateStr : ''}</div>
+          <div style="font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(mainLabel)}</div>
+          ${subLabel ? `<div style="font-size:11px;color:var(--ink-soft);">${escapeHtml(subLabel)}</div>` : ''}
         </div>
         <span style="font-size:13px;font-weight:700;color:${amtColor};font-variant-numeric:tabular-nums;margin-left:10px;">${amtStr}</span>
       </div>`;
