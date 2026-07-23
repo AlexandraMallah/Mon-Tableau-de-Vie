@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v498</title>
+<title>Mon Tableau de Vie 🌿 · v499</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7864,22 +7864,34 @@ function renderFoodIngredients() {
   updateIngTotal();
 }
 
+// Extrait l'unité d'une chaîne de portion (ex: "10g" → "g", "250ml" → "ml")
+function _extractUnit(portionStr) {
+  const m = (portionStr || '').match(/(\d+\.?\d*)\s*(g|gr|kg|ml|cl|l)\b/i);
+  return m ? m[2].toLowerCase() : 'g';
+}
+
 // Cherche dans la base locale foodKcal par nom (insensible à la casse)
-// Retourne { kcal, refQty } ou null
 function _lookupLocalFood(name) {
   const db = state.domestique?.foodKcal || [];
-  const n = name.trim().toLowerCase();
+  const n = (name || '').trim().toLowerCase();
+  if (!n) return null;
   const match = db.find(f => f.name.toLowerCase() === n)
     || db.find(f => f.name.toLowerCase().includes(n) && n.length >= 3);
   if (!match) return null;
-  // Extraire la quantité de référence depuis la portion déclarée
   const { grams: refQty } = _parseFoodQuery(match.portion || '100g');
-  return { kcal: match.kcal, refQty: refQty || 100, name: match.name, portion: match.portion || '' };
+  const refUnit = _extractUnit(match.portion || '100g');
+  return { kcal: match.kcal, refQty: refQty || 100, refUnit, name: match.name, portion: match.portion || '' };
 }
 
-// Calcule les kcal proportionnellement à la quantité entrée
+// Calcule les kcal proportionnellement — défaut : grammes si pas d'unité
 function _prorateFoodKcal(localMatch, portionStr) {
-  const { grams: enteredQty } = _parseFoodQuery(portionStr || '');
+  // Si portionStr est juste un nombre sans unité, on suppose la même unité que la référence
+  const cleaned = (portionStr || '').trim();
+  const asNumber = parseFloat(cleaned.replace(',', '.'));
+  const effectiveStr = (!isNaN(asNumber) && !/[a-zA-Z]/.test(cleaned))
+    ? asNumber + (localMatch.refUnit || 'g')
+    : cleaned;
+  const { grams: enteredQty } = _parseFoodQuery(effectiveStr || '');
   if (!enteredQty || !localMatch.refQty) return localMatch.kcal;
   return Math.round(localMatch.kcal * enteredQty / localMatch.refQty);
 }
@@ -7900,9 +7912,16 @@ async function searchIngCalories(idx, query) {
   const local = _lookupLocalFood(query);
   if (local) {
     ing.kcal = _prorateFoodKcal(local, ing.portion || '');
+    ing._refUnit = local.refUnit;
     renderFoodIngredients();
+    // Mettre à jour le placeholder de la portion pour afficher l'unité de référence
+    const rows = document.querySelectorAll('#foodIngredientsList > div');
+    if (rows[idx]) {
+      const portionInput = rows[idx].querySelectorAll('input')[1];
+      if (portionInput && !portionInput.value) portionInput.placeholder = `ex: 20${local.refUnit}`;
+    }
     updateIngTotal();
-    return; // base locale trouvée → pas besoin de l'API
+    return;
   }
   // 2. Fallback OpenFoodFacts
   const { name, grams } = _parseFoodQuery(query);
@@ -13346,15 +13365,21 @@ function recipeEmoji(r) { return r.emoji || autoRecipeEmoji(r.name); }
 
 // Met à jour l'affichage "Total recette · par portion" dans la modale recette
 function _autoFillRecipeIngKcal(row) {
-  const name = row.querySelector('.rec-ing-name')?.value?.trim();
-  const qty = row.querySelector('.rec-ing-qty')?.value?.trim();
-  const unit = row.querySelector('.rec-ing-unit')?.value?.trim();
+  const nameInput = row.querySelector('.rec-ing-name');
+  const qtyInput  = row.querySelector('.rec-ing-qty');
+  const unitInput = row.querySelector('.rec-ing-unit');
+  const kcalInput = row.querySelector('.rec-ing-kcal');
+  const name = nameInput?.value?.trim();
   if (!name) return;
   const local = _lookupLocalFood(name);
   if (!local) return;
-  const portionStr = qty ? (qty + (unit || 'g')) : '';
+  // Affiche l'unité de référence comme hint
+  if (unitInput && !unitInput.value) unitInput.placeholder = local.refUnit;
+  if (qtyInput) qtyInput.placeholder = local.refUnit === 'g' ? 'g' : local.refUnit;
+  const qty  = qtyInput?.value?.trim();
+  const unit = unitInput?.value?.trim() || local.refUnit;
+  const portionStr = qty ? (qty + unit) : '';
   const kcal = portionStr ? _prorateFoodKcal(local, portionStr) : local.kcal;
-  const kcalInput = row.querySelector('.rec-ing-kcal');
   if (kcalInput) { kcalInput.value = kcal; updateRecipeTotals(); }
 }
 
