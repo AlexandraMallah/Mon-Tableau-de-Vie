@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v507</title>
+<title>Mon Tableau de Vie 🌿 · v508</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3104,7 +3104,11 @@
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
             <input type="number" id="fkKcal" placeholder="Kcal totaux" min="0" step="1" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
-            <input type="text" id="fkPortion" placeholder="Portion (ex: 10g, 250ml)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+            <input type="text" id="fkPortion" placeholder="Portion en g/ml (ex: 100g)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+          </div>
+          <div style="margin-bottom:8px;">
+            <input type="text" id="fkUnitLabel" placeholder="Équivalent en unité (ex: 1 oeuf, 1 avocat, 1 c.à.s)" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+            <p style="font-size:11px;color:var(--ink-soft);margin:4px 0 0;">Si tu remplis ce champ, tu pourras taper "1" ou "2" dans les ingrédients au lieu des grammes</p>
           </div>
           <p style="font-size:12px;color:var(--ink-soft);margin:0 0 6px;">Ingrédients (optionnel) :</p>
           <div id="fkIngredients" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
@@ -7852,7 +7856,7 @@ function renderFoodIngredients() {
         oninput="_foodIngredients[${i}].name=this.value;searchIngCalories(${i},this.value)"
         onchange="_foodIngredients[${i}].name=this.value;searchIngCalories(${i},this.value)"
         style="flex:3;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
-      <input type="text" value="${escapeHtml(ing.portion||'')}" placeholder="ex: 10g"
+      <input type="text" value="${escapeHtml(ing.portion||'')}" placeholder="${ing._unitLabel ? 'ex: 1 ou ' + escapeHtml(ing._unitLabel.replace(/^\d+\s*/,'').slice(0,8)) + ', 150g' : 'ex: 10g'}"
         oninput="_foodIngredients[${i}].portion=this.value;_updateFoodIngKcal(${i},this)"
         onchange="_foodIngredients[${i}].portion=this.value;_updateFoodIngKcal(${i},this)"
         style="width:70px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:center;" />
@@ -7884,14 +7888,18 @@ function _lookupLocalFood(name) {
   if (!match) return null;
   const { grams: refQty } = _parseFoodQuery(match.portion || '100g');
   const refUnit = _extractUnit(match.portion || '100g');
-  return { kcal: match.kcal, refQty: refQty || 100, refUnit, name: match.name, portion: match.portion || '' };
+  return { kcal: match.kcal, refQty: refQty || 100, refUnit, name: match.name, portion: match.portion || '', unitLabel: match.unitLabel || '' };
 }
 
 // Calcule les kcal proportionnellement — défaut : grammes si pas d'unité
 function _prorateFoodKcal(localMatch, portionStr) {
-  // Si portionStr est juste un nombre sans unité, on suppose la même unité que la référence
   const cleaned = (portionStr || '').trim();
   const asNumber = parseFloat(cleaned.replace(',', '.'));
+  // Nombre seul sans unité + unitLabel défini → traiter comme un nombre d'unités (ex: "2" = 2 oeufs)
+  if (!isNaN(asNumber) && !/[a-zA-Z]/.test(cleaned) && localMatch.unitLabel) {
+    return Math.round(localMatch.kcal * asNumber);
+  }
+  // Nombre seul sans unité → ajouter l'unité de référence (ex: "70" → "70g")
   const effectiveStr = (!isNaN(asNumber) && !/[a-zA-Z]/.test(cleaned))
     ? asNumber + (localMatch.refUnit || 'g')
     : cleaned;
@@ -7905,7 +7913,7 @@ function _refreshFoodKcalDatalist() {
   let dl = document.getElementById("foodKcalDatalist");
   if (!dl) { dl = document.createElement("datalist"); dl.id = "foodKcalDatalist"; document.body.appendChild(dl); }
   const db = state.domestique?.foodKcal || [];
-  dl.innerHTML = db.map(f => `<option value="${escapeHtml(f.name)}">${f.portion ? f.portion + ' = ' + f.kcal + ' kcal' : f.kcal + ' kcal'}</option>`).join('');
+  dl.innerHTML = db.map(f => `<option value="${escapeHtml(f.name)}">${f.portion ? f.portion + (f.unitLabel ? ' / ' + f.unitLabel : '') + ' = ' + f.kcal + ' kcal' : f.kcal + ' kcal'}</option>`).join('');
 }
 
 async function searchIngCalories(idx, query) {
@@ -7919,6 +7927,7 @@ async function searchIngCalories(idx, query) {
     if (!ing.portion) ing.portion = local.portion;
     ing.kcal = _prorateFoodKcal(local, ing.portion);
     ing._refUnit = local.refUnit;
+    ing._unitLabel = local.unitLabel; // pour le placeholder dans renderFoodIngredients
     renderFoodIngredients();
     updateIngTotal();
     return;
@@ -13370,6 +13379,7 @@ function _updateFoodIngKcal(idx, portionInput) {
   if (!ing) return;
   const local = _lookupLocalFood(ing.name || '');
   if (local) {
+    ing._unitLabel = local.unitLabel; // conserver le label pour le placeholder
     const newKcal = _prorateFoodKcal(local, portionInput.value);
     ing.kcal = newKcal;
     // Mettre à jour seulement le champ kcal de cette ligne
@@ -13457,6 +13467,7 @@ function openFoodKcalForm(id) {
   document.getElementById('fkBrand').value = f?.brand || '';
   document.getElementById('fkKcal').value = f?.kcal || '';
   document.getElementById('fkPortion').value = f?.portion || '';
+  document.getElementById('fkUnitLabel').value = f?.unitLabel || '';
   document.getElementById('fkIngredients').innerHTML = '';
   (f?.ingredients || []).forEach(i => addFkIngredientRow(i.name, i.qty, i.kcal));
   document.getElementById('foodKcalAddForm').style.display = 'block';
@@ -13479,6 +13490,7 @@ function saveFoodKcal() {
   const brand = document.getElementById('fkBrand').value.trim();
   const kcal = parseFloat(document.getElementById('fkKcal').value) || 0;
   const portion = document.getElementById('fkPortion').value.trim();
+  const unitLabel = document.getElementById('fkUnitLabel').value.trim();
   const rows = document.getElementById('fkIngredients').querySelectorAll('div');
   const ingredients = [];
   rows.forEach(r => {
@@ -13490,9 +13502,9 @@ function saveFoodKcal() {
   if (!state.domestique.foodKcal) state.domestique.foodKcal = [];
   if (_fkEditId) {
     const i = state.domestique.foodKcal.findIndex(x => x.id === _fkEditId);
-    if (i >= 0) state.domestique.foodKcal[i] = { ...state.domestique.foodKcal[i], name, brand, kcal: totalKcal, portion, ingredients };
+    if (i >= 0) state.domestique.foodKcal[i] = { ...state.domestique.foodKcal[i], name, brand, kcal: totalKcal, portion, unitLabel, ingredients };
   } else {
-    state.domestique.foodKcal.unshift({ id: 'fk-' + Date.now(), name, brand, kcal: totalKcal, portion, ingredients, createdAt: new Date().toISOString() });
+    state.domestique.foodKcal.unshift({ id: 'fk-' + Date.now(), name, brand, kcal: totalKcal, portion, unitLabel, ingredients, createdAt: new Date().toISOString() });
   }
   saveState(); closeFoodKcalForm(); renderFoodKcal();
 }
@@ -13512,7 +13524,7 @@ function renderFoodKcal() {
     }</div>` : '';
     return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);">
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13.5px;font-weight:600;color:var(--ink);">${escapeHtml(f.name)}${f.brand ? `<span style="font-weight:400;color:var(--ink-soft);font-size:12px;"> · ${escapeHtml(f.brand)}</span>` : ''}${f.portion ? `<span style="font-weight:400;color:var(--ink-soft);font-size:12px;"> — ${escapeHtml(f.portion)}</span>` : ''}</div>
+        <div style="font-size:13.5px;font-weight:600;color:var(--ink);">${escapeHtml(f.name)}${f.brand ? `<span style="font-weight:400;color:var(--ink-soft);font-size:12px;"> · ${escapeHtml(f.brand)}</span>` : ''}${f.portion ? `<span style="font-weight:400;color:var(--ink-soft);font-size:12px;"> — ${escapeHtml(f.portion)}${f.unitLabel ? ' (' + escapeHtml(f.unitLabel) + ')' : ''}</span>` : (f.unitLabel ? `<span style="font-weight:400;color:var(--ink-soft);font-size:12px;"> — ${escapeHtml(f.unitLabel)}</span>` : '')}</div>
         ${ingHtml}
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:10px;flex-shrink:0;">
