@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v504</title>
+<title>Mon Tableau de Vie 🌿 · v506</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -17514,7 +17514,37 @@ function _mergeFromCloud(remote) {
   const merged = migrate({ ...DEFAULT_STATE, ...remote });
   merged.calEvents = state.calEvents || []; // le cloud ne contient pas le calendrier → garder le local
   if ((!merged.shortcuts || !merged.shortcuts.length) && state.shortcuts?.length) merged.shortcuts = state.shortcuts;
+
+  // Protéger les données du jour en cours contre l'écrasement par le cloud.
+  // Cas typique : l'utilisatrice saisit des données → debounce 800ms pas encore parti →
+  // le cloud (qui a un ts plus récent d'une autre session) arrive et écrase tout.
+  // Ici on fusionne : pour chaque champ que le local a renseigné, on le garde.
+  const todayK = todayKey();
+  const localToday = state.history?.[todayK];
+  if (localToday && _hasTodayData(localToday)) {
+    if (!merged.history) merged.history = {};
+    const cloudToday = merged.history[todayK] || {};
+    const safe = { ...cloudToday };
+    for (const [k, v] of Object.entries(localToday)) {
+      if (k === 'habits') {
+        safe.habits = { ...(cloudToday.habits || {}), ...v }; // union des habitudes
+      } else if (v !== null && v !== undefined && v !== '' &&
+                 !(typeof v === 'number' && v === 0) &&
+                 !(Array.isArray(v) && v.length === 0)) {
+        safe[k] = v;
+      }
+    }
+    merged.history[todayK] = safe;
+  }
+
   return merged;
+}
+// Retourne true si le local a au moins une saisie significative pour aujourd'hui.
+function _hasTodayData(t) {
+  if (!t) return false;
+  return t.mood != null || t.energy != null || t.sleep != null || t.weight != null ||
+    t.bedtime || t.wakeTime || (t.journal && t.journal.trim()) ||
+    Object.values(t.habits || {}).some(v => v);
 }
 async function _fbLoad() {
   try {
