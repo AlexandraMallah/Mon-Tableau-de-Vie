@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v490</title>
+<title>Mon Tableau de Vie 🌿 · v491</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2667,6 +2667,10 @@
 
   <!-- VIEW: MONEY -->
   <section class="view" data-view="money">
+    <div class="card" style="margin-bottom:18px;">
+      <h2 style="margin:0 0 8px;">📝 Notes finances</h2>
+      <textarea id="moneyNote" oninput="saveMoneyNote()" placeholder="Rappels, objectifs, idées…" style="width:100%;box-sizing:border-box;resize:none;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--bg-1);line-height:1.5;outline:none;min-height:64px;max-height:120px;" rows="3"></textarea>
+    </div>
     <div class="card" style="margin-bottom:18px;">
       <h2>🏦 Mes comptes</h2>
       <div class="money-accounts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
@@ -8956,7 +8960,16 @@ function setTxType(t) {
   if (fromSel && !isExpense) fromSel.value = "";
   populateTxCategories();
 }
-function renderMoney() { populateTxCategories(); populateMissionList(); renderMoneySummary(); renderBudgetGauge(); renderExternalSummary(); renderTxList(); renderReimbursable(); renderSavings(); renderAccounts(); renderForecast(); renderDailyExpenseChart(); }
+function saveMoneyNote() {
+  if (!state.moneyNote !== undefined) state.moneyNote = "";
+  state.moneyNote = document.getElementById("moneyNote")?.value || "";
+  saveState();
+}
+function renderMoney() {
+  const noteEl = document.getElementById("moneyNote");
+  if (noteEl && noteEl.value !== (state.moneyNote || "")) noteEl.value = state.moneyNote || "";
+  populateTxCategories(); populateMissionList(); renderMoneySummary(); renderBudgetGauge(); renderExternalSummary(); renderTxList(); renderReimbursable(); renderSavings(); renderAccounts(); renderForecast(); renderDailyExpenseChart();
+}
 let _externalMonthOffset = 0;
 function externalNav(delta) {
   _externalMonthOffset = Math.min(0, _externalMonthOffset + delta);
