@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v499</title>
+<title>Mon Tableau de Vie 🌿 · v500</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7849,8 +7849,8 @@ function renderFoodIngredients() {
         oninput="_foodIngredients[${i}].name=this.value;searchIngCalories(${i},this.value)"
         onchange="_foodIngredients[${i}].name=this.value;searchIngCalories(${i},this.value)"
         style="flex:3;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
-      <input type="text" value="${escapeHtml(ing.portion||'')}" placeholder="400ml"
-        oninput="_foodIngredients[${i}].portion=this.value;const _lm=_lookupLocalFood(_foodIngredients[${i}].name);if(_lm){_foodIngredients[${i}].kcal=_prorateFoodKcal(_lm,this.value);renderFoodIngredients();}else{searchIngCalories(${i},_foodIngredients[${i}].name);}"
+      <input type="text" value="${escapeHtml(ing.portion||'')}" placeholder="ex: 10g"
+        oninput="_foodIngredients[${i}].portion=this.value;_updateFoodIngKcal(${i},this)"
         style="width:70px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:center;" />
       <div style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
         <input type="number" value="${ing.kcal>0?ing.kcal:''}" placeholder="kcal" min="0" max="9999"
@@ -7911,15 +7911,11 @@ async function searchIngCalories(idx, query) {
   // 1. Chercher d'abord dans la base locale
   const local = _lookupLocalFood(query);
   if (local) {
-    ing.kcal = _prorateFoodKcal(local, ing.portion || '');
+    // Auto-remplir la portion avec la valeur de référence si vide
+    if (!ing.portion) ing.portion = local.portion;
+    ing.kcal = _prorateFoodKcal(local, ing.portion);
     ing._refUnit = local.refUnit;
     renderFoodIngredients();
-    // Mettre à jour le placeholder de la portion pour afficher l'unité de référence
-    const rows = document.querySelectorAll('#foodIngredientsList > div');
-    if (rows[idx]) {
-      const portionInput = rows[idx].querySelectorAll('input')[1];
-      if (portionInput && !portionInput.value) portionInput.placeholder = `ex: 20${local.refUnit}`;
-    }
     updateIngTotal();
     return;
   }
@@ -13364,6 +13360,24 @@ function autoRecipeEmoji(name) {
 function recipeEmoji(r) { return r.emoji || autoRecipeEmoji(r.name); }
 
 // Met à jour l'affichage "Total recette · par portion" dans la modale recette
+// Met à jour le champ kcal d'une ligne ingrédient repas sans re-render (garde le focus)
+function _updateFoodIngKcal(idx, portionInput) {
+  const ing = _foodIngredients[idx];
+  if (!ing) return;
+  const local = _lookupLocalFood(ing.name || '');
+  if (local) {
+    const newKcal = _prorateFoodKcal(local, portionInput.value);
+    ing.kcal = newKcal;
+    // Mettre à jour seulement le champ kcal de cette ligne
+    const row = portionInput.closest('div');
+    const kcalInput = row?.querySelector('input[type="number"]');
+    if (kcalInput) kcalInput.value = newKcal;
+    updateIngTotal();
+  } else {
+    searchIngCalories(idx, ing.name || '');
+  }
+}
+
 function _autoFillRecipeIngKcal(row) {
   const nameInput = row.querySelector('.rec-ing-name');
   const qtyInput  = row.querySelector('.rec-ing-qty');
