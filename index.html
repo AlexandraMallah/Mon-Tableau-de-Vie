@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v496</title>
+<title>Mon Tableau de Vie 🌿 · v497</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10384,14 +10384,16 @@ function openSavingsAccountModal(cat) {
       const mainLabel = label && label !== cat ? label : typeLabel;
       const subLabel = (label && label !== cat) ? (typeLabel + (dateStr ? ' · ' + dateStr : '')) : dateStr;
       const isAdj = !!t.isAdjustment;
-      const rowBg = isAdj ? 'var(--bg-2)' : 'var(--bg-1)';
-      const editHint = !isAdj ? ` title="Cliquer pour ajouter/modifier le motif" onclick="editSavingsTxDesc('${t.id}','${escapeHtml(cat)}')" style="cursor:pointer;"` : '';
-      return `<div${editHint} style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:${rowBg};border-radius:8px;${!isAdj?'':'border-left:3px solid #9b72d4;'}}">
+      const clickAttr = !isAdj ? `onclick="editSavingsTxDesc('${t.id}','${escapeHtml(cat)}')"` : '';
+      const borderStyle = isAdj ? 'border-left:3px solid #9b72d4;' : '';
+      const cursorStyle = !isAdj ? 'cursor:pointer;' : '';
+      const sub = subLabel ? `<span style="font-size:11px;color:var(--ink-soft);">${escapeHtml(subLabel)}${!isAdj ? ' · ✏️' : ''}</span>` : '';
+      return `<div ${clickAttr} style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 10px;background:var(--bg-1);border-radius:8px;${borderStyle}${cursorStyle}">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${isAdj ? '📊 ' : ''}${escapeHtml(mainLabel)}</div>
-          ${subLabel ? `<div style="font-size:11px;color:var(--ink-soft);">${escapeHtml(subLabel)}${!isAdj ? ' · ✏️ motif' : ''}</div>` : ''}
+          <span style="font-size:13px;font-weight:600;color:var(--ink);">${isAdj ? '📊 ' : ''}${escapeHtml(mainLabel)}</span>
+          ${sub ? `<div>${sub}</div>` : ''}
         </div>
-        <span style="font-size:13px;font-weight:700;color:${amtColor};font-variant-numeric:tabular-nums;margin-left:10px;">${amtStr}</span>
+        <span style="font-size:13px;font-weight:700;color:${amtColor};font-variant-numeric:tabular-nums;white-space:nowrap;">${amtStr}</span>
       </div>`;
     }).join("");
 
