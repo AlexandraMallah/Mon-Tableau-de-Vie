@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v495</title>
+<title>Mon Tableau de Vie 🌿 · v496</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4100,6 +4100,27 @@
 </div>
 
 <!-- Modal conge -->
+<div class="modal-bg" id="savingsUpdateModal" onclick="if(event.target===this)closeSavingsUpdateModal()">
+  <div class="modal" style="max-width:380px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <h2 id="savingsUpdateTitle" style="margin:0;font-size:16px;"></h2>
+      <button onclick="closeSavingsUpdateModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);line-height:1;">✕</button>
+    </div>
+    <div style="background:var(--bg-1);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--ink-soft);">
+      Solde calculé actuellement : <strong id="savingsUpdateCurrent" style="color:var(--ink);"></strong>
+    </div>
+    <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:6px;">Vrai solde actuel (€)</label>
+    <input type="number" id="savingsUpdateNewBal" step="0.01" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1.5px solid var(--lavender);border-radius:12px;font-size:18px;font-family:inherit;color:var(--ink);margin-bottom:12px;outline:none;" />
+    <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:6px;">Motif (ex : Intérêts annuels, Valorisation…)</label>
+    <input type="text" id="savingsUpdateNote" placeholder="Intérêts / Valorisation" style="width:100%;box-sizing:border-box;padding:10px 14px;border:1px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;color:var(--ink);margin-bottom:18px;outline:none;" />
+    <div id="savingsUpdateDiff" style="text-align:center;font-size:14px;font-weight:600;margin-bottom:16px;min-height:20px;"></div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeSavingsUpdateModal()" class="btn-soft" style="flex:1;">Annuler</button>
+      <button onclick="confirmSavingsUpdate()" class="btn-primary" style="flex:2;">Enregistrer l'ajustement</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="savingsAccountModal" onclick="if(event.target===this)closeSavingsAccountModal()">
   <div class="modal" style="max-width:480px;max-height:80vh;display:flex;flex-direction:column;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -10383,8 +10404,9 @@ function openSavingsAccountModal(cat) {
 function closeSavingsAccountModal() {
   document.getElementById("savingsAccountModal").style.display = "none";
 }
+let _savingsUpdateCat = null;
+let _savingsUpdateCurrentBal = 0;
 function updateSavingsBalance(cat) {
-  // Compute current balance for this account
   const breakdown = state.accounts?.savingsBreakdown || {};
   const txDelta = {};
   state.transactions.forEach(t => {
@@ -10393,28 +10415,52 @@ function updateSavingsBalance(cat) {
     else if (t.type === "income" && t.directSavingsAccount) txDelta[t.directSavingsAccount] = (txDelta[t.directSavingsAccount] || 0) + t.amount;
     if (t.fromSavingsAccount && (t.type === "expense" || t.type === "external")) txDelta[t.fromSavingsAccount] = (txDelta[t.fromSavingsAccount] || 0) - t.amount;
   });
-  const currentBal = (breakdown[cat] || 0) + (txDelta[cat] || 0);
-  const raw = prompt(`Solde réel actuel de "${cat}" (€) :\n(Solde calculé actuellement : ${currentBal.toFixed(2)} €)`, currentBal.toFixed(2));
-  if (raw === null) return;
-  const newBal = parseFloat(raw.replace(",", "."));
+  _savingsUpdateCat = cat;
+  _savingsUpdateCurrentBal = (breakdown[cat] || 0) + (txDelta[cat] || 0);
+
+  document.getElementById("savingsUpdateTitle").textContent = "📊 " + cat + " — mise à jour";
+  document.getElementById("savingsUpdateCurrent").textContent = _savingsUpdateCurrentBal.toFixed(2) + " €";
+  const input = document.getElementById("savingsUpdateNewBal");
+  input.value = _savingsUpdateCurrentBal.toFixed(2);
+  document.getElementById("savingsUpdateNote").value = "";
+  document.getElementById("savingsUpdateDiff").textContent = "";
+  document.getElementById("savingsUpdateModal").style.display = "flex";
+  setTimeout(() => { input.focus(); input.select(); }, 50);
+
+  input.oninput = () => {
+    const nv = parseFloat(input.value);
+    const diffEl = document.getElementById("savingsUpdateDiff");
+    if (isNaN(nv)) { diffEl.textContent = ""; return; }
+    const d = Math.round((nv - _savingsUpdateCurrentBal) * 100) / 100;
+    if (d === 0) { diffEl.textContent = "Aucun changement"; diffEl.style.color = "var(--ink-soft)"; return; }
+    diffEl.textContent = (d > 0 ? "+" : "−") + Math.abs(d).toFixed(2) + " € seront enregistrés";
+    diffEl.style.color = d > 0 ? "#5bbcb8" : "#e07bbd";
+  };
+}
+function closeSavingsUpdateModal() {
+  document.getElementById("savingsUpdateModal").style.display = "none";
+}
+function confirmSavingsUpdate() {
+  const newBal = parseFloat(document.getElementById("savingsUpdateNewBal").value);
   if (isNaN(newBal)) return;
-  const delta = Math.round((newBal - currentBal) * 100) / 100;
-  if (delta === 0) { alert("Le solde est déjà à jour."); return; }
-  const note = prompt(`Motif de l'ajustement (ex: Intérêts annuels, Valorisation…) :`, delta > 0 ? "Intérêts / Valorisation" : "Frais / Moins-value") || "Ajustement solde";
-  const today = todayKey();
+  const delta = Math.round((newBal - _savingsUpdateCurrentBal) * 100) / 100;
+  if (delta === 0) { closeSavingsUpdateModal(); return; }
+  const note = document.getElementById("savingsUpdateNote").value.trim()
+    || (delta > 0 ? "Intérêts / Valorisation" : "Frais / Moins-value");
   state.transactions.unshift({
     id: "tx-" + Date.now(),
     type: delta > 0 ? "savings" : "savings-out",
-    category: cat,
+    category: _savingsUpdateCat,
     amount: Math.abs(delta),
-    date: today,
+    date: todayKey(),
     description: note,
     isAdjustment: true,
   });
   saveState();
   renderSavings();
-  openSavingsAccountModal(cat); // refresh popup
-  showToast(`✅ Solde ${cat} mis à jour : ${delta > 0 ? "+" : ""}${delta.toFixed(2)} € enregistré`);
+  closeSavingsUpdateModal();
+  openSavingsAccountModal(_savingsUpdateCat);
+  showToast(`✅ ${_savingsUpdateCat} mis à jour : ${delta > 0 ? "+" : ""}${delta.toFixed(2)} € enregistré`);
 }
 function editSavingsTxDesc(txId, cat) {
   const tx = state.transactions.find(t => t.id === txId);
