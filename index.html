@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v509</title>
+<title>Mon Tableau de Vie 🌿 · v510</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7904,11 +7904,7 @@ function _lookupLocalFood(name) {
 function _prorateFoodKcal(localMatch, portionStr) {
   const cleaned = (portionStr || '').trim();
   const asNumber = parseFloat(cleaned.replace(',', '.'));
-  // Nombre seul sans unité + unitLabel défini → traiter comme un nombre d'unités (ex: "2" = 2 oeufs)
-  if (!isNaN(asNumber) && !/[a-zA-Z]/.test(cleaned) && localMatch.unitLabel) {
-    return Math.round(localMatch.kcal * asNumber);
-  }
-  // Nombre seul sans unité → ajouter l'unité de référence (ex: "70" → "70g")
+  // Nombre seul sans unité → supposer la même unité que la référence (ex: "80" → "80g")
   const effectiveStr = (!isNaN(asNumber) && !/[a-zA-Z]/.test(cleaned))
     ? asNumber + (localMatch.refUnit || 'g')
     : cleaned;
