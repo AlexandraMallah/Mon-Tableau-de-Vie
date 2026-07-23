@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v510</title>
+<title>Mon Tableau de Vie 🌿 · v511</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7824,6 +7824,7 @@ function openFoodEntry(id) {
       if (!ing.portion) ing.portion = local.portion;
       ing.kcal = _prorateFoodKcal(local, ing.portion);
       ing._unitLabel = local.unitLabel;
+      ing._localRef = local;
     } else if (ing.portion) {
       searchIngCalories(i, ing.name + ' ' + ing.portion); // fallback OpenFoodFacts
     }
@@ -7928,11 +7929,11 @@ async function searchIngCalories(idx, query) {
   // 1. Chercher d'abord dans la base locale
   const local = _lookupLocalFood(query);
   if (local) {
-    // Auto-remplir la portion avec la valeur de référence si vide
     if (!ing.portion) ing.portion = local.portion;
     ing.kcal = _prorateFoodKcal(local, ing.portion);
     ing._refUnit = local.refUnit;
-    ing._unitLabel = local.unitLabel; // pour le placeholder dans renderFoodIngredients
+    ing._unitLabel = local.unitLabel;
+    ing._localRef = local; // stocker pour recalcul rapide quand la portion change
     renderFoodIngredients();
     updateIngTotal();
     return;
@@ -13382,8 +13383,10 @@ function recipeEmoji(r) { return r.emoji || autoRecipeEmoji(r.name); }
 function _updateFoodIngKcal(idx, portionInput) {
   const ing = _foodIngredients[idx];
   if (!ing) return;
-  const local = _lookupLocalFood(ing.name || '');
+  // Utiliser la référence mise en cache lors de la sélection, ou relancer la recherche
+  const local = ing._localRef || _lookupLocalFood(ing.name || '');
   if (local) {
+    if (!ing._localRef) ing._localRef = local;
     ing._unitLabel = local.unitLabel;
     const newKcal = _prorateFoodKcal(local, portionInput.value);
     ing.kcal = newKcal;
