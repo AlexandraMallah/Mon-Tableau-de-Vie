@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v514</title>
+<title>Mon Tableau de Vie 🌿 · v515</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3065,6 +3065,14 @@
       </div><!-- end food-view groceries -->
 
       <div class="food-view" data-food="cuisine">
+      <!-- Mini-onglets Recettes / Kcal aliments -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button id="cuis-tab-recipes" onclick="switchCuisineTab('recipes')"
+          style="padding:7px 16px;border-radius:999px;border:1px solid var(--line);background:var(--mint-soft);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;color:var(--ink);">🍳 Recettes</button>
+        <button id="cuis-tab-kcal" onclick="switchCuisineTab('kcal')"
+          style="padding:7px 16px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:13px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">🔢 Kcal aliments</button>
+      </div>
+      <div id="cuis-panel-recipes">
       <div class="card" style="margin-bottom:14px;">
         <div class="work-header">
           <h2 style="margin:0;">🍳 Mes recettes <span class="count" id="recipeCount"></span></h2>
@@ -3090,7 +3098,9 @@
         <div id="recipeKcalChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center;"></div>
         <div id="recipeList"></div>
       </div>
+      </div><!-- end cuis-panel-recipes -->
       <!-- kcal aliments -->
+      <div id="cuis-panel-kcal" style="display:none;">
       <div class="card">
         <div class="work-header" style="margin-bottom:12px;">
           <h2 style="margin:0;">🔢 Kcal aliments</h2>
@@ -3120,6 +3130,7 @@
         </div>
         <div id="foodKcalList"></div>
       </div>
+      </div><!-- end cuis-panel-kcal -->
       </div><!-- end food-view cuisine -->
     </div><!-- end sub-view alimentation -->
 
@@ -13477,6 +13488,19 @@ function deleteRecipe() {
 function switchFoodTab(tab) {
   document.querySelectorAll('.food-tab').forEach(b => b.classList.toggle('active', b.dataset.food === tab));
   document.querySelectorAll('.food-view').forEach(v => v.classList.toggle('active', v.dataset.food === tab));
+}
+function switchCuisineTab(tab) {
+  const isKcal = tab === 'kcal';
+  const rPanel = document.getElementById('cuis-panel-recipes');
+  const kPanel = document.getElementById('cuis-panel-kcal');
+  const rBtn   = document.getElementById('cuis-tab-recipes');
+  const kBtn   = document.getElementById('cuis-tab-kcal');
+  if (rPanel) rPanel.style.display = isKcal ? 'none' : 'block';
+  if (kPanel) kPanel.style.display = isKcal ? 'block' : 'none';
+  const activeStyle  = 'padding:7px 16px;border-radius:999px;border:1px solid var(--line);background:var(--mint-soft);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;color:var(--ink);';
+  const inactiveStyle = 'padding:7px 16px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:13px;cursor:pointer;font-family:inherit;color:var(--ink-soft);';
+  if (rBtn) rBtn.style.cssText = isKcal ? inactiveStyle : activeStyle;
+  if (kBtn) kBtn.style.cssText = isKcal ? activeStyle : inactiveStyle;
 }
 
 /* ---- Kcal aliments ---- */
