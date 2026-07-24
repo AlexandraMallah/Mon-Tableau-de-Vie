@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v513</title>
+<title>Mon Tableau de Vie 🌿 · v514</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7937,8 +7937,16 @@ async function searchIngCalories(idx, query) {
     ing.kcal = _prorateFoodKcal(local, ing.portion);
     ing._refUnit = local.refUnit;
     ing._unitLabel = local.unitLabel;
-    ing._localRef = local; // stocker pour recalcul rapide quand la portion change
-    renderFoodIngredients();
+    ing._localRef = local;
+    // Mettre à jour portion+kcal SANS re-render pour garder le focus sur le champ nom
+    const _list = document.getElementById('foodIngredientsList');
+    const _row = _list ? _list.children[idx] : null;
+    if (_row) {
+      const _portionInput = _row.querySelectorAll('input[type="text"]')[1];
+      const _kcalInput = _row.querySelector('input[type="number"]');
+      if (_portionInput && !_portionInput.value) _portionInput.value = ing.portion;
+      if (_kcalInput) _kcalInput.value = ing.kcal;
+    }
     updateIngTotal();
     return;
   }
