@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v527</title>
+<title>Mon Tableau de Vie 🌿 · v528</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -17811,9 +17811,19 @@ async function cloudPull() {
     // Remplacement total — on garde seulement le calendrier Google local
     const calEvents = state.calEvents || [];
     const calSources = state.calSources || [];
+    // Fusionner les repas d'aujourd'hui des deux appareils (évite de perdre des entrées)
+    const dk = todayKey();
+    const localFood = state.history?.[dk]?.foodLog || [];
+    const cloudFood = remote.history?.[dk]?.foodLog || [];
     state = migrate({ ...DEFAULT_STATE, ...remote });
     state.calEvents = calEvents;
     state.calSources = calSources;
+    if (localFood.length > 0 && cloudFood.length >= 0) {
+      if (!state.history[dk]) state.history[dk] = {};
+      const merged = [...cloudFood];
+      localFood.forEach(lf => { if (!merged.find(cf => cf.id === lf.id)) merged.push(lf); });
+      state.history[dk].foodLog = merged;
+    }
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
     closeSyncMenu();
     showToast("⬇️ Données du cloud récupérées — rechargement…");
