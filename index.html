@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v515</title>
+<title>Mon Tableau de Vie 🌿 · v517</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9695,14 +9695,35 @@ function moneyCatMonthNav(delta) {
 }
 function currentMonthRange() {
   const now = new Date();
+  // Trouver la dernière transaction "Salaire (postdoc)" reçue avant ou aujourd'hui
+  const allTx = (state.money?.transactions || []);
+  const salaires = allTx
+    .filter(tx => tx.type === 'income' && tx.category === 'Salaire (postdoc)' && new Date(tx.date) <= now)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (salaires.length > 0) {
+    const lastSalaire = new Date(salaires[0].date);
+    lastSalaire.setHours(0, 0, 0, 0);
+    // Chercher le salaire suivant (mois prochain)
+    const nextSalaires = allTx
+      .filter(tx => tx.type === 'income' && tx.category === 'Salaire (postdoc)' && new Date(tx.date) > now)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+    let end;
+    if (nextSalaires.length > 0) {
+      end = new Date(nextSalaires[0].date);
+      end.setHours(0, 0, 0, 0);
+    } else {
+      // Estimer : même jour le mois prochain
+      end = new Date(lastSalaire.getFullYear(), lastSalaire.getMonth() + 1, lastSalaire.getDate());
+    }
+    return [lastSalaire, end];
+  }
+  // Fallback : logique fixe au 26
   const day = now.getDate();
   let start, end;
   if (day >= 26) {
-    // Ex : 26 juin → 25 juillet
     start = new Date(now.getFullYear(), now.getMonth(), 26);
     end   = new Date(now.getFullYear(), now.getMonth() + 1, 26);
   } else {
-    // Ex : 1→25 juin → période 26 mai → 25 juin
     start = new Date(now.getFullYear(), now.getMonth() - 1, 26);
     end   = new Date(now.getFullYear(), now.getMonth(), 26);
   }
