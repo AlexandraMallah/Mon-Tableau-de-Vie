@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v519</title>
+<title>Mon Tableau de Vie 🌿 · v521</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1868,9 +1868,11 @@
         <button id="foodFromRecipeBtn" onclick="closeFoodEntry();openRecipePick();" class="btn-soft" style="font-size:12px;width:100%;margin-bottom:14px;padding:9px;border-radius:10px;">🍳 Choisir depuis mes recettes</button>
         <input type="hidden" id="foodEntryId" />
         <div style="display:flex;gap:8px;margin-bottom:2px;">
-          <div style="flex:1;">
+          <div style="flex:1;position:relative;">
             <label>Nom du plat / repas</label>
-            <input type="text" id="foodEntryName" placeholder="ex : Latte maison, salade, poulet…" />
+            <input type="text" id="foodEntryName" placeholder="ex : Latte maison, salade, poulet…" autocomplete="off"
+              oninput="_foodNameSearch(this.value)" onblur="setTimeout(()=>_foodNameHide(),200)" />
+            <div id="foodNameDropdown" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:999;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.1);max-height:200px;overflow-y:auto;"></div>
           </div>
           <div>
             <label>Heure</label>
@@ -3108,11 +3110,11 @@
         </div>
         <p style="color:var(--ink-soft);font-size:12px;margin:-8px 0 12px;">Note les kcal d'aliments ou préparations avec leurs ingrédients (ex: Ube Latte → 10g Ube, 250ml lait…)</p>
         <div id="foodKcalAddForm" style="display:none;background:#faf8fd;padding:12px;border-radius:14px;margin-bottom:12px;border:1px solid var(--line);">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:8px;">
             <input type="text" id="fkName" placeholder="Nom (ex: Huile d'olive)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
             <input type="text" id="fkBrand" placeholder="Marque (ex: Monoprix Bio)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:8px;">
             <input type="number" id="fkKcal" placeholder="Kcal totaux" min="0" step="1" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
             <input type="text" id="fkPortion" placeholder="Portion en g/ml (ex: 100g)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
           </div>
@@ -7625,7 +7627,7 @@ function switchBodyMetric(metric) {
   renderBodyChart(metric);
 }
 const METRIC_CONFIG = {
-  weight: { label: "Poids", unit: "kg", color: "#b4d4f1", bg: "rgba(180,212,241,0.18)", min: 45, max: 65 },
+  weight: { label: "Poids", unit: "kg", color: "#b4d4f1", bg: "rgba(180,212,241,0.18)", min: 50, max: 60 },
   bodyFat: { label: "Masse grasse", unit: "kg", color: "#f5b6c9", bg: "rgba(245,182,201,0.18)", min: 0, max: 40 },
   muscleMass: { label: "Masse maigre", unit: "kg", color: "#aee0c8", bg: "rgba(174,224,200,0.18)", min: 20, max: 60 },
 };
@@ -7812,6 +7814,65 @@ function togglePill() {
   saveState();
   renderPill();
   renderPillSante();
+}
+
+/* ========= AUTOCOMPLÉTION NOM DU PLAT ========= */
+function _foodNameSearch(q) {
+  const dd = document.getElementById('foodNameDropdown');
+  if (!dd) return;
+  const query = q.trim().toLowerCase();
+  if (query.length < 1) { dd.style.display = 'none'; return; }
+  const results = [];
+  // Recettes
+  (state.domestique?.recipes || []).forEach(r => {
+    if (r.name.toLowerCase().includes(query)) {
+      const kcal = recipeKcal(r).per;
+      results.push({ label: (autoRecipeEmoji(r.name)||'🍳') + ' ' + r.name, sub: kcal ? kcal + ' kcal/portion' : '', kcal, type: 'recipe', obj: r });
+    }
+  });
+  // Aliments kcal
+  (state.domestique?.foodKcal || []).forEach(f => {
+    if (f.name.toLowerCase().includes(query)) {
+      const label = f.unitLabel ? f.unitLabel + ' ' + f.name : f.portion + ' ' + f.name;
+      results.push({ label: '🥗 ' + f.name, sub: f.kcal + ' kcal (' + (f.unitLabel || f.portion) + ')', kcal: f.kcal, type: 'food', obj: f });
+    }
+  });
+  if (!results.length) { dd.style.display = 'none'; return; }
+  dd.innerHTML = results.slice(0, 8).map((r, i) =>
+    `<div onclick="_foodNameSelect(${i})" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;"
+      onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background=''"
+      data-idx="${i}">
+      <span style="font-size:14px;">${r.label}</span>
+      <span style="font-size:12px;color:var(--ink-soft);">${r.sub}</span>
+    </div>`
+  ).join('');
+  dd._results = results.slice(0, 8);
+  dd.style.display = 'block';
+}
+function _foodNameHide() {
+  const dd = document.getElementById('foodNameDropdown');
+  if (dd) dd.style.display = 'none';
+}
+function _foodNameSelect(idx) {
+  const dd = document.getElementById('foodNameDropdown');
+  if (!dd || !dd._results) return;
+  const r = dd._results[idx];
+  if (!r) return;
+  document.getElementById('foodEntryName').value = r.obj.name;
+  dd.style.display = 'none';
+  if (r.type === 'recipe') {
+    // Charger les ingrédients de la recette
+    const portions = 1;
+    _foodIngredients = (r.obj.ingredients || []).map(i => ({ ...i, fromRecipe: true }));
+    renderFoodIngredients();
+    const cal = recipeKcal(r.obj).per;
+    if (cal) document.getElementById('foodEntryCalories').value = cal;
+  } else {
+    // Aliment simple — mettre les kcal directement
+    _foodIngredients = [];
+    renderFoodIngredients();
+    document.getElementById('foodEntryCalories').value = r.kcal || '';
+  }
 }
 
 /* ========= JOURNAL ALIMENTAIRE ========= */
