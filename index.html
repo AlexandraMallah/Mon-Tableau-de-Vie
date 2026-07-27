@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v532</title>
+<title>Mon Tableau de Vie 🌿 · v534</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -17735,13 +17735,20 @@ function _fbListen() {
     const remoteTs = remote.lastModified || 0;
     const localTs  = state.lastModified || 0;
     if (remoteTs >= localTs) {
-      state = _mergeFromCloud(remote);
+      // Remplacement direct — hasPendingWrites garantit que ce n'est pas notre propre écriture
+      // Annuler tout save en attente pour éviter que l'ancien state reparte vers le cloud
+      if (_fbSaveTimer) { clearTimeout(_fbSaveTimer); _fbSaveTimer = null; }
+      const calEvents = state.calEvents || [];
+      const calSources = state.calSources || [];
+      state = migrate({ ...DEFAULT_STATE, ...remote });
+      state.calEvents = calEvents;
+      state.calSources = calSources;
       localStorage.setItem(STORE_KEY, JSON.stringify(state));
       renderAll();
       try { renderBiblioCollectionTree(); } catch(e) {}
       try { renderBiblioRefs(); } catch(e) {}
       renderShortcutsBar();
-      showToast("🔄 Mis à jour depuis un autre appareil");
+      if (remoteTs > localTs) showToast("🔄 Mis à jour depuis un autre appareil");
     }
     _fbSetStatus("ok");
   }, err => {
