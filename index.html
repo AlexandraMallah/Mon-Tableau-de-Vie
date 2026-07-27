@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v530</title>
+<title>Mon Tableau de Vie 🌿 · v531</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -17661,6 +17661,13 @@ function _mergeFromCloud(remote) {
     for (const [k, v] of Object.entries(localToday)) {
       if (k === 'habits') {
         safe.habits = { ...(cloudToday.habits || {}), ...v }; // union des habitudes
+      } else if (k === 'foodLog') {
+        // Fusionner les repas des deux appareils par id unique — le cloud peut avoir des repas plus récents
+        const cloudFood = cloudToday.foodLog || [];
+        const localFood = v || [];
+        const mergedFood = [...cloudFood];
+        localFood.forEach(lf => { if (!mergedFood.find(cf => cf.id === lf.id)) mergedFood.push(lf); });
+        safe.foodLog = mergedFood;
       } else if (v !== null && v !== undefined && v !== '' &&
                  !(typeof v === 'number' && v === 0) &&
                  !(Array.isArray(v) && v.length === 0)) {
