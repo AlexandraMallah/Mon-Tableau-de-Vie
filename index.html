@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v517</title>
+<title>Mon Tableau de Vie 🌿 · v519</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9696,7 +9696,7 @@ function moneyCatMonthNav(delta) {
 function currentMonthRange() {
   const now = new Date();
   // Trouver la dernière transaction "Salaire (postdoc)" reçue avant ou aujourd'hui
-  const allTx = (state.money?.transactions || []);
+  const allTx = (state.transactions || []);
   const salaires = allTx
     .filter(tx => tx.type === 'income' && tx.category === 'Salaire (postdoc)' && new Date(tx.date) <= now)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
