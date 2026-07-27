@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v528</title>
+<title>Mon Tableau de Vie 🌿 · v530</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -17746,11 +17746,19 @@ function _fbListen() {
 async function _fbSaveNow() {
   if (!_fbUser || !_fbDb) return;
   try {
-    await _fbDocRef().set(_cloudPayload()); // sans calendrier Google + compressé (sous la limite 1 Mo)
+    const payload = _cloudPayload();
+    const sizeKo = Math.round(JSON.stringify(payload).length / 1024);
+    if (sizeKo > 950) {
+      showToast("⚠️ Données trop volumineuses pour le cloud (" + sizeKo + " Ko) — export manuel recommandé", 6000);
+      _fbSetStatus("error");
+      return;
+    }
+    await _fbDocRef().set(payload);
     _fbSetStatus("ok");
   } catch(e) {
     console.warn("[Firebase] save error", e);
     _fbSetStatus("error");
+    showToast("❌ Échec de la synchronisation cloud — vérifie ta connexion", 5000);
   }
 }
 
