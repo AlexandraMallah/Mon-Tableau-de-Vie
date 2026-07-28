@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v550</title>
+<title>Mon Tableau de Vie 🌿 · v551</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13353,7 +13353,7 @@ function renderChecklists() {
       ${addRow(li, -1)}
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:${sections.length?'14px':'0'};">
         ${sections.map((sec, si) => `
-        <div draggable="true" ondragstart="_clDragStart(event,${li},${si})" ondragover="_clDragOver(event)" ondragleave="_clDragLeave(event)" ondrop="_clDrop(event,${li},${si})" style="background:${(sec.items||[]).length > 0 && (sec.items||[]).every(i=>i.done) ? '#e8f7ee' : 'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;cursor:grab;">
+        <div class="_cl-sec" draggable="true" ondragstart="_clDragStart(event,${li},${si})" ondragover="_clDragOver(event)" ondragleave="_clDragLeave(event)" ondragend="_clDragEnd(event)" ondrop="_clDrop(event,${li},${si})" style="background:${(sec.items||[]).length > 0 && (sec.items||[]).every(i=>i.done) ? '#e8f7ee' : 'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;cursor:grab;box-sizing:border-box;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
             <span style="font-size:16px;">${sec.emoji||'📂'}</span>
             <span style="font-weight:700;font-size:14px;flex:1;">${escapeHtml(sec.name)}</span>
@@ -13566,26 +13566,55 @@ function moveCLSection(li, si, dir) {
 }
 /* Drag & drop sections */
 let _clDragSrc = null;
+function _clClearDropIndicators() {
+  document.querySelectorAll('._cl-sec').forEach(el => {
+    el.style.borderTop = '';
+    el.style.borderBottom = '';
+    delete el.dataset.dropPos;
+  });
+}
 function _clDragStart(e, li, si) {
   _clDragSrc = { li, si };
   e.dataTransfer.effectAllowed = 'move';
 }
 function _clDragOver(e) {
   e.preventDefault();
-  e.currentTarget.style.outline = '2px solid var(--lavender)';
   e.dataTransfer.dropEffect = 'move';
+  _clClearDropIndicators();
+  const sec = e.currentTarget;
+  const rect = sec.getBoundingClientRect();
+  if (e.clientY < rect.top + rect.height / 2) {
+    sec.style.borderTop = '3px solid #c9b6f0';
+    sec.dataset.dropPos = 'before';
+  } else {
+    sec.style.borderBottom = '3px solid #c9b6f0';
+    sec.dataset.dropPos = 'after';
+  }
 }
 function _clDragLeave(e) {
-  e.currentTarget.style.outline = '';
+  // only clear if leaving to outside the element (not to a child)
+  if (!e.currentTarget.contains(e.relatedTarget)) {
+    e.currentTarget.style.borderTop = '';
+    e.currentTarget.style.borderBottom = '';
+    delete e.currentTarget.dataset.dropPos;
+  }
+}
+function _clDragEnd(e) {
+  _clClearDropIndicators();
+  _clDragSrc = null;
 }
 function _clDrop(e, li, si) {
   e.preventDefault();
-  e.currentTarget.style.outline = '';
-  if (!_clDragSrc || (_clDragSrc.li === li && _clDragSrc.si === si)) return;
-  if (_clDragSrc.li !== li) return; // pas de déplacement entre listes différentes
+  _clClearDropIndicators();
+  if (!_clDragSrc || (_clDragSrc.li === li && _clDragSrc.si === si)) { _clDragSrc = null; return; }
+  if (_clDragSrc.li !== li) { _clDragSrc = null; return; }
   const sections = state.domestique.checklists[li].sections;
-  const [moved] = sections.splice(_clDragSrc.si, 1);
-  sections.splice(si, 0, moved);
+  const dropPos = e.currentTarget.dataset.dropPos || 'after';
+  let targetSi = dropPos === 'before' ? si : si + 1;
+  const fromSi = _clDragSrc.si;
+  const [moved] = sections.splice(fromSi, 1);
+  if (fromSi < targetSi) targetSi--;
+  sections.splice(targetSi, 0, moved);
   _clDragSrc = null;
   saveState(); renderChecklists();
 }
