@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v555</title>
+<title>Mon Tableau de Vie 🌿 · v556</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13601,16 +13601,11 @@ function _clZoneDrop(e, li, insertAt) {
   if (!_clDragSrc || _clDragSrc.li !== li) { _clDragSrc = null; return; }
   const sections = state.domestique.checklists[li].sections;
   const fromSi = _clDragSrc.si;
-  // insertAt is the first index of the row; clamp to valid range
+  _clDragSrc = null;
   let target = Math.min(insertAt, sections.length);
-  // no-op if dropped in same row
-  const fromRow = Math.floor(fromSi / 2);
-  const toRow = Math.floor(target / 2);
-  if (fromRow === toRow) { _clDragSrc = null; return; }
   const [moved] = sections.splice(fromSi, 1);
   if (fromSi < target) target--;
   sections.splice(target, 0, moved);
-  _clDragSrc = null;
   saveState(); renderChecklists();
 }
 
