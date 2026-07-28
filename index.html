@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v543</title>
+<title>Mon Tableau de Vie 🌿 · v544</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13349,7 +13349,9 @@ function renderChecklists() {
         <button onclick="editChecklist(${li})" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-soft);padding:0 4px;" title="Modifier">✏️</button>
         <button onclick="deleteChecklist(${li})" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-soft);padding:0 4px;" title="Supprimer">🗑️</button>
       </div>
-      ${directItems.map((it,ii) => itemRow(it, li, -1, ii)).join('')}
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 16px;">
+        ${directItems.map((it,ii) => itemRow(it, li, -1, ii)).join('')}
+      </div>
       ${addRow(li, -1)}
       ${sections.map((sec, si) => `
         <div style="margin-top:14px;background:var(--bg-1);border-radius:10px;padding:10px 12px;">
@@ -13360,7 +13362,9 @@ function renderChecklists() {
             <button onclick="editCLSection(${li},${si})" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;" title="Modifier">✏️</button>
             <button onclick="deleteCLSection(${li},${si})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:13px;padding:0 2px;" title="Supprimer">🗑️</button>
           </div>
-          ${(sec.items||[]).map((it,ii) => itemRow(it, li, si, ii)).join('')}
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0 16px;">
+            ${(sec.items||[]).map((it,ii) => itemRow(it, li, si, ii)).join('')}
+          </div>
           ${addRow(li, si)}
         </div>`).join('')}
       <button onclick="addCLSection(${li})" style="margin-top:12px;background:none;border:1.5px dashed var(--line);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;width:100%;">+ Ajouter une sous-liste</button>
