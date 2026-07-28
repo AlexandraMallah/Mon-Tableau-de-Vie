@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v552</title>
+<title>Mon Tableau de Vie 🌿 · v553</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13351,9 +13351,10 @@ function renderChecklists() {
       </div>
       ${directItems.map((it,ii) => itemRow(it, li, -1, ii)).join('')}
       ${addRow(li, -1)}
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:${sections.length?'14px':'0'};">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0;margin-top:${sections.length?'14px':'0'};">
+        <div class="_cl-drop-zone" data-li="${li}" data-si="0" ondragover="_clZoneOver(event)" ondragleave="_clZoneLeave(event)" ondrop="_clZoneDrop(event,${li},0)" style="grid-column:1/-1;height:10px;border-radius:4px;background:transparent;transition:background 0.15s;margin-bottom:2px;"></div>
         ${sections.map((sec, si) => `
-        <div class="_cl-sec" draggable="true" ondragstart="_clDragStart(event,${li},${si})" ondragover="_clDragOver(event)" ondragleave="_clDragLeave(event)" ondragend="_clDragEnd(event)" ondrop="_clDrop(event,${li},${si})" style="background:${(sec.items||[]).length > 0 && (sec.items||[]).every(i=>i.done) ? '#e8f7ee' : 'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;cursor:grab;box-sizing:border-box;">
+        <div class="_cl-sec" draggable="true" ondragstart="_clDragStart(event,${li},${si})" ondragend="_clDragEnd(event)" style="background:${(sec.items||[]).length > 0 && (sec.items||[]).every(i=>i.done) ? '#e8f7ee' : 'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;cursor:grab;box-sizing:border-box;margin:0 6px 0 6px;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
             <span style="font-size:16px;">${sec.emoji||'📂'}</span>
             <span style="font-weight:700;font-size:14px;flex:1;">${escapeHtml(sec.name)}</span>
@@ -13365,7 +13366,9 @@ function renderChecklists() {
           </div>
           <div style="flex:1;">${(sec.items||[]).map((it,ii) => itemRow(it, li, si, ii)).join('')}</div>
           ${addRow(li, si)}
-        </div>`).join('')}
+        </div>
+        <div class="_cl-drop-zone" data-li="${li}" data-si="${si+1}" ondragover="_clZoneOver(event)" ondragleave="_clZoneLeave(event)" ondrop="_clZoneDrop(event,${li},${si+1})" style="grid-column:1/-1;height:10px;border-radius:4px;background:transparent;transition:background 0.15s;margin-top:2px;margin-bottom:2px;"></div>
+        `).join('')}
       </div>
       <button onclick="addCLSection(${li})" style="margin-top:12px;background:none;border:1.5px dashed var(--line);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;width:100%;">+ Ajouter une sous-liste</button>
     </div>`;
@@ -13567,51 +13570,38 @@ function moveCLSection(li, si, dir) {
 /* Drag & drop sections */
 let _clDragSrc = null;
 function _clClearDropIndicators() {
-  document.querySelectorAll('._cl-sec').forEach(el => {
-    el.style.boxShadow = '';
-    delete el.dataset.dropPos;
-  });
+  document.querySelectorAll('._cl-drop-zone').forEach(el => { el.style.background = 'transparent'; el.style.height = '10px'; });
 }
 function _clDragStart(e, li, si) {
   _clDragSrc = { li, si };
   e.dataTransfer.effectAllowed = 'move';
 }
-function _clDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  _clClearDropIndicators();
-  const sec = e.currentTarget;
-  const rect = sec.getBoundingClientRect();
-  if (e.clientY < rect.top + rect.height / 2) {
-    sec.style.boxShadow = '0 -7px 0 0 #c9b6f0';
-    sec.dataset.dropPos = 'before';
-  } else {
-    sec.style.boxShadow = '0 7px 0 0 #c9b6f0';
-    sec.dataset.dropPos = 'after';
-  }
-}
-function _clDragLeave(e) {
-  if (!e.currentTarget.contains(e.relatedTarget)) {
-    e.currentTarget.style.boxShadow = '';
-    delete e.currentTarget.dataset.dropPos;
-  }
-}
 function _clDragEnd(e) {
   _clClearDropIndicators();
   _clDragSrc = null;
 }
-function _clDrop(e, li, si) {
+function _clZoneOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  _clClearDropIndicators();
+  e.currentTarget.style.background = '#c9b6f0';
+  e.currentTarget.style.height = '6px';
+}
+function _clZoneLeave(e) {
+  e.currentTarget.style.background = 'transparent';
+  e.currentTarget.style.height = '10px';
+}
+function _clZoneDrop(e, li, insertAt) {
   e.preventDefault();
   _clClearDropIndicators();
-  if (!_clDragSrc || (_clDragSrc.li === li && _clDragSrc.si === si)) { _clDragSrc = null; return; }
-  if (_clDragSrc.li !== li) { _clDragSrc = null; return; }
+  if (!_clDragSrc || _clDragSrc.li !== li) { _clDragSrc = null; return; }
   const sections = state.domestique.checklists[li].sections;
-  const dropPos = e.currentTarget.dataset.dropPos || 'after';
-  let targetSi = dropPos === 'before' ? si : si + 1;
   const fromSi = _clDragSrc.si;
+  if (fromSi === insertAt || fromSi === insertAt - 1) { _clDragSrc = null; return; }
   const [moved] = sections.splice(fromSi, 1);
-  if (fromSi < targetSi) targetSi--;
-  sections.splice(targetSi, 0, moved);
+  let target = insertAt;
+  if (fromSi < target) target--;
+  sections.splice(target, 0, moved);
   _clDragSrc = null;
   saveState(); renderChecklists();
 }
