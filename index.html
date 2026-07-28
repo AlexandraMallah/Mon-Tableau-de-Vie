@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v556</title>
+<title>Mon Tableau de Vie 🌿 · v557</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13574,11 +13574,22 @@ function moveCLSection(li, si, dir) {
 /* Drag & drop sections */
 let _clDragSrc = null;
 function _clClearDropIndicators() {
-  document.querySelectorAll('._cl-drop-zone').forEach(el => { el.style.background = 'transparent'; el.style.height = '10px'; });
+  document.querySelectorAll('._cl-drop-zone').forEach(el => {
+    el.style.background = 'transparent';
+    el.style.height = '10px';
+    el.style.border = 'none';
+  });
 }
 function _clDragStart(e, li, si) {
   _clDragSrc = { li, si };
   e.dataTransfer.effectAllowed = 'move';
+  // Rendre les zones de dépôt visibles pendant le drag
+  setTimeout(() => {
+    document.querySelectorAll('._cl-drop-zone').forEach(el => {
+      el.style.height = '24px';
+      el.style.border = '2px dashed #c9b6f0';
+    });
+  }, 0);
 }
 function _clDragEnd(e) {
   _clClearDropIndicators();
@@ -13589,11 +13600,12 @@ function _clZoneOver(e) {
   e.dataTransfer.dropEffect = 'move';
   _clClearDropIndicators();
   e.currentTarget.style.background = '#c9b6f0';
-  e.currentTarget.style.height = '6px';
+  e.currentTarget.style.borderRadius = '3px';
 }
 function _clZoneLeave(e) {
-  e.currentTarget.style.background = 'transparent';
-  e.currentTarget.style.height = '10px';
+  if (!e.currentTarget.contains(e.relatedTarget)) {
+    e.currentTarget.style.background = 'transparent';
+  }
 }
 function _clZoneDrop(e, li, insertAt) {
   e.preventDefault();
