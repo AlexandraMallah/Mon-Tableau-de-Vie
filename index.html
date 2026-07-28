@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v557</title>
+<title>Mon Tableau de Vie 🌿 · v558</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13583,13 +13583,19 @@ function _clClearDropIndicators() {
 function _clDragStart(e, li, si) {
   _clDragSrc = { li, si };
   e.dataTransfer.effectAllowed = 'move';
-  // Rendre les zones de dépôt visibles pendant le drag
   setTimeout(() => {
-    document.querySelectorAll('._cl-drop-zone').forEach(el => {
+    const zones = document.querySelectorAll('._cl-drop-zone');
+    console.log('[DnD] dragstart li='+li+' si='+si+' zones trouvées:', zones.length);
+    zones.forEach((el,i) => {
+      const r = el.getBoundingClientRect();
+      console.log('[DnD] zone'+i+' top='+Math.round(r.top)+' height='+Math.round(r.height));
       el.style.height = '24px';
       el.style.border = '2px dashed #c9b6f0';
     });
   }, 0);
+}
+function _clZoneOver_orig(e) {
+  console.log('[DnD] zoneOver sur', e.currentTarget.getBoundingClientRect());
 }
 function _clDragEnd(e) {
   _clClearDropIndicators();
