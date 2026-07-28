@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v547</title>
+<title>Mon Tableau de Vie 🌿 · v548</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13353,7 +13353,12 @@ function renderChecklists() {
       ${addRow(li, -1)}
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:${sections.length?'14px':'0'};">
         ${sections.map((sec, si) => `
-        <div style="background:${(sec.items||[]).length > 0 && (sec.items||[]).every(i=>i.done) ? '#e8f7ee' : 'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;">
+        <div draggable="true" data-li="${li}" data-si="${si}"
+          ondragstart="_clDragStart(event,${li},${si})"
+          ondragover="_clDragOver(event)"
+          ondrop="_clDrop(event,${li},${si})"
+          ondragleave="_clDragLeave(event)"
+          style="background:${(sec.items||[]).length > 0 && (sec.items||[]).every(i=>i.done) ? '#e8f7ee' : 'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;cursor:grab;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
             <span style="font-size:16px;">${sec.emoji||'📂'}</span>
             <span style="font-weight:700;font-size:14px;flex:1;">${escapeHtml(sec.name)}</span>
@@ -13554,6 +13559,32 @@ function deleteChecklist(li) {
   state.domestique.checklists.splice(li, 1);
   saveState(); renderChecklists();
 }
+/* Drag & drop sections */
+let _clDragSrc = null;
+function _clDragStart(e, li, si) {
+  _clDragSrc = { li, si };
+  e.dataTransfer.effectAllowed = 'move';
+}
+function _clDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.style.outline = '2px solid var(--lavender)';
+  e.dataTransfer.dropEffect = 'move';
+}
+function _clDragLeave(e) {
+  e.currentTarget.style.outline = '';
+}
+function _clDrop(e, li, si) {
+  e.preventDefault();
+  e.currentTarget.style.outline = '';
+  if (!_clDragSrc || (_clDragSrc.li === li && _clDragSrc.si === si)) return;
+  if (_clDragSrc.li !== li) return; // pas de déplacement entre listes différentes
+  const sections = state.domestique.checklists[li].sections;
+  const [moved] = sections.splice(_clDragSrc.si, 1);
+  sections.splice(si, 0, moved);
+  _clDragSrc = null;
+  saveState(); renderChecklists();
+}
+
 // compat ancienne structure (items directs sans sections)
 function addChecklistItem(li) { addCLItem(li, -1); }
 function toggleChecklistItem(li, ii) { toggleCLItem(li, -1, ii); }
