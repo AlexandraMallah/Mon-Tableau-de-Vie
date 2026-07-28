@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v537</title>
+<title>Mon Tableau de Vie 🌿 · v539</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1981,6 +1981,24 @@
       <div class="actions" style="margin-top:14px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closePillarDetail()">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal : nouvelle sous-liste -->
+  <div class="modal-bg" id="newSectionModal" onclick="if(event.target===this)closeNewSectionModal()">
+    <div class="modal" style="max-width:360px;" onclick="event.stopPropagation()">
+      <h2 style="margin:0 0 14px;">📂 Nouvelle sous-liste</h2>
+      <input type="hidden" id="newSectionListIdx" value="" />
+      <label>Nom</label>
+      <input type="text" id="newSectionName" placeholder="ex : Vêtements, Trousse de toilette…" maxlength="60"
+        onkeydown="if(event.key==='Enter')saveNewSection()" />
+      <label style="margin-top:10px;">Emoji (optionnel)</label>
+      <input type="text" id="newSectionEmoji" placeholder="👗" maxlength="4" style="width:60px;" />
+      <div class="actions" style="margin-top:16px;">
+        <div class="spacer"></div>
+        <button class="secondary" onclick="closeNewSectionModal()">Annuler</button>
+        <button class="primary" onclick="saveNewSection()">Créer</button>
       </div>
     </div>
   </div>
@@ -13328,10 +13346,12 @@ function renderChecklists() {
       ${directItems.map((it,ii) => itemRow(it, li, -1, ii)).join('')}
       ${addRow(li, -1)}
       ${sections.map((sec, si) => `
-        <div style="margin-top:14px;">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-            <span style="font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.05em;flex:1;">${escapeHtml(sec.name)}</span>
-            <button onclick="deleteCLSection(${li},${si})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:11px;padding:0;">✕ section</button>
+        <div style="margin-top:14px;background:var(--bg-1);border-radius:10px;padding:10px 12px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span style="font-size:16px;">${sec.emoji||'📂'}</span>
+            <span style="font-weight:700;font-size:14px;flex:1;">${escapeHtml(sec.name)}</span>
+            <span style="font-size:11px;color:var(--ink-soft);">${(sec.items||[]).filter(i=>i.done).length}/${(sec.items||[]).length}</span>
+            <button onclick="deleteCLSection(${li},${si})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:13px;padding:0 2px;" title="Supprimer">🗑️</button>
           </div>
           ${(sec.items||[]).map((it,ii) => itemRow(it, li, si, ii)).join('')}
           ${addRow(li, si)}
@@ -13404,12 +13424,22 @@ function deleteCLItem(li, si, ii) {
   saveState(); renderChecklists();
 }
 function addCLSection(li) {
-  const name = prompt('Nom de la sous-liste :');
-  if (!name || !name.trim()) return;
+  document.getElementById('newSectionListIdx').value = li;
+  document.getElementById('newSectionName').value = '';
+  document.getElementById('newSectionEmoji').value = '';
+  document.getElementById('newSectionModal').classList.add('open');
+  setTimeout(() => document.getElementById('newSectionName').focus(), 50);
+}
+function closeNewSectionModal() { document.getElementById('newSectionModal').classList.remove('open'); }
+function saveNewSection() {
+  const name = document.getElementById('newSectionName').value.trim();
+  if (!name) return;
+  const emoji = document.getElementById('newSectionEmoji').value.trim() || '📂';
+  const li = parseInt(document.getElementById('newSectionListIdx').value);
   const lst = state.domestique.checklists[li];
   if (!lst.sections) lst.sections = [];
-  lst.sections.push({ id:'cs'+Date.now(), name: name.trim(), items:[] });
-  saveState(); renderChecklists();
+  lst.sections.push({ id:'cs'+Date.now(), name, emoji, items:[] });
+  saveState(); renderChecklists(); closeNewSectionModal();
 }
 function deleteCLSection(li, si) {
   const lst = state.domestique.checklists[li];
