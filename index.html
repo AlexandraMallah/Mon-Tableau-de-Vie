@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v558</title>
+<title>Mon Tableau de Vie 🌿 · v559</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2178,7 +2178,11 @@
         </div>
       </div>
       <div class="card" style="margin-bottom:18px;">
-        <h2>14 derniers jours</h2>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <button onclick="timeBarNav(-1)" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--lavender);padding:0 4px;" title="Période précédente">◀</button>
+          <h2 style="margin:0;flex:1;text-align:center;" id="timeBarTitle">14 derniers jours</h2>
+          <button onclick="timeBarNav(1)" id="timeBarNext" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--lavender);padding:0 4px;opacity:0.3;" title="Période suivante">▶</button>
+        </div>
         <div class="chart-wrap" style="height:260px;"><canvas id="timeBarChart"></canvas></div>
       </div>
       <div class="card" style="margin-bottom:18px;">
@@ -12786,6 +12790,7 @@ const TIME_CATS = [
 ];
 let timeBarChart, timeDonutChart, timeDonutAllChart;
 let _timeDonutOffset = 0; // 0 = 30 derniers jours, -1 = période précédente, etc.
+let _timeBarOffset = 0; // 0 = 14 derniers jours, -1 = période précédente (j-28 à j-15), etc.
 
 function getTimeDateKey() {
   const i = document.getElementById("timeWorkDate");
@@ -13102,10 +13107,30 @@ function renderTimeStatsMonth() {
   const nextBtn = document.getElementById("timeMonthNext");
   if (nextBtn) nextBtn.disabled = _timeMonthOffset >= 0;
 }
+function timeBarNav(dir) {
+  _timeBarOffset += dir;
+  if (_timeBarOffset > 0) _timeBarOffset = 0;
+  renderTimeBarChart();
+}
 function renderTimeBarChart() {
   const canvas = document.getElementById("timeBarChart");
   if (!canvas) return;
-  const dates = lastDates(14);
+  // Calculer les 14 jours selon l'offset
+  const end = new Date(); end.setHours(23,59,59,999);
+  end.setDate(end.getDate() + _timeBarOffset * 14);
+  const dates = Array.from({length:14}, (_,i) => { const d = new Date(end); d.setDate(d.getDate() - 13 + i); return d; });
+  // Titre
+  const titleEl = document.getElementById('timeBarTitle');
+  if (titleEl) {
+    if (_timeBarOffset === 0) titleEl.textContent = '14 derniers jours';
+    else {
+      const from = dates[0].toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+      const to = dates[13].toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+      titleEl.textContent = from + ' – ' + to;
+    }
+  }
+  const nextBtn = document.getElementById('timeBarNext');
+  if (nextBtn) nextBtn.style.opacity = _timeBarOffset === 0 ? '0.3' : '1';
   const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
   // Calcul des données brutes d'abord pour savoir quel dataset est le plus haut/bas par colonne
   const rawData = TIME_CATS.map(c => dates.map(d => Number(getWorkTime(todayKey(d))[c.key]) || 0));
