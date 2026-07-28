@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v536</title>
+<title>Mon Tableau de Vie 🌿 · v537</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1988,7 +1988,8 @@
   <!-- Modal : nouvelle liste -->
   <div class="modal-bg" id="newListModal" onclick="if(event.target===this)closeNewListModal()">
     <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
-      <h2 style="margin:0 0 14px;">🗂️ Nouvelle liste</h2>
+      <h2 id="newListModalTitle" style="margin:0 0 14px;">🗂️ Nouvelle liste</h2>
+      <input type="hidden" id="editListIdx" value="" />
       <label>Nom de la liste</label>
       <input type="text" id="newListName" placeholder="ex : Valise, Courses, Checklist départ…" maxlength="60"
         onkeydown="if(event.key==='Enter')saveNewList()" />
@@ -1997,7 +1998,7 @@
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closeNewListModal()">Annuler</button>
-        <button class="primary" onclick="saveNewList()">Créer</button>
+        <button class="primary" id="newListSaveBtn" onclick="saveNewList()">Créer</button>
       </div>
     </div>
   </div>
@@ -13283,6 +13284,12 @@ function deleteTodoItem(id) {
 function renderDomestique() { renderTodo(); renderChecklists(); renderDomesticTasks(); renderMealPlan(); renderGroceries(); renderPlants(); renderRecipes(); renderFoodKcal(); }
 
 /* ========= LISTES / CHECKLISTS ========= */
+function _clAllItems(lst) {
+  // Retourne tous les items : items directs + items de toutes les sections
+  const direct = lst.items || [];
+  const sectItems = (lst.sections || []).flatMap(s => s.items || []);
+  return [...direct, ...sectItems];
+}
 function renderChecklists() {
   const el = document.getElementById('checklistsContainer');
   if (!el) return;
@@ -13291,34 +13298,64 @@ function renderChecklists() {
     el.innerHTML = '<p style="color:var(--ink-soft);font-size:13px;margin:0;">Aucune liste — clique sur "+ Nouvelle liste" pour commencer.</p>';
     return;
   }
-  el.innerHTML = lists.map((lst, li) => `
-    <div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-        <span style="font-size:18px;">${lst.emoji || '🗂️'}</span>
+  const itemRow = (it, li, si, ii) => `
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:4px 0;">
+      <input type="checkbox" ${it.done?'checked':''} onchange="toggleCLItem(${li},${si},${ii})"
+        style="width:17px;height:17px;cursor:pointer;accent-color:var(--mint);flex-shrink:0;" />
+      <span style="${it.done?'text-decoration:line-through;color:var(--ink-soft);':''}font-size:14px;">${escapeHtml(it.text)}</span>
+      <button onclick="deleteCLItem(${li},${si},${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;margin-left:auto;padding:0 4px;">✕</button>
+    </label>`;
+  const addRow = (li, si) => `
+    <div style="display:flex;gap:6px;margin-top:6px;">
+      <input type="text" id="clInput_${li}_${si}" placeholder="Ajouter un élément…" maxlength="100"
+        style="flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;"
+        onkeydown="if(event.key==='Enter')addCLItem(${li},${si})" />
+      <button onclick="addCLItem(${li},${si})" class="btn-primary" style="padding:7px 14px;">+</button>
+    </div>`;
+  el.innerHTML = lists.map((lst, li) => {
+    const allItems = _clAllItems(lst);
+    const doneCount = allItems.filter(i=>i.done).length;
+    const sections = lst.sections || [];
+    const directItems = lst.items || [];
+    return `<div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="font-size:18px;">${lst.emoji||'🗂️'}</span>
         <strong style="flex:1;font-size:15px;">${escapeHtml(lst.name)}</strong>
-        <span style="font-size:12px;color:var(--ink-soft);">${(lst.items||[]).filter(i=>i.done).length}/${(lst.items||[]).length}</span>
-        <button onclick="deleteChecklist(${li})" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 4px;" title="Supprimer la liste">🗑️</button>
+        <span style="font-size:12px;color:var(--ink-soft);">${doneCount}/${allItems.length}</span>
+        <button onclick="editChecklist(${li})" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-soft);padding:0 4px;" title="Modifier">✏️</button>
+        <button onclick="deleteChecklist(${li})" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-soft);padding:0 4px;" title="Supprimer">🗑️</button>
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
-        ${(lst.items||[]).map((it, ii) => `
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:4px 0;">
-            <input type="checkbox" ${it.done?'checked':''} onchange="toggleChecklistItem(${li},${ii})"
-              style="width:17px;height:17px;cursor:pointer;accent-color:var(--mint);flex-shrink:0;" />
-            <span style="${it.done?'text-decoration:line-through;color:var(--ink-soft);':''};font-size:14px;">${escapeHtml(it.text)}</span>
-            <button onclick="deleteChecklistItem(${li},${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;margin-left:auto;padding:0 4px;">✕</button>
-          </label>`).join('')}
-      </div>
-      <div style="display:flex;gap:6px;">
-        <input type="text" id="clInput_${li}" placeholder="Ajouter un élément…" maxlength="100"
-          style="flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;"
-          onkeydown="if(event.key==='Enter')addChecklistItem(${li})" />
-        <button onclick="addChecklistItem(${li})" class="btn-primary" style="padding:7px 14px;">+</button>
-      </div>
-    </div>`).join('');
+      ${directItems.map((it,ii) => itemRow(it, li, -1, ii)).join('')}
+      ${addRow(li, -1)}
+      ${sections.map((sec, si) => `
+        <div style="margin-top:14px;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <span style="font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.05em;flex:1;">${escapeHtml(sec.name)}</span>
+            <button onclick="deleteCLSection(${li},${si})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:11px;padding:0;">✕ section</button>
+          </div>
+          ${(sec.items||[]).map((it,ii) => itemRow(it, li, si, ii)).join('')}
+          ${addRow(li, si)}
+        </div>`).join('')}
+      <button onclick="addCLSection(${li})" style="margin-top:12px;background:none;border:1.5px dashed var(--line);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;width:100%;">+ Ajouter une sous-liste</button>
+    </div>`;
+  }).join('');
 }
 function openNewListModal() {
+  document.getElementById('newListModalTitle').textContent = '🗂️ Nouvelle liste';
+  document.getElementById('newListSaveBtn').textContent = 'Créer';
+  document.getElementById('editListIdx').value = '';
   document.getElementById('newListName').value = '';
   document.getElementById('newListEmoji').value = '';
+  document.getElementById('newListModal').classList.add('open');
+  setTimeout(() => document.getElementById('newListName').focus(), 50);
+}
+function editChecklist(li) {
+  const lst = state.domestique.checklists[li];
+  document.getElementById('newListModalTitle').textContent = '✏️ Modifier la liste';
+  document.getElementById('newListSaveBtn').textContent = 'Enregistrer';
+  document.getElementById('editListIdx').value = li;
+  document.getElementById('newListName').value = lst.name;
+  document.getElementById('newListEmoji').value = lst.emoji || '';
   document.getElementById('newListModal').classList.add('open');
   setTimeout(() => document.getElementById('newListName').focus(), 50);
 }
@@ -13327,40 +13364,69 @@ function saveNewList() {
   const name = document.getElementById('newListName').value.trim();
   if (!name) return;
   const emoji = document.getElementById('newListEmoji').value.trim() || '🗂️';
+  const idx = document.getElementById('editListIdx').value;
   if (!state.domestique.checklists) state.domestique.checklists = [];
-  state.domestique.checklists.push({ id: 'cl' + Date.now(), name, emoji, items: [] });
-  saveState();
-  renderChecklists();
-  closeNewListModal();
+  if (idx !== '') {
+    state.domestique.checklists[parseInt(idx)].name = name;
+    state.domestique.checklists[parseInt(idx)].emoji = emoji;
+  } else {
+    state.domestique.checklists.push({ id: 'cl'+Date.now(), name, emoji, items: [], sections: [] });
+  }
+  saveState(); renderChecklists(); closeNewListModal();
 }
-function addChecklistItem(li) {
-  const inp = document.getElementById('clInput_' + li);
+function addCLItem(li, si) {
+  const inp = document.getElementById(`clInput_${li}_${si}`);
   if (!inp) return;
   const text = inp.value.trim();
   if (!text) return;
-  state.domestique.checklists[li].items.push({ id: 'ci' + Date.now(), text, done: false });
-  saveState();
-  renderChecklists();
-  const newInp = document.getElementById('clInput_' + li);
+  const lst = state.domestique.checklists[li];
+  if (si === -1) {
+    if (!lst.items) lst.items = [];
+    lst.items.push({ id:'ci'+Date.now(), text, done:false });
+  } else {
+    if (!lst.sections[si].items) lst.sections[si].items = [];
+    lst.sections[si].items.push({ id:'ci'+Date.now(), text, done:false });
+  }
+  saveState(); renderChecklists();
+  const newInp = document.getElementById(`clInput_${li}_${si}`);
   if (newInp) newInp.focus();
 }
-function toggleChecklistItem(li, ii) {
-  state.domestique.checklists[li].items[ii].done = !state.domestique.checklists[li].items[ii].done;
-  saveState();
-  renderChecklists();
+function toggleCLItem(li, si, ii) {
+  const lst = state.domestique.checklists[li];
+  const item = si === -1 ? lst.items[ii] : lst.sections[si].items[ii];
+  item.done = !item.done;
+  saveState(); renderChecklists();
 }
-function deleteChecklistItem(li, ii) {
-  state.domestique.checklists[li].items.splice(ii, 1);
-  saveState();
-  renderChecklists();
+function deleteCLItem(li, si, ii) {
+  const lst = state.domestique.checklists[li];
+  if (si === -1) lst.items.splice(ii, 1);
+  else lst.sections[si].items.splice(ii, 1);
+  saveState(); renderChecklists();
+}
+function addCLSection(li) {
+  const name = prompt('Nom de la sous-liste :');
+  if (!name || !name.trim()) return;
+  const lst = state.domestique.checklists[li];
+  if (!lst.sections) lst.sections = [];
+  lst.sections.push({ id:'cs'+Date.now(), name: name.trim(), items:[] });
+  saveState(); renderChecklists();
+}
+function deleteCLSection(li, si) {
+  const lst = state.domestique.checklists[li];
+  if (!confirm(`Supprimer la sous-liste "${lst.sections[si].name}" ?`)) return;
+  lst.sections.splice(si, 1);
+  saveState(); renderChecklists();
 }
 function deleteChecklist(li) {
   const lst = state.domestique.checklists[li];
   if (!confirm(`Supprimer la liste "${lst.name}" ?`)) return;
   state.domestique.checklists.splice(li, 1);
-  saveState();
-  renderChecklists();
+  saveState(); renderChecklists();
 }
+// compat ancienne structure (items directs sans sections)
+function addChecklistItem(li) { addCLItem(li, -1); }
+function toggleChecklistItem(li, ii) { toggleCLItem(li, -1, ii); }
+function deleteChecklistItem(li, ii) { deleteCLItem(li, -1, ii); }
 
 /* ========= CUISINE — RECETTES ========= */
 let _recipeCategoryFilter = "";
