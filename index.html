@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v554</title>
+<title>Mon Tableau de Vie 🌿 · v555</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13351,10 +13351,10 @@ function renderChecklists() {
       </div>
       ${directItems.map((it,ii) => itemRow(it, li, -1, ii)).join('')}
       ${addRow(li, -1)}
-      <div style="display:flex;flex-direction:column;margin-top:${sections.length?'14px':'0'};">
-        <div class="_cl-drop-zone" ondragover="_clZoneOver(event)" ondragleave="_clZoneLeave(event)" ondrop="_clZoneDrop(event,${li},0)" style="height:10px;border-radius:4px;background:transparent;transition:background 0.15s;"></div>
-        ${sections.map((sec, si) => `
-        <div class="_cl-sec" draggable="true" ondragstart="_clDragStart(event,${li},${si})" ondragend="_clDragEnd(event)" style="background:${(sec.items||[]).length > 0 && (sec.items||[]).every(i=>i.done) ? '#e8f7ee' : 'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;cursor:grab;">
+      ${(()=>{
+        if (!sections.length) return '';
+        const dz = (insertAt) => `<div class="_cl-drop-zone" ondragover="_clZoneOver(event)" ondragleave="_clZoneLeave(event)" ondrop="_clZoneDrop(event,${li},${insertAt})" style="height:10px;border-radius:4px;background:transparent;transition:background 0.15s;flex-shrink:0;"></div>`;
+        const secCard = (sec, si) => `<div class="_cl-sec" draggable="true" ondragstart="_clDragStart(event,${li},${si})" ondragend="_clDragEnd(event)" style="flex:1;min-width:0;background:${(sec.items||[]).length>0&&(sec.items||[]).every(i=>i.done)?'#e8f7ee':'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;cursor:grab;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
             <span style="font-size:16px;">${sec.emoji||'📂'}</span>
             <span style="font-weight:700;font-size:14px;flex:1;">${escapeHtml(sec.name)}</span>
@@ -13364,12 +13364,16 @@ function renderChecklists() {
             <button onclick="editCLSection(${li},${si})" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;" title="Modifier">✏️</button>
             <button onclick="deleteCLSection(${li},${si})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:13px;padding:0 2px;" title="Supprimer">🗑️</button>
           </div>
-          <div>${(sec.items||[]).map((it,ii) => itemRow(it, li, si, ii)).join('')}</div>
-          ${addRow(li, si)}
-        </div>
-        <div class="_cl-drop-zone" ondragover="_clZoneOver(event)" ondragleave="_clZoneLeave(event)" ondrop="_clZoneDrop(event,${li},${si+1})" style="height:10px;border-radius:4px;background:transparent;transition:background 0.15s;"></div>
-        `).join('')}
-      </div>
+          <div>${(sec.items||[]).map((it,ii)=>itemRow(it,li,si,ii)).join('')}</div>
+          ${addRow(li,si)}
+        </div>`;
+        let html = `<div style="display:flex;flex-direction:column;margin-top:14px;">` + dz(0);
+        for (let r=0; r<Math.ceil(sections.length/2); r++) {
+          const i0=r*2, i1=r*2+1;
+          html += `<div style="display:flex;gap:12px;align-items:stretch;">` + secCard(sections[i0],i0) + (i1<sections.length?secCard(sections[i1],i1):'') + `</div>` + dz((r+1)*2);
+        }
+        return html + `</div>`;
+      })()}
       <button onclick="addCLSection(${li})" style="margin-top:12px;background:none;border:1.5px dashed var(--line);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;width:100%;">+ Ajouter une sous-liste</button>
     </div>`;
   }).join('');
@@ -13597,9 +13601,13 @@ function _clZoneDrop(e, li, insertAt) {
   if (!_clDragSrc || _clDragSrc.li !== li) { _clDragSrc = null; return; }
   const sections = state.domestique.checklists[li].sections;
   const fromSi = _clDragSrc.si;
-  if (fromSi === insertAt || fromSi === insertAt - 1) { _clDragSrc = null; return; }
+  // insertAt is the first index of the row; clamp to valid range
+  let target = Math.min(insertAt, sections.length);
+  // no-op if dropped in same row
+  const fromRow = Math.floor(fromSi / 2);
+  const toRow = Math.floor(target / 2);
+  if (fromRow === toRow) { _clDragSrc = null; return; }
   const [moved] = sections.splice(fromSi, 1);
-  let target = insertAt;
   if (fromSi < target) target--;
   sections.splice(target, 0, moved);
   _clDragSrc = null;
