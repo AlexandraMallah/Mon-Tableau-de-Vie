@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v534</title>
+<title>Mon Tableau de Vie 🌿 · v536</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1985,6 +1985,23 @@
     </div>
   </div>
 
+  <!-- Modal : nouvelle liste -->
+  <div class="modal-bg" id="newListModal" onclick="if(event.target===this)closeNewListModal()">
+    <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <h2 style="margin:0 0 14px;">🗂️ Nouvelle liste</h2>
+      <label>Nom de la liste</label>
+      <input type="text" id="newListName" placeholder="ex : Valise, Courses, Checklist départ…" maxlength="60"
+        onkeydown="if(event.key==='Enter')saveNewList()" />
+      <label style="margin-top:10px;">Emoji (optionnel)</label>
+      <input type="text" id="newListEmoji" placeholder="🧳" maxlength="4" style="width:60px;" />
+      <div class="actions" style="margin-top:16px;">
+        <div class="spacer"></div>
+        <button class="secondary" onclick="closeNewListModal()">Annuler</button>
+        <button class="primary" onclick="saveNewList()">Créer</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal : synchronisation cloud -->
   <div class="modal-bg" id="syncMenuModal" onclick="if(event.target===this)closeSyncMenu()">
     <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
@@ -2931,6 +2948,15 @@
           <button class="btn-primary" onclick="addTodoItem('newTodoInput')">+</button>
         </div>
         <div class="todo-list" id="todoList"></div>
+      </div>
+
+      <!-- Mes listes -->
+      <div class="card" style="margin-top:14px;">
+        <div class="work-header" style="margin-bottom:14px;">
+          <h2 style="margin:0;">🗂️ Mes listes</h2>
+          <button class="btn-primary" onclick="openNewListModal()">+ Nouvelle liste</button>
+        </div>
+        <div id="checklistsContainer"></div>
       </div>
     </div>
 
@@ -13254,7 +13280,87 @@ function deleteTodoItem(id) {
   _renderAllTodo();
 }
 
-function renderDomestique() { renderTodo(); renderDomesticTasks(); renderMealPlan(); renderGroceries(); renderPlants(); renderRecipes(); renderFoodKcal(); }
+function renderDomestique() { renderTodo(); renderChecklists(); renderDomesticTasks(); renderMealPlan(); renderGroceries(); renderPlants(); renderRecipes(); renderFoodKcal(); }
+
+/* ========= LISTES / CHECKLISTS ========= */
+function renderChecklists() {
+  const el = document.getElementById('checklistsContainer');
+  if (!el) return;
+  const lists = state.domestique.checklists || [];
+  if (!lists.length) {
+    el.innerHTML = '<p style="color:var(--ink-soft);font-size:13px;margin:0;">Aucune liste — clique sur "+ Nouvelle liste" pour commencer.</p>';
+    return;
+  }
+  el.innerHTML = lists.map((lst, li) => `
+    <div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-size:18px;">${lst.emoji || '🗂️'}</span>
+        <strong style="flex:1;font-size:15px;">${escapeHtml(lst.name)}</strong>
+        <span style="font-size:12px;color:var(--ink-soft);">${(lst.items||[]).filter(i=>i.done).length}/${(lst.items||[]).length}</span>
+        <button onclick="deleteChecklist(${li})" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 4px;" title="Supprimer la liste">🗑️</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+        ${(lst.items||[]).map((it, ii) => `
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:4px 0;">
+            <input type="checkbox" ${it.done?'checked':''} onchange="toggleChecklistItem(${li},${ii})"
+              style="width:17px;height:17px;cursor:pointer;accent-color:var(--mint);flex-shrink:0;" />
+            <span style="${it.done?'text-decoration:line-through;color:var(--ink-soft);':''};font-size:14px;">${escapeHtml(it.text)}</span>
+            <button onclick="deleteChecklistItem(${li},${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;margin-left:auto;padding:0 4px;">✕</button>
+          </label>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="clInput_${li}" placeholder="Ajouter un élément…" maxlength="100"
+          style="flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;"
+          onkeydown="if(event.key==='Enter')addChecklistItem(${li})" />
+        <button onclick="addChecklistItem(${li})" class="btn-primary" style="padding:7px 14px;">+</button>
+      </div>
+    </div>`).join('');
+}
+function openNewListModal() {
+  document.getElementById('newListName').value = '';
+  document.getElementById('newListEmoji').value = '';
+  document.getElementById('newListModal').classList.add('open');
+  setTimeout(() => document.getElementById('newListName').focus(), 50);
+}
+function closeNewListModal() { document.getElementById('newListModal').classList.remove('open'); }
+function saveNewList() {
+  const name = document.getElementById('newListName').value.trim();
+  if (!name) return;
+  const emoji = document.getElementById('newListEmoji').value.trim() || '🗂️';
+  if (!state.domestique.checklists) state.domestique.checklists = [];
+  state.domestique.checklists.push({ id: 'cl' + Date.now(), name, emoji, items: [] });
+  saveState();
+  renderChecklists();
+  closeNewListModal();
+}
+function addChecklistItem(li) {
+  const inp = document.getElementById('clInput_' + li);
+  if (!inp) return;
+  const text = inp.value.trim();
+  if (!text) return;
+  state.domestique.checklists[li].items.push({ id: 'ci' + Date.now(), text, done: false });
+  saveState();
+  renderChecklists();
+  const newInp = document.getElementById('clInput_' + li);
+  if (newInp) newInp.focus();
+}
+function toggleChecklistItem(li, ii) {
+  state.domestique.checklists[li].items[ii].done = !state.domestique.checklists[li].items[ii].done;
+  saveState();
+  renderChecklists();
+}
+function deleteChecklistItem(li, ii) {
+  state.domestique.checklists[li].items.splice(ii, 1);
+  saveState();
+  renderChecklists();
+}
+function deleteChecklist(li) {
+  const lst = state.domestique.checklists[li];
+  if (!confirm(`Supprimer la liste "${lst.name}" ?`)) return;
+  state.domestique.checklists.splice(li, 1);
+  saveState();
+  renderChecklists();
+}
 
 /* ========= CUISINE — RECETTES ========= */
 let _recipeCategoryFilter = "";
