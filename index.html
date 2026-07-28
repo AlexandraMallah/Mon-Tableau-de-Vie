@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v539</title>
+<title>Mon Tableau de Vie 🌿 · v540</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1987,14 +1987,16 @@
 
   <!-- Modal : nouvelle sous-liste -->
   <div class="modal-bg" id="newSectionModal" onclick="if(event.target===this)closeNewSectionModal()">
-    <div class="modal" style="max-width:360px;" onclick="event.stopPropagation()">
+    <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
       <h2 style="margin:0 0 14px;">📂 Nouvelle sous-liste</h2>
       <input type="hidden" id="newSectionListIdx" value="" />
       <label>Nom</label>
       <input type="text" id="newSectionName" placeholder="ex : Vêtements, Trousse de toilette…" maxlength="60"
         onkeydown="if(event.key==='Enter')saveNewSection()" />
-      <label style="margin-top:10px;">Emoji (optionnel)</label>
-      <input type="text" id="newSectionEmoji" placeholder="👗" maxlength="4" style="width:60px;" />
+      <label style="margin-top:12px;">Emoji</label>
+      <div style="font-size:22px;margin-bottom:4px;" id="newSectionEmojiPreview">📂</div>
+      <input type="hidden" id="newSectionEmoji" value="📂" />
+      <div id="newSectionEmojiPicker" style="display:flex;flex-wrap:wrap;gap:6px;max-height:180px;overflow-y:auto;padding:8px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);"></div>
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closeNewSectionModal()">Annuler</button>
@@ -2005,14 +2007,16 @@
 
   <!-- Modal : nouvelle liste -->
   <div class="modal-bg" id="newListModal" onclick="if(event.target===this)closeNewListModal()">
-    <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
+    <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
       <h2 id="newListModalTitle" style="margin:0 0 14px;">🗂️ Nouvelle liste</h2>
       <input type="hidden" id="editListIdx" value="" />
       <label>Nom de la liste</label>
       <input type="text" id="newListName" placeholder="ex : Valise, Courses, Checklist départ…" maxlength="60"
         onkeydown="if(event.key==='Enter')saveNewList()" />
-      <label style="margin-top:10px;">Emoji (optionnel)</label>
-      <input type="text" id="newListEmoji" placeholder="🧳" maxlength="4" style="width:60px;" />
+      <label style="margin-top:12px;">Emoji</label>
+      <div style="font-size:22px;margin-bottom:4px;" id="newListEmojiPreview">🗂️</div>
+      <input type="hidden" id="newListEmoji" value="🗂️" />
+      <div id="newListEmojiPicker" style="display:flex;flex-wrap:wrap;gap:6px;max-height:180px;overflow-y:auto;padding:8px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);"></div>
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closeNewListModal()">Annuler</button>
@@ -13360,22 +13364,66 @@ function renderChecklists() {
     </div>`;
   }).join('');
 }
+const _CL_EMOJIS = [
+  // Listes générales
+  '🗂️','📋','✅','📝','🗒️','📌','🔖','⭐','💡','🎯',
+  // Valise / voyage
+  '🧳','✈️','🗺️','🏖️','🏔️','🚂','🚗','🛳️','🏨','🗼',
+  // Vêtements
+  '👗','👕','👖','🧥','🧣','🧤','🧦','👙','👚','👔','👒','🎩','🧢','👟','👠','👡','👢','🩴','👛','👜',
+  // Toilette & soin
+  '🪥','🧴','🧼','🪞','💊','💉','🩹','🩺','🧻','🚿','🛁','🪒','✂️',
+  // Maquillage & beauté
+  '💄','💅','💋','🪮','💆','🧖','💐','🌸','✨','🌟',
+  // Affaires de bain
+  '🏊','🩱','🏄','🤿','☀️','🕶️','🧴','🌊',
+  // High-tech & chargeurs
+  '🔌','🔋','💻','📱','📷','🎧','🖥️','⌨️','🖱️','📡','🔦','🕯️',
+  // Livres & culture
+  '📚','📖','📰','🗞️','🎵','🎮','🎨','🖊️','📓',
+  // Nourriture & cuisine
+  '🍎','🥗','🧃','☕','🍫','🥜','🍱',
+  // Maison & divers
+  '🏠','🔑','🪴','🐾','🧸','🎁','🎀','💼','🗝️','🔒',
+];
+function _renderEmojiPicker(containerId, hiddenId, previewId, current) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = _CL_EMOJIS.map(e =>
+    `<button type="button" onclick="_pickEmoji('${hiddenId}','${previewId}','${e}',this)"
+      style="font-size:22px;background:${e===current?'var(--lavender-soft,#ede8ff)':'transparent'};border:2px solid ${e===current?'var(--lavender)':'transparent'};border-radius:8px;padding:3px 5px;cursor:pointer;line-height:1;" title="${e}">${e}</button>`
+  ).join('');
+}
+function _pickEmoji(hiddenId, previewId, emoji, btn) {
+  document.getElementById(hiddenId).value = emoji;
+  document.getElementById(previewId).textContent = emoji;
+  btn.closest('div').querySelectorAll('button').forEach(b => {
+    b.style.background = 'transparent'; b.style.borderColor = 'transparent';
+  });
+  btn.style.background = 'var(--lavender-soft,#ede8ff)';
+  btn.style.borderColor = 'var(--lavender)';
+}
 function openNewListModal() {
   document.getElementById('newListModalTitle').textContent = '🗂️ Nouvelle liste';
   document.getElementById('newListSaveBtn').textContent = 'Créer';
   document.getElementById('editListIdx').value = '';
   document.getElementById('newListName').value = '';
-  document.getElementById('newListEmoji').value = '';
+  document.getElementById('newListEmoji').value = '🗂️';
+  document.getElementById('newListEmojiPreview').textContent = '🗂️';
+  _renderEmojiPicker('newListEmojiPicker','newListEmoji','newListEmojiPreview','🗂️');
   document.getElementById('newListModal').classList.add('open');
   setTimeout(() => document.getElementById('newListName').focus(), 50);
 }
 function editChecklist(li) {
   const lst = state.domestique.checklists[li];
+  const em = lst.emoji || '🗂️';
   document.getElementById('newListModalTitle').textContent = '✏️ Modifier la liste';
   document.getElementById('newListSaveBtn').textContent = 'Enregistrer';
   document.getElementById('editListIdx').value = li;
   document.getElementById('newListName').value = lst.name;
-  document.getElementById('newListEmoji').value = lst.emoji || '';
+  document.getElementById('newListEmoji').value = em;
+  document.getElementById('newListEmojiPreview').textContent = em;
+  _renderEmojiPicker('newListEmojiPicker','newListEmoji','newListEmojiPreview', em);
   document.getElementById('newListModal').classList.add('open');
   setTimeout(() => document.getElementById('newListName').focus(), 50);
 }
@@ -13426,7 +13474,9 @@ function deleteCLItem(li, si, ii) {
 function addCLSection(li) {
   document.getElementById('newSectionListIdx').value = li;
   document.getElementById('newSectionName').value = '';
-  document.getElementById('newSectionEmoji').value = '';
+  document.getElementById('newSectionEmoji').value = '📂';
+  document.getElementById('newSectionEmojiPreview').textContent = '📂';
+  _renderEmojiPicker('newSectionEmojiPicker','newSectionEmoji','newSectionEmojiPreview','📂');
   document.getElementById('newSectionModal').classList.add('open');
   setTimeout(() => document.getElementById('newSectionName').focus(), 50);
 }
@@ -13434,7 +13484,7 @@ function closeNewSectionModal() { document.getElementById('newSectionModal').cla
 function saveNewSection() {
   const name = document.getElementById('newSectionName').value.trim();
   if (!name) return;
-  const emoji = document.getElementById('newSectionEmoji').value.trim() || '📂';
+  const emoji = document.getElementById('newSectionEmoji').value || '📂';
   const li = parseInt(document.getElementById('newSectionListIdx').value);
   const lst = state.domestique.checklists[li];
   if (!lst.sections) lst.sections = [];
