@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v541</title>
+<title>Mon Tableau de Vie 🌿 · v542</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1988,8 +1988,9 @@
   <!-- Modal : nouvelle sous-liste -->
   <div class="modal-bg" id="newSectionModal" onclick="if(event.target===this)closeNewSectionModal()">
     <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
-      <h2 style="margin:0 0 14px;">📂 Nouvelle sous-liste</h2>
+      <h2 id="newSectionModalTitle" style="margin:0 0 14px;">📂 Nouvelle sous-liste</h2>
       <input type="hidden" id="newSectionListIdx" value="" />
+      <input type="hidden" id="newSectionIdx" value="" />
       <label>Nom</label>
       <input type="text" id="newSectionName" placeholder="ex : Vêtements, Trousse de toilette…" maxlength="60"
         onkeydown="if(event.key==='Enter')saveNewSection()" />
@@ -2000,7 +2001,7 @@
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closeNewSectionModal()">Annuler</button>
-        <button class="primary" onclick="saveNewSection()">Créer</button>
+        <button class="primary" id="newSectionSaveBtn" onclick="saveNewSection()">Créer</button>
       </div>
     </div>
   </div>
@@ -13321,12 +13322,13 @@ function renderChecklists() {
     return;
   }
   const itemRow = (it, li, si, ii) => `
-    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:4px 0;">
+    <div style="display:flex;align-items:center;gap:8px;padding:3px 0;" id="clrow_${li}_${si}_${ii}">
       <input type="checkbox" ${it.done?'checked':''} onchange="toggleCLItem(${li},${si},${ii})"
         style="width:17px;height:17px;cursor:pointer;accent-color:var(--mint);flex-shrink:0;" />
-      <span style="${it.done?'text-decoration:line-through;color:var(--ink-soft);':''}font-size:14px;">${escapeHtml(it.text)}</span>
-      <button onclick="deleteCLItem(${li},${si},${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;margin-left:auto;padding:0 4px;">✕</button>
-    </label>`;
+      <span style="${it.done?'text-decoration:line-through;color:var(--ink-soft);':''}font-size:14px;flex:1;cursor:default;">${escapeHtml(it.text)}</span>
+      <button onclick="editCLItemInline(${li},${si},${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:12px;padding:0 3px;" title="Modifier">✏️</button>
+      <button onclick="deleteCLItem(${li},${si},${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;padding:0 3px;" title="Supprimer">✕</button>
+    </div>`;
   const addRow = (li, si) => `
     <div style="display:flex;gap:6px;margin-top:6px;">
       <input type="text" id="clInput_${li}_${si}" placeholder="Ajouter un élément…" maxlength="100"
@@ -13355,6 +13357,7 @@ function renderChecklists() {
             <span style="font-size:16px;">${sec.emoji||'📂'}</span>
             <span style="font-weight:700;font-size:14px;flex:1;">${escapeHtml(sec.name)}</span>
             <span style="font-size:11px;color:var(--ink-soft);">${(sec.items||[]).filter(i=>i.done).length}/${(sec.items||[]).length}</span>
+            <button onclick="editCLSection(${li},${si})" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;" title="Modifier">✏️</button>
             <button onclick="deleteCLSection(${li},${si})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:13px;padding:0 2px;" title="Supprimer">🗑️</button>
           </div>
           ${(sec.items||[]).map((it,ii) => itemRow(it, li, si, ii)).join('')}
@@ -13459,6 +13462,29 @@ function addCLItem(li, si) {
   const newInp = document.getElementById(`clInput_${li}_${si}`);
   if (newInp) newInp.focus();
 }
+function editCLItemInline(li, si, ii) {
+  const row = document.getElementById(`clrow_${li}_${si}_${ii}`);
+  if (!row) return;
+  const lst = state.domestique.checklists[li];
+  const item = si === -1 ? lst.items[ii] : lst.sections[si].items[ii];
+  const span = row.querySelector('span');
+  if (!span) return;
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.value = item.text;
+  inp.style.cssText = 'flex:1;padding:3px 8px;border:1px solid var(--lavender);border-radius:7px;font-family:inherit;font-size:14px;';
+  const save = () => {
+    const val = inp.value.trim();
+    if (val) { item.text = val; saveState(); }
+    renderChecklists();
+  };
+  inp.onkeydown = e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') renderChecklists(); };
+  inp.onblur = save;
+  span.replaceWith(inp);
+  // Cacher les boutons pendant l'édition
+  row.querySelectorAll('button').forEach(b => b.style.display = 'none');
+  inp.focus(); inp.select();
+}
 function toggleCLItem(li, si, ii) {
   const lst = state.domestique.checklists[li];
   const item = si === -1 ? lst.items[ii] : lst.sections[si].items[ii];
@@ -13472,11 +13498,28 @@ function deleteCLItem(li, si, ii) {
   saveState(); renderChecklists();
 }
 function addCLSection(li) {
+  document.getElementById('newSectionModalTitle').textContent = '📂 Nouvelle sous-liste';
+  document.getElementById('newSectionSaveBtn').textContent = 'Créer';
   document.getElementById('newSectionListIdx').value = li;
+  document.getElementById('newSectionIdx').value = '';
   document.getElementById('newSectionName').value = '';
   document.getElementById('newSectionEmoji').value = '📂';
   document.getElementById('newSectionEmojiPreview').textContent = '📂';
   _renderEmojiPicker('newSectionEmojiPicker','newSectionEmoji','newSectionEmojiPreview','📂');
+  document.getElementById('newSectionModal').classList.add('open');
+  setTimeout(() => document.getElementById('newSectionName').focus(), 50);
+}
+function editCLSection(li, si) {
+  const sec = state.domestique.checklists[li].sections[si];
+  const em = sec.emoji || '📂';
+  document.getElementById('newSectionModalTitle').textContent = '✏️ Modifier la sous-liste';
+  document.getElementById('newSectionSaveBtn').textContent = 'Enregistrer';
+  document.getElementById('newSectionListIdx').value = li;
+  document.getElementById('newSectionIdx').value = si;
+  document.getElementById('newSectionName').value = sec.name;
+  document.getElementById('newSectionEmoji').value = em;
+  document.getElementById('newSectionEmojiPreview').textContent = em;
+  _renderEmojiPicker('newSectionEmojiPicker','newSectionEmoji','newSectionEmojiPreview', em);
   document.getElementById('newSectionModal').classList.add('open');
   setTimeout(() => document.getElementById('newSectionName').focus(), 50);
 }
@@ -13486,9 +13529,15 @@ function saveNewSection() {
   if (!name) return;
   const emoji = document.getElementById('newSectionEmoji').value || '📂';
   const li = parseInt(document.getElementById('newSectionListIdx').value);
+  const siRaw = document.getElementById('newSectionIdx').value;
   const lst = state.domestique.checklists[li];
-  if (!lst.sections) lst.sections = [];
-  lst.sections.push({ id:'cs'+Date.now(), name, emoji, items:[] });
+  if (siRaw !== '') {
+    lst.sections[parseInt(siRaw)].name = name;
+    lst.sections[parseInt(siRaw)].emoji = emoji;
+  } else {
+    if (!lst.sections) lst.sections = [];
+    lst.sections.push({ id:'cs'+Date.now(), name, emoji, items:[] });
+  }
   saveState(); renderChecklists(); closeNewSectionModal();
 }
 function deleteCLSection(li, si) {
