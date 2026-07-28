@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v548</title>
+<title>Mon Tableau de Vie 🌿 · v550</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13353,16 +13353,13 @@ function renderChecklists() {
       ${addRow(li, -1)}
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:${sections.length?'14px':'0'};">
         ${sections.map((sec, si) => `
-        <div draggable="true" data-li="${li}" data-si="${si}"
-          ondragstart="_clDragStart(event,${li},${si})"
-          ondragover="_clDragOver(event)"
-          ondrop="_clDrop(event,${li},${si})"
-          ondragleave="_clDragLeave(event)"
-          style="background:${(sec.items||[]).length > 0 && (sec.items||[]).every(i=>i.done) ? '#e8f7ee' : 'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;cursor:grab;">
+        <div draggable="true" ondragstart="_clDragStart(event,${li},${si})" ondragover="_clDragOver(event)" ondragleave="_clDragLeave(event)" ondrop="_clDrop(event,${li},${si})" style="background:${(sec.items||[]).length > 0 && (sec.items||[]).every(i=>i.done) ? '#e8f7ee' : 'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;cursor:grab;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
             <span style="font-size:16px;">${sec.emoji||'📂'}</span>
             <span style="font-weight:700;font-size:14px;flex:1;">${escapeHtml(sec.name)}</span>
             <span style="font-size:11px;color:var(--ink-soft);">${(sec.items||[]).filter(i=>i.done).length}/${(sec.items||[]).length}</span>
+            <button onclick="moveCLSection(${li},${si},-1)" ${si===0?'disabled':''} style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;opacity:${si===0?'0.3':'1'};" title="Monter">▲</button>
+            <button onclick="moveCLSection(${li},${si},1)" ${si===sections.length-1?'disabled':''} style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;opacity:${si===sections.length-1?'0.3':'1'};" title="Descendre">▼</button>
             <button onclick="editCLSection(${li},${si})" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;" title="Modifier">✏️</button>
             <button onclick="deleteCLSection(${li},${si})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:13px;padding:0 2px;" title="Supprimer">🗑️</button>
           </div>
@@ -13557,6 +13554,14 @@ function deleteChecklist(li) {
   const lst = state.domestique.checklists[li];
   if (!confirm(`Supprimer la liste "${lst.name}" ?`)) return;
   state.domestique.checklists.splice(li, 1);
+  saveState(); renderChecklists();
+}
+function moveCLSection(li, si, dir) {
+  const sections = state.domestique.checklists[li].sections;
+  const newSi = si + dir;
+  if (newSi < 0 || newSi >= sections.length) return;
+  const [moved] = sections.splice(si, 1);
+  sections.splice(newSi, 0, moved);
   saveState(); renderChecklists();
 }
 /* Drag & drop sections */
