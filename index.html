@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v571</title>
+<title>Mon Tableau de Vie 🌿 · v573</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9802,21 +9802,24 @@ function _salaryPeriods() {
     .filter(tx => tx.type === 'income' && tx.category === 'Salaire (postdoc)')
     .map(tx => new Date(tx.date))
     .sort((a, b) => a - b);
-  if (!salaires.length) {
-    // Fallback au 26 du mois
-    const day = now.getDate();
-    const start = day >= 26
-      ? new Date(now.getFullYear(), now.getMonth(), 26)
-      : new Date(now.getFullYear(), now.getMonth() - 1, 26);
-    const end = new Date(start.getFullYear(), start.getMonth() + 1, 26);
-    return [{ start, end: now, label: start, current: true }];
-  }
   const periods = [];
+  // Périodes réelles basées sur les salaires enregistrés
   for (let i = 0; i < salaires.length; i++) {
     const start = salaires[i];
     const end = i + 1 < salaires.length ? salaires[i + 1] : now;
     const current = i === salaires.length - 1;
     periods.push({ start, end, label: start, current });
+  }
+  // Compléter avec des périodes calendaires (au 26) pour avoir 12 mois au total
+  const firstSalary = salaires.length ? salaires[0] : now;
+  let refDate = new Date(firstSalary);
+  while (periods.length < 12) {
+    // Recule d'une période calendaire (26 du mois précédent)
+    const prevEnd = new Date(refDate);
+    const prevStart = new Date(refDate.getFullYear(), refDate.getMonth() - 1, 26);
+    prevStart.setHours(0, 0, 0, 0);
+    periods.unshift({ start: prevStart, end: prevEnd, label: prevStart, current: false });
+    refDate = prevStart;
   }
   return periods;
 }
