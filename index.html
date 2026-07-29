@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v563</title>
+<title>Mon Tableau de Vie 🌿 · v564</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10783,7 +10783,7 @@ function renderSavingsChart() {
         tooltip: { ...baseChartOpts().plugins.tooltip, callbacks: { footer: () => "Cliquer pour le détail" } },
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#8a8499" } },
+        x: { grid: { display: false }, ticks: { color: "#8a8499", autoSkip: false, maxRotation: 0 } },
         y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " €" }, beginAtZero: true },
       },
     },
