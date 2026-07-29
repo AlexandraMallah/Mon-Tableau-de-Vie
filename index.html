@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v573</title>
+<title>Mon Tableau de Vie 🌿 · v575</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2806,7 +2806,11 @@
     <div class="card" style="margin-bottom:18px;" id="budgetGaugeCard">
       <div class="card-row" style="margin-bottom:14px;">
         <h2 style="margin:0;">🎯 Budget de vie</h2>
-        <span style="font-size:12px;color:var(--ink-soft);">Revenus − épargne du mois</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="budgetMonthLabel" style="font-size:12px;color:var(--ink-soft);">Ce mois</span>
+          <button onclick="_budgetNavMonth(-1)" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 2px;">◀</button>
+          <button onclick="_budgetNavMonth(1)" id="budgetNavNext" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 2px;">▶</button>
+        </div>
       </div>
       <div id="budgetGauge"></div>
     </div>
@@ -2880,20 +2884,13 @@
       </div>
       <div class="chart-wrap" style="height:220px;"><canvas id="dailyExpenseChart"></canvas></div>
     </div>
-    <!-- Évolution du solde + comparaison mois -->
-    <div class="grid-two-eq" style="margin-bottom:18px;">
-      <div class="card">
-        <h2 style="margin:0 0 4px;">💰 Évolution du patrimoine (3 mois)</h2>
-        <p style="font-size:11px;color:var(--ink-softer);margin:0 0 10px;">Compte courant + épargne — les virements vers l'épargne ne font pas plonger la courbe.</p>
-        <div class="chart-wrap" style="height:200px;"><canvas id="balanceEvolutionChart"></canvas></div>
+    <!-- Comparaison mois -->
+    <div class="card" id="monthCompareCard" style="margin-bottom:18px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px;">
+        <h2 style="margin:0;">⚖️ Mois en mois</h2>
+        <span id="monthCompareLabel" style="font-size:12px;color:var(--ink-soft);"></span>
       </div>
-      <div class="card" id="monthCompareCard">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px;">
-          <h2 style="margin:0;">⚖️ Mois en mois</h2>
-          <span id="monthCompareLabel" style="font-size:12px;color:var(--ink-soft);"></span>
-        </div>
-        <div id="monthCompareBody"></div>
-      </div>
+      <div id="monthCompareBody"></div>
     </div>
     <div class="card">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
@@ -9770,6 +9767,20 @@ function populateTxCategories() {
 // Mois financier : du 26 du mois précédent au 25 du mois courant (cycle salaire)
 // Navigation des anneaux "par catégorie" : 0 = mois courant, -1 = mois précédent, etc.
 let _moneyCatMonthOffset = 0;
+let _budgetMonthOffset = 0;
+function _budgetNavMonth(delta) {
+  const periods = _salaryPeriods();
+  const newOffset = _budgetMonthOffset + delta;
+  if (newOffset > 0) return; // pas dans le futur
+  if (periods.length - 1 + newOffset < 0) return; // pas avant le début
+  _budgetMonthOffset = newOffset;
+  renderBudgetGauge();
+}
+function _budgetRange() {
+  const periods = _salaryPeriods();
+  const idx = Math.max(0, periods.length - 1 + _budgetMonthOffset);
+  return periods[idx];
+}
 function _moneyCatRange() {
   const periods = _salaryPeriods();
   const idx = periods.length - 1 + _moneyCatMonthOffset;
@@ -10962,8 +10973,17 @@ function renderBudgetGauge() {
   const el = document.getElementById("budgetGauge");
   if (!el) return;
 
-  const [start, end] = currentMonthRange();
+  const period = _budgetRange();
+  const start = period.start;
   const now = new Date();
+  const isCurrent = _budgetMonthOffset === 0;
+  const end = isCurrent ? now : period.end;
+
+  // Label navigation
+  const labelEl = document.getElementById("budgetMonthLabel");
+  if (labelEl) labelEl.textContent = isCurrent ? "Ce mois" : start.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const nextBtn = document.getElementById("budgetNavNext");
+  if (nextBtn) nextBtn.style.opacity = isCurrent ? "0.3" : "1";
 
   // Budget auto = revenus − épargne nette du mois
   let income = 0, savings = 0, savingsOut = 0, spentRaw = 0, fixedTotal = 0, exceptionalTotal = 0;
@@ -10983,9 +11003,14 @@ function renderBudgetGauge() {
   }
   // Dépenses hors charges fixes et hors exceptionnelles (pour la jauge)
   const spent     = Math.max(0, spentRaw - fixedTotal - exceptionalTotal);
-  // Restant = solde courant réel (ce qu'il y a vraiment en banque)
-  const remaining = balanceCourant();
-  const budget    = spent + remaining; // solde libre = dépenses libres + ce qui reste en banque (loyer + épargne déjà déduits)
+  // Pour le mois courant : solde réel. Pour les mois passés : revenus − épargne nette − dépenses réelles
+  const netSavings = savings - savingsOut;
+  const remaining = isCurrent
+    ? balanceCourant()
+    : Math.max(0, income - netSavings - spentRaw);
+  const budget    = isCurrent
+    ? spent + remaining
+    : Math.max(1, income - netSavings - fixedTotal - exceptionalTotal);
 
   if (budget <= 0 && income === 0) {
     el.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);padding:6px 0;">
@@ -10993,9 +11018,10 @@ function renderBudgetGauge() {
     return;
   }
 
-  const totalDays   = Math.round((end - start) / 86400000);
-  const daysElapsed = Math.max(1, Math.round((now - start) / 86400000));
-  const daysLeft    = Math.max(0, totalDays - daysElapsed);
+  const periodEnd   = isCurrent ? now : period.end;
+  const totalDays   = Math.max(1, Math.round((periodEnd - start) / 86400000));
+  const daysElapsed = isCurrent ? Math.max(1, Math.round((now - start) / 86400000)) : totalDays;
+  const daysLeft    = isCurrent ? Math.max(0, totalDays - daysElapsed) : 0;
   const pct         = budget > 0 ? Math.min(100, Math.round((spent / budget) * 100)) : 0;
   const dailyActual = spent / daysElapsed;
   const projectedTotal = dailyActual * totalDays;
