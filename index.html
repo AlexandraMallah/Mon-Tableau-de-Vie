@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v569</title>
+<title>Mon Tableau de Vie 🌿 · v570</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9773,10 +9773,37 @@ let _moneyCatMonthOffset = 0;
 function _moneyCatRange() {
   const [s, e] = currentMonthRange();
   if (!_moneyCatMonthOffset) return [s, e];
-  return [
-    new Date(s.getFullYear(), s.getMonth() + _moneyCatMonthOffset, s.getDate()),
-    new Date(e.getFullYear(), e.getMonth() + _moneyCatMonthOffset, e.getDate()),
-  ];
+  // Construire les périodes historiques basées sur les dates réelles de salaire
+  const now = new Date();
+  const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0,0,0,0);
+  const allSalaires = (state.transactions || [])
+    .filter(t => t.type === 'income' && t.category === 'Salaire (postdoc)')
+    .map(t => { const d = new Date(t.date); d.setHours(0,0,0,0); return d; })
+    .sort((a, b) => a - b);
+  const periods = []; // [start, end] du plus ancien au plus récent
+  const lastSal = allSalaires.length > 0 ? allSalaires[allSalaires.length - 1] : null;
+  if (lastSal) {
+    periods.unshift([new Date(lastSal), new Date(tomorrow)]);
+    let end = new Date(lastSal);
+    for (let i = 0; i < 23; i++) {
+      const start = new Date(end.getFullYear(), end.getMonth() - 1, 26);
+      start.setHours(0,0,0,0);
+      periods.unshift([new Date(start), new Date(end)]);
+      end = new Date(start);
+    }
+  } else {
+    periods.unshift([s, e]);
+    let end = new Date(s);
+    for (let i = 0; i < 23; i++) {
+      const start = new Date(end.getFullYear(), end.getMonth() - 1, end.getDate());
+      periods.unshift([start, new Date(end)]);
+      end = new Date(start);
+    }
+  }
+  // offset -1 = dernier élément avant le courant (index = periods.length - 1 + offset)
+  const idx = periods.length - 1 + _moneyCatMonthOffset;
+  if (idx < 0) return periods[0];
+  return periods[idx] || [s, e];
 }
 function _moneyCatMonthLabel() {
   if (_moneyCatMonthOffset === 0) return "Ce mois";
