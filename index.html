@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v583</title>
+<title>Mon Tableau de Vie 🌿 · v585</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10960,7 +10960,7 @@ function renderMoneyCatChartNoFixed() {
 }
 
 function openCatDetail(cat) {
-  const [start, end] = currentMonthRange();
+  const [start, end] = _moneyCatRange();
   const txs = state.transactions
     .filter(tx => tx.type === "expense" && tx.category === cat && new Date(tx.date) >= start && new Date(tx.date) < end)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
