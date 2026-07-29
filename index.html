@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v579</title>
+<title>Mon Tableau de Vie 🌿 · v581</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9797,10 +9797,16 @@ function _moneyCatRange() {
   const p = periods[Math.max(0, idx)] || periods[periods.length - 1];
   return [p.start, p.end];
 }
+function _periodLabel(p) {
+  // Salaire reçu en juillet → mois d'août (le mois que le salaire "enclenche")
+  const next = new Date(p.start.getFullYear(), p.start.getMonth() + 1, 1);
+  return next.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+}
 function _moneyCatMonthLabel() {
   if (_moneyCatMonthOffset === 0) return "Ce mois";
-  const [s] = _moneyCatRange();
-  return s.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const periods = _salaryPeriods();
+  const idx = Math.max(0, periods.length - 1 + _moneyCatMonthOffset);
+  return _periodLabel(periods[idx]);
 }
 function _updateMoneyCatTitle() {
   const t = document.getElementById("moneyCatTitle");
@@ -10737,7 +10743,7 @@ function renderSavingsChart() {
   if (savingsChart) savingsChart.destroy();
   const allPeriods = _salaryPeriods();
   const periods = allPeriods.slice(-12);
-  const labels = periods.map(p => p.label.toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }));
+  const labels = periods.map(p => _periodLabel(p).replace(/\s\d{4}$/, v => " '" + v.trim().slice(2)));
   const data = periods.map(({ start, end }) => {
     const inAmt  = state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "savings"; }).reduce((s, t) => s + t.amount, 0);
     const outAmt = state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "savings-out"; }).reduce((s, t) => s + t.amount, 0);
@@ -10992,7 +10998,7 @@ function renderBudgetGauge() {
 
   // Label navigation
   const labelEl = document.getElementById("budgetMonthLabel");
-  if (labelEl) labelEl.textContent = isCurrent ? "Ce mois" : start.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  if (labelEl) labelEl.textContent = isCurrent ? "Ce mois" : _periodLabel(period);
   const nextBtn = document.getElementById("budgetNavNext");
   if (nextBtn) nextBtn.style.opacity = isCurrent ? "0.3" : "1";
 
