@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v570</title>
+<title>Mon Tableau de Vie 🌿 · v571</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9771,45 +9771,15 @@ function populateTxCategories() {
 // Navigation des anneaux "par catégorie" : 0 = mois courant, -1 = mois précédent, etc.
 let _moneyCatMonthOffset = 0;
 function _moneyCatRange() {
-  const [s, e] = currentMonthRange();
-  if (!_moneyCatMonthOffset) return [s, e];
-  // Construire les périodes historiques basées sur les dates réelles de salaire
-  const now = new Date();
-  const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0,0,0,0);
-  const allSalaires = (state.transactions || [])
-    .filter(t => t.type === 'income' && t.category === 'Salaire (postdoc)')
-    .map(t => { const d = new Date(t.date); d.setHours(0,0,0,0); return d; })
-    .sort((a, b) => a - b);
-  const periods = []; // [start, end] du plus ancien au plus récent
-  const lastSal = allSalaires.length > 0 ? allSalaires[allSalaires.length - 1] : null;
-  if (lastSal) {
-    periods.unshift([new Date(lastSal), new Date(tomorrow)]);
-    let end = new Date(lastSal);
-    for (let i = 0; i < 23; i++) {
-      const start = new Date(end.getFullYear(), end.getMonth() - 1, 26);
-      start.setHours(0,0,0,0);
-      periods.unshift([new Date(start), new Date(end)]);
-      end = new Date(start);
-    }
-  } else {
-    periods.unshift([s, e]);
-    let end = new Date(s);
-    for (let i = 0; i < 23; i++) {
-      const start = new Date(end.getFullYear(), end.getMonth() - 1, end.getDate());
-      periods.unshift([start, new Date(end)]);
-      end = new Date(start);
-    }
-  }
-  // offset -1 = dernier élément avant le courant (index = periods.length - 1 + offset)
+  const periods = _salaryPeriods();
   const idx = periods.length - 1 + _moneyCatMonthOffset;
-  if (idx < 0) return periods[0];
-  return periods[idx] || [s, e];
+  const p = periods[Math.max(0, idx)] || periods[periods.length - 1];
+  return [p.start, p.end];
 }
 function _moneyCatMonthLabel() {
   if (_moneyCatMonthOffset === 0) return "Ce mois";
-  const [, e] = _moneyCatRange();
-  const d = new Date(e); d.setDate(d.getDate() - 1); // dernier jour de la période (cycle 26→25)
-  return d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const [s] = _moneyCatRange();
+  return s.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
 }
 function _updateMoneyCatTitle() {
   const t = document.getElementById("moneyCatTitle");
@@ -9823,41 +9793,37 @@ function moneyCatMonthNav(delta) {
   renderMoneyIncomeCatChart();
   _updateMoneyCatTitle();
 }
-function currentMonthRange() {
+// Source de vérité unique : toutes les périodes financières basées sur les timestamps exacts du Salaire (postdoc).
+// Chaque période = [dateArrivéeSalaire, dateArrivéeSalaireSuivant[.
+// La période en cours se termine à "maintenant" (pas de fin connue).
+function _salaryPeriods() {
   const now = new Date();
-  // Trouver la dernière transaction "Salaire (postdoc)" reçue avant ou aujourd'hui
-  const allTx = (state.transactions || []);
-  const salaires = allTx
-    .filter(tx => tx.type === 'income' && tx.category === 'Salaire (postdoc)' && new Date(tx.date) <= now)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
-  if (salaires.length > 0) {
-    const lastSalaire = new Date(salaires[0].date);
-    lastSalaire.setHours(0, 0, 0, 0);
-    // Chercher le salaire suivant (mois prochain)
-    const nextSalaires = allTx
-      .filter(tx => tx.type === 'income' && tx.category === 'Salaire (postdoc)' && new Date(tx.date) > now)
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-    let end;
-    if (nextSalaires.length > 0) {
-      end = new Date(nextSalaires[0].date);
-      end.setHours(0, 0, 0, 0);
-    } else {
-      // Estimer : même jour le mois prochain
-      end = new Date(lastSalaire.getFullYear(), lastSalaire.getMonth() + 1, lastSalaire.getDate());
-    }
-    return [lastSalaire, end];
+  const salaires = (state.transactions || [])
+    .filter(tx => tx.type === 'income' && tx.category === 'Salaire (postdoc)')
+    .map(tx => new Date(tx.date))
+    .sort((a, b) => a - b);
+  if (!salaires.length) {
+    // Fallback au 26 du mois
+    const day = now.getDate();
+    const start = day >= 26
+      ? new Date(now.getFullYear(), now.getMonth(), 26)
+      : new Date(now.getFullYear(), now.getMonth() - 1, 26);
+    const end = new Date(start.getFullYear(), start.getMonth() + 1, 26);
+    return [{ start, end: now, label: start, current: true }];
   }
-  // Fallback : logique fixe au 26
-  const day = now.getDate();
-  let start, end;
-  if (day >= 26) {
-    start = new Date(now.getFullYear(), now.getMonth(), 26);
-    end   = new Date(now.getFullYear(), now.getMonth() + 1, 26);
-  } else {
-    start = new Date(now.getFullYear(), now.getMonth() - 1, 26);
-    end   = new Date(now.getFullYear(), now.getMonth(), 26);
+  const periods = [];
+  for (let i = 0; i < salaires.length; i++) {
+    const start = salaires[i];
+    const end = i + 1 < salaires.length ? salaires[i + 1] : now;
+    const current = i === salaires.length - 1;
+    periods.push({ start, end, label: start, current });
   }
-  return [start, end];
+  return periods;
+}
+function currentMonthRange() {
+  const periods = _salaryPeriods();
+  const cur = periods[periods.length - 1];
+  return [cur.start, cur.end];
 }
 function currentMonthLabel() {
   const [start, end] = currentMonthRange();
@@ -10472,14 +10438,17 @@ function renderMonthComparison() {
   const el = document.getElementById("monthCompareBody");
   const lbl = document.getElementById("monthCompareLabel");
   if (!el) return;
-  const [mThis, mThis2] = currentMonthRange();
-  const mPrev  = new Date(mThis.getFullYear(), mThis.getMonth() - 1, 26);
-  const mPrev2 = new Date(mThis);
+  const periods = _salaryPeriods();
+  const curP  = periods[periods.length - 1];
+  const prevP = periods[Math.max(0, periods.length - 2)];
+  const [mThis, mThis2] = [curP.start, curP.end];
+  const [mPrev, mPrev2] = [prevP.start, prevP.end];
   const sum = (from, to, type) =>
     state.transactions.filter(t => { const d = new Date(t.date); return d >= from && d < to && t.type === type; })
     .reduce((s, t) => s + t.amount, 0);
-  const nowLabel  = new Date(mThis.getFullYear(), mThis.getMonth() + 1, 1).toLocaleDateString("fr-FR", { month:"long" });
-  const prevLabel = new Date(mThis.getFullYear(), mThis.getMonth(), 1).toLocaleDateString("fr-FR", { month:"long" });
+  const fmtMonth = d => d.toLocaleDateString("fr-FR", { month:"long" });
+  const nowLabel  = fmtMonth(mThis);
+  const prevLabel = fmtMonth(mPrev);
   if (lbl) lbl.textContent = `${prevLabel} → ${nowLabel}`;
   const rows = [
     { label: "Dépenses",  icon: "−", colorN: "#c75b4d", n: sum(mThis, mThis2, "expense"),  p: sum(mPrev, mPrev2, "expense") },
@@ -10741,34 +10710,8 @@ function editSavingsStart(cat) {
 }
 function renderSavingsChart() {
   if (savingsChart) savingsChart.destroy();
-  const now = new Date();
-  const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0,0,0,0);
-  const allSalaires = (state.transactions || [])
-    .filter(t => t.type === 'income' && t.category === 'Salaire (postdoc)')
-    .map(t => { const d = new Date(t.date); d.setHours(0,0,0,0); return d; })
-    .sort((a, b) => a - b);
-  const periods = [];
-  const lastSal = allSalaires.length > 0 ? allSalaires[allSalaires.length - 1] : null;
-  if (lastSal) {
-    // Période actuelle : dernier salaire → demain
-    periods.unshift({ start: lastSal, end: tomorrow, label: lastSal });
-    // 5 périodes précédentes en remontant par le 26 du mois
-    let end = new Date(lastSal);
-    for (let i = 0; i < 11; i++) {
-      const start = new Date(end.getFullYear(), end.getMonth() - 1, 26);
-      start.setHours(0,0,0,0);
-      periods.unshift({ start, end: new Date(end), label: start });
-      end = new Date(start);
-    }
-  } else {
-    // Fallback si aucun salaire : 26 du mois
-    for (let i = 5; i >= 0; i--) {
-      const refMonth = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const start = new Date(refMonth.getFullYear(), refMonth.getMonth() - 1, 26);
-      const end = i === 0 ? tomorrow : new Date(refMonth.getFullYear(), refMonth.getMonth(), 26);
-      periods.push({ start, end, label: start });
-    }
-  }
+  const allPeriods = _salaryPeriods();
+  const periods = allPeriods.slice(-12);
   const labels = periods.map(p => p.label.toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }));
   const data = periods.map(({ start, end }) => {
     const inAmt  = state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "savings"; }).reduce((s, t) => s + t.amount, 0);
