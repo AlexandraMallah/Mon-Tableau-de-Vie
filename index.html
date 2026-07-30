@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v597</title>
+<title>Mon Tableau de Vie 🌿 · v599</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1898,7 +1898,7 @@
           <button onclick="selectFoodReason('🤖 Automatique')" class="note-tb-btn" data-r="🤖 Automatique">🤖 Automatique</button>
         </div>
         <input type="hidden" id="foodEntryReason" />
-        <div id="foodEntryPortionRow" style="display:none;margin-top:8px;">
+        <div id="foodEntryPortionRow" style="margin-top:8px;">
           <label>Portion <span id="foodEntryPortionHint" style="font-size:11px;color:var(--ink-softer);font-weight:400;"></span></label>
           <input type="text" id="foodEntryPortion" placeholder="ex : 1, 1/2, 150g…"
             oninput="_foodPortionChanged(this.value)"
@@ -8009,12 +8009,8 @@ function _foodPortionChanged(val) {
   }
 }
 function _showFoodPortionField(show, hint, defaultVal) {
-  const row = document.getElementById('foodEntryPortionRow');
-  row.style.display = show ? '' : 'none';
-  if (show) {
-    document.getElementById('foodEntryPortionHint').textContent = hint ? '— ref : ' + hint : '';
-    document.getElementById('foodEntryPortion').value = defaultVal || '1';
-  }
+  document.getElementById('foodEntryPortionHint').textContent = hint ? '— ref : ' + hint : '';
+  if (defaultVal !== undefined) document.getElementById('foodEntryPortion').value = defaultVal;
 }
 
 function addFoodIngredient(ing) {
