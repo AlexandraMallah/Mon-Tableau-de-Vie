@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v599</title>
+<title>Mon Tableau de Vie 🌿 · v601</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7978,8 +7978,11 @@ function openFoodEntry(id) {
   if (del) del.style.display = e ? "inline-block" : "none";
   const recBtn = document.getElementById("foodFromRecipeBtn");
   if (recBtn) recBtn.style.display = e ? "none" : "block"; // seulement pour une nouvelle entrée
-  _foodPortionBase = null;
-  _showFoodPortionField(false);
+  // Base portion = kcal actuels de l'entrée (ou 0 si nouvelle entrée)
+  const baseKcal = e?.calories || 0;
+  _foodPortionBase = { type: 'recipe', kcalPer1: baseKcal };
+  document.getElementById('foodEntryPortion').value = '1';
+  document.getElementById('foodEntryPortionHint').textContent = baseKcal ? '— 1 portion = ' + baseKcal + ' kcal' : '';
   document.getElementById("foodEntryModal").classList.add("open");
   setTimeout(() => document.getElementById("foodEntryName").focus(), 50);
 }
