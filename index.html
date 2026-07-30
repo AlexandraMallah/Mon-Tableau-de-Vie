@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v601</title>
+<title>Mon Tableau de Vie 🌿 · v603</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7918,17 +7918,18 @@ function _foodNameSelect(idx) {
   if (r.type === 'recipe') {
     _foodIngredients = (r.obj.ingredients || []).map(i => ({ ...i, fromRecipe: true }));
     renderFoodIngredients();
-    const cal = recipeKcal(r.obj).per;
-    _foodPortionBase = { type: 'recipe', kcalPer1: cal || 0 };
-    _showFoodPortionField(true, cal ? cal + ' kcal/portion' : '', '1');
+    const cal = recipeKcal(r.obj).per || 0;
+    _foodPortionBase = { baseKcal: cal, refPortion: '1' };
+    document.getElementById('foodEntryPortionHint').textContent = cal ? '— 1 portion = ' + cal + ' kcal' : '';
+    document.getElementById('foodEntryPortion').value = '1';
     if (cal) document.getElementById('foodEntryCalories').value = cal;
   } else {
-    // Aliment simple depuis la base kcal
     _foodIngredients = [];
     renderFoodIngredients();
-    _foodPortionBase = { type: 'food', kcalPer1: r.kcal || 0, foodObj: r.obj };
-    const hint = r.obj.portion || r.obj.unitLabel || '';
-    _showFoodPortionField(true, hint ? hint + ' = ' + r.kcal + ' kcal' : r.kcal + ' kcal', '1');
+    const refPortion = r.obj.portion || r.obj.unitLabel || '1';
+    _foodPortionBase = { baseKcal: r.kcal || 0, refPortion };
+    document.getElementById('foodEntryPortionHint').textContent = refPortion + ' = ' + (r.kcal || 0) + ' kcal';
+    document.getElementById('foodEntryPortion').value = refPortion;
     document.getElementById('foodEntryCalories').value = r.kcal || '';
   }
 }
@@ -7978,37 +7979,35 @@ function openFoodEntry(id) {
   if (del) del.style.display = e ? "inline-block" : "none";
   const recBtn = document.getElementById("foodFromRecipeBtn");
   if (recBtn) recBtn.style.display = e ? "none" : "block"; // seulement pour une nouvelle entrée
-  // Base portion = kcal actuels de l'entrée (ou 0 si nouvelle entrée)
   const baseKcal = e?.calories || 0;
-  _foodPortionBase = { type: 'recipe', kcalPer1: baseKcal };
-  document.getElementById('foodEntryPortion').value = '1';
-  document.getElementById('foodEntryPortionHint').textContent = baseKcal ? '— 1 portion = ' + baseKcal + ' kcal' : '';
+  const refPortion = e?.refPortion || '1';
+  _foodPortionBase = { baseKcal, refPortion };
+  document.getElementById('foodEntryPortion').value = e?.portion || refPortion;
+  document.getElementById('foodEntryPortionHint').textContent = baseKcal ? refPortion + ' = ' + baseKcal + ' kcal' : '';
   document.getElementById("foodEntryModal").classList.add("open");
   setTimeout(() => document.getElementById("foodEntryName").focus(), 50);
 }
 
 let _foodCalTimer = null;
 let _foodIngredients = []; // liste des ingrédients de l'entrée en cours
-let _foodPortionBase = null; // { kcalPer1: number, type: 'recipe'|'food', foodObj: obj|null }
-function _parsePortion(str) {
-  // Convertit "1/2", "0.5", "2" en nombre. Retourne null si invalide.
+let _foodPortionBase = null; // { baseKcal, refPortion }
+function _parsePortionNum(str) {
+  // Extrait le nombre d'une chaîne de portion : "10 fraises"→10, "100g"→100, "1/2"→0.5
   const s = (str || '').trim().replace(',', '.');
   if (s.includes('/')) {
-    const [a, b] = s.split('/').map(Number);
+    const parts = s.split('/');
+    const a = parseFloat(parts[0]), b = parseFloat(parts[1]);
     return (b && !isNaN(a) && !isNaN(b)) ? a / b : null;
   }
-  const n = parseFloat(s);
+  const n = parseFloat(s); // parseFloat ignore les lettres après le nombre
   return isNaN(n) ? null : n;
 }
 function _foodPortionChanged(val) {
-  if (!_foodPortionBase) return;
-  if (_foodPortionBase.type === 'recipe') {
-    const n = _parsePortion(val);
-    if (n !== null && n > 0) document.getElementById('foodEntryCalories').value = Math.round(_foodPortionBase.kcalPer1 * n);
-  } else if (_foodPortionBase.type === 'food') {
-    // Pour un aliment du db : proratiser via _prorateFoodKcal
-    const kcal = _prorateFoodKcal(_foodPortionBase.foodObj, val || _foodPortionBase.foodObj.portion);
-    if (kcal !== null && kcal >= 0) document.getElementById('foodEntryCalories').value = Math.round(kcal);
+  if (!_foodPortionBase || !_foodPortionBase.baseKcal) return;
+  const entered = _parsePortionNum(val);
+  const ref = _parsePortionNum(_foodPortionBase.refPortion) || 1;
+  if (entered !== null && entered > 0 && ref > 0) {
+    document.getElementById('foodEntryCalories').value = Math.round(_foodPortionBase.baseKcal * entered / ref);
   }
 }
 function _showFoodPortionField(show, hint, defaultVal) {
@@ -8227,6 +8226,8 @@ function saveFoodEntry() {
     reason: document.getElementById("foodEntryReason").value,
     note: document.getElementById("foodEntryNote").value.trim(),
     calories: parseInt(document.getElementById("foodEntryCalories")?.value)||0,
+    portion: document.getElementById("foodEntryPortion")?.value.trim() || undefined,
+    refPortion: _foodPortionBase?.refPortion || undefined,
     ingredients: JSON.parse(JSON.stringify(_foodIngredients)),
   };
   if (id) {
