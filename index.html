@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v593</title>
+<title>Mon Tableau de Vie 🌿 · v595</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -11041,7 +11041,7 @@ function renderBudgetGauge() {
     ? new Date(start.getFullYear(), start.getMonth() + 1, start.getDate())
     : period.end;
   const totalDays   = Math.max(1, Math.round((estimatedEnd - start) / 86400000));
-  const daysElapsed = isCurrent ? Math.max(1, Math.round((now - start) / 86400000)) : totalDays;
+  const daysElapsed = isCurrent ? Math.floor((now - start) / 86400000) + 1 : totalDays;
   const daysLeft    = isCurrent ? Math.max(0, totalDays - daysElapsed) : 0;
   const pct         = budget > 0 ? Math.min(100, Math.round((spent / budget) * 100)) : 0;
   const dailyActual = spent / daysElapsed;
