@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v587</title>
+<title>Mon Tableau de Vie 🌿 · v589</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4169,7 +4169,7 @@
 </div>
 
 <!-- Modal conge -->
-<div class="modal-bg" id="savingsUpdateModal" onclick="if(event.target===this)closeSavingsUpdateModal()">
+<div class="modal-bg" id="savingsUpdateModal" style="z-index:200;" onclick="if(event.target===this)closeSavingsUpdateModal()">
   <div class="modal" style="max-width:380px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
       <h2 id="savingsUpdateTitle" style="margin:0;font-size:16px;"></h2>
@@ -10707,6 +10707,7 @@ function confirmSavingsUpdate() {
   });
   saveState();
   renderSavings();
+  renderAccounts();
   closeSavingsUpdateModal();
   openSavingsAccountModal(_savingsUpdateCat);
   showToast(`✅ ${_savingsUpdateCat} mis à jour : ${delta > 0 ? "+" : ""}${delta.toFixed(2)} € enregistré`);
