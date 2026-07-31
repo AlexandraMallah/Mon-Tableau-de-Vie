@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v607</title>
+<title>Mon Tableau de Vie 🌿 · v608</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -5948,9 +5948,34 @@ function admOpenConge(id) {
   document.getElementById("admCDebut").value  = p.debut  || "";
   document.getElementById("admCFin").value    = p.fin    || "";
   document.getElementById("admCJours").value  = p.jours  || "";
-  document.getElementById("admCType").value   = p.type   || "CA";
   document.getElementById("admCStatut").value = p.statut || "Planifie";
   document.getElementById("admCDeleteBtn").style.display = id ? "inline-flex" : "none";
+  // Désactiver CA si solde épuisé (sauf si on édite une période CA existante)
+  var cfg = (state.admin && state.admin.congesConfig) || { droitsCA: 27, droitsRTT: 20 };
+  var periodes = state.admin.congesPeriodes || [];
+  var prisCA = 0, planCA = 0, prisRTT = 0, planRTT = 0;
+  for (var i = 0; i < periodes.length; i++) {
+    var pi = periodes[i];
+    if (pi.id === id) continue; // exclure la période en cours d'édition
+    if (pi.type === "CA"  && pi.statut === "Pris")     prisCA  += pi.jours || 0;
+    if (pi.type === "CA"  && pi.statut === "Planifie") planCA  += pi.jours || 0;
+    if (pi.type === "RTT" && pi.statut === "Pris")     prisRTT += pi.jours || 0;
+    if (pi.type === "RTT" && pi.statut === "Planifie") planRTT += pi.jours || 0;
+  }
+  var restCA  = cfg.droitsCA  - prisCA  - planCA;
+  var restRTT = cfg.droitsRTT - prisRTT - planRTT;
+  var sel = document.getElementById("admCType");
+  var caOpt  = sel.querySelector('option[value="CA"]');
+  var rttOpt = sel.querySelector('option[value="RTT"]');
+  caOpt.disabled  = restCA  <= 0 && p.type !== "CA";
+  rttOpt.disabled = restRTT <= 0 && p.type !== "RTT";
+  caOpt.textContent  = restCA  <= 0 ? "CA (épuisé)"  : "CA";
+  rttOpt.textContent = restRTT <= 0 ? "RTT (épuisé)" : "RTT";
+  // Sélectionner le type courant ou un type disponible
+  var preferredType = p.type || "CA";
+  if (preferredType === "CA"  && restCA  <= 0 && !id) preferredType = "RTT";
+  if (preferredType === "RTT" && restRTT <= 0 && !id) preferredType = "CA";
+  sel.value = preferredType;
   document.getElementById("admCongeModal").classList.add("open");
 }
 function admCloseConge() { document.getElementById("admCongeModal").classList.remove("open"); }
@@ -13039,15 +13064,23 @@ function _renderTimeStats(target, datesOrDays, periodLabel, totalNote) {
   }
   target.innerHTML = html;
 }
+function _isDayConge(dk) {
+  // Retourne true si le jour dk tombe dans une période de congés (et qu'aucune heure n'est saisie)
+  const periodes = (state.admin && state.admin.congesPeriodes) || [];
+  if (!periodes.length) return false;
+  const hasWork = (() => { const wt = getWorkTime(dk); return TIME_CATS.some(c => Number(wt[c.key]) > 0); })();
+  if (hasWork) return false; // bosser pendant les congés = compte normalement
+  return periodes.some(p => dk >= p.debut && dk <= p.fin);
+}
 function renderTimeStatsWeek() {
   const dates = _currentWeekDates(_timeWeekOffset);
   const t = document.getElementById("timeWeekStats");
-  // Moyenne par jour = total / jours ouvrés non fériés écoulés
+  // Moyenne par jour = total / jours ouvrés non fériés non congés écoulés
   const grand = Object.values(_sumWorkTime(dates)).reduce((s, v) => s + v, 0);
   const workedDays = dates.filter(dk => {
     const key = todayKey(dk instanceof Date ? dk : new Date(dk));
     const dow = new Date(key).getDay();
-    return dow >= 1 && dow <= 5 && !_isHoliday(key);
+    return dow >= 1 && dow <= 5 && !_isHoliday(key) && !_isDayConge(key);
   }).length;
   const perDay = workedDays ? grand / workedDays : 0;
   const note = grand > 0 ? `≈ ${perDay.toFixed(1).replace(".", ",")} h/j` : "";
@@ -13178,7 +13211,14 @@ function renderTimeStatsMonth() {
   const today = new Date(); today.setHours(0,0,0,0);
   const periodEnd = dates[dates.length - 1];
   const elapsed = dates.filter(d => d <= today);
-  const elapsedDays = elapsed.length;
+  // Exclure les jours de congés sans saisie du dénominateur
+  const elapsedActive = elapsed.filter(d => {
+    const dk = todayKey(d);
+    const dow = d.getDay();
+    if (dow === 0 || dow === 6 || _isHoliday(dk)) return false;
+    return !_isDayConge(dk);
+  });
+  const elapsedDays = elapsedActive.length || elapsed.length; // fallback si tout est congé
   let totalHours = 0;
   for (const d of elapsed) {
     const dk = todayKey(d);
