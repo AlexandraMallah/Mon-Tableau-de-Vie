@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v608</title>
+<title>Mon Tableau de Vie 🌿 · v609</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13065,11 +13065,10 @@ function _renderTimeStats(target, datesOrDays, periodLabel, totalNote) {
   target.innerHTML = html;
 }
 function _isDayConge(dk) {
-  // Retourne true si le jour dk tombe dans une période de congés (et qu'aucune heure n'est saisie)
+  // Retourne true si le jour dk tombe dans une période de congés déclarée.
+  // Les heures saisies pendant les congés restent comptées dans le total
+  // mais le jour n'est pas ajouté au dénominateur (rattrapage = booste la moyenne).
   const periodes = (state.admin && state.admin.congesPeriodes) || [];
-  if (!periodes.length) return false;
-  const hasWork = (() => { const wt = getWorkTime(dk); return TIME_CATS.some(c => Number(wt[c.key]) > 0); })();
-  if (hasWork) return false; // bosser pendant les congés = compte normalement
   return periodes.some(p => dk >= p.debut && dk <= p.fin);
 }
 function renderTimeStatsWeek() {
