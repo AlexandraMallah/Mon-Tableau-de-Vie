@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v610</title>
+<title>Mon Tableau de Vie 🌿 · v611</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13082,7 +13082,16 @@ function renderTimeStatsWeek() {
     return dow >= 1 && dow <= 5 && !_isHoliday(key) && !_isDayConge(key);
   }).length;
   const perDay = workedDays ? grand / workedDays : 0;
-  const note = grand > 0 ? `≈ ${perDay.toFixed(1).replace(".", ",")} h/j` : "";
+  // Semaine entièrement en congés
+  const allConge = dates.every(dk => {
+    const key = todayKey(dk instanceof Date ? dk : new Date(dk));
+    const dow = new Date(key).getDay();
+    return dow === 0 || dow === 6 || _isHoliday(key) || _isDayConge(key);
+  });
+  let note;
+  if (allConge && grand > 0) note = `⛱️ Congés · ${grand.toFixed(1).replace(".", ",")} h de rattrapage`;
+  else if (allConge) note = "⛱️ Semaine de congés";
+  else note = grand > 0 ? `≈ ${perDay.toFixed(1).replace(".", ",")} h/j` : "";
   if (t) _renderTimeStats(t, dates, _timeWeekOffset === 0 ? "cette semaine" : "cette période", note);
   const title = document.getElementById("timeWeekTitle");
   if (title) {
