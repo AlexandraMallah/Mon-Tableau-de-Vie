@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v613</title>
+<title>Mon Tableau de Vie 🌿 · v614</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1439,8 +1439,9 @@
     .tx-amount { font-size: 12px; flex-shrink: 0; }
     .tx-date { font-size: 10px; flex-shrink: 0; }
 
-    /* === Financier : formulaire === */
-    .tx-form-inputs { grid-template-columns: 1fr; }
+    /* === Financier : formulaire — montant+note plus larges que catégorie+date === */
+    .tx-form-inputs { grid-template-columns: 3fr 2fr; }
+    .tx-form-inputs .add-btn { grid-column: span 2; }
     .tx-form input, .tx-form select, .tx-form .add-btn { width: 100%; }
 
     /* === Modal : quasi plein écran === */
