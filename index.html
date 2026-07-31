@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v612</title>
+<title>Mon Tableau de Vie 🌿 · v613</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1337,7 +1337,7 @@
   }
   @media (max-width: 600px) {
     /* === Conteneur === */
-    .container { padding: 14px 12px 80px; }
+    .container { padding: 14px 16px 80px; }
 
     /* === Header mobile === */
     header.top { gap: 10px; }
@@ -1430,6 +1430,14 @@
     /* === Kanban (Postdoc/Valo/etc.) → colonnes full width === */
     .kanban { flex-direction: column; overflow-x: unset; }
     .kanban-col { min-width: unset; width: 100%; }
+
+    /* === Transactions : évite le chevauchement badges/montant === */
+    .tx-row { gap: 6px; padding: 8px 8px; }
+    .tx-edit { display: none; }
+    .tx-cat { white-space: normal; line-height: 1.4; }
+    .tx-cat span { font-size: 10px !important; padding: 1px 3px !important; }
+    .tx-amount { font-size: 12px; flex-shrink: 0; }
+    .tx-date { font-size: 10px; flex-shrink: 0; }
 
     /* === Financier : formulaire === */
     .tx-form-inputs { grid-template-columns: 1fr; }
@@ -2735,7 +2743,7 @@
   <section class="view" data-view="money">
     <div class="card" style="margin-bottom:18px;">
       <h2 style="margin:0 0 8px;">📝 Notes finances</h2>
-      <textarea id="moneyNote" oninput="saveMoneyNote()" placeholder="Rappels, objectifs, idées…" style="width:100%;box-sizing:border-box;resize:none;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--bg-1);line-height:1.5;outline:none;min-height:64px;max-height:120px;" rows="3"></textarea>
+      <textarea id="moneyNote" oninput="saveMoneyNote()" placeholder="Rappels, objectifs, idées…" style="width:100%;box-sizing:border-box;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--bg-1);line-height:1.5;outline:none;min-height:64px;max-height:600px;" rows="3"></textarea>
     </div>
     <div class="card" style="margin-bottom:18px;">
       <h2>🏦 Mes comptes</h2>
@@ -2896,7 +2904,14 @@
     <!-- Évolution du solde + comparaison mois -->
     <div class="grid-two-eq" style="margin-bottom:18px;">
       <div class="card">
-        <h2 style="margin:0 0 4px;">💰 Évolution du patrimoine (3 mois)</h2>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:8px;">
+          <h2 style="margin:0;">💰 Évolution du patrimoine</h2>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <button onclick="_patrimoineNav(-1)" style="background:none;border:1px solid var(--line);border-radius:8px;padding:2px 8px;cursor:pointer;font-size:14px;">◀</button>
+            <span id="patrimoineLabel" style="font-size:12px;color:var(--ink-soft);min-width:80px;text-align:center;"></span>
+            <button id="patrimoineNavNext" onclick="_patrimoineNav(1)" style="background:none;border:1px solid var(--line);border-radius:8px;padding:2px 8px;cursor:pointer;font-size:14px;">▶</button>
+          </div>
+        </div>
         <p style="font-size:11px;color:var(--ink-softer);margin:0 0 10px;">Compte courant + épargne — les virements vers l'épargne ne font pas plonger la courbe.</p>
         <div class="chart-wrap" style="height:200px;"><canvas id="balanceEvolutionChart"></canvas></div>
       </div>
@@ -10477,14 +10492,30 @@ function renderMoneyFlowChart() {
   });
 }
 let balanceEvolutionChart = null;
+let _patrimoineOffset = 0; // 0 = derniers 6 mois, -1 = 6 mois d'avant, etc.
+function _patrimoineNav(delta) {
+  _patrimoineOffset = Math.min(0, _patrimoineOffset + delta);
+  renderBalanceEvolutionChart();
+}
 function renderBalanceEvolutionChart() {
-  // Calcul du solde courant jour par jour sur les 90 derniers jours
+  // Fenêtre glissante de 6 mois (180 jours)
   const today = new Date(); today.setHours(0,0,0,0);
+  const windowDays = 180;
+  const endOffset = -_patrimoineOffset * windowDays; // offset en jours depuis aujourd'hui
+  const end = new Date(today); end.setDate(end.getDate() - endOffset);
   const days = [];
-  for (let i = 89; i >= 0; i--) {
-    const d = new Date(today); d.setDate(d.getDate() - i);
+  for (let i = windowDays - 1; i >= 0; i--) {
+    const d = new Date(end); d.setDate(d.getDate() - i);
     days.push(d);
   }
+  // Label de la période
+  const labelEl = document.getElementById("patrimoineLabel");
+  if (labelEl) {
+    const fmt = d => d.toLocaleDateString("fr-FR", { month: "short", year: "2-digit" });
+    labelEl.textContent = fmt(days[0]) + " – " + fmt(days[days.length - 1]);
+  }
+  const nextBtn = document.getElementById("patrimoineNavNext");
+  if (nextBtn) nextBtn.disabled = _patrimoineOffset >= 0;
   // Patrimoine total = compte courant + épargne. Ainsi un virement vers l'épargne
   // (savings / savings-out) ne fait PAS plonger la courbe : c'est juste un transfert interne.
   const breakdownSum = Object.values(state.accounts?.savingsBreakdown || {}).reduce((s, v) => s + v, 0);
@@ -10502,8 +10533,8 @@ function renderBalanceEvolutionChart() {
     }
     return bal;
   });
-  // Labels : 1 sur 10 pour ne pas surcharger
-  const labels = days.map((d, i) => i % 10 === 0 ? d.toLocaleDateString("fr-FR", { day:"numeric", month:"short" }) : "");
+  // Labels : 1 sur 20 pour ne pas surcharger sur 6 mois
+  const labels = days.map((d, i) => i % 20 === 0 ? d.toLocaleDateString("fr-FR", { day:"numeric", month:"short" }) : "");
   if (balanceEvolutionChart) balanceEvolutionChart.destroy();
   const ctx = document.getElementById("balanceEvolutionChart");
   if (!ctx) return;
@@ -10856,7 +10887,7 @@ function renderSavingsChart() {
         tooltip: { ...baseChartOpts().plugins.tooltip, callbacks: { footer: () => "Cliquer pour le détail" } },
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#8a8499", autoSkip: false, maxRotation: 0 } },
+        x: { grid: { display: false }, ticks: { color: "#8a8499", autoSkip: true, maxTicksLimit: 6, maxRotation: 0 } },
         y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " €" }, beginAtZero: true },
       },
     },
