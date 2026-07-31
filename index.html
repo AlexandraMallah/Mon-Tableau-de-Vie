@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v605</title>
+<title>Mon Tableau de Vie 🌿 · v607</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -5756,7 +5756,11 @@ function admRenderConges() {
       var ds = yr + '-' + String(mo).padStart(2,'0') + '-' + String(dd).padStart(2,'0');
       var t  = admDayType(ds);
       var st = admDayStyle(t);
-      h += '<div style="text-align:center;font-size:9px;padding:2px 1px;border-radius:3px;' + st + '">' + dd + '</div>';
+      var clickable = (t !== 'weekend' && t !== 'ferie');
+      var cursor = clickable ? 'cursor:pointer;' : '';
+      var title  = clickable ? ' title="Cliquer pour poser un congé"' : '';
+      var onclick = clickable ? ' onclick="admDayClick(\'' + ds + '\')"' : '';
+      h += '<div' + onclick + title + ' style="text-align:center;font-size:9px;padding:2px 1px;border-radius:3px;' + cursor + st + '">' + dd + '</div>';
     }
     h += '</div></div>';
     return h;
@@ -5950,6 +5954,17 @@ function admOpenConge(id) {
   document.getElementById("admCongeModal").classList.add("open");
 }
 function admCloseConge() { document.getElementById("admCongeModal").classList.remove("open"); }
+function admDayClick(ds) {
+  // Si un congé existe déjà sur ce jour, l'ouvrir en édition
+  var periodes = state.admin.congesPeriodes || [];
+  var existing = periodes.find(function(p) { return p.debut <= ds && p.fin >= ds; });
+  if (existing) { admOpenConge(existing.id); return; }
+  // Sinon ouvrir le modal en création pré-rempli avec ce jour
+  admOpenConge(null);
+  document.getElementById("admCDebut").value = ds;
+  document.getElementById("admCFin").value = ds;
+  document.getElementById("admCJours").value = "1";
+}
 function admSaveConge() {
   var debut = document.getElementById("admCDebut").value.trim();
   var fin   = document.getElementById("admCFin").value.trim();
