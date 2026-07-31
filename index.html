@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v609</title>
+<title>Mon Tableau de Vie 🌿 · v610</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13210,14 +13210,7 @@ function renderTimeStatsMonth() {
   const today = new Date(); today.setHours(0,0,0,0);
   const periodEnd = dates[dates.length - 1];
   const elapsed = dates.filter(d => d <= today);
-  // Exclure les jours de congés sans saisie du dénominateur
-  const elapsedActive = elapsed.filter(d => {
-    const dk = todayKey(d);
-    const dow = d.getDay();
-    if (dow === 0 || dow === 6 || _isHoliday(dk)) return false;
-    return !_isDayConge(dk);
-  });
-  const elapsedDays = elapsedActive.length || elapsed.length; // fallback si tout est congé
+  const elapsedDays = elapsed.length;
   let totalHours = 0;
   for (const d of elapsed) {
     const dk = todayKey(d);
