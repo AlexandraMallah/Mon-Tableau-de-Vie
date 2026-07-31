@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v611</title>
+<title>Mon Tableau de Vie 🌿 · v612</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9339,23 +9339,27 @@ function renderExternalSummary() {
   const listEl = document.getElementById("externalList");
   const totalEl = document.getElementById("externalTotal");
   if (!card || !listEl) return;
-  // Plage du mois selon offset (cycle 26-25)
-  const [s0, e0] = currentMonthRange();
-  const start = new Date(s0.getFullYear(), s0.getMonth() + _externalMonthOffset, 26);
-  const end   = new Date(e0.getFullYear(), e0.getMonth() + _externalMonthOffset, 26);
+  card.style.display = "";
+  // Utilise le même système de périodes que le budget (basé sur les dates de salaire)
+  const periods = _salaryPeriods();
+  const idx = Math.max(0, periods.length - 1 + _externalMonthOffset);
+  const period = periods[idx] || periods[periods.length - 1];
+  const { start, end } = period;
   // Label mois
   const labelEl = document.getElementById("externalMonthLabel");
-  if (labelEl) labelEl.textContent = end.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  if (labelEl) labelEl.textContent = _periodLabel(period);
   const nextBtn = document.getElementById("externalNavNext");
   if (nextBtn) nextBtn.disabled = _externalMonthOffset >= 0;
   const txs = state.transactions.filter(tx => {
     const d = new Date(tx.date);
     return tx.type === "external" && d >= start && d < end && tx.category !== "↩ Retour hors compte";
   }).sort((a, b) => new Date(b.date) - new Date(a.date));
-  if (!txs.length) { card.style.display = "none"; return; }
-  card.style.display = "";
   const total = txs.reduce((s, tx) => s + tx.amount, 0);
   if (totalEl) totalEl.textContent = total.toFixed(2) + " €";
+  if (!txs.length) {
+    listEl.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);margin:0;">Aucune dépense hors compte ce mois.</p>`;
+    return;
+  }
   // Grouper par catégorie
   const byCat = {};
   for (const tx of txs) byCat[tx.category] = (byCat[tx.category] || 0) + tx.amount;
@@ -13510,7 +13514,7 @@ function renderChecklists() {
       ${(()=>{
         if (!sections.length) return '';
         const dz = (insertAt) => `<div class="_cl-drop-zone" ondragover="_clZoneOver(event)" ondragleave="_clZoneLeave(event)" ondrop="_clZoneDrop(event,${li},${insertAt})" style="height:10px;border-radius:4px;background:transparent;transition:background 0.15s;flex-shrink:0;"></div>`;
-        const secCard = (sec, si) => `<div class="_cl-sec" style="flex:1;min-width:0;background:${(sec.items||[]).length>0&&(sec.items||[]).every(i=>i.done)?'#e8f7ee':'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;">
+        const secCard = (sec, si) => `<div class="_cl-sec" style="flex:1 1 240px;min-width:0;background:${(sec.items||[]).length>0&&(sec.items||[]).every(i=>i.done)?'#e8f7ee':'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
             <span draggable="true" ondragstart="_clDragStart(event,${li},${si})" ondragend="_clDragEnd(event)" style="font-size:15px;color:var(--ink-softer);cursor:grab;padding:0 2px;user-select:none;" title="Glisser pour déplacer">⠿</span>
             <span style="font-size:16px;">${sec.emoji||'📂'}</span>
@@ -13527,7 +13531,7 @@ function renderChecklists() {
         let html = `<div style="display:flex;flex-direction:column;margin-top:14px;">` + dz(0);
         for (let r=0; r<Math.ceil(sections.length/2); r++) {
           const i0=r*2, i1=r*2+1;
-          html += `<div style="display:flex;gap:12px;align-items:stretch;">` + secCard(sections[i0],i0) + (i1<sections.length?secCard(sections[i1],i1):'') + `</div>` + dz((r+1)*2);
+          html += `<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:stretch;">` + secCard(sections[i0],i0) + (i1<sections.length?secCard(sections[i1],i1):'') + `</div>` + dz((r+1)*2);
         }
         return html + `</div>`;
       })()}
