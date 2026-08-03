@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v639</title>
+<title>Mon Tableau de Vie 🌿 · v641</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2594,6 +2594,11 @@
       <h2>🗓️ Planning sport — 14 prochains jours</h2>
       <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 14px;">Basé sur tes événements calendrier. Vert = créneau libre, orange = chargé, rouge = surchargé → pense à récupérer.</p>
       <div id="sportPlanningContent"></div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <h2>📊 Rétrospective — depuis le début</h2>
+      <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 14px;">Fréquentation mensuelle de chaque activité depuis que tu utilises le dashboard.</p>
+      <div id="activityRetroContent"></div>
     </div>
   </section>
 
@@ -7292,9 +7297,10 @@ function renderActivities() {
   renderActivityStats();
   renderHormones();
   renderSportPlanning();
+  renderActivityRetro();
 }
 function activityWeekTotal(id) {
-  return lastDates(7).reduce((sum, d) => sum + (state.history[todayKey(d)]?.activities?.[id] ? 1 : 0), 0);
+  return currentWeekDates().reduce((sum, d) => sum + (state.history[todayKey(d)]?.activities?.[id] ? 1 : 0), 0);
 }
 function renderActivityStats() {
   document.getElementById("actStats").innerHTML = state.activities.slice(0, 6).map(a => {
@@ -7528,6 +7534,95 @@ function renderActivityChart() {
       },
     },
   });
+}
+
+function renderActivityRetro() {
+  const el = document.getElementById("activityRetroContent");
+  if (!el) return;
+  const acts = state.activities;
+  if (!acts.length) { el.innerHTML = '<p style="color:var(--ink-soft);font-size:13px;">Aucune activité enregistrée.</p>'; return; }
+
+  // Collecter tous les mois qui ont au moins une entrée history
+  const allDks = Object.keys(state.history || {}).sort();
+  if (!allDks.length) { el.innerHTML = '<p style="color:var(--ink-soft);font-size:13px;">Pas encore de données.</p>'; return; }
+
+  // Construire la liste des mois (YYYY-MM) depuis le premier jour jusqu'à aujourd'hui
+  const firstMonth = allDks[0].slice(0, 7);
+  const nowMonth = todayKey().slice(0, 7);
+  const months = [];
+  let cur = firstMonth;
+  while (cur <= nowMonth) {
+    months.push(cur);
+    const [y, m] = cur.split('-').map(Number);
+    const next = m === 12 ? `${y+1}-01` : `${y}-${String(m+1).padStart(2,'0')}`;
+    cur = next;
+  }
+
+  // Pour chaque mois, compter les séances par activité + nb jours du mois écoulés
+  const monthData = months.map(ym => {
+    const [y, m] = ym.split('-').map(Number);
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const today = new Date(); today.setHours(0,0,0,0);
+    const lastDay = Math.min(daysInMonth, ym === nowMonth ? today.getDate() : daysInMonth);
+    const counts = {};
+    acts.forEach(a => { counts[a.id] = 0; });
+    for (let d = 1; d <= lastDay; d++) {
+      const dk = `${ym}-${String(d).padStart(2,'0')}`;
+      const entry = state.history[dk];
+      if (!entry) continue;
+      acts.forEach(a => { if (entry.activities?.[a.id]) counts[a.id]++; });
+    }
+    return { ym, lastDay, counts };
+  });
+
+  const monthLabel = ym => {
+    const [y, m] = ym.split('-').map(Number);
+    return new Date(y, m-1, 1).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+  };
+
+  // Tableau : lignes = activités, colonnes = mois
+  const maxCounts = acts.map(a => Math.max(1, ...monthData.map(md => md.counts[a.id])));
+
+  const colW = Math.max(44, Math.floor(Math.min(window.innerWidth - 80, 900) / (months.length + 1)));
+
+  let html = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+  <table style="border-collapse:collapse;min-width:100%;font-size:12px;">
+    <thead>
+      <tr>
+        <th style="text-align:left;padding:4px 10px 8px 0;color:var(--ink-soft);font-weight:600;white-space:nowrap;min-width:120px;">Activité</th>
+        ${months.map(ym => `<th style="text-align:center;padding:4px 4px 8px;color:var(--ink-softer);font-weight:500;white-space:nowrap;min-width:${colW}px;">${monthLabel(ym)}</th>`).join('')}
+      </tr>
+    </thead>
+    <tbody>`;
+
+  acts.forEach((a, ai) => {
+    const color = PASTEL_PALETTE[ai % PASTEL_PALETTE.length];
+    html += `<tr>
+      <td style="padding:6px 10px 6px 0;white-space:nowrap;font-weight:600;color:var(--ink);">${a.emoji || '✨'} ${escapeHtml(a.name)}</td>
+      ${monthData.map((md, mi) => {
+        const n = md.counts[a.id];
+        const intensity = n === 0 ? 0 : Math.max(0.15, n / maxCounts[ai]);
+        const bg = n === 0 ? 'var(--bg-1)' : `${color}${Math.round(intensity * 255).toString(16).padStart(2,'0')}`;
+        const total = monthData.reduce((s, x) => s + x.counts[a.id], 0);
+        return `<td style="text-align:center;padding:4px;">
+          <div style="background:${bg};border-radius:8px;padding:5px 2px;min-width:${colW-8}px;">
+            <div style="font-size:13px;font-weight:700;color:${n===0?'var(--ink-softer)':'var(--ink)'};">${n}</div>
+            <div style="font-size:9px;color:var(--ink-softer);">séance${n!==1?'s':''}</div>
+          </div>
+        </td>`;
+      }).join('')}
+    </tr>`;
+    // Ligne total
+    const total = monthData.reduce((s, md) => s + md.counts[a.id], 0);
+    const avgPerMonth = (total / months.length).toFixed(1).replace('.', ',');
+    html += `<tr>
+      <td style="padding:2px 10px 10px 0;font-size:11px;color:var(--ink-softer);">Total : ${total} · moy. ${avgPerMonth}/mois</td>
+      <td colspan="${months.length}"></td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  el.innerHTML = html;
 }
 
 /* ========= SPORT PLANNING ========= */
