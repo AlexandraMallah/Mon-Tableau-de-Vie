@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v681</title>
+<title>Mon Tableau de Vie 🌿 · v683</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -8748,7 +8748,7 @@ function renderPillSante() {
     days.push(todayKey(d));
   }
 
-  const CYCLE_DOT = ["","rgba(255,180,190,0.55)","rgba(230,120,145,0.7)","rgba(200,60,100,0.8)","rgba(160,20,60,0.9)","rgba(100,5,35,0.95)"];
+  const CYCLE_DOT = ["","#ffb3c1","#e8485a","#c01030","#880010","#3a0008"];
   calEl.innerHTML = days.map(dk => {
     const taken = !!state.history[dk]?.pillTaken;
     const flow = state.history[dk]?.cycleFlow || 0;
@@ -8768,7 +8768,7 @@ function renderPillSante() {
     else if (taken) bg = "#c9b6f0";
     else bg = "#ece6f5";
     const opacity = taken || isToday || flow ? "1" : "0.5";
-    const dot = flow ? `<div style="position:absolute;bottom:2px;right:2px;width:7px;height:7px;border-radius:50%;background:${CYCLE_DOT[flow]};"></div>` : "";
+    const dot = flow ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;border-radius:50%;background:${CYCLE_DOT[flow]};"></div></div>` : "";
     return `<div data-tip="${title}" onmouseenter="showHoverTip(event,this.dataset.tip)" onmousemove="moveHoverTip(event)" onmouseleave="hideHoverTip()" style="position:relative;width:18px;height:18px;border-radius:4px;background:${bg};opacity:${opacity};cursor:default;">${dot}</div>`;
   }).join("");
 
