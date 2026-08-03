@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v621</title>
+<title>Mon Tableau de Vie 🌿 · v622</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3179,7 +3179,9 @@
           <h2 style="margin:0;">🔢 Kcal aliments</h2>
           <button class="btn-primary" onclick="openFoodKcalForm()">+ Ajouter</button>
         </div>
-        <p style="color:var(--ink-soft);font-size:12px;margin:-8px 0 12px;">Note les kcal d'aliments ou préparations avec leurs ingrédients (ex: Ube Latte → 10g Ube, 250ml lait…)</p>
+        <p style="color:var(--ink-soft);font-size:12px;margin:-8px 0 10px;">Note les kcal d'aliments ou préparations avec leurs ingrédients (ex: Ube Latte → 10g Ube, 250ml lait…)</p>
+        <input type="text" id="foodKcalSearch" placeholder="🔍 Rechercher un aliment…" oninput="renderFoodKcal()"
+          style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);margin-bottom:12px;" />
         <div id="foodKcalAddForm" style="display:none;background:#faf8fd;padding:12px;border-radius:14px;margin-bottom:12px;border:1px solid var(--line);">
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:8px;">
             <input type="text" id="fkName" placeholder="Nom (ex: Huile d'olive)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
@@ -14223,8 +14225,11 @@ function deleteFoodKcal(id) {
 function renderFoodKcal() {
   const el = document.getElementById('foodKcalList');
   if (!el) return;
-  const items = state.domestique.foodKcal || [];
-  if (!items.length) { el.innerHTML = '<p style="color:var(--ink-soft);font-size:13px;text-align:center;margin:16px 0;">Aucun aliment enregistré</p>'; return; }
+  const search = (document.getElementById('foodKcalSearch')?.value || '').toLowerCase().trim();
+  let items = state.domestique.foodKcal || [];
+  if (search) items = items.filter(f => f.name?.toLowerCase().includes(search) || f.brand?.toLowerCase().includes(search));
+  if (!(state.domestique.foodKcal || []).length) { el.innerHTML = '<p style="color:var(--ink-soft);font-size:13px;text-align:center;margin:16px 0;">Aucun aliment enregistré</p>'; return; }
+  if (!items.length) { el.innerHTML = '<p style="color:var(--ink-soft);font-size:13px;text-align:center;margin:16px 0;">Aucun résultat pour « ' + escapeHtml(search) + ' »</p>'; return; }
   el.innerHTML = items.map(f => {
     const ingHtml = (f.ingredients || []).length ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">${
       f.ingredients.map(i => `<span style="font-size:11px;background:var(--bg-2);border-radius:6px;padding:2px 7px;color:var(--ink-soft);">${escapeHtml(i.name)}${i.qty ? ' · ' + escapeHtml(i.qty) : ''}${i.kcal ? ' · ' + i.kcal + ' kcal' : ''}</span>`).join('')
