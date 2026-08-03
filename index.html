@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v649</title>
+<title>Mon Tableau de Vie 🌿 · v651</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7883,17 +7883,29 @@ function renderHealth() {
   };
   renderMetric("weight", "Today", "kg");
   // Masse grasse et maigre : afficher kg + % calculé depuis le poids du jour
-  const w = today.weight;
+  // Cherche en arrière jusqu'à 90j si pas de valeur aujourd'hui
+  const findRecentVal = (key) => {
+    if (today[key]) return { val: today[key], date: null };
+    for (let i = 1; i <= 90; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const dk = todayKey(d);
+      if (state.history[dk]?.[key]) return { val: state.history[dk][key], date: d };
+    }
+    return null;
+  };
+  const w = today.weight || (() => { const r = findRecentVal("weight"); return r?.val; })();
   ["bodyFat", "muscleMass"].forEach(key => {
     const elToday = document.getElementById(key + "Today");
     const elTrend = document.getElementById(key + "Trend");
     if (!elToday) return;
-    const cur = today[key];
+    const found = findRecentVal(key);
+    const cur = found?.val;
+    const dateHint = found?.date ? `<div style="font-size:10px;color:var(--ink-softer);">${found.date.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}</div>` : "";
     const pct = (cur && w) ? ` <span style="font-size:11px;color:var(--ink-soft);font-weight:400;">(${(cur/w*100).toFixed(1)}%)</span>` : "";
-    elToday.innerHTML = cur ? `${cur}<span class="stat-unit">kg</span>${pct}` : "—";
+    elToday.innerHTML = cur ? `${cur}<span class="stat-unit">kg</span>${pct}${dateHint}` : "—";
     if (!elTrend) return;
     const old = findRecentMetric(key, 30);
-    if (cur && old) {
+    if (cur && old && !found?.date) {
       const diff = (cur - old).toFixed(1);
       const sign = diff > 0 ? "+" : "";
       elTrend.textContent = `${sign}${diff} kg vs 30j`;
