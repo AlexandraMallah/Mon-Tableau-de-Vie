@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v635</title>
+<title>Mon Tableau de Vie 🌿 · v637</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13322,27 +13322,20 @@ function renderTimeGlobalAvg() {
       projects[k] = (projects[k] || 0) + h;
     }
   }
-  // Dénominateur = semaines de travail (semaines où au moins un jour lun-ven n'est pas congé/férié)
+  // Dénominateur = jours ouvrés écoulés (lun-ven, hors congés, hors fériés, depuis firstDate)
   // Les heures de congés travaillés gonflent le numérateur sans augmenter le dénominateur
-  let workWeeks = 0;
+  let workDays = 0;
   const cur = new Date(firstDate);
-  // Aller au lundi de la semaine de firstDate
-  const dow0 = cur.getDay();
-  const diffToMon = dow0 === 0 ? -6 : 1 - dow0;
-  cur.setDate(cur.getDate() + diffToMon);
   while (cur <= today) {
-    let hasWorkDay = false;
-    for (let d = 0; d < 5; d++) {
-      const dd = new Date(cur); dd.setDate(dd.getDate() + d);
-      if (dd > today) break;
-      if (dd < firstDate) continue; // ignorer les jours avant le début du suivi
-      const dk = todayKey(dd);
-      if (!_isDayConge(dk) && !_isHoliday(dk)) { hasWorkDay = true; break; }
+    const dow = cur.getDay();
+    if (dow >= 1 && dow <= 5) {
+      const dk = todayKey(cur);
+      if (!_isDayConge(dk) && !_isHoliday(dk)) workDays++;
     }
-    if (hasWorkDay) workWeeks++;
-    cur.setDate(cur.getDate() + 7);
+    cur.setDate(cur.getDate() + 1);
   }
-  const nbWeeks = Math.max(1, workWeeks);
+  const workWeeks = workDays / 5; // pour l'affichage "X sem."
+  const nbWeeks = Math.max(1, workDays) / 5;
   const avgPerWeek = (totalH / nbWeeks).toFixed(1).replace('.', ',');
   const since = firstDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   if (el) el.innerHTML = `Moyenne depuis le ${since} : <strong style="color:var(--ink);">${avgPerWeek} h/sem.</strong> <span style="color:var(--ink-softer);">(${totalH.toFixed(1).replace('.',',')} h au total)</span>`;
