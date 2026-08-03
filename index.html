@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v629</title>
+<title>Mon Tableau de Vie 🌿 · v631</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13303,17 +13303,24 @@ function timeBarNav(dir) {
   renderTimeBarChart();
 }
 function renderTimeGlobalAvg() {
-  const wt = state.workTime || {};
-  const allKeys = Object.keys(wt).sort();
+  // Le temps de travail est dans state.history[dk].workTime
+  const hist = state.history || {};
+  const allKeys = Object.keys(hist).filter(dk => hist[dk]?.workTime && Object.keys(hist[dk].workTime).length > 0).sort();
   const el = document.getElementById('timeGlobalAvg');
   const review = document.getElementById('timeGlobalReview');
   if (!allKeys.length) { if (el) el.textContent = ''; if (review) review.innerHTML = ''; return; }
   const firstDate = new Date(allKeys[0]); firstDate.setHours(0,0,0,0);
   const today = new Date(); today.setHours(0,0,0,0);
   let totalH = 0;
+  const projects = {};
   for (const dk of allKeys) {
-    const entry = wt[dk];
-    for (const v of Object.values(entry)) totalH += Number(v) || 0;
+    const entry = hist[dk].workTime;
+    for (const [k, v] of Object.entries(entry)) {
+      if (k === 'autreNote') continue;
+      const h = Number(v) || 0;
+      totalH += h;
+      projects[k] = (projects[k] || 0) + h;
+    }
   }
   // Dénominateur = semaines de travail (semaines où au moins un jour lun-ven n'est pas congé/férié)
   // Les heures de congés travaillés gonflent le numérateur sans augmenter le dénominateur
@@ -13339,13 +13346,6 @@ function renderTimeGlobalAvg() {
   const since = firstDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   if (el) el.innerHTML = `Moyenne depuis le ${since} : <strong style="color:var(--ink);">${avgPerWeek} h/sem.</strong> <span style="color:var(--ink-softer);">(${totalH.toFixed(1).replace('.',',')} h au total)</span>`;
   if (review) {
-    // Répartition par projet sur toute la période
-    const projects = {};
-    for (const dk of allKeys) {
-      for (const [pid, h] of Object.entries(wt[dk])) {
-        projects[pid] = (projects[pid] || 0) + (Number(h) || 0);
-      }
-    }
     const allProjects = [...(state.work?.projects || [])];
     const rows = Object.entries(projects)
       .filter(([,h]) => h > 0)
