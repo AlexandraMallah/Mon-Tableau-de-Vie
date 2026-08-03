@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v659</title>
+<title>Mon Tableau de Vie 🌿 · v661</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -8954,30 +8954,69 @@ function renderBodyComboChart() {
   const nbDays = Math.max(1, Math.round((last - first) / 86400000) + 1);
   const dates = Array.from({length: nbDays}, (_, i) => { const d = new Date(first); d.setDate(first.getDate() + i); return d; });
   const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day:"numeric", month:"short" }));
-  const weightKg   = dates.map(d => hist[todayKey(d)]?.weight    ?? null);
-  const fatKg      = dates.map(d => hist[todayKey(d)]?.bodyFat   ?? null);
-  const muscleKg   = dates.map(d => hist[todayKey(d)]?.muscleMass ?? null);
+  // Aires empilées : grasse (bas) + maigre (haut) ≈ poids total, ligne poids par-dessus
+  const weightKg  = dates.map(d => hist[todayKey(d)]?.weight     ?? null);
+  const fatKg     = dates.map(d => hist[todayKey(d)]?.bodyFat    ?? null);
+  const muscleKg  = dates.map(d => hist[todayKey(d)]?.muscleMass ?? null);
   if (bodyComboChart) bodyComboChart.destroy();
   bodyComboChart = new Chart(canvas, {
+    type: "line",
     data: {
       labels,
       datasets: [
-        { type:"line", label:"Poids (kg)",       data: weightKg,  borderColor:"#9d82d6", backgroundColor:"rgba(157,130,214,0.08)", fill:true, borderWidth:2.5, pointRadius:3, spanGaps:true,  yAxisID:"yL", order:0 },
-        { type:"line", label:"Masse maigre (kg)", data: muscleKg, borderColor:"#4db89a", backgroundColor:"rgba(174,224,200,0.18)", fill:true, borderWidth:2,   pointRadius:4, spanGaps:false, yAxisID:"yR", order:1 },
-        { type:"line", label:"Masse grasse (kg)", data: fatKg,    borderColor:"#e890a4", backgroundColor:"rgba(245,182,201,0.18)", fill:true, borderWidth:2,   pointRadius:4, spanGaps:false, yAxisID:"yR", order:2 },
+        {
+          label: "🟠 Masse grasse (kg)",
+          data: fatKg,
+          borderColor: "#e890a4",
+          backgroundColor: "rgba(245,182,201,0.55)",
+          fill: "origin",
+          borderWidth: 1.5,
+          pointRadius: 5,
+          pointBackgroundColor: "#e890a4",
+          spanGaps: false,
+          order: 3,
+        },
+        {
+          label: "🟢 Masse maigre (kg)",
+          data: muscleKg,
+          borderColor: "#4db89a",
+          backgroundColor: "rgba(174,224,200,0.5)",
+          fill: "origin",
+          borderWidth: 1.5,
+          pointRadius: 5,
+          pointBackgroundColor: "#4db89a",
+          spanGaps: false,
+          order: 2,
+        },
+        {
+          label: "⚖️ Poids total (kg)",
+          data: weightKg,
+          borderColor: "#9d82d6",
+          backgroundColor: "transparent",
+          fill: false,
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointBackgroundColor: "#9d82d6",
+          borderDash: [5, 3],
+          spanGaps: true,
+          order: 1,
+        },
       ]
     },
     options: {
       ...baseChartOpts(),
-      interaction: { mode:"index", intersect:false },
+      interaction: { mode: "index", intersect: false },
       scales: {
-        x: { grid:{display:false}, ticks:{color:"#8a8499", maxTicksLimit:7} },
-        yL: { position:"left",  grid:{color:"#f3eef9"}, ticks:{color:"#9d82d6", callback:v=>v+" kg"}, title:{display:true,text:"Poids",color:"#9d82d6",font:{size:11}} },
-        yR: { position:"right", grid:{display:false},   ticks:{color:"#8a8499", callback:v=>v+" kg"}, title:{display:true,text:"Grasse / Maigre",color:"#8a8499",font:{size:11}} },
+        x: { grid: { display: false }, ticks: { color: "#8a8499", maxTicksLimit: 7 } },
+        y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " kg" }, min: 0 },
       },
       plugins: {
         ...baseChartOpts().plugins,
-        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label} : ${ctx.parsed.y != null ? ctx.parsed.y + " kg" : "—"}` } }
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.parsed.y != null ? `${ctx.dataset.label} : ${ctx.parsed.y} kg` : null,
+          }
+        }
       }
     }
   });
