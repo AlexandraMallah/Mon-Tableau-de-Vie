@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v645</title>
+<title>Mon Tableau de Vie 🌿 · v647</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7600,11 +7600,14 @@ function renderActivityRetro() {
         const bg = n === 0 ? 'var(--bg-1)' : `${color}${Math.round(intensity * 255).toString(16).padStart(2,'0')}`;
         const nbWeeksInMonth = md.lastDay / 7;
         const perWeek = n === 0 ? '—' : (n / nbWeeksInMonth).toFixed(1).replace('.', ',');
+        const dark = intensity > 0.55;
+        const textMain = n === 0 ? 'var(--ink-softer)' : (dark ? '#fff' : 'var(--ink)');
+        const textSub = n === 0 ? 'var(--ink-softer)' : (dark ? 'rgba(255,255,255,0.8)' : 'var(--ink-softer)');
         return `<td style="text-align:center;padding:4px;">
           <div style="background:${bg};border-radius:8px;padding:5px 2px;min-width:${colW-8}px;">
-            <div style="font-size:13px;font-weight:700;color:${n===0?'var(--ink-softer)':'var(--ink)'};">${n}</div>
-            <div style="font-size:9px;color:var(--ink-softer);">séance${n!==1?'s':''}</div>
-            <div style="font-size:9px;color:var(--ink-softer);margin-top:1px;">${perWeek}/sem.</div>
+            <div style="font-size:13px;font-weight:700;color:${textMain};">${n}</div>
+            <div style="font-size:9px;color:${textSub};">séance${n!==1?'s':''}</div>
+            <div style="font-size:9px;color:${textSub};margin-top:1px;">${perWeek}/sem.</div>
           </div>
         </td>`;
       }).join('')}
