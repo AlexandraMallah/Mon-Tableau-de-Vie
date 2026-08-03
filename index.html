@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v663</title>
+<title>Mon Tableau de Vie 🌿 · v665</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2661,7 +2661,7 @@
     <div class="card" style="margin-top:18px;">
       <h2 style="margin:0 0 4px;">📊 Composition corporelle — vue combinée</h2>
       <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px;">Masse grasse % et masse maigre % (aires empilées ≈ 100%), poids en ligne secondaire.</p>
-      <div class="chart-wrap" style="height:480px;"><canvas id="bodyComboChart"></canvas></div>
+      <div class="chart-wrap" style="height:700px;"><canvas id="bodyComboChart"></canvas></div>
     </div>
 
     <!-- 🌿 Forme & énergie -->
@@ -8968,21 +8968,21 @@ function renderBodyComboChart() {
           label: "🟠 Masse grasse (kg)",
           data: fatKg,
           borderColor: "#e890a4",
-          backgroundColor: "rgba(245,182,201,0.55)",
+          backgroundColor: "rgba(245,182,201,0.7)",
           fill: "origin",
           borderWidth: 2,
           pointRadius: 5,
           pointBackgroundColor: "#e890a4",
           spanGaps: true,
           tension: 0.3,
-          order: 3,
+          order: 1,
         },
         {
           label: "🟢 Masse maigre (kg)",
           data: muscleKg,
           borderColor: "#4db89a",
-          backgroundColor: "rgba(174,224,200,0.5)",
-          fill: "origin",
+          backgroundColor: "rgba(174,224,200,0.55)",
+          fill: "-1",
           borderWidth: 2,
           pointRadius: 5,
           pointBackgroundColor: "#4db89a",
@@ -9002,7 +9002,7 @@ function renderBodyComboChart() {
           borderDash: [5, 3],
           spanGaps: true,
           tension: 0.3,
-          order: 1,
+          order: 3,
         },
       ]
     },
