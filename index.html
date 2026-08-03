@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v667</title>
+<title>Mon Tableau de Vie 🌿 · v669</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1770,6 +1770,18 @@
             </div>
             <span id="pillCheck" style="font-size:20px;opacity:0.3;">✓</span>
           </button>
+        </div>
+        <!-- 🩸 Cycle menstruel -->
+        <div style="margin-top:10px;">
+          <div id="cycleTrackerBtn"
+            style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:2px solid var(--line);background:white;box-sizing:border-box;">
+            <span style="font-size:22px;flex-shrink:0;">🩸</span>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:700;color:var(--ink);">Règles du jour</div>
+              <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;" id="cycleSubLabel">Aucun flux</div>
+              <div style="display:flex;gap:7px;margin-top:8px;" id="cycleDrops"></div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="card">
@@ -5418,7 +5430,7 @@ function navToToday() {
   renderTodayNav();
   renderTodayView();
 }
-function renderTodayView() { renderTodayNav(); renderRings(); renderHabits(); renderWellbeing(); renderPill(); renderTodoToday(); renderSkincare(); renderJournal(); renderFoodLog(); }
+function renderTodayView() { renderTodayNav(); renderRings(); renderHabits(); renderWellbeing(); renderPill(); renderCycle(); renderTodoToday(); renderSkincare(); renderJournal(); renderFoodLog(); }
 
 /* ========= WORK :: POSTDOC PROJECTS ========= */
 // Filtres pour identifier les projets "majeurs" qui ont leur propre sous-onglet
@@ -8638,6 +8650,45 @@ function renderPill() {
   // Streak dans "Aujourd'hui"
   const streak = _pillStreak();
   if (sl) sl.textContent = streak > 1 ? `🔥 ${streak} jours de suite` : taken ? "C'est bon pour aujourd'hui !" : "Pense à la prendre 💜";
+}
+
+const CYCLE_LABELS = ["Aucun flux","Très léger","Léger","Modéré","Abondant","Très abondant"];
+const CYCLE_COLORS = [
+  null,
+  {fill:"#fbd0dc",stroke:"#e87fa0"},
+  {fill:"#f29ab4",stroke:"#d1537a"},
+  {fill:"#e0527a",stroke:"#b83060"},
+  {fill:"#c12a56",stroke:"#8c1a38"},
+  {fill:"#8b0f38",stroke:"#5c0a24"},
+];
+
+function renderCycle() {
+  const d = getToday();
+  const sel = d.cycleFlow || 0;
+  const container = document.getElementById("cycleDrops");
+  const sub = document.getElementById("cycleSubLabel");
+  if (!container) return;
+  let html = "";
+  for (let i = 1; i <= 5; i++) {
+    const filled = i <= sel && sel > 0;
+    const c = filled ? CYCLE_COLORS[sel] : {fill:"#f3e8ee",stroke:"#d4a0b5"};
+    html += `<button onclick="setCycleFlow(${i})" title="Niveau ${i}"
+      style="background:none;border:none;cursor:pointer;padding:0;line-height:1;">
+      <svg width="22" height="28" viewBox="0 0 28 36" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2 C14 2, 2 16, 2 24 C2 30.6 7.4 34 14 34 C20.6 34 26 30.6 26 24 C26 16 14 2 14 2Z"
+          fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.8"/>
+      </svg>
+    </button>`;
+  }
+  container.innerHTML = html;
+  if (sub) sub.textContent = CYCLE_LABELS[sel];
+}
+
+function setCycleFlow(level) {
+  const d = getToday();
+  d.cycleFlow = (d.cycleFlow === level) ? 0 : level;
+  saveState();
+  renderCycle();
 }
 
 function _pillStreak() {
