@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v633</title>
+<title>Mon Tableau de Vie 🌿 · v635</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13327,7 +13327,7 @@ function renderTimeGlobalAvg() {
   let workWeeks = 0;
   const cur = new Date(firstDate);
   // Aller au lundi de la semaine de firstDate
-  const dow0 = cur.getDay(); // 0=dim
+  const dow0 = cur.getDay();
   const diffToMon = dow0 === 0 ? -6 : 1 - dow0;
   cur.setDate(cur.getDate() + diffToMon);
   while (cur <= today) {
@@ -13335,6 +13335,7 @@ function renderTimeGlobalAvg() {
     for (let d = 0; d < 5; d++) {
       const dd = new Date(cur); dd.setDate(dd.getDate() + d);
       if (dd > today) break;
+      if (dd < firstDate) continue; // ignorer les jours avant le début du suivi
       const dk = todayKey(dd);
       if (!_isDayConge(dk) && !_isHoliday(dk)) { hasWorkDay = true; break; }
     }
