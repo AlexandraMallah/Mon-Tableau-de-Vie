@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v683</title>
+<title>Mon Tableau de Vie 🌿 · v685</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -5110,7 +5110,8 @@ function renderRings() {
     ? (today.sleep < 7 ? today.sleep / 7 * 0.85 : today.sleep <= 9 ? 1 : 0.9)
     : 0;
   const sqMap = { peaceful: 1.0, restless: 0.5, fragmented: 0.15 };
-  const sqScore = sqMap[today.sleepQuality] ?? null;
+  const _sqArr2 = _sqArray(today.sleepQuality);
+  const sqScore = _sqArr2.length ? Math.min(..._sqArr2.map(v => sqMap[v] ?? 0.5)) : null;
   let energyPct, energySub, energyVal;
   if (today.energy && sqScore !== null) {
     energyPct = (today.energy / 5) * 0.7 + sqScore * 0.3;
@@ -5150,8 +5151,11 @@ function labelFor(kind, v) {
 }
 function sleepLabel(h) { return h < 7 ? "Insuffisant" : h <= 9 ? "Correct" : "Bon"; }
 function sleepQualityLabel(q) {
-  return { peaceful: "Paisible", restless: "Agité", fragmented: "Beaucoup de réveils" }[q] || "";
+  const map = { peaceful: "Paisible", restless: "Agité", fragmented: "Beaucoup de réveils" };
+  if (Array.isArray(q)) return q.map(v => map[v] || v).join(" · ") || "";
+  return map[q] || "";
 }
+function _sqArray(q) { return Array.isArray(q) ? q : (q ? [q] : []); }
 function sleepQualClass(h) { return h < 7 ? "insuf" : h <= 9 ? "correct" : "bon"; }
 
 /* ========= HABITS ========= */
@@ -5256,7 +5260,8 @@ function renderWellbeing() {
   const today = getToday();
   document.querySelectorAll("#moodScale button").forEach(b => b.classList.toggle("active", Number(b.dataset.v) === today.mood));
   document.querySelectorAll("#energyScale button").forEach(b => b.classList.toggle("active", Number(b.dataset.v) === today.energy));
-  document.querySelectorAll("#sleepQualityScale button").forEach(b => b.classList.toggle("active", b.dataset.v === today.sleepQuality));
+  const sqArr = _sqArray(today.sleepQuality);
+  document.querySelectorAll("#sleepQualityScale button").forEach(b => b.classList.toggle("active", sqArr.includes(b.dataset.v)));
   document.querySelectorAll("#bellyScale button").forEach(b => b.classList.toggle("active", Number(b.dataset.v) === (today.belly ?? -1)));
   const bellyLbls = ["Ventre ok 😌","Légère gêne 😕","Inconfort 😣","Douleur 😖","Très douloureux 🤢"];
   const bellyLbl = document.getElementById("bellyLabel");
@@ -5266,6 +5271,7 @@ function renderWellbeing() {
   if (endoLbl) endoLbl.textContent = today.endo != null ? bellyLbls[today.endo] || "" : "";
   const sqLbl = document.getElementById("sleepQualityLabel");
   if (sqLbl) sqLbl.textContent = today.sleepQuality ? sleepQualityLabel(today.sleepQuality) : "";
+
   // Émotions détectées dans le journal du jour
   const journalEmotions = analyzeJournal(today.journal || "");
   const todayBlock = document.getElementById("journalMoodToday");
@@ -5333,7 +5339,15 @@ function setupWellbeing() {
   document.querySelectorAll("#sleepQualityScale button").forEach(b => {
     b.onclick = () => {
       const t = getToday();
-      t.sleepQuality = t.sleepQuality === b.dataset.v ? null : b.dataset.v; // re-clic = désélectionne
+      let arr = _sqArray(t.sleepQuality);
+      const v = b.dataset.v;
+      if (v === "peaceful") {
+        arr = arr.includes("peaceful") ? [] : ["peaceful"];
+      } else {
+        arr = arr.filter(x => x !== "peaceful");
+        arr = arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v];
+      }
+      t.sleepQuality = arr.length === 0 ? null : arr.length === 1 ? arr[0] : arr;
       saveState(); renderTodayView();
     };
   });
