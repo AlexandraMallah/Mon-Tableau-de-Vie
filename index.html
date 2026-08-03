@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v655</title>
+<title>Mon Tableau de Vie 🌿 · v657</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2658,6 +2658,12 @@
         </div>
       </div>
 
+    <div class="card" style="margin-top:18px;">
+      <h2 style="margin:0 0 4px;">📊 Composition corporelle — vue combinée</h2>
+      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px;">Masse grasse % et masse maigre % (aires empilées ≈ 100%), poids en ligne secondaire.</p>
+      <div class="chart-wrap" style="height:240px;"><canvas id="bodyComboChart"></canvas></div>
+    </div>
+
     <!-- 🌿 Forme & énergie -->
     <div class="grid-two" style="margin-top:18px;">
       <div class="card">
@@ -5058,7 +5064,7 @@ function onViewChange(view) {
   if (view === "today") maybeLoadWeather();
   if (view === "work") updateWorkTabBadges();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
-  if (view === "health") { renderBodyChart(currentBodyMetric); renderWellbeingChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); }
+  if (view === "health") { renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); }
   if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
@@ -8933,6 +8939,49 @@ function renderBodyChart(metric) {
   });
 }
 function renderWeightChart() { renderBodyChart(currentBodyMetric); } // backwards compat
+
+let bodyComboChart;
+function renderBodyComboChart() {
+  const canvas = document.getElementById("bodyComboChart");
+  if (!canvas) return;
+  const hist = state.history || {};
+  // Trouver la plage de dates avec au moins poids + une des deux masses
+  const allDks = Object.keys(hist).sort().filter(dk => hist[dk]?.weight || hist[dk]?.bodyFat || hist[dk]?.muscleMass);
+  if (allDks.length < 2) { canvas.parentElement.style.display = "none"; return; }
+  canvas.parentElement.style.display = "";
+  const first = new Date(allDks[0]); first.setHours(0,0,0,0);
+  const last = new Date(allDks[allDks.length-1]); last.setHours(0,0,0,0);
+  const nbDays = Math.max(1, Math.round((last - first) / 86400000) + 1);
+  const dates = Array.from({length: nbDays}, (_, i) => { const d = new Date(first); d.setDate(first.getDate() + i); return d; });
+  const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day:"numeric", month:"short" }));
+  const fatPct = dates.map(d => { const h = hist[todayKey(d)]; return (h?.bodyFat && h?.weight) ? parseFloat((h.bodyFat/h.weight*100).toFixed(1)) : null; });
+  const musclePct = dates.map(d => { const h = hist[todayKey(d)]; return (h?.muscleMass && h?.weight) ? parseFloat((h.muscleMass/h.weight*100).toFixed(1)) : null; });
+  const weightKg = dates.map(d => hist[todayKey(d)]?.weight ?? null);
+  if (bodyComboChart) bodyComboChart.destroy();
+  bodyComboChart = new Chart(canvas, {
+    data: {
+      labels,
+      datasets: [
+        { type:"line", label:"Poids (kg)", data: weightKg, borderColor:"#9d82d6", backgroundColor:"transparent", borderWidth:2, pointRadius:3, spanGaps:true, yAxisID:"yWeight", order:0 },
+        { type:"line", label:"Masse maigre %", data: musclePct, borderColor:"#4db89a", backgroundColor:"rgba(174,224,200,0.25)", fill:true, borderWidth:2, pointRadius:2, spanGaps:true, yAxisID:"yPct", order:1 },
+        { type:"line", label:"Masse grasse %", data: fatPct, borderColor:"#e890a4", backgroundColor:"rgba(245,182,201,0.3)", fill:true, borderWidth:2, pointRadius:2, spanGaps:true, yAxisID:"yPct", order:2 },
+      ]
+    },
+    options: {
+      ...baseChartOpts(),
+      interaction: { mode:"index", intersect:false },
+      scales: {
+        x: { grid:{display:false}, ticks:{color:"#8a8499", maxTicksLimit:6} },
+        yWeight: { position:"left", grid:{color:"#f3eef9"}, ticks:{color:"#9d82d6", callback:v=>v+" kg"}, title:{display:true,text:"Poids",color:"#9d82d6",font:{size:11}} },
+        yPct: { position:"right", grid:{display:false}, min:0, max:100, ticks:{color:"#8a8499", callback:v=>v+"%"}, title:{display:true,text:"% du poids",color:"#8a8499",font:{size:11}} },
+      },
+      plugins: {
+        ...baseChartOpts().plugins,
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label} : ${ctx.parsed.y ?? "—"}${ctx.dataset.yAxisID==="yWeight"?" kg":"%"}` } }
+      }
+    }
+  });
+}
 function renderWellbeingChart() {
   const dates = lastDates(30);
   const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
