@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v627</title>
+<title>Mon Tableau de Vie 🌿 · v629</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -13315,8 +13315,26 @@ function renderTimeGlobalAvg() {
     const entry = wt[dk];
     for (const v of Object.values(entry)) totalH += Number(v) || 0;
   }
-  const elapsedDays = Math.max(1, Math.round((today - firstDate) / 86400000) + 1);
-  const nbWeeks = elapsedDays / 7;
+  // Dénominateur = semaines de travail (semaines où au moins un jour lun-ven n'est pas congé/férié)
+  // Les heures de congés travaillés gonflent le numérateur sans augmenter le dénominateur
+  let workWeeks = 0;
+  const cur = new Date(firstDate);
+  // Aller au lundi de la semaine de firstDate
+  const dow0 = cur.getDay(); // 0=dim
+  const diffToMon = dow0 === 0 ? -6 : 1 - dow0;
+  cur.setDate(cur.getDate() + diffToMon);
+  while (cur <= today) {
+    let hasWorkDay = false;
+    for (let d = 0; d < 5; d++) {
+      const dd = new Date(cur); dd.setDate(dd.getDate() + d);
+      if (dd > today) break;
+      const dk = todayKey(dd);
+      if (!_isDayConge(dk) && !_isHoliday(dk)) { hasWorkDay = true; break; }
+    }
+    if (hasWorkDay) workWeeks++;
+    cur.setDate(cur.getDate() + 7);
+  }
+  const nbWeeks = Math.max(1, workWeeks);
   const avgPerWeek = (totalH / nbWeeks).toFixed(1).replace('.', ',');
   const since = firstDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   if (el) el.innerHTML = `Moyenne depuis le ${since} : <strong style="color:var(--ink);">${avgPerWeek} h/sem.</strong> <span style="color:var(--ink-softer);">(${totalH.toFixed(1).replace('.',',')} h au total)</span>`;
@@ -13347,7 +13365,7 @@ function renderTimeGlobalAvg() {
         <div style="font-size:22px;font-weight:800;color:var(--ink);">${avgPerWeek} h<span style="font-size:13px;font-weight:500;">/sem.</span></div>
         <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">${totalH.toFixed(1).replace('.',',')} h au total · ${Math.round(nbWeeks)} sem.</div>
       </div>
-      <div style="font-size:11px;color:var(--ink-softer);margin-bottom:6px;">Congés & fériés travaillés inclus</div>
+      <div style="font-size:11px;color:var(--ink-softer);margin-bottom:6px;">${workWeeks} sem. de travail · heures vacances incluses</div>
       ${rows}`;
   }
 }
