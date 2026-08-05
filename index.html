@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v698</title>
+<title>Mon Tableau de Vie 🌿 · v699</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -57,7 +57,7 @@
 
   * { box-sizing: border-box; }
   html { color-scheme: light; background: #fdf6f0; } /* fond clair immédiat avant CSS vars */
-  html, body { margin: 0; padding: 0; }
+  html, body { margin: 0; padding: 0; overflow-x: hidden; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
     color: var(--ink);
@@ -66,7 +66,7 @@
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
-  .container { max-width: 1180px; margin: 0 auto; padding: 28px 28px 80px; overflow-x: clip; }
+  .container { max-width: 1180px; margin: 0 auto; padding: 28px 28px 80px; overflow-x: hidden; }
 
   /* ========= HEADER ========= */
   header.top {
@@ -924,7 +924,7 @@
   }
 
   /* ========= GROCERY EVENTS ========= */
-  .grocery-layout { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; }
+  .grocery-layout { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; width: 100%; box-sizing: border-box; }
   .grocery-event {
     background: #faf8fd; border-radius: 14px; padding: 14px;
     margin-bottom: 10px; border-left: 4px solid var(--lavender);
@@ -1520,6 +1520,7 @@
 
     /* === Courses : colonne unique === */
     .grocery-layout { grid-template-columns: 1fr !important; }
+    .grocery-layout > div { min-width: 0; width: 100%; box-sizing: border-box; }
 
     /* === Biblio : sidebar + liste → colonne unique === */
     #biblioGrid { grid-template-columns: 1fr !important; }
@@ -1751,7 +1752,7 @@
           <span id="weatherTemp" style="font-size:22px;font-weight:700;color:var(--ink);">—</span>
         </div>
         <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;display:flex;flex-wrap:wrap;gap:2px 12px;">
-          <span id="weatherDesc" style="white-space:nowrap;text-transform:capitalize;">Chargement…</span>
+          <span id="weatherDesc" style="white-space:normal;text-transform:capitalize;word-break:break-word;">Chargement…</span>
           <span id="weatherFeels" style="white-space:nowrap;">Ressenti : —</span>
           <span id="weatherHumidity" style="white-space:nowrap;">Humidité : —</span>
           <span id="weatherWind" style="white-space:nowrap;">Vent : —</span>
@@ -3084,7 +3085,7 @@
     </div>
 
     <!-- Sub: Planning de repas -->
-    <div class="sub-view" data-sub="alimentation">
+    <div class="sub-view" data-sub="alimentation" style="width:100%;max-width:100%;overflow-x:hidden;box-sizing:border-box;">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
         <button class="food-tab active" data-food="meals" onclick="switchFoodTab('meals')">🍽️ Repas</button>
         <button class="food-tab" data-food="groceries" onclick="switchFoodTab('groceries')">🛒 Courses</button>
@@ -5029,7 +5030,7 @@ async function fetchWeather(force) {
     const denied = geoPerm === "denied" || (e && e.code === 1); // permission bloquée
     if (denied) {
       document.getElementById("weatherCity").textContent = "📍 Localisation bloquée par le navigateur";
-      document.getElementById("weatherDesc").textContent = "Pour la réactiver : 🔒 à gauche de l'adresse → Localisation → Autoriser, puis recharge";
+      document.getElementById("weatherDesc").textContent = "Localisation bloquée — autorise-la dans les paramètres du navigateur";
     } else {
       document.getElementById("weatherCity").textContent = "📍 Autoriser la localisation ou saisir une ville →";
       document.getElementById("weatherDesc").textContent = "Localisation indisponible";
