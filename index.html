@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v697</title>
+<title>Mon Tableau de Vie 🌿 · v698</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1523,7 +1523,12 @@
 
     /* === Biblio : sidebar + liste → colonne unique === */
     #biblioGrid { grid-template-columns: 1fr !important; }
-    #biblioGrid #biblioResizeLine { display: none !important; }
+    #biblioGrid #biblioResizeHandle { display: none !important; }
+    #biblioGrid > div:last-child { margin-top: 14px !important; }
+
+    /* === Courses : éviter overflow sur les cartes internes === */
+    .food-view { overflow-x: hidden; }
+    .food-view .card { max-width: 100%; box-sizing: border-box; }
 
     /* Financier mobile : abonnements compacts */
     #subsCard h2 { font-size: 14px; }
@@ -2204,7 +2209,7 @@
           <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">🔧 Autre</span>
           <input type="number" id="timeAutre" step="0.25" min="0" placeholder="0" style="width:64px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#b8900a;background:white;text-align:center;" onchange="saveTimeWork()" />
           <span style="font-size:12px;color:var(--ink-soft);">h</span>
-          <input type="text" id="timeAutreNote" placeholder="Préciser (ex : soutenance blanche, jury…)" maxlength="120" style="flex:1;padding:4px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" oninput="saveTimeNote()" />
+          <input type="text" id="timeAutreNote" placeholder="Préciser…" maxlength="120" style="flex:1;padding:4px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" oninput="saveTimeNote()" />
         </div>
         <div style="padding:8px 12px;background:linear-gradient(135deg,var(--butter-soft),white);border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:13px;color:var(--ink-soft);">Total du jour</span>
@@ -7628,55 +7633,102 @@ function renderActivityRetro() {
     return new Date(y, m-1, 1).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
   };
 
-  // Tableau : lignes = activités, colonnes = mois
+  // Tableau : lignes = activités, colonnes = mois (desktop)
+  //           lignes = mois, colonnes = activités (mobile < 600px)
   const maxCounts = acts.map(a => Math.max(1, ...monthData.map(md => md.counts[a.id])));
+  const isMobile = window.innerWidth < 600;
 
-  const colW = Math.max(44, Math.floor(Math.min(window.innerWidth - 80, 900) / (months.length + 1)));
+  let html;
 
-  let html = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-  <table style="border-collapse:collapse;min-width:100%;font-size:12px;">
-    <thead>
-      <tr>
-        <th style="text-align:left;padding:4px 10px 8px 0;color:var(--ink-soft);font-weight:600;white-space:nowrap;min-width:120px;">Activité</th>
-        ${months.map(ym => `<th style="text-align:center;padding:4px 4px 8px;color:var(--ink-softer);font-weight:500;white-space:nowrap;min-width:${colW}px;">${monthLabel(ym)}</th>`).join('')}
-      </tr>
-    </thead>
-    <tbody>`;
+  if (isMobile) {
+    // Version mobile : lignes = mois, colonnes = activités (pas de scroll horizontal)
+    const actColW = Math.floor((window.innerWidth - 32 - 56) / acts.length);
+    html = `<div style="overflow-x:hidden;">
+    <table style="border-collapse:collapse;width:100%;font-size:11px;">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:4px 6px 8px 0;color:var(--ink-soft);font-weight:600;min-width:52px;">Mois</th>
+          ${acts.map((a, ai) => `<th style="text-align:center;padding:4px 2px 8px;color:${PASTEL_PALETTE[ai % PASTEL_PALETTE.length]};font-weight:700;white-space:nowrap;">${a.emoji || '✨'}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>`;
 
-  acts.forEach((a, ai) => {
-    const color = PASTEL_PALETTE[ai % PASTEL_PALETTE.length];
-    const total = monthData.reduce((s, md) => s + md.counts[a.id], 0);
-    const avgPerMonth = (total / months.length).toFixed(1).replace('.', ',');
-    const firstDk = allDks[0];
-    const nbDays = Math.max(1, Math.round((new Date() - new Date(firstDk)) / 86400000) + 1);
-    const nbWeeks = nbDays / 7;
-    const avgPerWeek = (total / nbWeeks).toFixed(1).replace('.', ',');
-    html += `<tr>
-      <td style="padding:6px 10px 6px 0;white-space:nowrap;">
-        <div style="font-weight:600;color:var(--ink);margin-bottom:3px;">${a.emoji || '✨'} ${escapeHtml(a.name)}</div>
-        <div style="font-size:11px;color:var(--ink-softer);">Total : ${total} · <span style="color:var(--ink-soft);">${avgPerMonth}/mois · ${avgPerWeek}/sem.</span></div>
-      </td>
-      ${monthData.map((md, mi) => {
-        const n = md.counts[a.id];
-        const intensity = n === 0 ? 0 : Math.max(0.15, n / maxCounts[ai]);
-        const bg = n === 0 ? 'var(--bg-1)' : `${color}${Math.round(intensity * 255).toString(16).padStart(2,'0')}`;
-        const nbWeeksInMonth = md.lastDay / 7;
-        const perWeek = n === 0 ? '—' : (n / nbWeeksInMonth).toFixed(1).replace('.', ',');
-        const dark = intensity > 0.55;
-        const textMain = n === 0 ? 'var(--ink-softer)' : (dark ? '#fff' : 'var(--ink)');
-        const textSub = n === 0 ? 'var(--ink-softer)' : (dark ? 'rgba(255,255,255,0.8)' : 'var(--ink-softer)');
-        return `<td style="text-align:center;padding:4px;">
-          <div style="background:${bg};border-radius:8px;padding:5px 2px;min-width:${colW-8}px;">
-            <div style="font-size:13px;font-weight:700;color:${textMain};">${n}</div>
-            <div style="font-size:9px;color:${textSub};">séance${n!==1?'s':''}</div>
-            <div style="font-size:9px;color:${textSub};margin-top:1px;">${perWeek}/sem.</div>
-          </div>
-        </td>`;
+    monthData.forEach(md => {
+      html += `<tr>
+        <td style="padding:4px 6px 4px 0;white-space:nowrap;color:var(--ink-soft);font-size:11px;">${monthLabel(md.ym)}</td>
+        ${acts.map((a, ai) => {
+          const n = md.counts[a.id];
+          const color = PASTEL_PALETTE[ai % PASTEL_PALETTE.length];
+          const intensity = n === 0 ? 0 : Math.max(0.15, n / maxCounts[ai]);
+          const bg = n === 0 ? 'var(--bg-1)' : `${color}${Math.round(intensity * 255).toString(16).padStart(2,'0')}`;
+          const dark = intensity > 0.55;
+          const textColor = n === 0 ? 'var(--ink-softer)' : (dark ? '#fff' : 'var(--ink)');
+          return `<td style="text-align:center;padding:3px 2px;">
+            <div style="background:${bg};border-radius:6px;padding:4px 2px;min-width:28px;">
+              <div style="font-size:12px;font-weight:700;color:${textColor};">${n || '·'}</div>
+            </div>
+          </td>`;
+        }).join('')}
+      </tr>`;
+    });
+
+    // Ligne totaux
+    html += `<tr style="border-top:1px solid var(--line);">
+      <td style="padding:6px 6px 4px 0;font-size:11px;font-weight:700;color:var(--ink-soft);">Total</td>
+      ${acts.map(a => {
+        const total = monthData.reduce((s, md) => s + md.counts[a.id], 0);
+        return `<td style="text-align:center;padding:6px 2px 4px;font-size:12px;font-weight:700;color:var(--ink);">${total}</td>`;
       }).join('')}
     </tr>`;
-  });
+    html += `</tbody></table></div>`;
 
-  html += `</tbody></table></div>`;
+  } else {
+    // Version desktop : lignes = activités, colonnes = mois
+    const colW = Math.max(44, Math.floor(Math.min(window.innerWidth - 80, 900) / (months.length + 1)));
+    html = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+    <table style="border-collapse:collapse;min-width:100%;font-size:12px;">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:4px 10px 8px 0;color:var(--ink-soft);font-weight:600;white-space:nowrap;min-width:120px;">Activité</th>
+          ${months.map(ym => `<th style="text-align:center;padding:4px 4px 8px;color:var(--ink-softer);font-weight:500;white-space:nowrap;min-width:${colW}px;">${monthLabel(ym)}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>`;
+
+    acts.forEach((a, ai) => {
+      const color = PASTEL_PALETTE[ai % PASTEL_PALETTE.length];
+      const total = monthData.reduce((s, md) => s + md.counts[a.id], 0);
+      const avgPerMonth = (total / months.length).toFixed(1).replace('.', ',');
+      const firstDk = allDks[0];
+      const nbDays = Math.max(1, Math.round((new Date() - new Date(firstDk)) / 86400000) + 1);
+      const nbWeeks = nbDays / 7;
+      const avgPerWeek = (total / nbWeeks).toFixed(1).replace('.', ',');
+      html += `<tr>
+        <td style="padding:6px 10px 6px 0;white-space:nowrap;">
+          <div style="font-weight:600;color:var(--ink);margin-bottom:3px;">${a.emoji || '✨'} ${escapeHtml(a.name)}</div>
+          <div style="font-size:11px;color:var(--ink-softer);">Total : ${total} · <span style="color:var(--ink-soft);">${avgPerMonth}/mois · ${avgPerWeek}/sem.</span></div>
+        </td>
+        ${monthData.map(md => {
+          const n = md.counts[a.id];
+          const intensity = n === 0 ? 0 : Math.max(0.15, n / maxCounts[ai]);
+          const bg = n === 0 ? 'var(--bg-1)' : `${color}${Math.round(intensity * 255).toString(16).padStart(2,'0')}`;
+          const nbWeeksInMonth = md.lastDay / 7;
+          const perWeek = n === 0 ? '—' : (n / nbWeeksInMonth).toFixed(1).replace('.', ',');
+          const dark = intensity > 0.55;
+          const textMain = n === 0 ? 'var(--ink-softer)' : (dark ? '#fff' : 'var(--ink)');
+          const textSub = n === 0 ? 'var(--ink-softer)' : (dark ? 'rgba(255,255,255,0.8)' : 'var(--ink-softer)');
+          return `<td style="text-align:center;padding:4px;">
+            <div style="background:${bg};border-radius:8px;padding:5px 2px;min-width:${colW-8}px;">
+              <div style="font-size:13px;font-weight:700;color:${textMain};">${n}</div>
+              <div style="font-size:9px;color:${textSub};">séance${n!==1?'s':''}</div>
+              <div style="font-size:9px;color:${textSub};margin-top:1px;">${perWeek}/sem.</div>
+            </div>
+          </td>`;
+        }).join('')}
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
   el.innerHTML = html;
 }
 
@@ -19191,15 +19243,13 @@ function _startJournalMic() {
   _micRecognition.onresult = (e) => {
     const ta = document.getElementById('journalToday');
     if (!ta) return;
-    // Reconstruire depuis zéro à chaque événement pour éviter les doublons
-    let finalBuf = '';
+    // Traiter uniquement les nouveaux résultats depuis resultIndex
     let interimBuf = '';
-    for (let i = 0; i < e.results.length; i++) {
+    for (let i = e.resultIndex; i < e.results.length; i++) {
       const t = e.results[i][0].transcript;
-      if (e.results[i].isFinal) finalBuf += t + ' ';
+      if (e.results[i].isFinal) _micFinal += t + ' ';
       else interimBuf += t;
     }
-    _micFinal = finalBuf;
     ta.value = _micBase + _micFinal + interimBuf;
     renderJournalMoodTags(ta.value);
   };
@@ -19209,7 +19259,17 @@ function _startJournalMic() {
     _stopJournalMic();
   };
 
-  _micRecognition.onend = () => { _stopJournalMic(); };
+  _micRecognition.onend = () => {
+    if (_micActive) {
+      // Le navigateur a coupé la session (silence/timeout) — redémarrer automatiquement
+      _micBase = _micBase + _micFinal;
+      _micFinal = '';
+      _micRecognition = null;
+      setTimeout(() => { if (_micActive) _startJournalMic(); }, 250);
+    } else {
+      _stopJournalMic();
+    }
+  };
 
   _micRecognition.start();
 }
