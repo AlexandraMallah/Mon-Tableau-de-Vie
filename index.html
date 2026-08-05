@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v700</title>
+<title>Mon Tableau de Vie 🌿 · v701</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -19229,7 +19229,7 @@ function _startJournalMic() {
 
   _micRecognition = new SR();
   _micRecognition.lang = 'fr-FR';
-  _micRecognition.continuous = true;
+  _micRecognition.continuous = false;  // false = une utterance à la fois, pas d'accumulation de results
   _micRecognition.interimResults = true;
 
   _micRecognition.onstart = () => {
@@ -19244,9 +19244,11 @@ function _startJournalMic() {
   _micRecognition.onresult = (e) => {
     const ta = document.getElementById('journalToday');
     if (!ta) return;
-    // Traiter uniquement les nouveaux résultats depuis resultIndex
+    // Reconstruire _micFinal depuis zéro à chaque event (REPLACE, pas +=)
+    // Avec continuous:false, e.results ne contient que les résultats de cette utterance
+    _micFinal = '';
     let interimBuf = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
+    for (let i = 0; i < e.results.length; i++) {
       const t = e.results[i][0].transcript;
       if (e.results[i].isFinal) _micFinal += t + ' ';
       else interimBuf += t;
@@ -19256,21 +19258,19 @@ function _startJournalMic() {
   };
 
   _micRecognition.onerror = (e) => {
+    if (e.error === 'no-speech') return; // silence normal, on redémarre dans onend
     if (e.error !== 'aborted') console.warn('Mic error:', e.error);
-    _stopJournalMic();
   };
 
   _micRecognition.onend = () => {
     if (_micActive) {
-      // Le navigateur a coupé (silence/timeout) — nettoyer l'intérimaire AVANT de redémarrer
-      // Sans ça, le texte intérimaire reste dans ta.value, est capturé comme _micBase,
-      // puis ré-ajouté comme résultat final → doublon
+      // Utterance terminée : valider le texte final, nettoyer, relancer pour la suite
+      _micBase = _micBase + _micFinal;
+      _micFinal = '';
       const ta2 = document.getElementById('journalToday');
-      const cleanText = _micBase + _micFinal;
-      if (ta2) ta2.value = cleanText; // retire l'intérimaire
+      if (ta2) ta2.value = _micBase; // enlève l'intérimaire
       _micRecognition = null;
-      setTimeout(() => { if (_micActive) _startJournalMic(); }, 250);
-      // _startJournalMic relit ta.value (= cleanText) comme nouveau _micBase et remet _micFinal = ''
+      setTimeout(() => { if (_micActive) _startJournalMic(); }, 150);
     } else {
       _stopJournalMic();
     }
