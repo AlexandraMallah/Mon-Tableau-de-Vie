@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v693</title>
+<title>Mon Tableau de Vie 🌿 · v695</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1517,6 +1517,13 @@
     .time-cats-grid { grid-template-columns: repeat(2, 1fr) !important; }
     .time-donut-grid { grid-template-columns: 1fr !important; }
     .time-donut-grid .chart-wrap { height: 200px !important; }
+
+    /* === Courses : colonne unique === */
+    .grocery-layout { grid-template-columns: 1fr !important; }
+
+    /* === Biblio : sidebar + liste → colonne unique === */
+    #biblioGrid { grid-template-columns: 1fr !important; }
+    #biblioGrid #biblioResizeLine { display: none !important; }
 
     /* Financier mobile : abonnements compacts */
     #subsCard h2 { font-size: 14px; }
@@ -4549,6 +4556,7 @@ function migrate(s) {
   s.domestique = s.domestique || { groceries: [], groceryEvents: [], chores: [], plants: [] };
   s.domestique.groceries = s.domestique.groceries || [];
   s.domestique.groceryEvents = s.domestique.groceryEvents || [];
+  s.domestique.purchaseHistory = s.domestique.purchaseHistory || [];
   s.domestique.chores = s.domestique.chores || [];
   s.domestique.plants = s.domestique.plants || [];
   s.domestique.tasks    = s.domestique.tasks    || [];
@@ -17011,10 +17019,17 @@ function toggleGlobalGrocery(nameKey) {
 function renderRecurringItems() {
   const target = document.getElementById("recurringItemsList");
   if (!target) return;
-  // Compte les occurrences par nom d'article (case-insensitive)
-  const allItems = state.domestique.groceries;
+  // Compte dans l'historique d'achats (persistant après suppression d'événements)
   const counts = {};
-  for (const g of allItems) {
+  const history = state.domestique.purchaseHistory || [];
+  for (const h of history) {
+    const key = h.name.toLowerCase().trim();
+    if (!counts[key]) counts[key] = { name: h.name, count: 0 };
+    counts[key].count++;
+  }
+  // Ajoute aussi les articles cochés actuels non encore supprimés
+  for (const g of (state.domestique.groceries || [])) {
+    if (!g.checked) continue;
     const key = g.name.toLowerCase().trim();
     if (!counts[key]) counts[key] = { name: g.name, count: 0 };
     counts[key].count++;
@@ -17061,6 +17076,10 @@ function deleteGroceryEvent(id) {
   const items = state.domestique.groceries.filter(g => g.eventId === id);
   if (!confirm(`Supprimer l'événement « ${ev.name} » et ses ${items.length} article(s) ?`)) return;
   state.domestique.groceryEvents = state.domestique.groceryEvents.filter(e => e.id !== id);
+  // Sauvegarder les articles cochés dans l'historique avant suppression
+  if (!state.domestique.purchaseHistory) state.domestique.purchaseHistory = [];
+  state.domestique.groceries.filter(g => g.eventId === id && g.checked)
+    .forEach(g => state.domestique.purchaseHistory.push({ name: g.name, date: todayKey() }));
   state.domestique.groceries = state.domestique.groceries.filter(g => g.eventId !== id);
   saveState(); renderGroceries();
 }
@@ -17072,7 +17091,13 @@ function addGroceryItem(eventId, name) {
 }
 function toggleGrocery(id) {
   const g = state.domestique.groceries.find(x => x.id === id);
-  if (g) { g.checked = !g.checked; saveState(); renderGroceries(); }
+  if (!g) return;
+  g.checked = !g.checked;
+  if (g.checked) {
+    if (!state.domestique.purchaseHistory) state.domestique.purchaseHistory = [];
+    state.domestique.purchaseHistory.push({ name: g.name, date: todayKey() });
+  }
+  saveState(); renderGroceries();
 }
 function deleteGrocery(id) {
   state.domestique.groceries = state.domestique.groceries.filter(g => g.id !== id);
