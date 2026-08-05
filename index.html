@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v699</title>
+<title>Mon Tableau de Vie 🌿 · v700</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -19262,11 +19262,15 @@ function _startJournalMic() {
 
   _micRecognition.onend = () => {
     if (_micActive) {
-      // Le navigateur a coupé la session (silence/timeout) — redémarrer automatiquement
-      _micBase = _micBase + _micFinal;
-      _micFinal = '';
+      // Le navigateur a coupé (silence/timeout) — nettoyer l'intérimaire AVANT de redémarrer
+      // Sans ça, le texte intérimaire reste dans ta.value, est capturé comme _micBase,
+      // puis ré-ajouté comme résultat final → doublon
+      const ta2 = document.getElementById('journalToday');
+      const cleanText = _micBase + _micFinal;
+      if (ta2) ta2.value = cleanText; // retire l'intérimaire
       _micRecognition = null;
       setTimeout(() => { if (_micActive) _startJournalMic(); }, 250);
+      // _startJournalMic relit ta.value (= cleanText) comme nouveau _micBase et remet _micFinal = ''
     } else {
       _stopJournalMic();
     }
