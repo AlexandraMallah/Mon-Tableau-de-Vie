@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v689</title>
+<title>Mon Tableau de Vie 🌿 · v691</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3303,8 +3303,14 @@
   <section class="view" data-view="journal">
     <div class="grid-two">
       <div class="card">
-        <h2>✍️ Note libre</h2>
-        <p style="color:var(--ink-soft);font-size:13px;margin:-8px 0 12px;">Pensées, réflexions du moment. Sauvegarde automatique.</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0;">
+          <h2 style="margin:0;">✍️ Note libre</h2>
+          <button id="journalMicBtn" onclick="toggleJournalMic()" title="Dicter" style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:20px;border:1.5px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;color:var(--ink-soft);transition:all 0.2s;">
+            <span id="journalMicIcon">🎙️</span>
+            <span id="journalMicLabel">Dicter</span>
+          </button>
+        </div>
+        <p style="color:var(--ink-soft);font-size:13px;margin:6px 0 12px;">Pensées, réflexions du moment. Sauvegarde automatique.</p>
         <textarea class="journal-input" id="journalToday" placeholder="Aujourd'hui, je…"></textarea>
         <div id="journalMoodTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:0;"></div>
       </div>
@@ -19112,7 +19118,94 @@ function noteCmd(cmd) {
   else                       document.execCommand(cmd);
   scheduleNoteSave();
 }
+
+/* ========= DICTÉE JOURNAL ========= */
+let _micRecognition = null;
+let _micActive = false;
+
+function toggleJournalMic() {
+  if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+    alert("Ton navigateur ne supporte pas la dictée vocale. Essaie Chrome ou Safari.");
+    return;
+  }
+  if (_micActive) {
+    _stopJournalMic();
+  } else {
+    _startJournalMic();
+  }
+}
+
+function _startJournalMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  _micRecognition = new SR();
+  _micRecognition.lang = 'fr-FR';
+  _micRecognition.continuous = true;
+  _micRecognition.interimResults = true;
+
+  let _interim = '';
+
+  _micRecognition.onstart = () => {
+    _micActive = true;
+    const btn = document.getElementById('journalMicBtn');
+    const lbl = document.getElementById('journalMicLabel');
+    if (btn) { btn.style.borderColor = '#e05'; btn.style.color = '#e05'; btn.style.background = '#fff0f3'; }
+    if (lbl) lbl.textContent = 'Stop';
+    _micPulse(true);
+  };
+
+  _micRecognition.onresult = (e) => {
+    const ta = document.getElementById('journalToday');
+    if (!ta) return;
+    let interim = '';
+    let final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t + ' ';
+      else interim += t;
+    }
+    if (final) {
+      ta.value += final;
+      _interim = '';
+      // Déclencher l'analyse émotionnelle et la sauvegarde
+      renderJournalMoodTags(ta.value);
+      getToday().journal = ta.value;
+      saveState();
+    }
+    _interim = interim;
+  };
+
+  _micRecognition.onerror = (e) => {
+    if (e.error !== 'aborted') console.warn('Mic error:', e.error);
+    _stopJournalMic();
+  };
+
+  _micRecognition.onend = () => { _stopJournalMic(); };
+
+  _micRecognition.start();
+}
+
+function _stopJournalMic() {
+  _micActive = false;
+  if (_micRecognition) { try { _micRecognition.stop(); } catch(e){} _micRecognition = null; }
+  const btn = document.getElementById('journalMicBtn');
+  const lbl = document.getElementById('journalMicLabel');
+  if (btn) { btn.style.borderColor = 'var(--line)'; btn.style.color = 'var(--ink-soft)'; btn.style.background = 'white'; }
+  if (lbl) lbl.textContent = 'Dicter';
+  _micPulse(false);
+}
+
+function _micPulse(on) {
+  const icon = document.getElementById('journalMicIcon');
+  if (!icon) return;
+  icon.style.animation = on ? 'micPulse 1s ease-in-out infinite' : '';
+}
 </script>
+<style>
+@keyframes micPulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:0.4; transform:scale(1.2); }
+}
+</style>
 
 <!-- Modale détail hormone -->
 <div id="hormoneDetailModal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closeHormoneDetail()">
