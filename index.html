@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v695</title>
+<title>Mon Tableau de Vie 🌿 · v697</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -19165,14 +19165,19 @@ function toggleJournalMic() {
   }
 }
 
+let _micBase = '';   // texte dans la textarea au moment où le mic démarre
+let _micFinal = '';  // transcription finale accumulée (sans doublons)
+
 function _startJournalMic() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const ta = document.getElementById('journalToday');
+  _micBase = ta ? ta.value : '';
+  _micFinal = '';
+
   _micRecognition = new SR();
   _micRecognition.lang = 'fr-FR';
   _micRecognition.continuous = true;
   _micRecognition.interimResults = true;
-
-  let _interim = '';
 
   _micRecognition.onstart = () => {
     _micActive = true;
@@ -19186,22 +19191,17 @@ function _startJournalMic() {
   _micRecognition.onresult = (e) => {
     const ta = document.getElementById('journalToday');
     if (!ta) return;
-    let interim = '';
-    let final = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
+    // Reconstruire depuis zéro à chaque événement pour éviter les doublons
+    let finalBuf = '';
+    let interimBuf = '';
+    for (let i = 0; i < e.results.length; i++) {
       const t = e.results[i][0].transcript;
-      if (e.results[i].isFinal) final += t + ' ';
-      else interim += t;
+      if (e.results[i].isFinal) finalBuf += t + ' ';
+      else interimBuf += t;
     }
-    if (final) {
-      ta.value += final;
-      _interim = '';
-      // Déclencher l'analyse émotionnelle et la sauvegarde
-      renderJournalMoodTags(ta.value);
-      getToday().journal = ta.value;
-      saveState();
-    }
-    _interim = interim;
+    _micFinal = finalBuf;
+    ta.value = _micBase + _micFinal + interimBuf;
+    renderJournalMoodTags(ta.value);
   };
 
   _micRecognition.onerror = (e) => {
@@ -19217,6 +19217,14 @@ function _startJournalMic() {
 function _stopJournalMic() {
   _micActive = false;
   if (_micRecognition) { try { _micRecognition.stop(); } catch(e){} _micRecognition = null; }
+  // Sauvegarder le texte final (base + transcription, sans les intérimaires)
+  const ta = document.getElementById('journalToday');
+  if (ta) {
+    ta.value = _micBase + _micFinal;
+    getToday().journal = ta.value;
+    saveState();
+    renderJournalMoodTags(ta.value);
+  }
   const btn = document.getElementById('journalMicBtn');
   const lbl = document.getElementById('journalMicLabel');
   if (btn) { btn.style.borderColor = 'var(--line)'; btn.style.color = 'var(--ink-soft)'; btn.style.background = 'white'; }
