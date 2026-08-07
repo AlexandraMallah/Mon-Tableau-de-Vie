@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v718</title>
+<title>Mon Tableau de Vie 🌿 · v719</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9603,64 +9603,70 @@ function renderEnergyBalance() {
   if (!el) return;
   const now = new Date();
   const y = now.getFullYear(), m = now.getMonth();
-  let burned = 0, consumed = 0, daysWithData = 0;
+  let totalBurned = 0, totalConsumed = 0, daysWithBoth = 0, daysOnlyBurned = 0, daysOnlyConsumed = 0;
   for (let d = 1; d <= now.getDate(); d++) {
     const dk = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const day = state.history[dk];
     if (!day) continue;
     const b = Number(day.habits?.['h-cal-dep']) || 0;
     const c = (day.foodLog || []).reduce((s, e) => s + (e.calories || 0), 0);
-    burned += b; consumed += c;
-    if (b > 0 || c > 0) daysWithData++;
+    if (b > 0 && c > 0) { totalBurned += b; totalConsumed += c; daysWithBoth++; }
+    else if (b > 0) daysOnlyBurned++;
+    else if (c > 0) daysOnlyConsumed++;
   }
-  if (!daysWithData) {
-    el.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;">Remplis les calories dépensées (habitudes) et les repas (Alimentation) pour voir ta balance.</p>`;
+  if (!daysWithBoth) {
+    el.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;">
+      Pour voir ta balance, renseigne <strong>les deux</strong> le même jour : calories dépensées dans tes habitudes + repas dans l'alimentation.
+      ${daysOnlyBurned > 0 ? `<br><span style="color:var(--ink-softer);font-size:12px;">${daysOnlyBurned} jour${daysOnlyBurned>1?'s':''} avec calories dépensées seulement.</span>` : ''}
+      ${daysOnlyConsumed > 0 ? `<br><span style="color:var(--ink-softer);font-size:12px;">${daysOnlyConsumed} jour${daysOnlyConsumed>1?'s':''} avec repas seulement.</span>` : ''}
+    </p>`;
     return;
   }
-  const diff = burned - consumed;
-  const isDeficit = diff > 0, isSurplus = diff < 0, isBalanced = Math.abs(diff) < 200;
+  const avgBurned = Math.round(totalBurned / daysWithBoth);
+  const avgConsumed = Math.round(totalConsumed / daysWithBoth);
+  const diff = avgBurned - avgConsumed;
+  const isBalanced = Math.abs(diff) < 150;
+  const isDeficit = diff > 0;
   const statusColor = isBalanced ? '#4d9c7e' : isDeficit ? '#4d9c7e' : '#c08a4d';
   const statusLabel = isBalanced ? '⚖️ Équilibre' : isDeficit ? '📉 Déficit calorique' : '📈 Surplus calorique';
   const statusDesc = isBalanced
-    ? 'Tes apports et dépenses sont équilibrés ce mois-ci.'
+    ? 'Tes apports et dépenses sont équilibrés en moyenne.'
     : isDeficit
-    ? `Tu brûles plus que tu n'ingères — ${Math.abs(diff).toLocaleString('fr-FR')} kcal de déficit.`
-    : `Tu ingères plus que tu ne brûles — ${Math.abs(diff).toLocaleString('fr-FR')} kcal de surplus.`;
-  const maxVal = Math.max(burned, consumed, 1);
-  const burnedPct = Math.round(burned / maxVal * 100);
-  const consumedPct = Math.round(consumed / maxVal * 100);
+    ? `Tu brûles plus que tu n'ingères — ${Math.abs(diff).toLocaleString('fr-FR')} kcal/j de déficit en moyenne.`
+    : `Tu ingères plus que tu ne brûles — ${Math.abs(diff).toLocaleString('fr-FR')} kcal/j de surplus en moyenne.`;
+  const maxVal = Math.max(avgBurned, avgConsumed, 1);
   el.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
       <div style="background:var(--mint-soft);border-radius:12px;padding:12px 14px;">
-        <div style="font-size:11px;color:var(--ink-softer);margin-bottom:4px;">🏃 Dépensées</div>
-        <div style="font-size:20px;font-weight:600;color:#3a7a5e;">${burned.toLocaleString('fr-FR')}</div>
-        <div style="font-size:11px;color:var(--ink-softer);">kcal ce mois</div>
+        <div style="font-size:11px;color:var(--ink-softer);margin-bottom:4px;">🏃 Dépensées / jour</div>
+        <div style="font-size:20px;font-weight:600;color:#3a7a5e;">${avgBurned.toLocaleString('fr-FR')}</div>
+        <div style="font-size:11px;color:var(--ink-softer);">kcal en moyenne</div>
       </div>
       <div style="background:var(--peach-soft);border-radius:12px;padding:12px 14px;">
-        <div style="font-size:11px;color:var(--ink-softer);margin-bottom:4px;">🍽️ Ingérées</div>
-        <div style="font-size:20px;font-weight:600;color:#a0622a;">${consumed.toLocaleString('fr-FR')}</div>
-        <div style="font-size:11px;color:var(--ink-softer);">kcal ce mois</div>
+        <div style="font-size:11px;color:var(--ink-softer);margin-bottom:4px;">🍽️ Ingérées / jour</div>
+        <div style="font-size:20px;font-weight:600;color:#a0622a;">${avgConsumed.toLocaleString('fr-FR')}</div>
+        <div style="font-size:11px;color:var(--ink-softer);">kcal en moyenne</div>
       </div>
     </div>
-    <div style="margin-bottom:10px;">
+    <div style="margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-softer);margin-bottom:4px;">
-        <span>🏃 Dépensées</span><span>${burnedPct}%</span>
+        <span>🏃 Dépensées</span><span>${avgBurned.toLocaleString('fr-FR')} kcal</span>
       </div>
       <div style="background:white;height:8px;border-radius:999px;overflow:hidden;margin-bottom:6px;">
-        <div style="width:${burnedPct}%;height:100%;background:#4d9c7e;transition:width .4s;"></div>
+        <div style="width:${Math.round(avgBurned/maxVal*100)}%;height:100%;background:#4d9c7e;transition:width .4s;"></div>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-softer);margin-bottom:4px;">
-        <span>🍽️ Ingérées</span><span>${consumedPct}%</span>
+        <span>🍽️ Ingérées</span><span>${avgConsumed.toLocaleString('fr-FR')} kcal</span>
       </div>
       <div style="background:white;height:8px;border-radius:999px;overflow:hidden;">
-        <div style="width:${consumedPct}%;height:100%;background:#c08a4d;transition:width .4s;"></div>
+        <div style="width:${Math.round(avgConsumed/maxVal*100)}%;height:100%;background:#c08a4d;transition:width .4s;"></div>
       </div>
     </div>
     <div style="background:var(--bg-2);border-radius:12px;padding:12px 14px;border-left:4px solid ${statusColor};">
       <div style="font-size:14px;font-weight:600;color:${statusColor};margin-bottom:4px;">${statusLabel}</div>
       <div style="font-size:12px;color:var(--ink-soft);">${statusDesc}</div>
     </div>
-    <p style="font-size:11px;color:var(--ink-softer);margin-top:8px;">Basé sur ${daysWithData} jour${daysWithData>1?'s':''} renseignés ce mois-ci.</p>`;
+    <p style="font-size:11px;color:var(--ink-softer);margin-top:8px;">Calculé sur ${daysWithBoth} jour${daysWithBoth>1?'s':''} où les deux valeurs sont renseignées.</p>`;
 }
 
 function renderCalorieChart() {
