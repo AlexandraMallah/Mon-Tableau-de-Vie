@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v720</title>
+<title>Mon Tableau de Vie 🌿 · v721</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -19016,6 +19016,8 @@ function _fbUpdateUI(user) {
 function _stateForCloud() {
   const s = JSON.parse(JSON.stringify(state));
   delete s.calEvents;
+  // Biblio exclue du cloud (trop volumineuse — 580 Ko) : reste en localStorage uniquement
+  if (s.work) { delete s.work.biblio; delete s.work.biblioProjects; }
   return s;
 }
 // Construit le contenu à écrire dans Firestore : compressé (stateZ) si LZString dispo, sinon brut (state).
@@ -19058,12 +19060,20 @@ function _mergeFromCloud(remote) {
       if (k === 'habits') {
         safe.habits = { ...(cloudToday.habits || {}), ...v }; // union des habitudes
       } else if (k === 'foodLog') {
-        // Fusionner les repas des deux appareils par id unique — le cloud peut avoir des repas plus récents
+        // Fusionner les repas des deux appareils par id unique
         const cloudFood = cloudToday.foodLog || [];
         const localFood = v || [];
         const mergedFood = [...cloudFood];
         localFood.forEach(lf => { if (!mergedFood.find(cf => cf.id === lf.id)) mergedFood.push(lf); });
         safe.foodLog = mergedFood;
+      } else if (k === 'emotionLog') {
+        // Fusionner les entrées des deux appareils par heure — union sans doublon
+        const cloudLog = cloudToday.emotionLog || [];
+        const localLog = v || [];
+        const mergedLog = [...cloudLog];
+        localLog.forEach(le => { if (!mergedLog.find(ce => ce.time === le.time)) mergedLog.push(le); });
+        mergedLog.sort((a, b) => a.time.localeCompare(b.time));
+        safe.emotionLog = mergedLog;
       } else if (v !== null && v !== undefined && v !== '' &&
                  !(typeof v === 'number' && v === 0) &&
                  !(Array.isArray(v) && v.length === 0)) {
