@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v703</title>
+<title>Mon Tableau de Vie 🌿 · v704</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1841,6 +1841,7 @@
                 <button data-v="restless">😫</button>
                 <button data-v="fragmented">👁️</button>
                 <button data-v="insomnia">😵</button>
+                <button data-v="nightmare">👹</button>
               </div>
               <div class="sleepquality-label" id="sleepQualityLabel"></div>
             </div>
@@ -5135,7 +5136,7 @@ function renderRings() {
   const sleepPct = today.sleep != null
     ? (today.sleep < 7 ? today.sleep / 7 * 0.85 : today.sleep <= 9 ? 1 : 0.9)
     : 0;
-  const sqMap = { peaceful: 1.0, restless: 0.5, fragmented: 0.15, insomnia: 0.0 };
+  const sqMap = { peaceful: 1.0, restless: 0.5, fragmented: 0.15, insomnia: 0.0, nightmare: 0.1 };
   const _sqArr2 = _sqArray(today.sleepQuality);
   const sqScore = _sqArr2.length ? Math.min(..._sqArr2.map(v => sqMap[v] ?? 0.5)) : null;
   let energyPct, energySub, energyVal;
@@ -5177,7 +5178,7 @@ function labelFor(kind, v) {
 }
 function sleepLabel(h) { return h < 7 ? "Insuffisant" : h <= 9 ? "Correct" : "Bon"; }
 function sleepQualityLabel(q) {
-  const map = { peaceful: "Paisible", restless: "Agité", fragmented: "Beaucoup de réveils", insomnia: "Insomnie" };
+  const map = { peaceful: "Paisible", restless: "Agité", fragmented: "Beaucoup de réveils", insomnia: "Insomnie", nightmare: "Cauchemar" };
   if (Array.isArray(q)) return q.map(v => map[v] || v).join(" · ") || "";
   return map[q] || "";
 }
@@ -12312,18 +12313,19 @@ function computeMetric(m) {
     return { score, value: thirsty === 0 ? "arrosées ✓" : thirsty + " à soif", label: m.label };
   }
   if (m.type === "wellbeing-quality") {
-    const qMap = { peaceful: 1.0, restless: 0.5, fragmented: 0.15, insomnia: 0.0 };
+    const qMap = { peaceful: 1.0, restless: 0.5, fragmented: 0.15, insomnia: 0.0, nightmare: 0.1 };
     const days = _last7Days();
     const vals = days.map(d => qMap[state.history[todayKey(d)]?.sleepQuality] ?? null).filter(v => v !== null);
     if (!vals.length) return { score: 0, value: "—", label: m.label };
     const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
-    const cnt = { peaceful: 0, restless: 0, fragmented: 0, insomnia: 0 };
+    const cnt = { peaceful: 0, restless: 0, fragmented: 0, insomnia: 0, nightmare: 0 };
     days.forEach(d => { const q = state.history[todayKey(d)]?.sleepQuality; if (q) cnt[q]++; });
     const parts = [];
     if (cnt.peaceful)   parts.push(`${cnt.peaceful}× 😴`);
     if (cnt.restless)   parts.push(`${cnt.restless}× 😫`);
     if (cnt.fragmented) parts.push(`${cnt.fragmented}× 👁️`);
     if (cnt.insomnia)   parts.push(`${cnt.insomnia}× 😵`);
+    if (cnt.nightmare)  parts.push(`${cnt.nightmare}× 👹`);
     return { score: avg, value: parts.join(" "), label: m.label };
   }
   // Toutes les activités physiques enregistrées (sans filtre par nom)
@@ -12374,7 +12376,7 @@ function computeMetricDetails(m) {
   } else if (m.type === "wellbeing-avg") {
     for (const d of days) { const v = state.history[todayKey(d)]?.[m.field]; if (v != null) lines.push(`${_fmtDayFr(d)} — ${v}/5`); }
   } else if (m.type === "wellbeing-quality") {
-    const lbl = { peaceful: "😴 paisible", restless: "😫 agité", fragmented: "👁️ fragmenté", insomnia: "😵 insomnie" };
+    const lbl = { peaceful: "😴 paisible", restless: "😫 agité", fragmented: "👁️ fragmenté", insomnia: "😵 insomnie", nightmare: "👹 cauchemar" };
     for (const d of days) { const q = state.history[todayKey(d)]?.sleepQuality; if (q) lines.push(`${_fmtDayFr(d)} — ${lbl[q] || q}`); }
   } else if (m.type === "habit-avg") {
     for (const d of days) { const v = Number(state.history[todayKey(d)]?.habits?.[m.habitId]) || 0; if (v) lines.push(`${_fmtDayFr(d)} — ${v}`); }
