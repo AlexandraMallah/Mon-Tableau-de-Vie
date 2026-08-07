@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v721</title>
+<title>Mon Tableau de Vie 🌿 · v723</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -18973,9 +18973,11 @@ const FB_CONFIG = {
 
 let _fbDb = null, _fbAuth = null, _fbUser = null;
 let _fbSaveTimer = null, _fbUnsub = null;
+let _fbListenTimer = null, _fbLoadTime = 0;
+let _snapCache = { state: null, work: null, biblio: null };
 
-function _fbDocRef() {
-  return _fbDb.collection("users").doc(_fbUser.uid).collection("dashboard").doc("state");
+function _fbDocRef(name = "state") {
+  return _fbDb.collection("users").doc(_fbUser.uid).collection("dashboard").doc(name);
 }
 
 function _fbSetStatus(s) {
@@ -19011,34 +19013,62 @@ function _fbUpdateUI(user) {
   }
 }
 
-// Le calendrier Google (calEvents) est volumineux et se retélécharge depuis Google →
-// on ne l'envoie PAS au cloud (sinon le document dépasse la limite de 1 Mo de Firestore).
-function _stateForCloud() {
-  const s = JSON.parse(JSON.stringify(state));
-  delete s.calEvents;
-  // Biblio exclue du cloud (trop volumineuse — 580 Ko) : reste en localStorage uniquement
-  if (s.work) { delete s.work.biblio; delete s.work.biblioProjects; }
-  return s;
-}
-// Construit le contenu à écrire dans Firestore : compressé (stateZ) si LZString dispo, sinon brut (state).
-function _cloudPayload() {
-  const obj = _stateForCloud();
+// ── Helpers multi-documents ──────────────────────────────────────────────────
+// 3 documents Firestore par utilisateur :
+//   "state"  — données principales (sans work, sans calEvents)
+//   "work"   — state.work sans biblio/biblioProjects
+//   "biblio" — state.work.biblio + state.work.biblioProjects (~580 Ko)
+// Cela permet de tout synchroniser sans dépasser la limite 1 Mo/document.
+
+function _makePayload(obj) {
   try {
     if (window.LZString) {
       const z = LZString.compressToBase64(JSON.stringify(obj));
       if (z) return { stateZ: z };
     }
-  } catch (e) { console.warn("[cloud] compression échouée, envoi brut", e); }
-  return { state: obj }; // repli non compressé
+  } catch(e) { console.warn("[cloud] compression échouée", e); }
+  return { state: obj };
 }
-// Lit le contenu d'un document Firestore : décompresse stateZ si présent, sinon utilise state (ancien format).
+
 function _readCloudState(data) {
   if (!data) return null;
   if (data.stateZ) {
     try { return JSON.parse(LZString.decompressFromBase64(data.stateZ)); }
-    catch (e) { console.warn("[cloud] décompression échouée", e); return null; }
+    catch(e) { console.warn("[cloud] décompression échouée", e); return null; }
   }
   return data.state || null;
+}
+
+function _coreForCloud() {
+  const s = JSON.parse(JSON.stringify(state));
+  delete s.calEvents;
+  delete s.work;
+  return s;
+}
+function _workForCloud() {
+  const w = JSON.parse(JSON.stringify(state.work || {}));
+  delete w.biblio;
+  delete w.biblioProjects;
+  return { work: w, lastModified: state.lastModified };
+}
+function _biblioForCloud() {
+  return {
+    biblio: JSON.parse(JSON.stringify(state.work?.biblio || [])),
+    biblioProjects: JSON.parse(JSON.stringify(state.work?.biblioProjects || [])),
+  };
+}
+
+// Assemble les 3 docs en un seul objet state complet.
+// stateData peut contenir .work (ancien format, doc unique) — on le garde en fallback.
+function _assembleRemote(stateData, workData, biblioData) {
+  if (!stateData) return null;
+  const assembled = { ...stateData };
+  // work : priorité au doc "work" séparé, sinon fallback sur ce qui était dans le doc "state" (ancien format)
+  const workBase = workData?.work || stateData.work || {};
+  assembled.work = { ...workBase };
+  if (biblioData?.biblio)        assembled.work.biblio = biblioData.biblio;
+  if (biblioData?.biblioProjects) assembled.work.biblioProjects = biblioData.biblioProjects;
+  return assembled;
 }
 // Fusionne une version venue du cloud SANS perdre les données locales que le cloud ne stocke pas.
 function _mergeFromCloud(remote) {
@@ -19095,8 +19125,22 @@ function _hasTodayData(t) {
 async function _fbLoad() {
   try {
     _fbSetStatus("syncing");
-    const doc = await _fbDocRef().get();
-    const remote = doc.exists ? _readCloudState(doc.data()) : null;
+    const [stateSnap, workSnap, biblioSnap] = await Promise.all([
+      _fbDocRef("state").get(),
+      _fbDocRef("work").get(),
+      _fbDocRef("biblio").get(),
+    ]);
+
+    // Mettre en cache pour que le listener ne re-applique pas immédiatement
+    if (stateSnap.exists)  _snapCache.state  = stateSnap.data();
+    if (workSnap.exists)   _snapCache.work   = workSnap.data();
+    if (biblioSnap.exists) _snapCache.biblio = biblioSnap.data();
+
+    const stateData  = stateSnap.exists  ? _readCloudState(stateSnap.data())  : null;
+    const workData   = workSnap.exists   ? _readCloudState(workSnap.data())   : null;
+    const biblioData = biblioSnap.exists ? (_readCloudState(biblioSnap.data()) || biblioSnap.data()) : null;
+    const remote = _assembleRemote(stateData, workData, biblioData);
+
     if (remote) {
       const localTs  = state.lastModified || 0;
       const remoteTs = remote.lastModified || 0;
@@ -19104,21 +19148,19 @@ async function _fbLoad() {
         state = _mergeFromCloud(remote);
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
         renderAll();
-        // Re-rendre la biblio et les raccourcis
         try { renderBiblioCollectionTree(); } catch(e) {}
         try { renderBiblioRefs(); } catch(e) {}
         renderShortcutsBar();
         showToast("✨ Données chargées depuis le cloud !");
       } else if (localTs > remoteTs) {
-        // les données locales sont plus récentes → on pousse vers le cloud
         await _fbSaveNow();
       }
     } else {
-      // Première connexion sur cet appareil → envoie les données locales
       await _fbSaveNow();
       showToast("☁️ Données envoyées vers le cloud ✅");
     }
     _fbSetStatus("ok");
+    _fbLoadTime = Date.now();
     _fbListen();
   } catch(e) {
     console.warn("[Firebase] load error", e);
@@ -19127,49 +19169,67 @@ async function _fbLoad() {
 }
 
 function _fbListen() {
-  if (_fbUnsub) _fbUnsub();
-  _fbUnsub = _fbDocRef().onSnapshot(snap => {
-    if (!snap.exists) return;
-    // Ignorer nos propres écritures (écho local non encore confirmé par le serveur)
-    if (snap.metadata.hasPendingWrites) { _fbSetStatus("ok"); return; }
-    // Ne pas écraser si on vient de saisir quelque chose localement (<6 s) — laisse notre push partir
-    const secsSinceLocalSave = (Date.now() - (window._lastLocalSave||0)) / 1000;
-    if (secsSinceLocalSave < 6) { _fbSetStatus("ok"); return; }
-    const remote = _readCloudState(snap.data());
-    if (!remote) { _fbSetStatus("ok"); return; }
-    // Appliquer si le cloud est plus récent OU à égalité (snapshot d'un autre appareil)
-    const remoteTs = remote.lastModified || 0;
-    const localTs  = state.lastModified || 0;
-    if (remoteTs >= localTs) {
-      // Remplacement direct — hasPendingWrites garantit que ce n'est pas notre propre écriture
-      // Annuler tout save en attente pour éviter que l'ancien state reparte vers le cloud
-      if (_fbSaveTimer) { clearTimeout(_fbSaveTimer); _fbSaveTimer = null; }
-      state = _mergeFromCloud(remote);
-      localStorage.setItem(STORE_KEY, JSON.stringify(state));
-      renderAll();
-      try { renderBiblioCollectionTree(); } catch(e) {}
-      try { renderBiblioRefs(); } catch(e) {}
-      renderShortcutsBar();
-      if (remoteTs > localTs) showToast("🔄 Mis à jour depuis un autre appareil");
-    }
-    _fbSetStatus("ok");
-  }, err => {
-    console.warn("[Firebase] listen error", err);
-    _fbSetStatus("error");
-  });
+  if (_fbUnsub) { _fbUnsub(); _fbUnsub = null; }
+  const unsubs = ["state", "work", "biblio"].map(name =>
+    _fbDocRef(name).onSnapshot(snap => {
+      if (!snap.exists || snap.metadata.hasPendingWrites) { _fbSetStatus("ok"); return; }
+      _snapCache[name] = snap.data();
+      clearTimeout(_fbListenTimer);
+      _fbListenTimer = setTimeout(_applyRemoteSnaps, 350);
+    }, err => {
+      console.warn("[Firebase] listen error", err);
+      _fbSetStatus("error");
+    })
+  );
+  _fbUnsub = () => unsubs.forEach(u => u());
+}
+
+function _applyRemoteSnaps() {
+  // Ignorer les snapshots qui arrivent juste après le chargement initial (même données)
+  if (Date.now() - _fbLoadTime < 4000) { _fbSetStatus("ok"); return; }
+  // Ignorer si on vient de saisir localement
+  const secsSince = (Date.now() - (window._lastLocalSave||0)) / 1000;
+  if (secsSince < 6) { _fbSetStatus("ok"); return; }
+
+  const stateData  = _snapCache.state  ? _readCloudState(_snapCache.state)  : null;
+  const workData   = _snapCache.work   ? _readCloudState(_snapCache.work)   : null;
+  const biblioData = _snapCache.biblio ? (_readCloudState(_snapCache.biblio) || _snapCache.biblio) : null;
+  const remote = _assembleRemote(stateData, workData, biblioData);
+  if (!remote) { _fbSetStatus("ok"); return; }
+
+  const remoteTs = remote.lastModified || 0;
+  const localTs  = state.lastModified  || 0;
+  if (remoteTs >= localTs) {
+    if (_fbSaveTimer) { clearTimeout(_fbSaveTimer); _fbSaveTimer = null; }
+    state = _mergeFromCloud(remote);
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    renderAll();
+    try { renderBiblioCollectionTree(); } catch(e) {}
+    try { renderBiblioRefs(); } catch(e) {}
+    renderShortcutsBar();
+    if (remoteTs > localTs) showToast("🔄 Mis à jour depuis un autre appareil");
+  }
+  _fbSetStatus("ok");
 }
 
 async function _fbSaveNow() {
   if (!_fbUser || !_fbDb) return;
   try {
-    const payload = _cloudPayload();
-    const sizeKo = Math.round(JSON.stringify(payload).length / 1024);
-    if (sizeKo > 950) {
-      showToast("⚠️ Données trop volumineuses pour le cloud (" + sizeKo + " Ko) — export manuel recommandé", 6000);
+    const corePayload   = _makePayload(_coreForCloud());
+    const workPayload   = _makePayload(_workForCloud());
+    const biblioPayload = _makePayload(_biblioForCloud());
+    const sizes = [corePayload, workPayload, biblioPayload].map(p => Math.round(JSON.stringify(p).length / 1024));
+    const maxKo = Math.max(...sizes);
+    if (maxKo > 950) {
+      showToast(`⚠️ Document trop volumineux pour le cloud (${maxKo} Ko) — export manuel recommandé`, 6000);
       _fbSetStatus("error");
       return;
     }
-    await _fbDocRef().set(payload);
+    await Promise.all([
+      _fbDocRef("state").set(corePayload),
+      _fbDocRef("work").set(workPayload),
+      _fbDocRef("biblio").set(biblioPayload),
+    ]);
     _fbSetStatus("ok");
   } catch(e) {
     console.warn("[Firebase] save error", e);
