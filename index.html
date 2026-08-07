@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v706</title>
+<title>Mon Tableau de Vie 🌿 · v708</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4304,6 +4304,19 @@
   </div>
 </div>
 
+<!-- Modal note rêve / cauchemar -->
+<div class="modal-bg" id="dreamNoteModal" onclick="if(event.target===this)closeDreamNoteModal()">
+  <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
+    <h2 id="dreamNoteTitle">🌙 Mon rêve</h2>
+    <p style="font-size:13px;color:var(--ink-soft);margin:0 0 12px;">Tu veux noter ce dont tu te souviens ?</p>
+    <textarea id="dreamNoteText" placeholder="Décris ton rêve ici…" style="width:100%;min-height:120px;resize:vertical;"></textarea>
+    <div class="actions">
+      <button class="secondary" onclick="closeDreamNoteModal()">Fermer</button>
+      <button class="primary" onclick="saveDreamNote()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <input type="file" id="importFile" accept=".json" style="display:none;" />
 
 <script>
@@ -5186,6 +5199,33 @@ function sleepQualityLabel(q) {
 function _sqArray(q) { return Array.isArray(q) ? q : (q ? [q] : []); }
 function sleepQualClass(h) { return h < 7 ? "insuf" : h <= 9 ? "correct" : "bon"; }
 
+/* ===== MODALE NOTE RÊVE / CAUCHEMAR ===== */
+let _dreamNoteType = null;
+function openDreamNoteModal(type) {
+  _dreamNoteType = type;
+  const title = document.getElementById('dreamNoteTitle');
+  if (title) title.textContent = type === 'dream' ? '🌙 Mon rêve' : '👹 Mon cauchemar';
+  const ta = document.getElementById('dreamNoteText');
+  const dk = getSelectedDayKey();
+  const t = getToday();
+  if (!t.dreamNotes) t.dreamNotes = {};
+  if (ta) ta.value = t.dreamNotes[type] || '';
+  document.getElementById('dreamNoteModal').classList.add('open');
+}
+function closeDreamNoteModal() {
+  document.getElementById('dreamNoteModal').classList.remove('open');
+  _dreamNoteType = null;
+}
+function saveDreamNote() {
+  if (!_dreamNoteType) return;
+  const ta = document.getElementById('dreamNoteText');
+  const t = getToday();
+  if (!t.dreamNotes) t.dreamNotes = {};
+  t.dreamNotes[_dreamNoteType] = ta ? ta.value.trim() : '';
+  saveState();
+  closeDreamNoteModal();
+}
+
 /* ========= HABITS ========= */
 function isHabitDone(habit, value) {
   if (habit.type === "numeric") return (Number(value) || 0) >= (habit.target || 1);
@@ -5369,16 +5409,15 @@ function setupWellbeing() {
       const t = getToday();
       let arr = _sqArray(t.sleepQuality);
       const v = b.dataset.v;
-      if (v === "peaceful") {
-        // Paisible : exclusif
-        arr = arr.includes("peaceful") ? [] : ["peaceful"];
-      } else {
-        // Agité / Réveils / Insomnie : cumulables, effacent Paisible
-        arr = arr.filter(x => x !== "peaceful");
-        arr = arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v];
-      }
+      // Toutes les cases sont cumulables — toggle simple
+      const wasActive = arr.includes(v);
+      arr = wasActive ? arr.filter(x => x !== v) : [...arr, v];
       t.sleepQuality = arr.length === 0 ? null : arr.length === 1 ? arr[0] : arr;
       saveState(); renderTodayView();
+      // Ouvre la modale note si on active rêve ou cauchemar
+      if (!wasActive && (v === "dream" || v === "nightmare")) {
+        openDreamNoteModal(v);
+      }
     };
   });
   // Slider durée sommeil
