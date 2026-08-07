@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v716</title>
+<title>Mon Tableau de Vie 🌿 · v717</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2699,6 +2699,13 @@
             <div id="calorieAvg" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;"></div>
           </div>
         </div>
+
+        <!-- Balance énergétique du mois -->
+        <div class="card" style="margin-top:18px;" id="energyBalanceCard">
+          <h2 style="margin:0 0 14px;">⚖️ Balance énergétique du mois</h2>
+          <div id="energyBalanceContent"></div>
+        </div>
+
       </div>
 
     <div class="card" style="margin-top:18px;">
@@ -4313,6 +4320,13 @@
   </div>
 </div>
 
+<!-- Picker intensité émotions (long press) -->
+<div id="emotionIntensityPicker" style="display:none;position:fixed;z-index:9999;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(80,60,120,0.18);border:1px solid var(--line);padding:14px 16px;min-width:180px;">
+  <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;text-align:center;" id="emotionPickerLabel">Intensité</div>
+  <div style="display:flex;flex-direction:column;gap:8px;" id="emotionPickerOptions"></div>
+  <button onclick="closeEmotionPicker()" style="margin-top:10px;width:100%;padding:6px;border:1px solid var(--line);border-radius:10px;background:none;color:var(--ink-soft);font-family:inherit;font-size:12px;cursor:pointer;">Désactiver</button>
+</div>
+
 <!-- Modal note rêve / cauchemar -->
 <div class="modal-bg" id="dreamNoteModal" onclick="if(event.target===this)closeDreamNoteModal()">
   <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
@@ -4456,6 +4470,7 @@ const DEFAULT_STATE = {
     { id: "h-pas", name: "9000 pas", type: "numeric", target: 9000, unit: "pas" },
     { id: "h-eau", name: "1 L d'eau", type: "numeric", target: 4, unit: "verres" },
     { id: "h-lecture", name: "Lire 30 min", type: "numeric", target: 30, unit: "min" },
+    { id: "h-cal-dep", name: "Calories dépensées", type: "numeric", target: 1500, unit: "kcal" },
     { id: "h-skincare-matin", name: "Skincare matin ☀️", type: "boolean" },
     { id: "h-skincare-soir", name: "Skincare soir 🌙", type: "boolean" },
     { id: "h-dents-matin", name: "Brossage dents matin ☀️", type: "boolean" },
@@ -4569,6 +4584,8 @@ function migrate(s) {
       s.habits.push({ id: "h-dents-soir", name: "Brossage dents soir 🌙", type: "boolean" });
     if (!s.habits.find(h => h.id === "h-douche"))
       s.habits.push({ id: "h-douche", name: "Douche 🚿", type: "boolean" });
+  if (!s.habits.find(h => h.id === "h-cal-dep"))
+    s.habits.push({ id: "h-cal-dep", name: "Calories dépensées", type: "numeric", target: 1500, unit: "kcal" });
   }
   // Garantit que les 3 habitudes essentielles restent toujours numériques (résiste aux Recharger avec ancien cache)
   if (Array.isArray(s.habits)) {
@@ -5128,7 +5145,7 @@ function onViewChange(view) {
   if (view === "today") maybeLoadWeather();
   if (view === "work") updateWorkTabBadges();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
-  if (view === "health") { renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); }
+  if (view === "health") { renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); renderEnergyBalance(); }
   if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
@@ -5244,9 +5261,68 @@ function _eObj(emotions) {
 /* Ids actifs d'un entry */
 function _eIds(emotions) { return Object.keys(_eObj(emotions)); }
 
-const INTENSITY_DOTS = ['', '·', '··', '···'];
 const INTENSITY_LABELS = ['', 'léger', 'modéré', 'intense'];
-const INTENSITY_OPACITY = ['', '0.55', '0.8', '1'];
+const INTENSITY_OPACITY = ['', '0.65', '0.85', '1'];
+
+/* ---- Long-press picker ---- */
+let _epTimer = null, _epId = null, _epMoved = false;
+
+function _epStart(id, el, e) {
+  _epMoved = false;
+  _epTimer = setTimeout(() => { if (!_epMoved) openEmotionPicker(id, el); }, 550);
+}
+function _epCancel() { clearTimeout(_epTimer); _epTimer = null; }
+function _epMove() { _epMoved = true; _epCancel(); }
+
+function openEmotionPicker(id, btn) {
+  _epId = id;
+  const em = EMOTIONS_LIST.find(e => e.id === id);
+  if (!em) return;
+  const pk = document.getElementById('emotionIntensityPicker');
+  document.getElementById('emotionPickerLabel').textContent = em.emoji + ' ' + em.label;
+  document.getElementById('emotionPickerOptions').innerHTML = [1,2,3].map(lvl => `
+    <button onclick="setEmotionIntensity('${id}',${lvl})" style="
+      display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;
+      border:1.5px solid var(--line);background:white;cursor:pointer;font-family:inherit;width:100%;
+    ">
+      <span style="font-size:18px;">${em.emoji.repeat(lvl)}</span>
+      <span style="font-size:13px;color:var(--ink-soft);">${lvl}/3 — ${INTENSITY_LABELS[lvl]}</span>
+    </button>`).join('');
+  const rect = btn.getBoundingClientRect();
+  pk.style.display = 'block';
+  const top = rect.top - pk.offsetHeight - 8;
+  pk.style.top = (top < 8 ? rect.bottom + 8 : top) + 'px';
+  pk.style.left = Math.min(rect.left, window.innerWidth - 210) + 'px';
+}
+
+function setEmotionIntensity(id, lvl) {
+  const t = getToday();
+  if (!t.emotionLog) t.emotionLog = [];
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const current = _emotionCurrentEntry(t.emotionLog);
+  if (current) {
+    const obj = _eObj(current.emotions);
+    obj[id] = lvl;
+    current.emotions = obj;
+    current.time = timeStr;
+  } else {
+    t.emotionLog.push({ time: timeStr, emotions: { [id]: lvl } });
+  }
+  saveState();
+  closeEmotionPicker();
+  renderEmotionGrid();
+}
+
+function closeEmotionPicker() {
+  document.getElementById('emotionIntensityPicker').style.display = 'none';
+  _epId = null;
+}
+
+document.addEventListener('click', e => {
+  const pk = document.getElementById('emotionIntensityPicker');
+  if (pk && pk.style.display !== 'none' && !pk.contains(e.target)) closeEmotionPicker();
+}, true);
 
 function renderEmotionGrid() {
   const el = document.getElementById('emotionGrid');
@@ -5256,21 +5332,32 @@ function renderEmotionGrid() {
   const current = _emotionCurrentEntry(log);
   const activeObj = current ? _eObj(current.emotions) : {};
 
+  const dotColors = ['', '#c9b6f0', '#a78be0', '#7c5cbf'];
   el.innerHTML = EMOTIONS_LIST.map(e => {
     const lvl = activeObj[e.id] || 0;
     const isOn = lvl > 0;
-    const dotColors = ['', 'var(--lavender)', '#a78be0', '#7c5cbf'];
-    return `<button onclick="toggleEmotion('${e.id}')" style="
-      display:flex;flex-direction:column;align-items:center;gap:3px;
-      padding:8px 4px;border-radius:12px;
-      border:2px solid ${isOn ? dotColors[lvl] : 'var(--line)'};
-      background:${isOn ? 'var(--bg-2)' : 'var(--card)'};
-      opacity:${isOn ? INTENSITY_OPACITY[lvl] : '1'};
-      cursor:pointer;transition:all .15s;font-family:inherit;position:relative;
-    ">
-      <span style="font-size:22px;">${e.emoji}</span>
+    return `<button
+      id="ebtn-${e.id}"
+      onmousedown="_epStart('${e.id}',this,event)"
+      onmouseup="_epCancel()"
+      onmouseleave="_epCancel()"
+      onmousemove="_epMove()"
+      ontouchstart="_epStart('${e.id}',this,event)"
+      ontouchend="_epCancel()"
+      ontouchmove="_epMove()"
+      onclick="toggleEmotion('${e.id}')"
+      style="
+        display:flex;flex-direction:column;align-items:center;gap:3px;
+        padding:8px 4px;border-radius:12px;
+        border:2px solid ${isOn ? dotColors[lvl] : 'var(--line)'};
+        background:${isOn ? 'var(--bg-2)' : 'var(--card)'};
+        opacity:${isOn ? INTENSITY_OPACITY[lvl] : '1'};
+        cursor:pointer;transition:all .15s;font-family:inherit;
+        -webkit-user-select:none;user-select:none;
+      ">
+      <span style="font-size:${isOn && lvl > 1 ? 16 : 22}px;letter-spacing:-2px;">${e.emoji.repeat(isOn ? lvl : 1)}</span>
       <span style="font-size:10px;color:${isOn ? dotColors[lvl] : 'var(--ink-soft)'};text-align:center;line-height:1.2;font-weight:${isOn ? '600' : '400'};">${e.label}</span>
-      <span style="font-size:11px;color:${dotColors[lvl] || 'transparent'};line-height:1;min-height:11px;">${INTENSITY_DOTS[lvl]}</span>
+      <span style="font-size:10px;color:${isOn ? dotColors[lvl] : 'transparent'};line-height:1;min-height:10px;">${isOn ? lvl+'/3' : ''}</span>
     </button>`;
   }).join('');
 
@@ -5284,12 +5371,12 @@ function renderEmotionGrid() {
     const obj = _eObj(entry.emotions);
     const parts = Object.entries(obj).map(([id, lvl]) => {
       const em = EMOTIONS_LIST.find(e => e.id === id);
-      return em ? `${em.emoji} ${em.label}${lvl > 1 ? ' ' + INTENSITY_DOTS[lvl] : ''}` : '';
+      return em ? `<span title="${em.label} — ${INTENSITY_LABELS[lvl]||'léger'}">${em.emoji.repeat(lvl||1)}</span>` : '';
     }).filter(Boolean);
-    return `<div style="display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 0;">
-      <span style="color:var(--ink-softer);min-width:36px;font-variant-numeric:tabular-nums;">${entry.time}</span>
-      <span style="color:var(--ink-soft);flex:1;">${parts.join(' · ')}</span>
-      <button onclick="deleteEmotionEntry(${i})" style="background:none;border:none;color:var(--ink-softer);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;" title="Supprimer">✕</button>
+    return `<div style="display:flex;align-items:center;gap:6px;font-size:13px;padding:4px 0;">
+      <span style="color:var(--ink-softer);min-width:36px;font-size:11px;font-variant-numeric:tabular-nums;">${entry.time}</span>
+      <span style="flex:1;display:flex;flex-wrap:wrap;gap:4px;letter-spacing:-1px;">${parts.join('')}</span>
+      <button onclick="deleteEmotionEntry(${i})" style="background:none;border:none;color:var(--ink-softer);cursor:pointer;font-size:13px;padding:2px 6px;line-height:1;" title="Supprimer">✕</button>
     </div>`;
   }).join('');
 }
@@ -9504,6 +9591,71 @@ function renderWellbeingCorrelations() {
   }
   html += `<p style="font-size:11px;color:var(--ink-softer);margin-top:10px;">💜 lien dans le même sens · 🧡 sens inverse · 💡 corrélation ≠ cause : c'est une tendance sur tes données, pas une preuve. Plus tu remplis, plus c'est fiable.</p>`;
   el.innerHTML = html;
+}
+
+function renderEnergyBalance() {
+  const el = document.getElementById('energyBalanceContent');
+  if (!el) return;
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  let burned = 0, consumed = 0, daysWithData = 0;
+  for (let d = 1; d <= now.getDate(); d++) {
+    const dk = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const day = state.history[dk];
+    if (!day) continue;
+    const b = Number(day.habits?.['h-cal-dep']) || 0;
+    const c = (day.foodLog || []).reduce((s, e) => s + (e.calories || 0), 0);
+    burned += b; consumed += c;
+    if (b > 0 || c > 0) daysWithData++;
+  }
+  if (!daysWithData) {
+    el.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;">Remplis les calories dépensées (habitudes) et les repas (Alimentation) pour voir ta balance.</p>`;
+    return;
+  }
+  const diff = burned - consumed;
+  const isDeficit = diff > 0, isSurplus = diff < 0, isBalanced = Math.abs(diff) < 200;
+  const statusColor = isBalanced ? '#4d9c7e' : isDeficit ? '#4d9c7e' : '#c08a4d';
+  const statusLabel = isBalanced ? '⚖️ Équilibre' : isDeficit ? '📉 Déficit calorique' : '📈 Surplus calorique';
+  const statusDesc = isBalanced
+    ? 'Tes apports et dépenses sont équilibrés ce mois-ci.'
+    : isDeficit
+    ? `Tu brûles plus que tu n'ingères — ${Math.abs(diff).toLocaleString('fr-FR')} kcal de déficit.`
+    : `Tu ingères plus que tu ne brûles — ${Math.abs(diff).toLocaleString('fr-FR')} kcal de surplus.`;
+  const maxVal = Math.max(burned, consumed, 1);
+  const burnedPct = Math.round(burned / maxVal * 100);
+  const consumedPct = Math.round(consumed / maxVal * 100);
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div style="background:var(--mint-soft);border-radius:12px;padding:12px 14px;">
+        <div style="font-size:11px;color:var(--ink-softer);margin-bottom:4px;">🏃 Dépensées</div>
+        <div style="font-size:20px;font-weight:600;color:#3a7a5e;">${burned.toLocaleString('fr-FR')}</div>
+        <div style="font-size:11px;color:var(--ink-softer);">kcal ce mois</div>
+      </div>
+      <div style="background:var(--peach-soft);border-radius:12px;padding:12px 14px;">
+        <div style="font-size:11px;color:var(--ink-softer);margin-bottom:4px;">🍽️ Ingérées</div>
+        <div style="font-size:20px;font-weight:600;color:#a0622a;">${consumed.toLocaleString('fr-FR')}</div>
+        <div style="font-size:11px;color:var(--ink-softer);">kcal ce mois</div>
+      </div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-softer);margin-bottom:4px;">
+        <span>🏃 Dépensées</span><span>${burnedPct}%</span>
+      </div>
+      <div style="background:white;height:8px;border-radius:999px;overflow:hidden;margin-bottom:6px;">
+        <div style="width:${burnedPct}%;height:100%;background:#4d9c7e;transition:width .4s;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-softer);margin-bottom:4px;">
+        <span>🍽️ Ingérées</span><span>${consumedPct}%</span>
+      </div>
+      <div style="background:white;height:8px;border-radius:999px;overflow:hidden;">
+        <div style="width:${consumedPct}%;height:100%;background:#c08a4d;transition:width .4s;"></div>
+      </div>
+    </div>
+    <div style="background:var(--bg-2);border-radius:12px;padding:12px 14px;border-left:4px solid ${statusColor};">
+      <div style="font-size:14px;font-weight:600;color:${statusColor};margin-bottom:4px;">${statusLabel}</div>
+      <div style="font-size:12px;color:var(--ink-soft);">${statusDesc}</div>
+    </div>
+    <p style="font-size:11px;color:var(--ink-softer);margin-top:8px;">Basé sur ${daysWithData} jour${daysWithData>1?'s':''} renseignés ce mois-ci.</p>`;
 }
 
 function renderCalorieChart() {
