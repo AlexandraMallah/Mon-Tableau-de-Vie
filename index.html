@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v715</title>
+<title>Mon Tableau de Vie 🌿 · v716</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -5215,7 +5215,7 @@ const EMOTIONS_LIST = [
   { id: "motivee",    label: "Motivée",    emoji: "🔥" },
   { id: "confiante",  label: "Confiante",  emoji: "💪" },
   { id: "calme",      label: "Calme",      emoji: "🌿" },
-  { id: "energique",  label: "Énergique",  emoji: "⚡" },
+  { id: "goumin",     label: "En goumin",  emoji: "💔" },
   { id: "fatiguee",   label: "Fatiguée",   emoji: "😴" },
   { id: "anxieuse",   label: "Anxieuse",   emoji: "😰" },
   { id: "stressee",   label: "Stressée",   emoji: "🌀" },
@@ -5234,39 +5234,62 @@ function _emotionCurrentEntry(log) {
   return diffMin >= 0 && diffMin < 10 ? last : null;
 }
 
+/* Normalise emotions : array legacy → objet {id: intensity} */
+function _eObj(emotions) {
+  if (!emotions) return {};
+  if (Array.isArray(emotions)) { const o = {}; emotions.forEach(id => { o[id] = 1; }); return o; }
+  return emotions;
+}
+
+/* Ids actifs d'un entry */
+function _eIds(emotions) { return Object.keys(_eObj(emotions)); }
+
+const INTENSITY_DOTS = ['', '·', '··', '···'];
+const INTENSITY_LABELS = ['', 'léger', 'modéré', 'intense'];
+const INTENSITY_OPACITY = ['', '0.55', '0.8', '1'];
+
 function renderEmotionGrid() {
   const el = document.getElementById('emotionGrid');
   if (!el) return;
   const t = getToday();
   const log = t.emotionLog || [];
   const current = _emotionCurrentEntry(log);
-  const active = current ? current.emotions : [];
+  const activeObj = current ? _eObj(current.emotions) : {};
 
-  el.innerHTML = EMOTIONS_LIST.map(e => `
-    <button onclick="toggleEmotion('${e.id}')" style="
-      display:flex;flex-direction:column;align-items:center;gap:4px;
-      padding:8px 4px;border-radius:12px;border:2px solid ${active.includes(e.id) ? 'var(--lavender)' : 'var(--line)'};
-      background:${active.includes(e.id) ? 'var(--bg-2)' : 'var(--card)'};
-      cursor:pointer;transition:all .15s;font-family:inherit;
+  el.innerHTML = EMOTIONS_LIST.map(e => {
+    const lvl = activeObj[e.id] || 0;
+    const isOn = lvl > 0;
+    const dotColors = ['', 'var(--lavender)', '#a78be0', '#7c5cbf'];
+    return `<button onclick="toggleEmotion('${e.id}')" style="
+      display:flex;flex-direction:column;align-items:center;gap:3px;
+      padding:8px 4px;border-radius:12px;
+      border:2px solid ${isOn ? dotColors[lvl] : 'var(--line)'};
+      background:${isOn ? 'var(--bg-2)' : 'var(--card)'};
+      opacity:${isOn ? INTENSITY_OPACITY[lvl] : '1'};
+      cursor:pointer;transition:all .15s;font-family:inherit;position:relative;
     ">
       <span style="font-size:22px;">${e.emoji}</span>
-      <span style="font-size:10px;color:var(--ink-soft);text-align:center;line-height:1.2;">${e.label}</span>
-    </button>`).join('');
+      <span style="font-size:10px;color:${isOn ? dotColors[lvl] : 'var(--ink-soft)'};text-align:center;line-height:1.2;font-weight:${isOn ? '600' : '400'};">${e.label}</span>
+      <span style="font-size:11px;color:${dotColors[lvl] || 'transparent'};line-height:1;min-height:11px;">${INTENSITY_DOTS[lvl]}</span>
+    </button>`;
+  }).join('');
 
   // Frise du jour
   const frise = document.getElementById('emotionFrise');
   if (!frise) return;
   const pastEntries = current ? log.slice(0, -1) : log;
-  if (!pastEntries.length && !current) { frise.innerHTML = ''; return; }
-  const allEntries = [...pastEntries, ...(current && current.emotions.length ? [current] : [])];
+  const allEntries = [...pastEntries, ...(current && _eIds(current.emotions).length ? [current] : [])];
+  if (!allEntries.length) { frise.innerHTML = ''; return; }
   frise.innerHTML = allEntries.map((entry, i) => {
-    const emojis = entry.emotions.map(id => EMOTIONS_LIST.find(e => e.id === id)?.emoji || '').join(' ');
-    const realIdx = i; // index dans allEntries = index dans log (pastEntries + éventuellement current)
+    const obj = _eObj(entry.emotions);
+    const parts = Object.entries(obj).map(([id, lvl]) => {
+      const em = EMOTIONS_LIST.find(e => e.id === id);
+      return em ? `${em.emoji} ${em.label}${lvl > 1 ? ' ' + INTENSITY_DOTS[lvl] : ''}` : '';
+    }).filter(Boolean);
     return `<div style="display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 0;">
       <span style="color:var(--ink-softer);min-width:36px;font-variant-numeric:tabular-nums;">${entry.time}</span>
-      <span>${emojis}</span>
-      <span style="color:var(--ink-soft);flex:1;">${entry.emotions.map(id => EMOTIONS_LIST.find(e => e.id === id)?.label || '').join(' · ')}</span>
-      <button onclick="deleteEmotionEntry(${realIdx})" style="background:none;border:none;color:var(--ink-softer);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;" title="Supprimer">✕</button>
+      <span style="color:var(--ink-soft);flex:1;">${parts.join(' · ')}</span>
+      <button onclick="deleteEmotionEntry(${i})" style="background:none;border:none;color:var(--ink-softer);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;" title="Supprimer">✕</button>
     </div>`;
   }).join('');
 }
@@ -5275,7 +5298,6 @@ function deleteEmotionEntry(idx) {
   const t = getToday();
   if (!t.emotionLog) return;
   t.emotionLog.splice(idx, 1);
-  if (!t.emotionLog.length) t.emotionLog = [];
   saveState();
   renderEmotionGrid();
 }
@@ -5287,12 +5309,14 @@ function toggleEmotion(id) {
   const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
   const current = _emotionCurrentEntry(t.emotionLog);
   if (current) {
-    current.emotions = current.emotions.includes(id)
-      ? current.emotions.filter(x => x !== id)
-      : [...current.emotions, id];
-    current.time = timeStr; // met à jour l'heure du snapshot
+    const obj = _eObj(current.emotions);
+    const lvl = obj[id] || 0;
+    if (lvl >= 3) delete obj[id];
+    else obj[id] = lvl + 1;
+    current.emotions = obj;
+    current.time = timeStr;
   } else {
-    t.emotionLog.push({ time: timeStr, emotions: [id] });
+    t.emotionLog.push({ time: timeStr, emotions: { [id]: 1 } });
   }
   saveState();
   renderEmotionGrid();
