@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v702</title>
+<title>Mon Tableau de Vie 🌿 · v703</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -5367,12 +5367,12 @@ function setupWellbeing() {
       const t = getToday();
       let arr = _sqArray(t.sleepQuality);
       const v = b.dataset.v;
-      if (v === "peaceful" || v === "insomnia") {
-        // Exclusifs : cochés seuls, ou décochés si déjà sélectionnés
-        arr = arr.includes(v) ? [] : [v];
+      if (v === "peaceful") {
+        // Paisible : exclusif
+        arr = arr.includes("peaceful") ? [] : ["peaceful"];
       } else {
-        // Agité / Réveils : cumulables, mais effacent les options exclusives
-        arr = arr.filter(x => x !== "peaceful" && x !== "insomnia");
+        // Agité / Réveils / Insomnie : cumulables, effacent Paisible
+        arr = arr.filter(x => x !== "peaceful");
         arr = arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v];
       }
       t.sleepQuality = arr.length === 0 ? null : arr.length === 1 ? arr[0] : arr;
