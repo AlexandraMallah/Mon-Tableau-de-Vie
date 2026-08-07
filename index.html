@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v711</title>
+<title>Mon Tableau de Vie 🌿 · v712</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1883,7 +1883,7 @@
         <!-- Émotions manuelles -->
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
           <div style="font-size:12px;color:var(--ink-softer);margin-bottom:10px;">💬 Mes émotions du moment</div>
-          <div id="emotionGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;"></div>
+          <div id="emotionGrid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;"></div>
           <div id="emotionFrise" style="margin-top:10px;padding-top:8px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px;"></div>
         </div>
         <div id="journalMoodToday" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);">
