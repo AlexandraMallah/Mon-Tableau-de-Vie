@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v713</title>
+<title>Mon Tableau de Vie 🌿 · v714</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3342,6 +3342,7 @@
         <p style="color:var(--ink-soft);font-size:13px;margin:6px 0 12px;">Pensées, réflexions du moment. Sauvegarde automatique.</p>
         <textarea class="journal-input" id="journalToday" placeholder="Aujourd'hui, je…"></textarea>
         <div id="journalMoodTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:0;"></div>
+        <div id="journalDreamNotes" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px;"></div>
       </div>
       <div class="card">
         <h2>🌱 En bref aujourd'hui</h2>
@@ -5257,14 +5258,26 @@ function renderEmotionGrid() {
   if (!frise) return;
   const pastEntries = current ? log.slice(0, -1) : log;
   if (!pastEntries.length && !current) { frise.innerHTML = ''; return; }
-  frise.innerHTML = [...pastEntries, ...(current && current.emotions.length ? [current] : [])].map(entry => {
+  const allEntries = [...pastEntries, ...(current && current.emotions.length ? [current] : [])];
+  frise.innerHTML = allEntries.map((entry, i) => {
     const emojis = entry.emotions.map(id => EMOTIONS_LIST.find(e => e.id === id)?.emoji || '').join(' ');
-    return `<div style="display:flex;align-items:baseline;gap:6px;font-size:12px;padding:4px 0;">
+    const realIdx = i; // index dans allEntries = index dans log (pastEntries + éventuellement current)
+    return `<div style="display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 0;">
       <span style="color:var(--ink-softer);min-width:36px;font-variant-numeric:tabular-nums;">${entry.time}</span>
       <span>${emojis}</span>
-      <span style="color:var(--ink-soft);">${entry.emotions.map(id => EMOTIONS_LIST.find(e => e.id === id)?.label || '').join(' · ')}</span>
+      <span style="color:var(--ink-soft);flex:1;">${entry.emotions.map(id => EMOTIONS_LIST.find(e => e.id === id)?.label || '').join(' · ')}</span>
+      <button onclick="deleteEmotionEntry(${realIdx})" style="background:none;border:none;color:var(--ink-softer);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;" title="Supprimer">✕</button>
     </div>`;
   }).join('');
+}
+
+function deleteEmotionEntry(idx) {
+  const t = getToday();
+  if (!t.emotionLog) return;
+  t.emotionLog.splice(idx, 1);
+  if (!t.emotionLog.length) t.emotionLog = [];
+  saveState();
+  renderEmotionGrid();
 }
 
 function toggleEmotion(id) {
@@ -5310,6 +5323,36 @@ function saveDreamNote() {
   t.dreamNotes[_dreamNoteType] = ta ? ta.value.trim() : '';
   saveState();
   closeDreamNoteModal();
+  renderJournalDreamNotes();
+}
+
+function renderJournalDreamNotes() {
+  const el = document.getElementById('journalDreamNotes');
+  if (!el) return;
+  const t = getToday();
+  const sq = t.sleepQuality;
+  const arr = Array.isArray(sq) ? sq : (sq ? [sq] : []);
+  const hasDream = arr.includes('dream');
+  const hasNightmare = arr.includes('nightmare');
+  if (!hasDream && !hasNightmare) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = [
+    hasDream ? { type: 'dream', icon: '🌙', label: 'Mon rêve' } : null,
+    hasNightmare ? { type: 'nightmare', icon: '👹', label: 'Mon cauchemar' } : null,
+  ].filter(Boolean).map(({ type, icon, label }) => `
+    <div>
+      <label style="font-size:12px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:5px;">${icon} ${label}</label>
+      <textarea id="journalDream_${type}" placeholder="Décris-le ici…"
+        oninput="saveDreamInline('${type}', this.value)"
+        style="width:100%;min-height:70px;resize:vertical;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:white;box-sizing:border-box;">${(t.dreamNotes && t.dreamNotes[type]) || ''}</textarea>
+    </div>`).join('');
+}
+
+function saveDreamInline(type, value) {
+  const t = getToday();
+  if (!t.dreamNotes) t.dreamNotes = {};
+  t.dreamNotes[type] = value;
+  saveState();
 }
 
 /* ========= HABITS ========= */
@@ -12162,6 +12205,7 @@ function renderJournal() {
   if (aEl) aEl.value = today.accomplishment || "";
   if (gEl) gEl.value = today.gratitude || "";
   if (hEl) hEl.value = today.highlight || "";
+  renderJournalDreamNotes();
 
   // Entrées passées : on affiche journal libre + prompts s'ils existent
   const past = Object.entries(state.history)
