@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v714</title>
+<title>Mon Tableau de Vie 🌿 · v715</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -5397,7 +5397,10 @@ function renderHabits() {
         <div class="habit habit-numeric ${isDone ? "done" : ""}">
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-              <span style="font-size:14.5px;">${escapeHtml(h.name)}</span>
+              ${h.id === 'h-pas'
+                ? `<span style="font-size:14.5px;cursor:pointer;text-decoration:underline dotted var(--ink-softer);" onclick="document.querySelector('.tab[data-view=health]').click()" title="Voir le détail dans Santé">${escapeHtml(h.name)} ↗</span>`
+                : `<span style="font-size:14.5px;">${escapeHtml(h.name)}</span>`
+              }
               <input type="number" value="${num || ''}" onchange="setHabitValue('${h.id}', this.value)" placeholder="0" min="0" step="${inputStep}" ${inputMax ? `max="${inputMax}"` : ""}
                 style="width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:right;background:white;" />
               <span style="font-size:11px;color:var(--ink-soft);">/ ${h.target}${h.unit ? " " + h.unit : ""}</span>
