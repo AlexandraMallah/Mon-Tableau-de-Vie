@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v717</title>
+<title>Mon Tableau de Vie 🌿 · v718</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1880,17 +1880,18 @@
             <div class="sleepquality-label" id="endoLabel"></div>
           </div>
         </div>
-        <!-- Émotions manuelles -->
-        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
-          <div style="font-size:12px;color:var(--ink-softer);margin-bottom:10px;">💬 Mes émotions du moment</div>
-          <div id="emotionGrid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;"></div>
-          <div id="emotionFrise" style="margin-top:10px;padding-top:8px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px;"></div>
-        </div>
         <div id="journalMoodToday" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);">
           <div style="font-size:12px;color:var(--ink-softer);margin-bottom:6px;">✍️ Ton journal d'aujourd'hui évoque :</div>
           <div id="journalMoodTodayBadges" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
         </div>
       </div>
+    </div>
+
+    <!-- 💬 Émotions du moment -->
+    <div class="card" style="margin-top:14px;">
+      <h2 style="margin:0 0 12px;">💬 Mes émotions du moment</h2>
+      <div id="emotionGrid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;"></div>
+      <div id="emotionFrise" style="margin-top:10px;display:flex;flex-direction:column;gap:4px;"></div>
     </div>
 
     <!-- 🍽️ Journal alimentaire du jour -->
@@ -5371,12 +5372,16 @@ function renderEmotionGrid() {
     const obj = _eObj(entry.emotions);
     const parts = Object.entries(obj).map(([id, lvl]) => {
       const em = EMOTIONS_LIST.find(e => e.id === id);
-      return em ? `<span title="${em.label} — ${INTENSITY_LABELS[lvl]||'léger'}">${em.emoji.repeat(lvl||1)}</span>` : '';
+      if (!em) return '';
+      return `<span style="display:inline-flex;align-items:center;gap:2px;background:var(--bg-2);border-radius:20px;padding:2px 7px;font-size:12px;">
+        <span style="letter-spacing:-1px;">${em.emoji.repeat(lvl||1)}</span>
+        <span style="color:var(--ink-soft);font-size:10px;">${em.label}</span>
+      </span>`;
     }).filter(Boolean);
-    return `<div style="display:flex;align-items:center;gap:6px;font-size:13px;padding:4px 0;">
-      <span style="color:var(--ink-softer);min-width:36px;font-size:11px;font-variant-numeric:tabular-nums;">${entry.time}</span>
-      <span style="flex:1;display:flex;flex-wrap:wrap;gap:4px;letter-spacing:-1px;">${parts.join('')}</span>
-      <button onclick="deleteEmotionEntry(${i})" style="background:none;border:none;color:var(--ink-softer);cursor:pointer;font-size:13px;padding:2px 6px;line-height:1;" title="Supprimer">✕</button>
+    return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;">
+      <span style="color:var(--ink-softer);min-width:36px;font-size:11px;font-variant-numeric:tabular-nums;flex-shrink:0;">${entry.time}</span>
+      <span style="flex:1;display:flex;flex-wrap:wrap;gap:4px;">${parts.join('')}</span>
+      <button onclick="deleteEmotionEntry(${i})" style="background:none;border:none;color:var(--ink-softer);cursor:pointer;font-size:13px;padding:2px 6px;line-height:1;flex-shrink:0;" title="Supprimer">✕</button>
     </div>`;
   }).join('');
 }
