@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v705</title>
+<title>Mon Tableau de Vie 🌿 · v706</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -261,7 +261,7 @@
   .scale.energy button.active { background: var(--peach-soft); border-color: var(--peach); }
   .scale.belly button.active { background: var(--lavender-soft); border-color: var(--lavender); }
   .scale button:focus { outline: none; }
-  .scale.sleepquality { grid-template-columns: repeat(5, 1fr); }
+  .scale.sleepquality { grid-template-columns: repeat(6, 1fr); }
   .scale.sleepquality button.active { background: var(--sky-soft); border-color: var(--sky); }
   .sleepquality-label { font-size: 11px; color: var(--sky); text-align: center; margin-top: 5px; min-height: 15px; font-weight: 500; letter-spacing: 0.01em; }
   .sleep-input { display: flex; align-items: center; gap: 12px; }
@@ -1842,6 +1842,7 @@
                 <button data-v="fragmented">👁️</button>
                 <button data-v="insomnia">😵</button>
                 <button data-v="nightmare">👹</button>
+                <button data-v="dream">🌙</button>
               </div>
               <div class="sleepquality-label" id="sleepQualityLabel"></div>
             </div>
@@ -5136,7 +5137,7 @@ function renderRings() {
   const sleepPct = today.sleep != null
     ? (today.sleep < 7 ? today.sleep / 7 * 0.85 : today.sleep <= 9 ? 1 : 0.9)
     : 0;
-  const sqMap = { peaceful: 1.0, restless: 0.5, fragmented: 0.15, insomnia: 0.0, nightmare: 0.1 };
+  const sqMap = { peaceful: 1.0, restless: 0.5, fragmented: 0.15, insomnia: 0.0, nightmare: 0.1, dream: 0.8 };
   const _sqArr2 = _sqArray(today.sleepQuality);
   const sqScore = _sqArr2.length ? Math.min(..._sqArr2.map(v => sqMap[v] ?? 0.5)) : null;
   let energyPct, energySub, energyVal;
@@ -5178,7 +5179,7 @@ function labelFor(kind, v) {
 }
 function sleepLabel(h) { return h < 7 ? "Insuffisant" : h <= 9 ? "Correct" : "Bon"; }
 function sleepQualityLabel(q) {
-  const map = { peaceful: "Paisible", restless: "Agité", fragmented: "Beaucoup de réveils", insomnia: "Insomnie", nightmare: "Cauchemar" };
+  const map = { peaceful: "Paisible", restless: "Agité", fragmented: "Beaucoup de réveils", insomnia: "Insomnie", nightmare: "Cauchemar", dream: "Rêve" };
   if (Array.isArray(q)) return q.map(v => map[v] || v).join(" · ") || "";
   return map[q] || "";
 }
@@ -12313,12 +12314,12 @@ function computeMetric(m) {
     return { score, value: thirsty === 0 ? "arrosées ✓" : thirsty + " à soif", label: m.label };
   }
   if (m.type === "wellbeing-quality") {
-    const qMap = { peaceful: 1.0, restless: 0.5, fragmented: 0.15, insomnia: 0.0, nightmare: 0.1 };
+    const qMap = { peaceful: 1.0, restless: 0.5, fragmented: 0.15, insomnia: 0.0, nightmare: 0.1, dream: 0.8 };
     const days = _last7Days();
     const vals = days.map(d => qMap[state.history[todayKey(d)]?.sleepQuality] ?? null).filter(v => v !== null);
     if (!vals.length) return { score: 0, value: "—", label: m.label };
     const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
-    const cnt = { peaceful: 0, restless: 0, fragmented: 0, insomnia: 0, nightmare: 0 };
+    const cnt = { peaceful: 0, restless: 0, fragmented: 0, insomnia: 0, nightmare: 0, dream: 0 };
     days.forEach(d => { const q = state.history[todayKey(d)]?.sleepQuality; if (q) cnt[q]++; });
     const parts = [];
     if (cnt.peaceful)   parts.push(`${cnt.peaceful}× 😴`);
@@ -12326,6 +12327,7 @@ function computeMetric(m) {
     if (cnt.fragmented) parts.push(`${cnt.fragmented}× 👁️`);
     if (cnt.insomnia)   parts.push(`${cnt.insomnia}× 😵`);
     if (cnt.nightmare)  parts.push(`${cnt.nightmare}× 👹`);
+    if (cnt.dream)      parts.push(`${cnt.dream}× 🌙`);
     return { score: avg, value: parts.join(" "), label: m.label };
   }
   // Toutes les activités physiques enregistrées (sans filtre par nom)
@@ -12376,7 +12378,7 @@ function computeMetricDetails(m) {
   } else if (m.type === "wellbeing-avg") {
     for (const d of days) { const v = state.history[todayKey(d)]?.[m.field]; if (v != null) lines.push(`${_fmtDayFr(d)} — ${v}/5`); }
   } else if (m.type === "wellbeing-quality") {
-    const lbl = { peaceful: "😴 paisible", restless: "😫 agité", fragmented: "👁️ fragmenté", insomnia: "😵 insomnie", nightmare: "👹 cauchemar" };
+    const lbl = { peaceful: "😴 paisible", restless: "😫 agité", fragmented: "👁️ fragmenté", insomnia: "😵 insomnie", nightmare: "👹 cauchemar", dream: "🌙 rêve" };
     for (const d of days) { const q = state.history[todayKey(d)]?.sleepQuality; if (q) lines.push(`${_fmtDayFr(d)} — ${lbl[q] || q}`); }
   } else if (m.type === "habit-avg") {
     for (const d of days) { const v = Number(state.history[todayKey(d)]?.habits?.[m.habitId]) || 0; if (v) lines.push(`${_fmtDayFr(d)} — ${v}`); }
