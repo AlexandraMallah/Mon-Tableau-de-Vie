@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v708</title>
+<title>Mon Tableau de Vie 🌿 · v709</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1877,6 +1877,11 @@
             </div>
             <div class="sleepquality-label" id="endoLabel"></div>
           </div>
+        </div>
+        <!-- Émotions manuelles -->
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
+          <div style="font-size:12px;color:var(--ink-softer);margin-bottom:10px;">💬 Mes émotions du moment</div>
+          <div id="emotionGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;"></div>
         </div>
         <div id="journalMoodToday" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);">
           <div style="font-size:12px;color:var(--ink-softer);margin-bottom:6px;">✍️ Ton journal d'aujourd'hui évoque :</div>
@@ -5199,6 +5204,48 @@ function sleepQualityLabel(q) {
 function _sqArray(q) { return Array.isArray(q) ? q : (q ? [q] : []); }
 function sleepQualClass(h) { return h < 7 ? "insuf" : h <= 9 ? "correct" : "bon"; }
 
+/* ===== ÉMOTIONS MANUELLES ===== */
+const EMOTIONS_LIST = [
+  { id: "contente",   label: "Contente",   emoji: "😊" },
+  { id: "confiante",  label: "Confiante",  emoji: "💪" },
+  { id: "calme",      label: "Calme",      emoji: "🌿" },
+  { id: "energique",  label: "Énergique",  emoji: "⚡" },
+  { id: "motivee",    label: "Motivée",    emoji: "🔥" },
+  { id: "excitee",    label: "Excitée",    emoji: "🎉" },
+  { id: "irritable",  label: "Irritable",  emoji: "😤" },
+  { id: "anxieuse",   label: "Anxieuse",   emoji: "😰" },
+  { id: "stressee",   label: "Stressée",   emoji: "🌀" },
+  { id: "fatiguee",   label: "Fatiguée",   emoji: "😴" },
+  { id: "sensible",   label: "Sensible",   emoji: "🥺" },
+  { id: "triste",     label: "Triste",     emoji: "😢" },
+  { id: "colere",     label: "En colère",  emoji: "😡" },
+];
+
+function renderEmotionGrid() {
+  const el = document.getElementById('emotionGrid');
+  if (!el) return;
+  const t = getToday();
+  const active = t.emotions || [];
+  el.innerHTML = EMOTIONS_LIST.map(e => `
+    <button onclick="toggleEmotion('${e.id}')" style="
+      display:flex;flex-direction:column;align-items:center;gap:4px;
+      padding:8px 4px;border-radius:12px;border:2px solid ${active.includes(e.id) ? 'var(--lavender)' : 'var(--line)'};
+      background:${active.includes(e.id) ? 'var(--bg-2)' : 'var(--card)'};
+      cursor:pointer;transition:all .15s;font-family:inherit;
+    ">
+      <span style="font-size:22px;">${e.emoji}</span>
+      <span style="font-size:10px;color:var(--ink-soft);text-align:center;line-height:1.2;">${e.label}</span>
+    </button>`).join('');
+}
+
+function toggleEmotion(id) {
+  const t = getToday();
+  if (!t.emotions) t.emotions = [];
+  t.emotions = t.emotions.includes(id) ? t.emotions.filter(x => x !== id) : [...t.emotions, id];
+  saveState();
+  renderEmotionGrid();
+}
+
 /* ===== MODALE NOTE RÊVE / CAUCHEMAR ===== */
 let _dreamNoteType = null;
 function openDreamNoteModal(type) {
@@ -5339,6 +5386,8 @@ function renderWellbeing() {
   if (endoLbl) endoLbl.textContent = today.endo != null ? bellyLbls[today.endo] || "" : "";
   const sqLbl = document.getElementById("sleepQualityLabel");
   if (sqLbl) sqLbl.textContent = today.sleepQuality ? sleepQualityLabel(today.sleepQuality) : "";
+
+  renderEmotionGrid();
 
   // Émotions détectées dans le journal du jour
   const journalEmotions = analyzeJournal(today.journal || "");
