@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v749</title>
+<title>Mon Tableau de Vie 🌿 · v751</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2683,26 +2683,33 @@
             <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;" id="muscleMassTrend"></div>
           </div>
         </div>
-        <div style="height:14px;"></div>
-        <div class="grid-two-eq" style="margin-bottom:0;align-items:stretch;">
-          <div style="display:flex;flex-direction:column;">
-            <div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;">
-              <button class="sub-tab active" id="bodyMetricWeight" onclick="switchBodyMetric('weight')">Poids</button>
-              <button class="sub-tab" id="bodyMetricFat" onclick="switchBodyMetric('bodyFat')">Masse grasse</button>
-              <button class="sub-tab" id="bodyMetricMuscle" onclick="switchBodyMetric('muscleMass')">Masse maigre</button>
-            </div>
-            <div class="chart-wrap" style="flex:1;min-height:210px;"><canvas id="bodyChart"></canvas></div>
+        <!-- Navigation mois -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin:18px 0 10px;">
+          <button onclick="healthNavMonth(-1)" style="background:var(--bg-2);border:1px solid var(--line);border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">◀</button>
+          <span id="healthMonthLabel" style="font-size:15px;font-weight:700;color:var(--ink);min-width:140px;text-align:center;"></span>
+          <button id="healthNavNext" onclick="healthNavMonth(1)" style="background:var(--bg-2);border:1px solid var(--line);border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">▶</button>
+        </div>
+
+        <!-- Graphique poids pleine largeur -->
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;">
+            <button class="sub-tab active" id="bodyMetricWeight" onclick="switchBodyMetric('weight')">Poids</button>
+            <button class="sub-tab" id="bodyMetricFat" onclick="switchBodyMetric('bodyFat')">Masse grasse</button>
+            <button class="sub-tab" id="bodyMetricMuscle" onclick="switchBodyMetric('muscleMass')">Masse maigre</button>
           </div>
-          <div>
-            <h2 style="margin:0 0 10px;text-align:center;font-size:15px;">🔥 Apport calorique 30 jours</h2>
-            <div class="chart-wrap" style="height:210px;"><canvas id="calorieChart"></canvas></div>
-            <div id="calorieAvg" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;"></div>
-          </div>
+          <div class="chart-wrap" style="height:200px;"><canvas id="bodyChart"></canvas></div>
+        </div>
+
+        <!-- Graphique kcal pleine largeur -->
+        <div style="margin-bottom:0;">
+          <h2 style="margin:0 0 8px;font-size:14px;">🔥 Apport calorique</h2>
+          <div class="chart-wrap" style="height:200px;"><canvas id="calorieChart"></canvas></div>
+          <div id="calorieAvg" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;"></div>
         </div>
 
         <!-- Balance énergétique du mois -->
-        <div class="card" style="margin-top:18px;" id="energyBalanceCard">
-          <h2 style="margin:0 0 14px;">⚖️ Balance énergétique du mois</h2>
+        <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line);" id="energyBalanceCard">
+          <h2 style="margin:0 0 12px;font-size:14px;">⚖️ Balance énergétique</h2>
           <div id="energyBalanceContent"></div>
         </div>
 
@@ -2711,9 +2718,6 @@
     <!-- 🌿 Forme & énergie -->
     <div class="grid-two" style="margin-top:18px;">
       <div class="card">
-        <h2>🌙 Bien-être 30 jours</h2>
-        <div class="chart-wrap" style="height:230px;"><canvas id="wellbeingChart"></canvas></div>
-        <div style="height:16px;"></div>
         <h2>💧 Hydratation aujourd'hui</h2>
         <p style="color:var(--ink-soft);font-size:13px;margin:-8px 0 12px;">Clique pour ajouter un verre (objectif : 4 verres ≈ 1 L)</p>
         <div class="water-row" id="waterRow"></div>
@@ -5178,7 +5182,7 @@ function onViewChange(view) {
   if (view === "today") maybeLoadWeather();
   if (view === "work") updateWorkTabBadges();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
-  if (view === "health") { renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); renderEnergyBalance(); }
+  if (view === "health") { _healthMonthOffset = 0; _renderHealthMonthLabel(); renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); renderEnergyBalance(); }
   if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
@@ -9325,7 +9329,7 @@ function renderStepsChart() {
   const h = getStepsHabit();
   if (!h || !document.getElementById("stepsChart")) return;
   const target = h.target || 9000;
-  const dates = lastDates(30);
+  const dates = _healthMonthDates();
   const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
   const values = dates.map(d => getStepsForDate(d));
   const colors = values.map(v => {
@@ -9358,18 +9362,43 @@ function renderStepsChart() {
     },
   });
 }
+let _healthMonthOffset = 0;
+
+function _healthMonthDates() {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const ref = new Date(now.getFullYear(), now.getMonth() + _healthMonthOffset, 1);
+  const start = new Date(ref.getFullYear(), ref.getMonth(), 1);
+  const endOfMonth = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
+  const end = endOfMonth > now ? now : endOfMonth;
+  const dates = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) dates.push(new Date(d));
+  return dates;
+}
+
+function _renderHealthMonthLabel() {
+  const now = new Date();
+  const ref = new Date(now.getFullYear(), now.getMonth() + _healthMonthOffset, 1);
+  const label = ref.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const el = document.getElementById('healthMonthLabel');
+  if (el) el.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+  const nxt = document.getElementById('healthNavNext');
+  if (nxt) nxt.style.opacity = _healthMonthOffset >= 0 ? '0.3' : '1';
+  if (nxt) nxt.style.pointerEvents = _healthMonthOffset >= 0 ? 'none' : 'auto';
+}
+
+function healthNavMonth(delta) {
+  if (_healthMonthOffset + delta > 0) return;
+  _healthMonthOffset += delta;
+  _renderHealthMonthLabel();
+  renderBodyChart(currentBodyMetric);
+  renderCalorieChart();
+  renderEnergyBalance();
+}
+
 function renderBodyChart(metric) {
   metric = metric || currentBodyMetric || "weight";
   const cfg = METRIC_CONFIG[metric];
-  // Trouver la première et dernière date avec une valeur pour cette métrique
-  const allDks = Object.keys(state.history || {}).sort();
-  const withData = allDks.filter(dk => state.history[dk]?.[metric] != null);
-  const firstDk = withData[0] || todayKey();
-  const lastDk = withData[withData.length - 1] || todayKey();
-  const first = new Date(firstDk); first.setHours(0,0,0,0);
-  const last = new Date(lastDk); last.setHours(0,0,0,0);
-  const nbDays = Math.max(1, Math.round((last - first) / 86400000) + 1);
-  const dates = Array.from({length: nbDays}, (_, i) => { const d = new Date(first); d.setDate(first.getDate() + i); return d; });
+  const dates = _healthMonthDates();
   const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
   const data = dates.map(d => state.history[todayKey(d)]?.[metric] ?? null);
   if (bodyChart) bodyChart.destroy();
@@ -9625,7 +9654,7 @@ function renderWellbeingCorrelations() {
 function renderEnergyBalance() {
   const el = document.getElementById('energyBalanceContent');
   if (!el) return;
-  const days = lastDates(30);
+  const days = _healthMonthDates();
   let totalBurned = 0, totalConsumed = 0, daysWithBoth = 0;
   days.forEach(d => {
     const day = state.history[todayKey(d)];
@@ -9675,7 +9704,7 @@ function renderEnergyBalance() {
 function renderCalorieChart() {
   const el = document.getElementById("calorieChart");
   if (!el) return;
-  const dates = lastDates(30);
+  const dates = _healthMonthDates();
   const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
   const limit = state.health?.dailyCalLimit || 1500;
   const data = dates.map(d => {
