@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v764</title>
+<title>Mon Tableau de Vie 🌿 · v766</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -19478,8 +19478,15 @@ async function cloudPull() {
   if (!confirm("⬇️ Récupérer les données du cloud et REMPLACER celles de cet appareil ?\n\n💡 Conseil : si tu as un doute, fais d'abord un export (⚙ Réglages).")) return;
   try {
     _fbSetStatus("syncing");
-    const doc = await _fbDocRef().get();
-    const remote = doc.exists ? _readCloudState(doc.data()) : null;
+    const [stateSnap, workSnap, biblioSnap] = await Promise.all([
+      _fbDocRef("state").get(),
+      _fbDocRef("work").get(),
+      _fbDocRef("biblio").get(),
+    ]);
+    const stateData  = stateSnap.exists  ? _readCloudState(stateSnap.data())  : null;
+    const workData   = workSnap.exists   ? _readCloudState(workSnap.data())   : null;
+    const biblioData = biblioSnap.exists ? (_readCloudState(biblioSnap.data()) || biblioSnap.data()) : null;
+    const remote = _assembleRemote(stateData, workData, biblioData);
     if (!remote) { alert("Aucune donnée dans le cloud pour l'instant."); _fbSetStatus("ok"); return; }
     // Remplacement total — on garde seulement le calendrier Google local
     const calEvents = state.calEvents || [];
@@ -19500,7 +19507,7 @@ async function cloudPull() {
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
     closeSyncMenu();
     showToast("⬇️ Données du cloud récupérées — rechargement…");
-    setTimeout(() => location.reload(), 700);
+    setTimeout(() => { window.location.href = '/Mon-Tableau-de-Vie/?_r=' + Date.now(); }, 700);
   } catch (e) { alert("Erreur : " + e.message); _fbSetStatus("error"); }
 }
 // ⬆️ Envoyer : remplace les données du cloud par celles de cet appareil
