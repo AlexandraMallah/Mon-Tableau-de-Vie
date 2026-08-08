@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v768</title>
+<title>Mon Tableau de Vie 🌿 · v770</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -1697,6 +1697,7 @@
       <button class="btn-icon" id="importBtn" onclick="importData()">↙ Importer</button>
       <button class="btn-icon" id="settingsBtn" onclick="openSettings()">⚙ Personnaliser</button>
       <button class="btn-icon" onclick="openGestionModal()" style="background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
+      <button class="btn-icon" onclick="cloudDiag()" title="Diagnostic sync" style="background:var(--lavender-soft);">🔍</button>
       <button class="btn-icon" onclick="openShortcutsEditor()" title="Gérer les raccourcis" style="background:var(--lavender-soft);">⚡</button>
       <button class="btn-icon" id="syncSignInBtn" onclick="signInWithGoogle()" style="background:linear-gradient(135deg,#e8f0fe,#d2e3fc);color:#1a73e8;font-weight:600;">☁️ Connexion</button>
       <div class="sync-row">
