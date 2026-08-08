@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v735</title>
+<title>Mon Tableau de Vie 🌿 · v737</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10605,10 +10605,11 @@ function cashWithdrawal() {
   if (!amt || amt <= 0) { alert("Entre un montant de retrait."); return; }
   const note = document.getElementById("cashNoteInput").value.trim() || "Retrait espèces";
   // 1. Retire du compte courant via une transaction
-  state.transactions.unshift({ id: "tx" + Date.now(), date: new Date().toISOString(), type: "expense", amount: amt, category: "Retrait espèces", note, reimbursable: false, mission: "", fixedCharge: false, exceptional: false, postdocMission: false, directSavingsAccount: "", fromSavingsAccount: "" });
-  // 2. Ajoute aux espèces
+  const txId = "tx" + Date.now();
+  state.transactions.unshift({ id: txId, date: new Date().toISOString(), type: "expense", amount: amt, category: "Retrait espèces", note, reimbursable: false, mission: "", fixedCharge: false, exceptional: false, postdocMission: false, directSavingsAccount: "", fromSavingsAccount: "" });
+  // 2. Ajoute aux espèces en gardant le lien avec la transaction
   if (!state.accounts.cashLog) state.accounts.cashLog = [];
-  state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount: amt, dir: "in", note });
+  state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount: amt, dir: "in", note, txId });
   state.accounts.cashBalance = (state.accounts.cashBalance || 0) + amt;
   document.getElementById("cashAmountInput").value = "";
   document.getElementById("cashNoteInput").value = "";
@@ -10644,9 +10645,15 @@ function setCashBalance() {
 function deleteCashEntry(idx) {
   if (!state.accounts.cashLog) return;
   const entry = state.accounts.cashLog[idx];
+  // Annuler l'effet sur le solde cash
   state.accounts.cashBalance = (state.accounts.cashBalance || 0) - (entry.dir === "in" ? entry.amount : -entry.amount);
+  // Si c'était un retrait lié à une transaction CC, supprimer aussi la transaction
+  if (entry.txId) {
+    const ti = state.transactions.findIndex(t => t.id === entry.txId);
+    if (ti !== -1) state.transactions.splice(ti, 1);
+  }
   state.accounts.cashLog.splice(idx, 1);
-  saveState(); renderCash();
+  saveState(); renderMoney(); renderAccounts();
 }
 function editAccountStart(account) {
   const current = account === "courant" ? (state.accounts?.courantStart || 0) : (state.accounts?.epargneStart || 0);
