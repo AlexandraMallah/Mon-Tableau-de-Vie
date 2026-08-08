@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v743</title>
+<title>Mon Tableau de Vie 🌿 · v745</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4349,6 +4349,22 @@
 </div>
 
 <!-- Modal note rêve / cauchemar -->
+<div class="modal-bg" id="renameCatModal" onclick="if(event.target===this)closeRenameCatModal()">
+  <div class="modal" style="max-width:400px;" onclick="event.stopPropagation()">
+    <h2 style="margin:0 0 4px;">✏️ Renommer une catégorie</h2>
+    <p style="font-size:13px;color:var(--ink-soft);margin:0 0 14px;">Clique sur une catégorie pour la renommer.</p>
+    <div id="renameCatList" style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;margin-bottom:14px;"></div>
+    <div id="renameCatForm" style="display:none;padding:12px;background:var(--bg-1);border-radius:12px;margin-bottom:12px;">
+      <div style="font-size:12px;color:var(--ink-softer);margin-bottom:6px;">Nouveau nom pour <strong id="renameCatOldName"></strong> :</div>
+      <input id="renameCatInput" type="text" style="width:100%;box-sizing:border-box;padding:8px 12px;border:1px solid var(--lavender);border-radius:9px;font-family:inherit;font-size:14px;color:var(--ink);outline:none;" onkeydown="if(event.key==='Enter')confirmRenamecat()" />
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button onclick="closeRenameCatModal()" class="secondary" style="flex:1;">Annuler</button>
+        <button onclick="confirmRenamecat()" class="primary" style="flex:1;">Renommer</button>
+      </div>
+    </div>
+    <button onclick="closeRenameCatModal()" class="secondary" style="width:100%;">Fermer</button>
+  </div>
+</div>
 <div class="modal-bg" id="dreamNoteModal" onclick="if(event.target===this)closeDreamNoteModal()">
   <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
     <h2 id="dreamNoteTitle">🌙 Mon rêve</h2>
@@ -10015,21 +10031,9 @@ function onTxCategoryChange() {
     populateTxCategories();
     sel.value = (name && list.includes(name)) ? name : (list[0] || "");
   } else if (sel.value === "__renamecat__") {
-    const menu = list.map((c, i) => `${i + 1}. ${c}`).join("\n");
-    const v = prompt("Quelle catégorie renommer ? Tape son numéro :\n\n" + menu);
-    const idx = parseInt(v) - 1;
-    if (idx >= 0 && idx < list.length) {
-      const oldName = list[idx];
-      const newName = (prompt(`Nouveau nom pour « ${oldName} » :`, oldName) || "").trim();
-      if (newName && newName !== oldName && !list.includes(newName)) {
-        list[idx] = newName;
-        // Mettre à jour toutes les transactions qui utilisaient l'ancienne catégorie
-        state.transactions.forEach(t => { if (t.category === oldName) t.category = newName; });
-        saveState();
-      }
-    }
+    openRenameCatModal(_activeTxCatList());
     populateTxCategories();
-    sel.value = list[idx] !== undefined ? list[idx] : (list[0] || "");
+    sel.value = list[0] || "";
   } else if (sel.value === "__delcat__") {
     if (!list.length) { populateTxCategories(); return; }
     const menu = list.map((c, i) => `${i + 1}. ${c}`).join("\n");
@@ -10055,6 +10059,47 @@ function _refreshModalCategories(isPro) {
   const prev = sel.value;
   sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
   if (list.includes(prev)) sel.value = prev;
+}
+let _renameCatList = null, _renameCatIdx = -1;
+function openRenameCatModal(list) {
+  _renameCatList = list;
+  _renameCatIdx = -1;
+  document.getElementById('renameCatForm').style.display = 'none';
+  const el = document.getElementById('renameCatList');
+  el.innerHTML = list.map((c, i) => `
+    <button onclick="selectRenameCat(${i})" style="
+      text-align:left;padding:10px 14px;border-radius:10px;border:1px solid var(--line);
+      background:var(--card);cursor:pointer;font-family:inherit;font-size:14px;color:var(--ink);
+      transition:all .15s;" onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background='var(--card)'">
+      ${escapeHtml(c)}
+    </button>`).join('');
+  document.getElementById('renameCatModal').classList.add('open');
+}
+function selectRenameCat(idx) {
+  _renameCatIdx = idx;
+  const name = _renameCatList[idx];
+  document.getElementById('renameCatOldName').textContent = name;
+  const inp = document.getElementById('renameCatInput');
+  inp.value = name;
+  document.getElementById('renameCatForm').style.display = '';
+  setTimeout(() => { inp.focus(); inp.select(); }, 50);
+}
+function confirmRenamecat() {
+  if (!_renameCatList || _renameCatIdx < 0) return;
+  const oldName = _renameCatList[_renameCatIdx];
+  const newName = document.getElementById('renameCatInput').value.trim();
+  if (!newName || newName === oldName) { closeRenameCatModal(); return; }
+  if (_renameCatList.includes(newName)) { alert('Cette catégorie existe déjà.'); return; }
+  _renameCatList[_renameCatIdx] = newName;
+  state.transactions.forEach(t => { if (t.category === oldName) t.category = newName; });
+  saveState();
+  closeRenameCatModal();
+  populateTxCategories();
+  renderTxList();
+}
+function closeRenameCatModal() {
+  document.getElementById('renameCatModal').classList.remove('open');
+  _renameCatList = null; _renameCatIdx = -1;
 }
 function populateMissionList() {
   const missions = [...new Set(
