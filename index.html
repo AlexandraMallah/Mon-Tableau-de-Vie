@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v731</title>
+<title>Mon Tableau de Vie 🌿 · v733</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2811,6 +2811,26 @@
         </div>
       </div>
       <p style="color:var(--ink-soft);font-size:12px;margin:10px 0 0;">💡 Quand tu ajoutes une transaction <strong>💰 Épargne</strong>, le montant est <strong>retiré du compte courant</strong> et <strong>ajouté au compte épargne</strong> automatiquement. Pour ajuster les soldes de départ : ⚙ Personnaliser.</p>
+
+      <!-- Espèces -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:15px;font-weight:700;color:var(--ink);">💵 Espèces en poche</span>
+          <span id="cashBalanceDisplay" style="font-size:20px;font-weight:800;color:#5a8a5a;"></span>
+          <span style="flex:1;"></span>
+          <span style="font-size:12px;color:var(--ink-softer);">Disponible total (CB + cash) : <strong id="totalDisponible" style="color:var(--ink);"></strong></span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+          <input type="number" id="cashAmountInput" placeholder="Montant €" step="0.01" min="0"
+            style="width:110px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:14px;color:var(--ink);" />
+          <input type="text" id="cashNoteInput" placeholder="Motif (ex: resto, marché…)"
+            style="flex:1;min-width:120px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:14px;color:var(--ink);" />
+          <button onclick="addCash(1)"  style="padding:7px 14px;border-radius:9px;border:none;background:#d4edda;color:#2d6a35;font-weight:700;cursor:pointer;font-family:inherit;">+ Reçu</button>
+          <button onclick="addCash(-1)" style="padding:7px 14px;border-radius:9px;border:none;background:#fde8e8;color:#a33;font-weight:700;cursor:pointer;font-family:inherit;">− Dépensé</button>
+          <button onclick="setCashBalance()" style="padding:7px 12px;border-radius:9px;border:1px solid var(--line);background:var(--bg-1);color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;">📍 Caler</button>
+        </div>
+        <div id="cashLog" style="margin-top:10px;display:flex;flex-direction:column;gap:3px;max-height:160px;overflow-y:auto;"></div>
+      </div>
     </div>
     <div class="money-summary" id="moneySummary"></div>
     <div class="card" style="margin-bottom:18px;">
@@ -4490,7 +4510,7 @@ const DEFAULT_STATE = {
   goals: [],
   transactions: [],
   subscriptions: [],
-  accounts: { courantStart: 0, epargneStart: 0 },
+  accounts: { courantStart: 0, epargneStart: 0, cashBalance: 0, cashLog: [] },
   domestique: { groceries: [], groceryEvents: [], mealEvents: [], chores: [], plants: [], tasks: [], recipes: [] },
   calEvents: [],
   calSources: [],
@@ -4557,6 +4577,8 @@ function migrate(s) {
   if (typeof s.accounts.courantStart !== "number") s.accounts.courantStart = 0;
   if (typeof s.accounts.epargneStart !== "number") s.accounts.epargneStart = 0;
   if (typeof s.accounts.monthlyBudget !== "number") s.accounts.monthlyBudget = 0;
+  if (typeof s.accounts.cashBalance !== "number") s.accounts.cashBalance = 0;
+  if (!Array.isArray(s.accounts.cashLog)) s.accounts.cashLog = [];
   s.customHolidays = s.customHolidays || [];
   s.calEvents = s.calEvents || [];
   s.calSources = s.calSources || [];
@@ -10543,6 +10565,7 @@ function renderAccounts() {
   const e = balanceEpargne();
   document.getElementById("accountCourant").textContent = c.toFixed(2) + " €";
   document.getElementById("accountEpargne").textContent = e.toFixed(2) + " €";
+  renderCash();
   const startC = state.accounts?.courantStart || 0;
   const startE = state.accounts?.epargneStart || 0;
   const editLinks = (acc) => `
@@ -10552,6 +10575,63 @@ function renderAccounts() {
     `Solde de départ : ${startC.toFixed(2)} € · Variation : ${(c - startC >= 0 ? "+" : "")}${(c - startC).toFixed(2)} €<br>${editLinks("courant")}`;
   document.getElementById("accountEpargneDetail").innerHTML =
     `Solde de départ : ${startE.toFixed(2)} € · Cumulé épargné : ${(e - startE >= 0 ? "+" : "")}${(e - startE).toFixed(2)} €<br>${editLinks("epargne")}`;
+}
+function renderCash() {
+  if (!state.accounts) return;
+  const bal = state.accounts.cashBalance || 0;
+  const disp = document.getElementById("cashBalanceDisplay");
+  const total = document.getElementById("totalDisponible");
+  const logEl = document.getElementById("cashLog");
+  if (disp) disp.textContent = bal.toFixed(2) + " €";
+  if (total) total.textContent = (balanceCourant() + bal).toFixed(2) + " €";
+  if (logEl) {
+    const log = (state.accounts.cashLog || []).slice().reverse();
+    logEl.innerHTML = log.length ? log.map((e, i) => {
+      const ri = log.length - 1 - i;
+      const sign = e.dir === "in" ? "+" : "−";
+      const col  = e.dir === "in" ? "#2d6a35" : "#a33";
+      return `<div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:2px 0;">
+        <span style="color:var(--ink-softer);min-width:70px;">${e.date}</span>
+        <span style="color:${col};font-weight:600;min-width:60px;">${sign}${Math.abs(e.amount).toFixed(2)} €</span>
+        <span style="color:var(--ink-soft);flex:1;">${escapeHtml(e.note||'')}</span>
+        <button onclick="deleteCashEntry(${ri})" style="background:none;border:none;color:var(--ink-softer);cursor:pointer;font-size:12px;padding:0 4px;">✕</button>
+      </div>`;
+    }).join('') : '<span style="font-size:12px;color:var(--ink-softer);">Aucun mouvement enregistré</span>';
+  }
+}
+function addCash(dir) {
+  const amt = parseFloat(document.getElementById("cashAmountInput").value);
+  if (!amt || amt <= 0) { alert("Entre un montant valide."); return; }
+  const note = document.getElementById("cashNoteInput").value.trim();
+  if (!state.accounts.cashLog) state.accounts.cashLog = [];
+  const date = new Date().toISOString().slice(0,10);
+  state.accounts.cashLog.push({ date, amount: amt, dir: dir === 1 ? "in" : "out", note });
+  state.accounts.cashBalance = (state.accounts.cashBalance || 0) + dir * amt;
+  document.getElementById("cashAmountInput").value = "";
+  document.getElementById("cashNoteInput").value = "";
+  saveState(); renderCash();
+}
+function setCashBalance() {
+  const v = prompt("Combien as-tu d'espèces en poche en ce moment ?", (state.accounts.cashBalance || 0).toFixed(2));
+  if (v === null) return;
+  const n = parseFloat(String(v).replace(",", "."));
+  if (isNaN(n) || n < 0) { alert("Montant invalide."); return; }
+  const old = state.accounts.cashBalance || 0;
+  const diff = n - old;
+  if (!state.accounts.cashLog) state.accounts.cashLog = [];
+  if (diff !== 0) {
+    const date = new Date().toISOString().slice(0,10);
+    state.accounts.cashLog.push({ date, amount: Math.abs(diff), dir: diff > 0 ? "in" : "out", note: "Mise à jour manuelle" });
+  }
+  state.accounts.cashBalance = n;
+  saveState(); renderCash();
+}
+function deleteCashEntry(idx) {
+  if (!state.accounts.cashLog) return;
+  const entry = state.accounts.cashLog[idx];
+  state.accounts.cashBalance = (state.accounts.cashBalance || 0) - (entry.dir === "in" ? entry.amount : -entry.amount);
+  state.accounts.cashLog.splice(idx, 1);
+  saveState(); renderCash();
 }
 function editAccountStart(account) {
   const current = account === "courant" ? (state.accounts?.courantStart || 0) : (state.accounts?.epargneStart || 0);
