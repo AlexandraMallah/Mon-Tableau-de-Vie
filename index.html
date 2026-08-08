@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v776</title>
+<title>Mon Tableau de Vie 🌿 · v778</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4931,12 +4931,16 @@ function migrate(s) {
   } catch(migErr) { console.warn("[migration biblio]", migErr); }
   return s;
 }
-function saveState() {
-  state.lastModified = Date.now();
-  window._lastLocalSave = Date.now();
+function saveState(userAction = true) {
+  if (userAction) {
+    state.lastModified = Date.now();
+    window._lastLocalSave = Date.now();
+    _fbQueueSave();
+  }
   localStorage.setItem(STORE_KEY, JSON.stringify(state));
-  _fbQueueSave();
 }
+// Sauvegarde silencieuse : localStorage uniquement, sans toucher au lastModified ni Firebase
+function saveStateQuiet() { saveState(false); }
 let state = loadState();
 
 /* ========= UTILS ========= */
@@ -5089,7 +5093,7 @@ async function fetchWeather(force) {
     document.getElementById("weatherHumidity").textContent = "Humidité : " + cur.relative_humidity_2m + "%";
     document.getElementById("weatherWind").textContent   = "Vent : " + Math.round(cur.wind_speed_10m) + " km/h";
     // Géoloc OK → on repasse en mode automatique (on oublie la ville fixée) + on masque les contrôles
-    if (state.weatherCity) { state.weatherCity = ""; saveState(); }
+    if (state.weatherCity) { state.weatherCity = ""; saveStateQuiet(); }
     const ctrl = document.getElementById("weatherControls");
     if (ctrl) ctrl.style.display = "none";
   } catch(e) {
@@ -5136,7 +5140,7 @@ async function fetchWeatherByCity() {
     document.getElementById("weatherHumidity").textContent = "Humidité : " + cur.relative_humidity_2m + "%";
     document.getElementById("weatherWind").textContent   = "Vent : " + Math.round(cur.wind_speed_10m) + " km/h";
     // Mémorise la ville pour les prochains chargements (plus besoin de la retaper)
-    state.weatherCity = city; saveState();
+    state.weatherCity = city; saveStateQuiet();
   } catch(e) {
     document.getElementById("weatherDesc").textContent = "Erreur réseau";
   }
@@ -19304,6 +19308,7 @@ async function _fbLoad() {
       const remoteTs = remote.lastModified || 0;
       if (remoteTs > localTs) {
         state = _mergeFromCloud(remote);
+        window._lastLocalSave = 0; // protéger le lastModified cloud contre saveState post-render
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
         renderAll();
         try { renderBiblioCollectionTree(); } catch(e) {}
@@ -19360,6 +19365,8 @@ function _applyRemoteSnaps() {
   if (remoteTs >= localTs) {
     if (_fbSaveTimer) { clearTimeout(_fbSaveTimer); _fbSaveTimer = null; }
     state = _mergeFromCloud(remote);
+    // Protéger le lastModified du cloud : empêcher que renderAll déclenche un save Firebase
+    window._lastLocalSave = 0;
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
     renderAll();
     try { renderBiblioCollectionTree(); } catch(e) {}
