@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v741</title>
+<title>Mon Tableau de Vie 🌿 · v743</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9992,7 +9992,7 @@ function _activeTxCatList() {
 }
 function _txCatExtraOptions() {
   return _activeTxCatList()
-    ? `<option value="__newcat__">➕ Nouvelle catégorie…</option><option value="__delcat__">🗑️ Supprimer une catégorie…</option>`
+    ? `<option value="__newcat__">➕ Nouvelle catégorie…</option><option value="__renamecat__">✏️ Renommer une catégorie…</option><option value="__delcat__">🗑️ Supprimer une catégorie…</option>`
     : "";
 }
 function _refreshTxCategories(isPro) {
@@ -10014,6 +10014,22 @@ function onTxCategoryChange() {
     if (name && !list.includes(name)) { list.push(name); saveState(); }
     populateTxCategories();
     sel.value = (name && list.includes(name)) ? name : (list[0] || "");
+  } else if (sel.value === "__renamecat__") {
+    const menu = list.map((c, i) => `${i + 1}. ${c}`).join("\n");
+    const v = prompt("Quelle catégorie renommer ? Tape son numéro :\n\n" + menu);
+    const idx = parseInt(v) - 1;
+    if (idx >= 0 && idx < list.length) {
+      const oldName = list[idx];
+      const newName = (prompt(`Nouveau nom pour « ${oldName} » :`, oldName) || "").trim();
+      if (newName && newName !== oldName && !list.includes(newName)) {
+        list[idx] = newName;
+        // Mettre à jour toutes les transactions qui utilisaient l'ancienne catégorie
+        state.transactions.forEach(t => { if (t.category === oldName) t.category = newName; });
+        saveState();
+      }
+    }
+    populateTxCategories();
+    sel.value = list[idx] !== undefined ? list[idx] : (list[0] || "");
   } else if (sel.value === "__delcat__") {
     if (!list.length) { populateTxCategories(); return; }
     const menu = list.map((c, i) => `${i + 1}. ${c}`).join("\n");
