@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v751</title>
+<title>Mon Tableau de Vie 🌿 · v753</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -9398,7 +9398,15 @@ function healthNavMonth(delta) {
 function renderBodyChart(metric) {
   metric = metric || currentBodyMetric || "weight";
   const cfg = METRIC_CONFIG[metric];
-  const dates = _healthMonthDates();
+  // Toutes les données du début à la fin
+  const allDks = Object.keys(state.history || {}).sort();
+  const withData = allDks.filter(dk => state.history[dk]?.[metric] != null);
+  const firstDk = withData[0] || todayKey();
+  const lastDk = withData[withData.length - 1] || todayKey();
+  const first = new Date(firstDk); first.setHours(0,0,0,0);
+  const last = new Date(lastDk); last.setHours(0,0,0,0);
+  const nbDays = Math.max(1, Math.round((last - first) / 86400000) + 1);
+  const dates = Array.from({length: nbDays}, (_, i) => { const d = new Date(first); d.setDate(first.getDate() + i); return d; });
   const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
   const data = dates.map(d => state.history[todayKey(d)]?.[metric] ?? null);
   if (bodyChart) bodyChart.destroy();
