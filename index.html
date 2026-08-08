@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v733</title>
+<title>Mon Tableau de Vie 🌿 · v735</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2825,6 +2825,7 @@
             style="width:110px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:14px;color:var(--ink);" />
           <input type="text" id="cashNoteInput" placeholder="Motif (ex: resto, marché…)"
             style="flex:1;min-width:120px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:14px;color:var(--ink);" />
+          <button onclick="cashWithdrawal()" style="padding:7px 14px;border-radius:9px;border:none;background:#fff3cd;color:#7a5c00;font-weight:700;cursor:pointer;font-family:inherit;">🏧 Retrait</button>
           <button onclick="addCash(1)"  style="padding:7px 14px;border-radius:9px;border:none;background:#d4edda;color:#2d6a35;font-weight:700;cursor:pointer;font-family:inherit;">+ Reçu</button>
           <button onclick="addCash(-1)" style="padding:7px 14px;border-radius:9px;border:none;background:#fde8e8;color:#a33;font-weight:700;cursor:pointer;font-family:inherit;">− Dépensé</button>
           <button onclick="setCashBalance()" style="padding:7px 12px;border-radius:9px;border:1px solid var(--line);background:var(--bg-1);color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;">📍 Caler</button>
@@ -10598,6 +10599,20 @@ function renderCash() {
       </div>`;
     }).join('') : '<span style="font-size:12px;color:var(--ink-softer);">Aucun mouvement enregistré</span>';
   }
+}
+function cashWithdrawal() {
+  const amt = parseFloat(document.getElementById("cashAmountInput").value);
+  if (!amt || amt <= 0) { alert("Entre un montant de retrait."); return; }
+  const note = document.getElementById("cashNoteInput").value.trim() || "Retrait espèces";
+  // 1. Retire du compte courant via une transaction
+  state.transactions.unshift({ id: "tx" + Date.now(), date: new Date().toISOString(), type: "expense", amount: amt, category: "Retrait espèces", note, reimbursable: false, mission: "", fixedCharge: false, exceptional: false, postdocMission: false, directSavingsAccount: "", fromSavingsAccount: "" });
+  // 2. Ajoute aux espèces
+  if (!state.accounts.cashLog) state.accounts.cashLog = [];
+  state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount: amt, dir: "in", note });
+  state.accounts.cashBalance = (state.accounts.cashBalance || 0) + amt;
+  document.getElementById("cashAmountInput").value = "";
+  document.getElementById("cashNoteInput").value = "";
+  saveState(); renderMoney(); renderAccounts();
 }
 function addCash(dir) {
   const amt = parseFloat(document.getElementById("cashAmountInput").value);
