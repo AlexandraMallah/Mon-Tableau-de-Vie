@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v737</title>
+<title>Mon Tableau de Vie 🌿 · v739</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10676,26 +10676,15 @@ function setCurrentBalance(account) {
   const n = Number(String(v).replace(",", "."));
   if (isNaN(n)) { alert("Valeur invalide"); return; }
 
-  // Calcul du "base" (balance sans starting)
-  let base;
-  if (account === "courant") {
-    let income = 0, expense = 0, savings = 0, savingsOut = 0;
-    for (const t of state.transactions) {
-      if (t.type === "income")           income     += t.amount;
-      else if (t.type === "expense")     expense    += t.amount;
-      else if (t.type === "savings")     savings    += t.amount;
-      else if (t.type === "savings-out") savingsOut += t.amount;
-    }
-    base = income + savingsOut - expense - savings;
-  } else {
-    const sv  = state.transactions.filter(t => t.type === "savings").reduce((s, t) => s + t.amount, 0);
-    const svo = state.transactions.filter(t => t.type === "savings-out").reduce((s, t) => s + t.amount, 0);
-    base = sv - svo;
-  }
-  const startBalance = n - base;
   if (!state.accounts) state.accounts = { courantStart: 0, epargneStart: 0 };
-  if (account === "courant") state.accounts.courantStart = startBalance;
-  else state.accounts.epargneStart = startBalance;
+  // On ajuste le solde de départ du delta entre ce que le dashboard calcule et la réalité
+  if (account === "courant") {
+    const delta = n - balanceCourant();
+    state.accounts.courantStart = (state.accounts.courantStart || 0) + delta;
+  } else {
+    const delta = n - balanceEpargne();
+    state.accounts.epargneStart = (state.accounts.epargneStart || 0) + delta;
+  }
   saveState();
   renderAccounts();
 }
