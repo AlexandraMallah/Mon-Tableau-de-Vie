@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v762</title>
+<title>Mon Tableau de Vie 🌿 · v764</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2711,27 +2711,20 @@
 
       </div>
 
-    <!-- 🌿 Forme & énergie -->
-    <div class="grid-two" style="margin-top:18px;">
-      <div class="card">
-        <h2>💧 Hydratation aujourd'hui</h2>
-        <p style="color:var(--ink-soft);font-size:13px;margin:-8px 0 12px;">Clique pour ajouter un verre (objectif : 4 verres ≈ 1 L)</p>
-        <div class="water-row" id="waterRow"></div>
+    <!-- 🌿 Pas -->
+    <div class="card" style="margin-top:18px;">
+      <div class="card-row">
+        <h2>🚶 Pas</h2>
+        <span style="font-size:13px;color:var(--ink-soft);">Objectif : <strong>9000 pas</strong> · orange dès 7000</span>
       </div>
-      <div class="card">
-        <div class="card-row">
-          <h2>🚶 Pas</h2>
-          <span style="font-size:13px;color:var(--ink-soft);">Objectif : <strong>9000 pas</strong> · orange dès 7000</span>
-        </div>
-        <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
-          <div class="stat" id="stepsTodayTile" style="transition:background 0.3s;"></div>
-          <div class="stat" id="stepsMonthlyTile" style="transition:background 0.3s;"></div>
-          <div class="stat" id="stepsBestTile"></div>
-        </div>
-        <div style="height:14px;"></div>
-        <p style="color:var(--ink-soft);font-size:12px;margin:0 0 6px;">🟢 ≥ 9000 · 🟠 7000-8999 · 🔴 < 7000 · pointillé vert = objectif</p>
-        <div class="chart-wrap" style="height:240px;"><canvas id="stepsChart"></canvas></div>
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat" id="stepsTodayTile" style="transition:background 0.3s;"></div>
+        <div class="stat" id="stepsMonthlyTile" style="transition:background 0.3s;"></div>
+        <div class="stat" id="stepsBestTile"></div>
       </div>
+      <div style="height:14px;"></div>
+      <p style="color:var(--ink-soft);font-size:12px;margin:0 0 6px;">🟢 ≥ 9000 · 🟠 7000-8999 · 🔴 < 7000 · pointillé vert = objectif</p>
+      <div class="chart-wrap" style="height:240px;"><canvas id="stepsChart"></canvas></div>
     </div>
 
     <!-- 🔁 Habitudes -->
@@ -8415,11 +8408,11 @@ function renderStepsStats() {
   if (!h || !document.getElementById("stepsTodayTile")) return;
   const target = h.target || 9000;
   const today = getStepsForDate(new Date());
-  const dates = lastDates(30);
-  const values = dates.map(d => getStepsForDate(d)).filter(v => v > 0);
+  const monthDates = _healthMonthDates();
+  const values = monthDates.map(d => getStepsForDate(d)).filter(v => v > 0);
   const monthlyAvg = values.length ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
   const best = values.length ? Math.max(...values) : 0;
-  const daysGoal = dates.filter(d => getStepsForDate(d) >= target).length;
+  const daysGoal = monthDates.filter(d => getStepsForDate(d) >= target).length;
 
   const ct = colorForSteps(today);
   const cm = colorForSteps(monthlyAvg);
@@ -8431,7 +8424,7 @@ function renderStepsStats() {
   `;
   document.getElementById("stepsTodayTile").style.background = ct.bg;
   document.getElementById("stepsMonthlyTile").innerHTML = `
-    <div class="stat-label">Moyenne 30j</div>
+    <div class="stat-label">Moy. du mois</div>
     <div class="stat-val" style="color:${cm.fg};">${monthlyAvg.toLocaleString("fr-FR")}</div>
     <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">sur ${values.length} j renseigné${values.length > 1 ? "s" : ""}</div>
   `;
@@ -9737,12 +9730,12 @@ function renderCalorieChart() {
           label: "🏃 Dépensées",
           type: "line",
           data: burnedData,
-          borderColor: "#5a9e7c",
+          borderColor: "#5b8fd4",
           borderWidth: 2.5,
           backgroundColor: "transparent",
           tension: 0.35,
           pointRadius: burnedData.map(v => v != null ? 4 : 0),
-          pointBackgroundColor: "#5a9e7c",
+          pointBackgroundColor: "#5b8fd4",
           pointBorderColor: "#fff",
           pointBorderWidth: 2,
           pointHoverRadius: 7,
@@ -9777,24 +9770,16 @@ function renderCalorieChart() {
     // Moyenne sur les jours renseignés du mois affiché
     const monthVals = dates.map(d => calOf(todayKey(d))).filter(v => v != null);
     const mo = monthVals.length ? { avg: Math.round(monthVals.reduce((s, v) => s + v, 0) / monthVals.length), n: monthVals.length } : null;
-    // Meilleur jour du mois
-    const best = monthVals.length ? Math.max(...monthVals) : null;
     const card = (emoji, label, res) => {
-      if (!res) return `<div style="flex:1;min-width:120px;background:var(--bg-soft,#faf7ff);border:1px solid var(--line);border-radius:12px;padding:9px 12px;text-align:center;">
-          <div style="font-size:12px;color:var(--ink-softer);">${emoji} ${label}</div>
-          <div style="font-size:15px;font-weight:700;color:var(--ink-soft);margin-top:2px;">—</div>
-          <div style="font-size:10px;color:var(--ink-softer);">aucune saisie</div></div>`;
+      if (!res) return `<div style="background:var(--bg-soft,#faf7ff);border:1px solid var(--line);border-radius:10px;padding:6px 10px;text-align:center;font-size:11px;color:var(--ink-softer);">${emoji} ${label} : —</div>`;
       const col = res.avg > limit ? "#d97777" : "#3f9e78";
-      return `<div style="flex:1;min-width:120px;background:var(--bg-soft,#faf7ff);border:1px solid var(--line);border-radius:12px;padding:9px 12px;text-align:center;">
-          <div style="font-size:12px;color:var(--ink-softer);">${emoji} ${label}</div>
-          <div style="font-size:18px;font-weight:700;color:${col};margin-top:2px;">${res.avg.toLocaleString("fr-FR")} <span style="font-size:11px;font-weight:600;">kcal/j</span></div>
-          <div style="font-size:10px;color:var(--ink-softer);">moyenne sur ${res.n} j renseigné${res.n > 1 ? "s" : ""}</div></div>`;
+      return `<div style="background:var(--bg-soft,#faf7ff);border:1px solid var(--line);border-radius:10px;padding:6px 12px;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;color:var(--ink-softer);">${emoji} ${label}</span>
+          <span style="font-size:15px;font-weight:700;color:${col};">${res.avg.toLocaleString("fr-FR")} <span style="font-size:10px;font-weight:600;">kcal/j</span></span>
+          <span style="font-size:10px;color:var(--ink-softer);margin-left:auto;">${res.n} j</span>
+        </div>`;
     };
-    const bestCard = best != null ? `<div style="flex:1;min-width:120px;background:var(--bg-soft,#faf7ff);border:1px solid var(--line);border-radius:12px;padding:9px 12px;text-align:center;">
-        <div style="font-size:12px;color:var(--ink-softer);">🔝 Max du mois</div>
-        <div style="font-size:18px;font-weight:700;color:${best > limit ? "#d97777" : "#3f9e78"};margin-top:2px;">${best.toLocaleString("fr-FR")} <span style="font-size:11px;font-weight:600;">kcal</span></div>
-        <div style="font-size:10px;color:var(--ink-softer);">jour le plus chargé</div></div>` : "";
-    avgEl.innerHTML = card("🗓️", "Moyenne du mois", mo) + bestCard;
+    avgEl.innerHTML = card("🗓️", "Moy. du mois", mo);
   }
 }
 
