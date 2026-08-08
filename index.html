@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v774</title>
+<title>Mon Tableau de Vie 🌿 · v776</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -5566,8 +5566,7 @@ function toggleHabit(id) {
 function setHabitValue(id, val) {
   const t = getToday();
   const v = Number(val) || 0;
-  if (v > 0) t.habits[id] = v;
-  else delete t.habits[id];
+  t.habits[id] = v; // stocker 0 explicitement pour que le cloud puisse écraser l'ancienne valeur
   // Si c'est l'eau, synchronise aussi today.water pour rétrocompat
   if (id === "h-eau" || /eau/i.test(state.habits.find(h => h.id === id)?.name || "")) {
     t.water = v;
@@ -8357,13 +8356,8 @@ function getWaterGlasses() {
 function setWaterGlasses(n) {
   const t = getToday();
   const h = getWaterHabit();
-  if (n > 0) {
-    if (h) t.habits[h.id] = n;
-    else t.water = n;
-  } else {
-    if (h) delete t.habits[h.id];
-    else t.water = 0;
-  }
+  if (h) t.habits[h.id] = n;
+  else t.water = n;
   // Garde aussi today.water synchronisé pour rétrocompat
   t.water = n;
   saveState();
