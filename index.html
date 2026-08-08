@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v757</title>
+<title>Mon Tableau de Vie 🌿 · v760</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2683,21 +2683,21 @@
             <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;" id="muscleMassTrend"></div>
           </div>
         </div>
-        <!-- Navigation mois -->
-        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin:18px 0 10px;">
-          <button onclick="healthNavMonth(-1)" style="background:var(--bg-2);border:1px solid var(--line);border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">◀</button>
-          <span id="healthMonthLabel" style="font-size:15px;font-weight:700;color:var(--ink);min-width:140px;text-align:center;"></span>
-          <button id="healthNavNext" onclick="healthNavMonth(1)" style="background:var(--bg-2);border:1px solid var(--line);border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">▶</button>
-        </div>
-
         <!-- Graphique poids pleine largeur -->
-        <div style="margin-bottom:14px;">
+        <div style="margin-bottom:18px;">
           <div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;">
             <button class="sub-tab active" id="bodyMetricWeight" onclick="switchBodyMetric('weight')">Poids</button>
             <button class="sub-tab" id="bodyMetricFat" onclick="switchBodyMetric('bodyFat')">Masse grasse</button>
             <button class="sub-tab" id="bodyMetricMuscle" onclick="switchBodyMetric('muscleMass')">Masse maigre</button>
           </div>
           <div class="chart-wrap" style="height:200px;"><canvas id="bodyChart"></canvas></div>
+        </div>
+
+        <!-- Navigation mois (pour kcal/pas/balance uniquement) -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin:0 0 10px;">
+          <button onclick="healthNavMonth(-1)" style="background:var(--bg-2);border:1px solid var(--line);border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">◀</button>
+          <span id="healthMonthLabel" style="font-size:15px;font-weight:700;color:var(--ink);min-width:140px;text-align:center;"></span>
+          <button id="healthNavNext" onclick="healthNavMonth(1)" style="background:var(--bg-2);border:1px solid var(--line);border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">▶</button>
         </div>
 
         <!-- Graphique kcal pleine largeur -->
@@ -9715,11 +9715,14 @@ function renderCalorieChart() {
   const dates = _healthMonthDates();
   const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
   const limit = state.health?.dailyCalLimit || 1500;
+  const now = new Date(); now.setHours(0,0,0,0);
   const data = dates.map(d => {
     const log = state.history[todayKey(d)]?.foodLog || [];
     const tot = log.reduce((s, e) => s + (e.calories || 0), 0);
     return tot > 0 ? tot : null;
   });
+  // Barres grises pour les jours passés sans données (pas les futurs)
+  const emptyData = dates.map((d, i) => (data[i] == null && d <= now) ? 300 : null);
   const colors = data.map(v => v == null ? "rgba(0,0,0,0)" : (v > limit ? "#f3a6a6" : "#aee0c8"));
   const burnedData = dates.map(d => {
     const v = Number(state.history[todayKey(d)]?.habits?.['h-cal-dep']) || 0;
@@ -9732,6 +9735,7 @@ function renderCalorieChart() {
       labels,
       datasets: [
         { label: "Ingérées", data, backgroundColor: colors, borderRadius: 6, barPercentage: 0.7, categoryPercentage: 0.85 },
+        { label: "_vide", data: emptyData, backgroundColor: "rgba(200,195,210,0.25)", borderRadius: 6, barPercentage: 0.7, categoryPercentage: 0.85 },
         { label: `Objectif (${limit})`, type: "line", data: dates.map(() => limit), borderColor: "#c9b6f0", borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, fill: false },
         {
           label: "🏃 Dépensées",
@@ -9753,6 +9757,11 @@ function renderCalorieChart() {
     },
     options: {
       ...baseChartOpts(),
+      plugins: {
+        ...baseChartOpts().plugins,
+        legend: { ...baseChartOpts().plugins?.legend, labels: { filter: item => !item.text.startsWith('_') } },
+        tooltip: { ...baseChartOpts().plugins?.tooltip, callbacks: { label: ctx => ctx.dataset.label.startsWith('_') ? null : ctx.parsed.y + " kcal" } },
+      },
       scales: {
         x: { grid: { display: false }, ticks: { color: "#8a8499", maxTicksLimit: 6 } },
         y: { min: 0, grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " kcal" } },
@@ -9760,29 +9769,20 @@ function renderCalorieChart() {
     },
   });
 
-  // ───── Moyennes semaine / mois (jours renseignés uniquement) ─────
+  // ───── Moyenne du mois affiché (jours renseignés uniquement) ─────
   const avgEl = document.getElementById("calorieAvg");
   if (avgEl) {
     const now = new Date(); now.setHours(0, 0, 0, 0);
-    // Lundi de la semaine en cours
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const calOf = dk => {
       const log = state.history[dk]?.foodLog || [];
       const tot = log.reduce((s, e) => s + (e.calories || 0), 0);
       return tot > 0 ? tot : null;
     };
-    const avgSince = start => {
-      const vals = [];
-      for (let d = new Date(start); d <= now; d.setDate(d.getDate() + 1)) {
-        const v = calOf(todayKey(d));
-        if (v != null) vals.push(v);
-      }
-      if (!vals.length) return null;
-      return { avg: Math.round(vals.reduce((s, v) => s + v, 0) / vals.length), n: vals.length };
-    };
-    const wk = avgSince(monday), mo = avgSince(firstOfMonth);
+    // Moyenne sur les jours renseignés du mois affiché
+    const monthVals = dates.map(d => calOf(todayKey(d))).filter(v => v != null);
+    const mo = monthVals.length ? { avg: Math.round(monthVals.reduce((s, v) => s + v, 0) / monthVals.length), n: monthVals.length } : null;
+    // Meilleur jour du mois
+    const best = monthVals.length ? Math.max(...monthVals) : null;
     const card = (emoji, label, res) => {
       if (!res) return `<div style="flex:1;min-width:120px;background:var(--bg-soft,#faf7ff);border:1px solid var(--line);border-radius:12px;padding:9px 12px;text-align:center;">
           <div style="font-size:12px;color:var(--ink-softer);">${emoji} ${label}</div>
@@ -9794,7 +9794,11 @@ function renderCalorieChart() {
           <div style="font-size:18px;font-weight:700;color:${col};margin-top:2px;">${res.avg.toLocaleString("fr-FR")} <span style="font-size:11px;font-weight:600;">kcal/j</span></div>
           <div style="font-size:10px;color:var(--ink-softer);">moyenne sur ${res.n} j renseigné${res.n > 1 ? "s" : ""}</div></div>`;
     };
-    avgEl.innerHTML = card("📅", "Cette semaine", wk) + card("🗓️", "Ce mois", mo);
+    const bestCard = best != null ? `<div style="flex:1;min-width:120px;background:var(--bg-soft,#faf7ff);border:1px solid var(--line);border-radius:12px;padding:9px 12px;text-align:center;">
+        <div style="font-size:12px;color:var(--ink-softer);">🔝 Max du mois</div>
+        <div style="font-size:18px;font-weight:700;color:${best > limit ? "#d97777" : "#3f9e78"};margin-top:2px;">${best.toLocaleString("fr-FR")} <span style="font-size:11px;font-weight:600;">kcal</span></div>
+        <div style="font-size:10px;color:var(--ink-softer);">jour le plus chargé</div></div>` : "";
+    avgEl.innerHTML = card("🗓️", "Moyenne du mois", mo) + bestCard;
   }
 }
 
