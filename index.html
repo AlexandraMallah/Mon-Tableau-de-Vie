@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v782</title>
+<title>Mon Tableau de Vie 🌿 · v784</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -7996,10 +7996,19 @@ function renderActivityRetro() {
 
     // Ligne totaux
     html += `<tr style="border-top:1px solid var(--line);">
-      <td style="padding:6px 6px 4px 0;font-size:11px;font-weight:700;color:var(--ink-soft);">Total</td>
+      <td style="padding:6px 6px 2px 0;font-size:11px;font-weight:700;color:var(--ink-soft);">Total</td>
       ${acts.map(a => {
         const total = monthData.reduce((s, md) => s + md.counts[a.id], 0);
-        return `<td style="text-align:center;padding:6px 2px 4px;font-size:12px;font-weight:700;color:var(--ink);">${total}</td>`;
+        return `<td style="text-align:center;padding:6px 2px 2px;font-size:12px;font-weight:700;color:var(--ink);">${total}</td>`;
+      }).join('')}
+    </tr>`;
+    // Ligne moyenne par mois
+    html += `<tr>
+      <td style="padding:2px 6px 6px 0;font-size:11px;color:var(--ink-softer);">Moy./mois</td>
+      ${acts.map(a => {
+        const total = monthData.reduce((s, md) => s + md.counts[a.id], 0);
+        const avg = months.length ? (total / months.length).toFixed(1).replace('.', ',') : '—';
+        return `<td style="text-align:center;padding:2px 2px 6px;font-size:11px;color:var(--ink-soft);">${avg}</td>`;
       }).join('')}
     </tr>`;
     html += `</tbody></table></div>`;
