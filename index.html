@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v789</title>
+<title>Mon Tableau de Vie 🌿 · v790</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2099,6 +2099,28 @@
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closeSyncMenu()">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal remboursement partiel -->
+  <div class="modal-bg" id="partialReimbModal" onclick="if(event.target===this)closePartialReimbModal()">
+    <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
+      <h2 style="margin:0 0 4px;">💸 Remboursement reçu</h2>
+      <p id="partialReimbTxInfo" style="font-size:13px;color:var(--ink-soft);margin:0 0 14px;"></p>
+      <div id="partialReimbHistory" style="margin-bottom:12px;"></div>
+      <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:4px;">Montant remboursé (€)</label>
+      <input type="number" id="partialReimbAmount" step="0.01" min="0.01" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:14px;margin-bottom:10px;box-sizing:border-box;">
+      <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:4px;">Date du remboursement</label>
+      <input type="date" id="partialReimbDate" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:14px;margin-bottom:10px;box-sizing:border-box;">
+      <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:4px;">Compte crédité</label>
+      <input type="text" id="partialReimbAccount" placeholder="ex : Compte Nickel, Lydia, CB…" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:14px;margin-bottom:10px;box-sizing:border-box;">
+      <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:4px;">Par qui ? (optionnel)</label>
+      <input type="text" id="partialReimbNote" placeholder="ex : Mon frère, Ma sœur…" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:14px;margin-bottom:16px;box-sizing:border-box;">
+      <div class="actions">
+        <button class="secondary" onclick="closePartialReimbModal()">Annuler</button>
+        <div class="spacer"></div>
+        <button class="primary" onclick="savePartialReimb()">Enregistrer</button>
       </div>
     </div>
   </div>
@@ -10662,6 +10684,68 @@ function undoReimbursed(id) {
   saveState();
   renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
+/* ===== REMBOURSEMENTS PARTIELS ===== */
+function txNetAmount(tx) {
+  if (!tx.partialReimbursements || !tx.partialReimbursements.length) return tx.amount;
+  const reimbTotal = tx.partialReimbursements.reduce((s, r) => s + r.amount, 0);
+  return Math.max(0, tx.amount - reimbTotal);
+}
+
+let _reimbModalTxId = null;
+function openPartialReimbModal(id) {
+  const tx = state.transactions.find(t => t.id === id);
+  if (!tx) return;
+  _reimbModalTxId = id;
+  const alreadyReimb = (tx.partialReimbursements || []).reduce((s, r) => s + r.amount, 0);
+  const remaining = Math.max(0, tx.amount - alreadyReimb);
+  document.getElementById("partialReimbTxInfo").textContent = `${tx.category} — ${tx.amount.toFixed(2)} €`;
+  document.getElementById("partialReimbAmount").value = remaining.toFixed(2);
+  document.getElementById("partialReimbDate").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("partialReimbAccount").value = "";
+  document.getElementById("partialReimbNote").value = "";
+  // Affiche historique remboursements existants
+  const hist = document.getElementById("partialReimbHistory");
+  if (tx.partialReimbursements && tx.partialReimbursements.length) {
+    hist.innerHTML = tx.partialReimbursements.map(r => {
+      const d = new Date(r.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+      return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 0;border-bottom:1px solid var(--line);">
+        <span style="color:var(--ink-soft);">${d} · ${r.account || '—'} · ${escapeHtml(r.note || '')}</span>
+        <span style="font-weight:600;color:#16a34a;">+${r.amount.toFixed(2)} €</span>
+        <button onclick="deletePartialReimb('${id}','${r.id}')" style="margin-left:8px;border:none;background:none;color:#dc2626;cursor:pointer;font-size:13px;">✕</button>
+      </div>`;
+    }).join("");
+  } else {
+    hist.innerHTML = "";
+  }
+  document.getElementById("partialReimbModal").classList.add("open");
+}
+function closePartialReimbModal() {
+  document.getElementById("partialReimbModal").classList.remove("open");
+  _reimbModalTxId = null;
+}
+function savePartialReimb() {
+  const tx = state.transactions.find(t => t.id === _reimbModalTxId);
+  if (!tx) return;
+  const amount = parseFloat(document.getElementById("partialReimbAmount").value);
+  if (!amount || amount <= 0) return;
+  const date = document.getElementById("partialReimbDate").value || new Date().toISOString().slice(0, 10);
+  const account = document.getElementById("partialReimbAccount").value.trim();
+  const note = document.getElementById("partialReimbNote").value.trim();
+  if (!tx.partialReimbursements) tx.partialReimbursements = [];
+  tx.partialReimbursements.push({ id: "pr" + Date.now(), amount, date, account, note });
+  saveState();
+  closePartialReimbModal();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderBudgetFeedback(); renderForecast();
+}
+function deletePartialReimb(txId, reimbId) {
+  const tx = state.transactions.find(t => t.id === txId);
+  if (!tx || !tx.partialReimbursements) return;
+  tx.partialReimbursements = tx.partialReimbursements.filter(r => r.id !== reimbId);
+  saveState();
+  openPartialReimbModal(txId); // recharge la modale
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderBudgetFeedback(); renderForecast();
+}
+
 function balanceCourant() {
   const start = state.accounts?.courantStart || 0;
   let income = 0, expense = 0, savings = 0, savingsOut = 0;
@@ -10914,7 +10998,7 @@ function renderMoneySummary() {
     const d = new Date(tx.date);
     if (d >= start && d < end) {
       if (tx.type === "income") income += tx.amount;
-      else if (tx.type === "expense") expense += tx.amount;
+      else if (tx.type === "expense") expense += txNetAmount(tx);
       // savings traités séparément dans la carte Épargne, pas comptés ici
     }
   }
@@ -11214,11 +11298,12 @@ function renderTxList() {
       <div class="tx-row">
         <div class="tx-dot" style="background:${dotColor}"></div>
         <div class="tx-info">
-          <div class="tx-cat">${escapeHtml(tx.category)}${tx.reimbursable ? ' <span style="font-size:11px;background:#fff3e0;color:#dc7014;border-radius:6px;padding:1px 5px;font-weight:600;">💼 frais pro</span>' : ''}${tx.fixedCharge ? ' <span style="font-size:11px;background:#f0eeff;color:#7c5cbf;border-radius:6px;padding:1px 5px;font-weight:600;">🏠 fixe</span>' : ''}${tx.exceptional ? ' <span style="font-size:11px;background:#fef9ec;color:#b45309;border-radius:6px;padding:1px 5px;font-weight:600;">✨ lissée</span>' : ''}</div>
+          <div class="tx-cat">${escapeHtml(tx.category)}${tx.reimbursable ? ' <span style="font-size:11px;background:#fff3e0;color:#dc7014;border-radius:6px;padding:1px 5px;font-weight:600;">💼 frais pro</span>' : ''}${tx.fixedCharge ? ' <span style="font-size:11px;background:#f0eeff;color:#7c5cbf;border-radius:6px;padding:1px 5px;font-weight:600;">🏠 fixe</span>' : ''}${tx.exceptional ? ' <span style="font-size:11px;background:#fef9ec;color:#b45309;border-radius:6px;padding:1px 5px;font-weight:600;">✨ lissée</span>' : ''}${(tx.partialReimbursements && tx.partialReimbursements.length) ? ` <span style="font-size:11px;background:#dcfce7;color:#16a34a;border-radius:6px;padding:1px 5px;font-weight:600;">💸 remb. ${(tx.amount - txNetAmount(tx)).toFixed(0)} €</span>` : ''}</div>
           <div class="tx-note">${escapeHtml(tx.note || "—")}${tx.reimbursedAt ? ' ✅' : ''}</div>
         </div>
-        <div class="tx-amount ${tx.type}">${sign} ${Math.abs(tx.amount).toFixed(2)} €</div>
+        <div class="tx-amount ${tx.type}">${sign} ${Math.abs(tx.type === "expense" ? txNetAmount(tx) : tx.amount).toFixed(2)} €</div>
         <div class="tx-date">${dateStr}</div>
+        ${tx.type === "expense" ? `<button class="tx-edit" onclick="openPartialReimbModal('${tx.id}')" title="Saisir un remboursement" style="color:#16a34a;border-color:#bbf7d0;font-size:13px;">💸</button>` : ''}
         <button class="tx-edit" onclick="openTxModal('${tx.id}')" title="Modifier">✎</button>
         <button class="tx-del" onclick="deleteTx('${tx.id}')" title="Supprimer">✕</button>
       </div>`;
@@ -11243,7 +11328,7 @@ function renderDailyExpenseChart() {
   for (const tx of state.transactions) {
     const dk = todayKey(new Date(tx.date));
     if (!(dk in outByDay)) continue;
-    if (tx.type === "expense") outByDay[dk] += tx.amount;
+    if (tx.type === "expense") outByDay[dk] += txNetAmount(tx);
     else if (tx.type === "income" || tx.type === "savings-out") inByDay[dk] += tx.amount;
   }
 
@@ -11361,7 +11446,7 @@ function openDayDetail(d) {
   const txs = state.transactions
     .filter(tx => todayKey(new Date(tx.date)) === dk && tx.type !== "savings" && tx.type !== "savings-out")
     .sort((a, b) => new Date(b.date) - new Date(a.date));
-  const totalOut = txs.filter(t => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+  const totalOut = txs.filter(t => t.type === "expense").reduce((s, t) => s + txNetAmount(t), 0);
   const totalIn  = txs.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0);
   const dateLabel = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
   document.getElementById("catDetailDot").style.background = "transparent";
@@ -11939,7 +12024,7 @@ function renderMoneyCatChart() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d < end && tx.type === "expense" && !tx.reimbursable) totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
+    if (d >= start && d < end && tx.type === "expense" && !tx.reimbursable) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const depTotal = entries.reduce((s,[,v]) => s+v, 0);
@@ -11990,7 +12075,7 @@ function renderMoneyCatChartNoFixed() {
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
     if (d >= start && d < end && tx.type === "expense" && !tx.reimbursable && !tx.fixedCharge)
-      totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
+      totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
@@ -12075,9 +12160,10 @@ function renderBudgetGauge() {
     // Jauge = vraies dépenses courantes seulement : type "Dépense", hors frais pro,
     // hors "Hors compte" (external) et hors charges fixes (retirées plus bas).
     if (tx.type === "expense" && !tx.reimbursable) {
-      spentRaw += tx.amount;
-      if (tx.fixedCharge) fixedTotal += tx.amount;
-      if (tx.exceptional) exceptionalTotal += tx.amount;
+      const net = txNetAmount(tx);
+      spentRaw += net;
+      if (tx.fixedCharge) fixedTotal += net;
+      if (tx.exceptional) exceptionalTotal += net;
     }
   }
   // Dépenses hors charges fixes et hors exceptionnelles (pour la jauge)
@@ -12153,7 +12239,7 @@ function renderBudgetFeedback() {
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
     if (d >= start && d < end && tx.type === "expense" && !tx.reimbursable)
-      totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
+      totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
 
   const budgets = state.budgets || {};
@@ -12785,7 +12871,7 @@ function computeMetric(m) {
     let spent = 0;
     for (const tx of state.transactions) {
       const d = new Date(tx.date);
-      if (d >= start && d < end && tx.type === "expense" && !tx.reimbursable) spent += tx.amount;
+      if (d >= start && d < end && tx.type === "expense" && !tx.reimbursable) spent += txNetAmount(tx);
     }
     const remaining = balanceCourant();
     const budget = spent + remaining;
@@ -19542,13 +19628,15 @@ function openBudgetDetail() {
   const body = document.getElementById("budgetDetailBody");
   if (!txs.length) { body.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;">Aucune dépense.</p>`; }
   else {
-    const total = txs.reduce((s, t) => s + t.amount, 0);
+    const total = txs.reduce((s, t) => s + txNetAmount(t), 0);
     body.innerHTML = txs.map(tx => {
       const d = new Date(tx.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
       const tag = tx.fixedCharge ? `<span style="font-size:10px;background:#f3ecff;color:#7c5cbf;border-radius:6px;padding:1px 5px;margin-left:4px;">fixe</span>` : tx.exceptional ? `<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 5px;margin-left:4px;">lissée</span>` : "";
+      const net = txNetAmount(tx);
+      const reimbTag = net < tx.amount ? `<span style="font-size:10px;background:#dcfce7;color:#16a34a;border-radius:6px;padding:1px 5px;margin-left:4px;">💸 remb. ${(tx.amount - net).toFixed(0)}€</span>` : "";
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;">
-        <div><span style="color:var(--ink-soft);min-width:52px;display:inline-block;">${d}</span> ${tx.label || tx.category}${tag}</div>
-        <strong style="color:#c75b4d;white-space:nowrap;margin-left:8px;">−${tx.amount.toFixed(2)} €</strong>
+        <div><span style="color:var(--ink-soft);min-width:52px;display:inline-block;">${d}</span> ${tx.label || tx.category}${tag}${reimbTag}</div>
+        <strong style="color:#c75b4d;white-space:nowrap;margin-left:8px;">−${net.toFixed(2)} €</strong>
       </div>`;
     }).join("") + `<div style="text-align:right;padding-top:8px;font-size:13px;font-weight:600;">Total : ${total.toFixed(2)} €</div>`;
   }
