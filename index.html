@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v792</title>
+<title>Mon Tableau de Vie 🌿 · v793</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4537,7 +4537,7 @@ const DEFAULT_STATE = {
   ],
   categories: ["Alimentation", "Logement", "Transport", "Loisirs", "Cadeau", "Sport", "Esthétique", "Santé", "Travail", "Abonnements audiovisuels", "Abonnement IA", "Autre"],
   incomeCategories: ["Salaire (postdoc)", "Salaire (vacations)", "Prime", "Remboursement", "Catsitting", "Autre revenu"],
-  savingsCategories: ["Livret A", "LEP", "PEA", "ETF", "BoursoBank", "Compte épargne", "Assurance vie", "Frais annuels / Projets", "Autre épargne"],
+  savingsCategories: ["Livret A", "LEP", "PEA", "ETF", "BoursoBank", "Assurance vie"],
   candidatureTypes: ["MCF", "MSCA", "CNRS", "ERC ACCESS"],
   contactRoles: ["Mentor", "Collaborateur", "Jury", "Rencontré en conf", "Famille", "Ami"],
   goals: [],
@@ -4956,6 +4956,17 @@ function migrate(s) {
       });
     }
   } catch(migErr) { console.warn("[migration biblio]", migErr); }
+
+  // Migration : supprimer les comptes épargne vides inutiles
+  const toRemove = ["Compte épargne", "Autre épargne", "Frais annuels / Projets"];
+  s.savingsCategories = (s.savingsCategories || []).filter(c => {
+    if (!toRemove.includes(c)) return true;
+    return (s.accounts?.savingsBreakdown?.[c] || 0) !== 0; // garder si solde non nul
+  });
+  toRemove.forEach(c => {
+    if ((s.accounts?.savingsBreakdown?.[c] || 0) === 0) delete s.accounts?.savingsBreakdown?.[c];
+  });
+
   return s;
 }
 function saveState(userAction = true) {
