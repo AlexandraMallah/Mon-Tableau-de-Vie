@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v778</title>
+<title>Mon Tableau de Vie 🌿 · v780</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -19234,6 +19234,10 @@ function _mergeFromCloud(remote) {
   const merged = migrate({ ...DEFAULT_STATE, ...remote });
   merged.calEvents = state.calEvents || []; // le cloud ne contient pas le calendrier → garder le local
   if ((!merged.shortcuts || !merged.shortcuts.length) && state.shortcuts?.length) merged.shortcuts = state.shortcuts;
+  // Protéger les données travail : si le local est plus riche que le cloud, le garder
+  const localWorkSize  = JSON.stringify(state.work  || {}).length;
+  const remoteWorkSize = JSON.stringify(merged.work || {}).length;
+  if (localWorkSize > remoteWorkSize * 1.2) merged.work = state.work;
 
   // Protéger les données du jour en cours contre l'écrasement par le cloud.
   // Cas typique : l'utilisatrice saisit des données → debounce 800ms pas encore parti →
