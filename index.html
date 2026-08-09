@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v780</title>
+<title>Mon Tableau de Vie 🌿 · v782</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -3390,6 +3390,11 @@
     <div class="card">
       <h2>Entrées précédentes</h2>
       <div class="journal-past" id="journalPast"></div>
+    </div>
+    <div style="height:14px;"></div>
+    <div class="card">
+      <h2>🌙 Historique des rêves &amp; cauchemars</h2>
+      <div class="journal-past" id="dreamPast"></div>
     </div>
   </section>
 </div>
@@ -12554,6 +12559,7 @@ function renderJournal() {
   if (gEl) gEl.value = today.gratitude || "";
   if (hEl) hEl.value = today.highlight || "";
   renderJournalDreamNotes();
+  renderDreamHistory();
 
   // Entrées passées : on affiche journal libre + prompts s'ils existent
   const past = Object.entries(state.history)
@@ -12586,6 +12592,28 @@ function renderJournal() {
       </div>`;
   }).join("");
 }
+function renderDreamHistory() {
+  const el = document.getElementById("dreamPast");
+  if (!el) return;
+  const past = Object.entries(state.history)
+    .filter(([k, v]) => k !== todayKey() && v.dreamNotes && (v.dreamNotes.dream?.trim() || v.dreamNotes.nightmare?.trim()))
+    .sort((a, b) => b[0].localeCompare(a[0])).slice(0, 30);
+  if (!past.length) {
+    el.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;padding:10px;">Tes rêves et cauchemars notés apparaîtront ici.</p>`;
+    return;
+  }
+  el.innerHTML = past.map(([k, v]) => {
+    const [y, m, d] = k.split("-");
+    const dateObj = new Date(Number(y), Number(m) - 1, Number(d));
+    const dateStr = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    const dreamHtml = v.dreamNotes.dream?.trim()
+      ? `<div style="margin-top:6px;font-size:13px;line-height:1.5;"><span style="font-weight:600;">🌙 Rêve</span><br><span style="color:var(--ink-soft);">${escapeHtml(v.dreamNotes.dream)}</span></div>` : "";
+    const nightmareHtml = v.dreamNotes.nightmare?.trim()
+      ? `<div style="margin-top:6px;font-size:13px;line-height:1.5;"><span style="font-weight:600;">👹 Cauchemar</span><br><span style="color:var(--ink-soft);">${escapeHtml(v.dreamNotes.nightmare)}</span></div>` : "";
+    return `<div class="journal-entry"><div class="journal-date">${dateStr}</div>${dreamHtml}${nightmareHtml}</div>`;
+  }).join("");
+}
+
 function setupJournal() {
   const ta = document.getElementById("journalToday");
   let timeout;
