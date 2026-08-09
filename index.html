@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v791</title>
+<title>Mon Tableau de Vie 🌿 · v792</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10702,8 +10702,7 @@ function openPartialReimbModal(id) {
   document.getElementById("partialReimbAmount").value = remaining.toFixed(2);
   document.getElementById("partialReimbDate").value = new Date().toISOString().slice(0, 10);
   const accountSel = document.getElementById("partialReimbAccount");
-  const breakdown = state.accounts?.savingsBreakdown || {};
-  const accountOptions = ["💳 Compte courant", ...Object.keys(breakdown)];
+  const accountOptions = ["💳 Compte courant", ...(state.savingsCategories || [])];
   accountSel.innerHTML = `<option value="">— Choisir un compte —</option>` + accountOptions.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
   accountSel.value = "";
   document.getElementById("partialReimbNote").value = "";
