@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v794</title>
+<title>Mon Tableau de Vie 🌿 · v795</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -10746,7 +10746,31 @@ function savePartialReimb() {
   const account = document.getElementById("partialReimbAccount").value.trim();
   const note = document.getElementById("partialReimbNote").value.trim();
   if (!tx.partialReimbursements) tx.partialReimbursements = [];
-  tx.partialReimbursements.push({ id: "pr" + Date.now(), amount, date, account, note });
+  const reimbEntry = { id: "pr" + Date.now(), amount, date, account, note };
+
+  // Crée la transaction compagnon selon le compte
+  const isCourant = account === "💳 Compte courant" || account === "";
+  const isSavings = !isCourant && (state.savingsCategories || []).includes(account);
+  if (isCourant) {
+    const incTx = {
+      id: "tx" + Date.now() + Math.random().toString(36).slice(2, 6),
+      date: new Date(date).toISOString(),
+      type: "income",
+      amount,
+      category: "Remboursement",
+      note: note || `Remboursement — ${tx.category}`,
+      reimbursable: false,
+      partialReimbIncome: true, // exclure des totaux revenus mais garder dans le solde
+    };
+    state.transactions.unshift(incTx);
+    reimbEntry.companionTxId = incTx.id;
+  } else if (isSavings) {
+    if (!state.accounts.savingsBreakdown) state.accounts.savingsBreakdown = {};
+    state.accounts.savingsBreakdown[account] = (state.accounts.savingsBreakdown[account] || 0) + amount;
+    reimbEntry.companionSavingsAccount = account;
+  }
+
+  tx.partialReimbursements.push(reimbEntry);
   saveState();
   closePartialReimbModal();
   renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderBudgetFeedback(); renderForecast();
@@ -10754,9 +10778,19 @@ function savePartialReimb() {
 function deletePartialReimb(txId, reimbId) {
   const tx = state.transactions.find(t => t.id === txId);
   if (!tx || !tx.partialReimbursements) return;
+  const reimb = tx.partialReimbursements.find(r => r.id === reimbId);
+  if (reimb) {
+    // Supprimer la transaction compagnon si elle existe
+    if (reimb.companionTxId) state.transactions = state.transactions.filter(t => t.id !== reimb.companionTxId);
+    // Rembourser le compte épargne si besoin
+    if (reimb.companionSavingsAccount && state.accounts?.savingsBreakdown) {
+      state.accounts.savingsBreakdown[reimb.companionSavingsAccount] =
+        Math.max(0, (state.accounts.savingsBreakdown[reimb.companionSavingsAccount] || 0) - reimb.amount);
+    }
+  }
   tx.partialReimbursements = tx.partialReimbursements.filter(r => r.id !== reimbId);
   saveState();
-  openPartialReimbModal(txId); // recharge la modale
+  openPartialReimbModal(txId);
   renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderBudgetFeedback(); renderForecast();
 }
 
@@ -11011,7 +11045,7 @@ function renderMoneySummary() {
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
     if (d >= start && d < end) {
-      if (tx.type === "income") income += tx.amount;
+      if (tx.type === "income" && !tx.partialReimbIncome) income += tx.amount;
       else if (tx.type === "expense") expense += txNetAmount(tx);
       // savings traités séparément dans la carte Épargne, pas comptés ici
     }
@@ -11499,7 +11533,7 @@ function renderMoneyFlowChart() {
     return state.transactions.filter(t => {
       const td = new Date(t.date);
       return td >= m && td < end && t.type === type && !t.reimbursable;
-    }).reduce((s, t) => s + t.amount, 0);
+    }).reduce((s, t) => s + (t.partialReimbIncome ? 0 : t.amount), 0);
   };
   const flowDatasets = [
     { label: "Revenus",         data: months.map(m => monthSum(m, "income")),       backgroundColor: "#aee0c8", borderRadius: 8 },
@@ -12168,7 +12202,7 @@ function renderBudgetGauge() {
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
     if (d < start || d >= end) continue;
-    if (tx.type === "income")       income     += tx.amount;
+    if (tx.type === "income" && !tx.partialReimbIncome) income += tx.amount;
     if (tx.type === "savings")      savings    += tx.amount;
     if (tx.type === "savings-out")  savingsOut += tx.amount;
     // Jauge = vraies dépenses courantes seulement : type "Dépense", hors frais pro,
