@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v797</title>
+<title>Mon Tableau de Vie 🌿 · v798</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -18369,8 +18369,8 @@ document.getElementById("newEventName")?.addEventListener("keydown", e => {
 /* ========= SETTINGS MODAL ========= */
 function openSettings() {
   document.getElementById("nameInput").value = state.name || "";
-  document.getElementById("accountCourantStart").value = state.accounts?.courantStart ?? 0;
-  document.getElementById("accountEpargneStart").value = state.accounts?.epargneStart ?? 0;
+  document.getElementById("accountCourantStart").value = parseFloat((state.accounts?.courantStart ?? 0).toFixed(2));
+  document.getElementById("accountEpargneStart").value = parseFloat((state.accounts?.epargneStart ?? 0).toFixed(2));
   document.getElementById("fixedChargesInput").value   = state.fixedCharges ?? 0;
   renderSettingsLists();
   ["newHabitInput", "newActivityName", "newActivityEmoji", "newCatInput", "newIncomeCatInput", "newSavingsCatInput", "newCandTypeInput"]
