@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v790</title>
+<title>Mon Tableau de Vie 🌿 · v791</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2114,7 +2114,7 @@
       <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:4px;">Date du remboursement</label>
       <input type="date" id="partialReimbDate" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:14px;margin-bottom:10px;box-sizing:border-box;">
       <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:4px;">Compte crédité</label>
-      <input type="text" id="partialReimbAccount" placeholder="ex : Compte Nickel, Lydia, CB…" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:14px;margin-bottom:10px;box-sizing:border-box;">
+      <select id="partialReimbAccount" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:14px;margin-bottom:10px;box-sizing:border-box;background:white;"></select>
       <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:4px;">Par qui ? (optionnel)</label>
       <input type="text" id="partialReimbNote" placeholder="ex : Mon frère, Ma sœur…" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:14px;margin-bottom:16px;box-sizing:border-box;">
       <div class="actions">
@@ -10701,7 +10701,11 @@ function openPartialReimbModal(id) {
   document.getElementById("partialReimbTxInfo").textContent = `${tx.category} — ${tx.amount.toFixed(2)} €`;
   document.getElementById("partialReimbAmount").value = remaining.toFixed(2);
   document.getElementById("partialReimbDate").value = new Date().toISOString().slice(0, 10);
-  document.getElementById("partialReimbAccount").value = "";
+  const accountSel = document.getElementById("partialReimbAccount");
+  const breakdown = state.accounts?.savingsBreakdown || {};
+  const accountOptions = ["💳 Compte courant", ...Object.keys(breakdown)];
+  accountSel.innerHTML = `<option value="">— Choisir un compte —</option>` + accountOptions.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
+  accountSel.value = "";
   document.getElementById("partialReimbNote").value = "";
   // Affiche historique remboursements existants
   const hist = document.getElementById("partialReimbHistory");
