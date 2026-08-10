@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v799</title>
+<title>Mon Tableau de Vie 🌿 · v801</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -3031,6 +3031,26 @@
         </div>
       </div>
     </div>
+    <div class="card" style="margin-top:18px;">
+      <h2 style="margin:0 0 12px;">Par catégorie · Depuis le 26 mai 2026</h2>
+      <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:8px;align-items:start;">
+        <div>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses <span id="catAllChartDepTotal" style="color:#c75b4d;"></span></p>
+          <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllChart"></canvas></div>
+          <div id="moneyCatAllLegend" class="cat-legend"></div>
+        </div>
+        <div>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Hors charges fixes <span id="catAllChartNoFixTotal" style="color:#c75b4d;"></span></p>
+          <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllNoFixChart"></canvas></div>
+          <div id="moneyCatAllNoFixLegend" class="cat-legend"></div>
+        </div>
+        <div>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">+ Revenus <span id="catAllChartIncTotal" style="color:#4d9c7e;"></span></p>
+          <div class="chart-wrap" style="height:160px;"><canvas id="moneyIncomeAllChart"></canvas></div>
+          <div id="moneyIncomeAllLegend" class="cat-legend"></div>
+        </div>
+      </div>
+    </div>
     <div class="card" id="reimbursableCard" style="margin-top:18px;display:none;">
       <div class="card-row" style="margin-bottom:12px;">
         <h2 style="margin:0;">💼 Frais pros en attente</h2>
@@ -5221,7 +5241,7 @@ function onViewChange(view) {
   if (view === "work") updateWorkTabBadges();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
   if (view === "health") { _healthMonthOffset = 0; _renderHealthMonthLabel(); renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); renderEnergyBalance(); }
-  if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
+  if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
 }
@@ -10577,7 +10597,7 @@ function confirmReimbursed(id) {
   tx.reimbTxId = r.incomeId; tx.reimbSurplusTxId = r.surplusId; tx.reimbReturnTxId = r.returnId;
   _reimbFormOpenId = null;
   saveState();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 
 function confirmGroupReimbursed(ids, dateInputId, mission) {
@@ -10594,7 +10614,7 @@ function confirmGroupReimbursed(ids, dateInputId, mission) {
   if (txs[0]) { txs[0].reimbTxId = r.incomeId; txs[0].reimbSurplusTxId = r.surplusId; txs[0].reimbReturnTxId = r.returnId; }
   _reimbFormOpenId = null;
   saveState();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 
 function toggleReimbForm(id) {
@@ -10603,7 +10623,7 @@ function toggleReimbForm(id) {
 }
 
 function _reimbRefresh() {
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 
 // Marquer un frais comme "remboursement lancé" (montant connu, pas encore reçu)
@@ -10698,7 +10718,7 @@ function undoReimbursed(id) {
   delete tx.reimbursedAt;
   delete tx.reimbursedAmount;
   saveState();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 /* ===== REMBOURSEMENTS PARTIELS ===== */
 function txNetAmount(tx) {
@@ -10778,7 +10798,7 @@ function savePartialReimb() {
   tx.partialReimbursements.push(reimbEntry);
   saveState();
   closePartialReimbModal();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderBudgetFeedback(); renderForecast();
 }
 function deletePartialReimb(txId, reimbId) {
   const tx = state.transactions.find(t => t.id === txId);
@@ -10796,7 +10816,7 @@ function deletePartialReimb(txId, reimbId) {
   tx.partialReimbursements = tx.partialReimbursements.filter(r => r.id !== reimbId);
   saveState();
   openPartialReimbModal(txId);
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderBudgetFeedback(); renderForecast();
 }
 
 function _courantName() { return state.accounts?.courantName || "Compte courant"; }
@@ -11119,16 +11139,16 @@ function addTransaction() {
   initTxDate(); // remet à aujourd'hui après ajout
   saveState();
   if (postdocMission) { try { admRender(); } catch(e) {} } // rafraîchit le tableau missions
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 function deleteTx(id, silent) {
   state.transactions = state.transactions.filter(t => t.id !== id);
-  if (!silent) { saveState(); renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
+  if (!silent) { saveState(); renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
 }
 function deleteVirement(virId) {
   state.transactions = state.transactions.filter(t => t.virementId !== virId);
   saveState();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 
 /* ===== TX EDIT MODAL ===== */
@@ -11245,7 +11265,7 @@ function saveTxFromModal() {
   tx.fromSavingsAccount = ((txModalType === "expense" || txModalType === "external") && fromSav?.value) ? fromSav.value : "";
   saveState();
   closeTxModal();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 function deleteTxFromModal() {
   const id = document.getElementById("txModalId").value;
@@ -11253,7 +11273,7 @@ function deleteTxFromModal() {
   state.transactions = state.transactions.filter(t => t.id !== id);
   saveState();
   closeTxModal();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 document.getElementById("catDetailModal").addEventListener("click", e => { if (e.target.id === "catDetailModal") e.target.classList.remove("open"); });
 // 24 couleurs pastel toutes distinctes — assignées par index dans la liste des catégories
@@ -11375,6 +11395,7 @@ function renderTxList() {
   }).join("");
 }
 let moneyFlowChart, moneyCatChart, moneyCatChartNoFixed, moneyIncomeCatChart, savingsChart, dailyExpenseChart;
+let moneyCatAllChart, moneyCatAllNoFixChart, moneyIncomeAllChart;
 function renderDailyExpenseChart() {
   const canvas = document.getElementById("dailyExpenseChart");
   if (!canvas) return;
@@ -12575,6 +12596,131 @@ function renderMoneyIncomeCatChart() {
           const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
           const pct = total > 0 ? Math.round((ctx.raw / total) * 100) : 0;
           return ` ${ctx.raw.toFixed(2)} € (${pct}%)`;
+        }}},
+      },
+    },
+  });
+}
+
+function _allTimeRange() {
+  return [new Date("2026-05-26"), new Date()];
+}
+function renderMoneyCatAllChart() {
+  if (moneyCatAllChart) moneyCatAllChart.destroy();
+  const wrap = document.getElementById("moneyCatAllChart")?.parentElement;
+  if (!wrap) return;
+  wrap.innerHTML = '<canvas id="moneyCatAllChart"></canvas>';
+  const [start, end] = _allTimeRange();
+  const totals = {};
+  for (const tx of state.transactions) {
+    const d = new Date(tx.date);
+    if (d >= start && d <= end && tx.type === "expense" && !tx.reimbursable) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
+  }
+  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  const total = entries.reduce((s,[,v]) => s+v, 0);
+  const el = document.getElementById("catAllChartDepTotal");
+  if (el) el.textContent = total > 0 ? "— " + total.toFixed(0) + " €" : "";
+  const lg = document.getElementById("moneyCatAllLegend");
+  if (lg) lg.innerHTML = _catLegendHtml(entries);
+  if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense"); return; }
+  moneyCatAllChart = new Chart(document.getElementById("moneyCatAllChart"), {
+    type: "doughnut",
+    data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: "55%",
+      plugins: {
+        ...baseChartOpts().plugins,
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => {
+          const t = ctx.dataset.data.reduce((s, v) => s + v, 0);
+          return ` ${ctx.raw.toFixed(2)} € (${t > 0 ? Math.round(ctx.raw/t*100) : 0}%)`;
+        }}},
+        datalabels: {
+          color: '#fff', font: { size: 11, weight: '700' },
+          formatter: (value, ctx) => {
+            const t = ctx.dataset.data.reduce((s, v) => s + v, 0);
+            const pct = t > 0 ? Math.round(value/t*100) : 0;
+            return pct >= 5 ? pct + '%' : '';
+          },
+        },
+      },
+    },
+    plugins: [ChartDataLabels],
+  });
+}
+function renderMoneyCatAllNoFixChart() {
+  if (moneyCatAllNoFixChart) moneyCatAllNoFixChart.destroy();
+  const wrap = document.getElementById("moneyCatAllNoFixChart")?.parentElement;
+  if (!wrap) return;
+  wrap.innerHTML = '<canvas id="moneyCatAllNoFixChart"></canvas>';
+  const [start, end] = _allTimeRange();
+  const totals = {};
+  for (const tx of state.transactions) {
+    const d = new Date(tx.date);
+    if (d >= start && d <= end && tx.type === "expense" && !tx.reimbursable && !tx.fixedCharge) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
+  }
+  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  const total = entries.reduce((s,[,v]) => s+v, 0);
+  const el = document.getElementById("catAllChartNoFixTotal");
+  if (el) el.textContent = total > 0 ? "— " + total.toFixed(0) + " €" : "";
+  const lg = document.getElementById("moneyCatAllNoFixLegend");
+  if (lg) lg.innerHTML = _catLegendHtml(entries);
+  if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>hors charges fixes"); return; }
+  moneyCatAllNoFixChart = new Chart(document.getElementById("moneyCatAllNoFixChart"), {
+    type: "doughnut",
+    data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: "55%",
+      plugins: {
+        ...baseChartOpts().plugins,
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => {
+          const t = ctx.dataset.data.reduce((s, v) => s + v, 0);
+          return ` ${ctx.raw.toFixed(2)} € (${t > 0 ? Math.round(ctx.raw/t*100) : 0}%)`;
+        }}},
+        datalabels: {
+          color: '#fff', font: { size: 11, weight: '700' },
+          formatter: (value, ctx) => {
+            const t = ctx.dataset.data.reduce((s, v) => s + v, 0);
+            const pct = t > 0 ? Math.round(value/t*100) : 0;
+            return pct >= 5 ? pct + '%' : '';
+          },
+        },
+      },
+    },
+    plugins: [ChartDataLabels],
+  });
+}
+function renderMoneyIncomeAllChart() {
+  if (moneyIncomeAllChart) moneyIncomeAllChart.destroy();
+  const wrap = document.getElementById("moneyIncomeAllChart")?.parentElement;
+  if (!wrap) return;
+  wrap.innerHTML = '<canvas id="moneyIncomeAllChart"></canvas>';
+  const [start, end] = _allTimeRange();
+  const totals = {};
+  const REIMB_CATS = ["Remboursement", "Surplus remboursement mission"];
+  for (const tx of state.transactions) {
+    const d = new Date(tx.date);
+    if (d >= start && d <= end && tx.type === "income" && !tx.partialReimbIncome && !REIMB_CATS.includes(tx.category)) totals[tx.category] = (totals[tx.category] || 0) + tx.amount;
+  }
+  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  const total = entries.reduce((s,[,v]) => s+v, 0);
+  const el = document.getElementById("catAllChartIncTotal");
+  if (el) el.textContent = total > 0 ? "— " + total.toFixed(0) + " €" : "";
+  const lg = document.getElementById("moneyIncomeAllLegend");
+  if (lg) lg.innerHTML = _catLegendHtml(entries);
+  if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucun revenu"); return; }
+  moneyIncomeAllChart = new Chart(document.getElementById("moneyIncomeAllChart"), {
+    type: "doughnut",
+    data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
+    options: {
+      ...baseChartOpts(), cutout: "62%",
+      plugins: {
+        ...baseChartOpts().plugins,
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => {
+          const t = ctx.dataset.data.reduce((s, v) => s + v, 0);
+          return ` ${ctx.raw.toFixed(2)} € (${t > 0 ? Math.round(ctx.raw/t*100) : 0}%)`;
         }}},
       },
     },
