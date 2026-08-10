@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v801</title>
+<title>Mon Tableau de Vie 🌿 · v802</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -12213,6 +12213,28 @@ function renderMoneyCatChartNoFixed() {
   });
 }
 
+function openCatDetailAllTime(cat) {
+  const [start, end] = _allTimeRange();
+  const txs = state.transactions
+    .filter(tx => tx.type === "expense" && tx.category === cat && new Date(tx.date) >= start && new Date(tx.date) <= end)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  const total = txs.reduce((s, tx) => s + txNetAmount(tx), 0);
+  document.getElementById("catDetailTitle").textContent = cat + " · Depuis le 26 mai";
+  document.getElementById("catDetailTotal").textContent = total.toFixed(2) + " €";
+  document.getElementById("catDetailDot").style.background = catColor(cat);
+  document.getElementById("catDetailList").innerHTML = txs.length ? txs.map(tx => {
+    const d = new Date(tx.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+    return `<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);">
+      <div style="flex:1;">
+        <div style="font-size:14px;color:var(--ink);">${escapeHtml(tx.note || "—")}</div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${d}</div>
+      </div>
+      <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${txNetAmount(tx).toFixed(2)} €</div>
+      <button onclick="openTxModal('${tx.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:11px;cursor:pointer;flex-shrink:0;">✎</button>
+    </div>`;
+  }).join("") : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px 0;">Aucune dépense dans cette catégorie.</p>`;
+  document.getElementById("catDetailModal").classList.add("open");
+}
 function openCatDetail(cat) {
   const [start, end] = _moneyCatRange();
   const txs = state.transactions
@@ -12628,6 +12650,9 @@ function renderMoneyCatAllChart() {
     data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: "55%",
+      interaction: { mode: "nearest", intersect: true },
+      onClick: (evt, elements) => { if (elements.length) openCatDetailAllTime(entries[elements[0].index][0]); },
+      onHover: (evt, elements) => { evt.native.target.style.cursor = elements.length ? "pointer" : "default"; },
       plugins: {
         ...baseChartOpts().plugins,
         legend: { display: false },
@@ -12671,6 +12696,9 @@ function renderMoneyCatAllNoFixChart() {
     data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: "55%",
+      interaction: { mode: "nearest", intersect: true },
+      onClick: (evt, elements) => { if (elements.length) openCatDetailAllTime(entries[elements[0].index][0]); },
+      onHover: (evt, elements) => { evt.native.target.style.cursor = elements.length ? "pointer" : "default"; },
       plugins: {
         ...baseChartOpts().plugins,
         legend: { display: false },
