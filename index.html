@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v805</title>
+<title>Mon Tableau de Vie 🌿 · v807</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -8626,14 +8626,21 @@ function _foodNameSelect(idx) {
     // Ajoute l'aliment directement comme ingrédient et garde le champ nom libre
     document.getElementById('foodEntryName').value = '';
     const f = r.obj;
+    const initPortions = _portionsFromUnitLabel(f.unitLabel);
+    const scaledKcal = Math.round((f.kcal || 0) * initPortions);
+    const scaledPortion = (() => {
+      const m = (f.portion || '').match(/^(\d+\.?\d*)(.*)/);
+      return m ? Math.round(parseFloat(m[1]) * initPortions) + m[2] : f.portion || '';
+    })();
     const ing = {
       id: 'fi' + Date.now(),
       name: f.name,
-      portion: f.portion || '',
-      kcal: f.kcal || 0,
+      portion: scaledPortion,
+      kcal: scaledKcal,
       _basePortion: f.portion || '',
       _baseKcal: f.kcal || 0,
-      portions: 1,
+      _basePortions: 1,
+      portions: initPortions,
       _localRef: { kcal: f.kcal, refQty: null, refUnit: 'g', unitLabel: f.unitLabel || '' },
     };
     _foodIngredients.push(ing);
@@ -8723,6 +8730,87 @@ function _showFoodPortionField(show, hint, defaultVal) {
   if (defaultVal !== undefined) document.getElementById('foodEntryPortion').value = defaultVal;
 }
 
+function _portionsFromUnitLabel(unitLabel) {
+  if (!unitLabel) return 1;
+  const m = (unitLabel + '').match(/^(\d+\.?\d*)/);
+  return m ? parseFloat(m[1]) : 1;
+}
+
+function _ingBaseWeight(ing) {
+  const m = (ing._basePortion || ing.portion || '').match(/^(\d+\.?\d*)(.*)/);
+  return m ? { val: parseFloat(m[1]), unit: m[2] } : null;
+}
+
+function _ingSetFields(i, portions, weight, kcal) {
+  const list = document.getElementById('foodIngredientsList');
+  const row = list ? list.children[i] : null;
+  if (!row) return;
+  const texts = row.querySelectorAll('input[type="text"]');
+  const kcalInput = row.querySelector('input[data-kcal]');
+  const portInput = row.querySelector('input[data-portions]');
+  if (texts[1] && weight !== undefined) texts[1].value = weight;
+  if (kcalInput && kcal !== undefined) kcalInput.value = kcal > 0 ? kcal : '';
+  if (portInput && portions !== undefined) portInput.value = portions;
+  updateIngTotal();
+}
+
+function _updateIngByWeight(i, val) {
+  const ing = _foodIngredients[i];
+  if (!ing) return;
+  ing.portion = val;
+  const base = _ingBaseWeight(ing);
+  if (!base || !base.val || !ing._baseKcal) {
+    // Pas de base → recalcul kcal via référence locale
+    _updateFoodIngKcal(i, { value: val });
+    return;
+  }
+  const entered = parseFloat(val);
+  if (isNaN(entered) || entered <= 0) return;
+  const factor = entered / base.val;
+  const newKcal = Math.round(ing._baseKcal * factor);
+  const newPortions = Math.round(factor * (ing._basePortions || 1) * 10) / 10;
+  ing.kcal = newKcal;
+  ing.portions = newPortions;
+  _ingSetFields(i, newPortions, undefined, newKcal);
+}
+
+function _updateIngByKcal(i, val) {
+  const ing = _foodIngredients[i];
+  if (!ing) return;
+  const newKcal = parseInt(val) || 0;
+  ing.kcal = newKcal;
+  if (!ing._baseKcal || !newKcal) { updateIngTotal(); return; }
+  const factor = newKcal / ing._baseKcal;
+  const base = _ingBaseWeight(ing);
+  const newPortions = Math.round(factor * (ing._basePortions || 1) * 10) / 10;
+  ing.portions = newPortions;
+  let newWeight;
+  if (base && base.val) {
+    newWeight = Math.round(base.val * factor) + base.unit;
+    ing.portion = newWeight;
+  }
+  _ingSetFields(i, newPortions, newWeight, undefined);
+}
+
+function _updateIngByPortions(i, val) {
+  const ing = _foodIngredients[i];
+  if (!ing) return;
+  const n = Math.max(0.5, parseFloat(val) || 1);
+  ing.portions = n;
+  if (!ing._basePortion && ing.portion) { ing._basePortion = ing.portion; ing._basePortions = 1; }
+  if (!ing._baseKcal && ing.kcal) { ing._baseKcal = ing.kcal; ing._basePortions = 1; }
+  const base = _ingBaseWeight(ing);
+  const refPortions = ing._basePortions || 1;
+  const newKcal = Math.round((ing._baseKcal || 0) * n / refPortions);
+  let newWeight;
+  if (base && base.val) {
+    newWeight = Math.round(base.val * n / refPortions) + base.unit;
+    ing.portion = newWeight;
+  }
+  ing.kcal = newKcal;
+  _ingSetFields(i, undefined, newWeight, newKcal);
+}
+
 function addFoodIngredient(ing) {
   ing = ing || { id: 'fi'+Date.now(), name: '', qty: '', unit: 'g', kcal: 0 };
   _foodIngredients.push(ing);
@@ -8767,20 +8855,19 @@ function renderFoodIngredients() {
         oninput="_foodIngredients[${i}].name=this.value;searchIngCalories(${i},this.value)"
         onchange="_foodIngredients[${i}].name=this.value;searchIngCalories(${i},this.value)"
         style="flex:3;min-width:100px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
-      <input type="text" value="${escapeHtml(ing.portion||'')}" placeholder="${ing._unitLabel ? 'ex: 1 ou ' + escapeHtml(ing._unitLabel.replace(/^\d+\s*/,'').slice(0,8)) + ', 150g' : 'ex: 10g'}"
-        oninput="_foodIngredients[${i}].portion=this.value;_foodIngredients[${i}]._basePortion=this.value;_foodIngredients[${i}].portions=1;_updateFoodIngKcal(${i},this)"
-        onchange="_foodIngredients[${i}].portion=this.value;_foodIngredients[${i}]._basePortion=this.value;_foodIngredients[${i}].portions=1;_updateFoodIngKcal(${i},this)"
+      <input type="text" value="${escapeHtml(ing.portion||'')}" placeholder="ex: 100g"
+        oninput="_updateIngByWeight(${i},this.value)"
         style="width:65px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:center;" />
       <div style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
         <input type="number" data-kcal value="${ing.kcal>0?ing.kcal:''}" placeholder="kcal" min="0" max="99999"
-          oninput="_foodIngredients[${i}].kcal=parseInt(this.value)||0;_foodIngredients[${i}]._baseKcal=_foodIngredients[${i}].kcal;_foodIngredients[${i}].portions=1;updateIngTotal()"
+          oninput="_updateIngByKcal(${i},this.value)"
           style="width:55px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;color:var(--orange);font-weight:600;text-align:center;" />
         <span style="font-size:11px;color:var(--ink-softer);">kcal</span>
       </div>
       <div style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
         <span style="font-size:11px;color:var(--ink-softer);">×</span>
-        <input type="number" value="${ing.portions||1}" min="0.5" step="0.5" title="Nombre de portions"
-          oninput="_updateIngPortions(${i},this.value)"
+        <input type="number" data-portions value="${ing.portions||1}" min="0.5" step="0.5" title="Nombre de portions"
+          oninput="_updateIngByPortions(${i},this.value)"
           style="width:42px;padding:5px 4px;border:1px solid var(--lavender);border-radius:8px;font-family:inherit;font-size:12px;color:var(--lavender);font-weight:700;text-align:center;" />
         <span style="font-size:11px;color:var(--ink-softer);">p.</span>
       </div>
@@ -8842,9 +8929,16 @@ async function searchIngCalories(idx, query) {
     ing._refUnit = local.refUnit;
     ing._unitLabel = local.unitLabel;
     ing._localRef = local;
-    ing._basePortion = ing.portion;
-    ing._baseKcal = ing.kcal;
-    ing.portions = ing.portions || 1;
+    ing._basePortion = local.portion;
+    ing._baseKcal = local.kcal;
+    ing._basePortions = 1;
+    const initP = _portionsFromUnitLabel(local.unitLabel);
+    ing.portions = initP;
+    if (initP > 1) {
+      ing.kcal = Math.round(local.kcal * initP);
+      const m = (local.portion || '').match(/^(\d+\.?\d*)(.*)/);
+      if (m) ing.portion = Math.round(parseFloat(m[1]) * initP) + m[2];
+    }
     // Mettre à jour portion+kcal SANS re-render pour garder le focus sur le champ nom
     const _list = document.getElementById('foodIngredientsList');
     const _row = _list ? _list.children[idx] : null;
