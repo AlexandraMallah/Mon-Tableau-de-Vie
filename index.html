@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v809</title>
+<title>Mon Tableau de Vie 🌿 · v810</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -8973,9 +8973,9 @@ function updateIngTotal() {
   const total = _foodIngredients.reduce((s,i) => s+(i.kcal||0), 0);
   const el = document.getElementById("foodIngCalTotal");
   if (el) el.textContent = total > 0 ? 'Total ingrédients : '+total+' kcal' : '';
-  // N'écraser les calories totales que s'il n'y a pas de base portion (saisie libre sans recette)
+  // Toujours mettre à jour si des ingrédients sont présents — ils sont la source de vérité
   const calEl = document.getElementById("foodEntryCalories");
-  if (calEl && total > 0 && !_foodPortionBase) calEl.value = total;
+  if (calEl && total > 0) calEl.value = total;
 }
 
 
