@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v804</title>
+<title>Mon Tableau de Vie 🌿 · v805</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -8623,16 +8623,21 @@ function _foodNameSelect(idx) {
     document.getElementById('foodEntryPortion').value = '1';
     if (cal) document.getElementById('foodEntryCalories').value = cal;
   } else {
-    _foodIngredients = [];
+    // Ajoute l'aliment directement comme ingrédient et garde le champ nom libre
+    document.getElementById('foodEntryName').value = '';
+    const f = r.obj;
+    const ing = {
+      id: 'fi' + Date.now(),
+      name: f.name,
+      portion: f.portion || '',
+      kcal: f.kcal || 0,
+      _basePortion: f.portion || '',
+      _baseKcal: f.kcal || 0,
+      portions: 1,
+      _localRef: { kcal: f.kcal, refQty: null, refUnit: 'g', unitLabel: f.unitLabel || '' },
+    };
+    _foodIngredients.push(ing);
     renderFoodIngredients();
-    const portionDesc = r.obj.unitLabel || r.obj.portion || '';
-    _foodPortionBase = { baseKcal: r.kcal || 0, refPortion: '1' };
-    const hint = portionDesc
-      ? `— 1 portion (${portionDesc}) = ${r.kcal || 0} kcal`
-      : `— 1 portion = ${r.kcal || 0} kcal`;
-    document.getElementById('foodEntryPortionHint').textContent = hint;
-    document.getElementById('foodEntryPortion').value = '1';
-    document.getElementById('foodEntryCalories').value = r.kcal || '';
   }
 }
 
