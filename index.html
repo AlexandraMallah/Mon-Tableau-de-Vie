@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v812</title>
+<title>Mon Tableau de Vie 🌿 · v814</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -15585,14 +15585,61 @@ function _autoFillRecipeIngKcal(row) {
   if (!name) return;
   const local = _lookupLocalFood(name);
   if (!local) return;
-  // Affiche l'unité de référence comme hint
-  if (unitInput && !unitInput.value) unitInput.placeholder = local.refUnit;
-  if (qtyInput) qtyInput.placeholder = local.refUnit === 'g' ? 'g' : local.refUnit;
-  const qty  = qtyInput?.value?.trim();
-  const unit = unitInput?.value?.trim() || local.refUnit;
-  const portionStr = qty ? (qty + unit) : '';
-  const kcal = portionStr ? _prorateFoodKcal(local, portionStr) : local.kcal;
-  if (kcalInput) { kcalInput.value = kcal; updateRecipeTotals(); }
+
+  // Si l'aliment vient d'être sélectionné (pas encore de base stockée), initialiser
+  if (!row.dataset.baseKcal) {
+    const baseG = local.refQty || parseFloat(local.portion) || 100;
+    const baseKcal = local.kcal || 0;
+    const baseUnits = _portionsFromUnitLabel(local.unitLabel);
+    row.dataset.baseG = baseG;
+    row.dataset.baseKcal = baseKcal;
+    row.dataset.baseUnits = baseUnits;
+    // Remplir les champs avec les valeurs de référence
+    if (qtyInput && !qtyInput.value) qtyInput.value = baseG;
+    if (unitInput && !unitInput.value) unitInput.value = baseUnits > 1 ? baseUnits : '';
+    if (kcalInput) { kcalInput.value = baseKcal; updateRecipeTotals(); }
+    // Attacher les handlers de proportionnalité (une seule fois)
+    qtyInput?.addEventListener('input', () => _recScaleFromG(row));
+    unitInput?.addEventListener('input', () => _recScaleFromUnit(row));
+    return;
+  }
+
+  // Sinon recalcul par rapport à la quantité saisie
+  const qty = parseFloat(qtyInput?.value) || 0;
+  const unit = parseFloat(unitInput?.value) || 0;
+  const baseG = parseFloat(row.dataset.baseG) || 100;
+  const baseKcal = parseFloat(row.dataset.baseKcal) || 0;
+  const baseUnits = parseFloat(row.dataset.baseUnits) || 1;
+  if (qty && kcalInput) { kcalInput.value = Math.round(baseKcal * qty / baseG); updateRecipeTotals(); }
+  else if (unit && kcalInput) { kcalInput.value = Math.round(baseKcal * unit / baseUnits); updateRecipeTotals(); }
+}
+
+function _recScaleFromG(row) {
+  const qtyInput  = row.querySelector('.rec-ing-qty');
+  const unitInput = row.querySelector('.rec-ing-unit');
+  const kcalInput = row.querySelector('.rec-ing-kcal');
+  const baseG     = parseFloat(row.dataset.baseG) || 100;
+  const baseKcal  = parseFloat(row.dataset.baseKcal) || 0;
+  const baseUnits = parseFloat(row.dataset.baseUnits) || 1;
+  const newG = parseFloat(qtyInput?.value);
+  if (!newG || !baseG) return;
+  if (kcalInput) kcalInput.value = Math.round(baseKcal * newG / baseG);
+  if (unitInput && baseUnits > 1) unitInput.value = +(baseUnits * newG / baseG).toFixed(2);
+  updateRecipeTotals();
+}
+
+function _recScaleFromUnit(row) {
+  const qtyInput  = row.querySelector('.rec-ing-qty');
+  const unitInput = row.querySelector('.rec-ing-unit');
+  const kcalInput = row.querySelector('.rec-ing-kcal');
+  const baseG     = parseFloat(row.dataset.baseG) || 100;
+  const baseKcal  = parseFloat(row.dataset.baseKcal) || 0;
+  const baseUnits = parseFloat(row.dataset.baseUnits) || 1;
+  const newU = parseFloat(unitInput?.value);
+  if (!newU || !baseUnits) return;
+  if (kcalInput) kcalInput.value = Math.round(baseKcal * newU / baseUnits);
+  if (qtyInput) qtyInput.value = +(baseG * newU / baseUnits).toFixed(1);
+  updateRecipeTotals();
 }
 
 function updateRecipeTotals() {
