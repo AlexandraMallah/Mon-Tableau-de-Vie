@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v814</title>
+<title>Mon Tableau de Vie 🌿 · v816</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -1953,7 +1953,7 @@
         </div>
         <input type="hidden" id="foodEntryReason" />
         <div id="foodEntryPortionRow" style="margin-top:8px;">
-          <label>Nombre de portions <span id="foodEntryPortionHint" style="font-size:11px;color:var(--ink-softer);font-weight:400;"></span></label>
+          <label>Nombre d'unités <span id="foodEntryPortionHint" style="font-size:11px;color:var(--ink-softer);font-weight:400;"></span></label>
           <input type="number" id="foodEntryPortion" placeholder="ex : 1, 2, 0.5…" min="0.25" step="0.25"
             oninput="_foodPortionChanged(this.value)"
             style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" />
@@ -8861,10 +8861,10 @@ function renderFoodIngredients() {
       </div>
       <div style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
         <span style="font-size:11px;color:var(--ink-softer);">×</span>
-        <input type="number" data-portions value="${ing.portions||1}" min="0.5" step="0.5" title="Nombre de portions"
+        <input type="number" data-portions value="${ing.portions||1}" min="0.5" step="0.5" title="Nombre d'unités"
           oninput="_updateIngByPortions(${i},this.value)"
           style="width:42px;padding:5px 4px;border:1px solid var(--lavender);border-radius:8px;font-family:inherit;font-size:12px;color:var(--lavender);font-weight:700;text-align:center;" />
-        <span style="font-size:11px;color:var(--ink-softer);">p.</span>
+        <span style="font-size:11px;color:var(--ink-softer);">u.</span>
       </div>
       <button onclick="_foodIngredients.splice(${i},1);renderFoodIngredients();updateIngTotal()"
         style="padding:4px 8px;border-radius:7px;border:1px solid var(--line);background:white;cursor:pointer;color:var(--ink-softer);">✕</button>
