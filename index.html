@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v820</title>
+<title>Mon Tableau de Vie 🌿 · v822</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -3809,6 +3809,22 @@
   </div>
 </div>
 
+<!-- Modal heure activité -->
+<div class="modal-bg" id="actTimeModal" onclick="if(event.target===this)_actTimeCancel()">
+  <div class="modal" style="max-width:320px;text-align:center;" onclick="event.stopPropagation()">
+    <div style="font-size:28px;margin-bottom:4px;" id="actTimeEmoji"></div>
+    <h3 style="margin:0 0 4px;" id="actTimeTitle"></h3>
+    <p style="font-size:13px;color:var(--ink-soft);margin:0 0 16px;" id="actTimeDate"></p>
+    <label style="font-size:13px;color:var(--ink-soft);display:block;margin-bottom:6px;">À quelle heure ?</label>
+    <input type="time" id="actTimeInput"
+      style="width:100%;padding:10px;border:1.5px solid var(--lavender);border-radius:12px;font-size:22px;text-align:center;font-family:inherit;color:var(--ink);background:white;box-sizing:border-box;" />
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn-soft" style="flex:1;" onclick="_actTimeCancel()">Sans heure</button>
+      <button class="btn-primary" style="flex:1;" onclick="_actTimeConfirm()">Valider ✓</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Recette -->
 <div class="modal-bg" id="recipeModal" onmousedown="_recBdDown=event.target===this" onclick="if(event.target===this&&_recBdDown)closeRecipeModal()">
   <div class="modal" style="max-width:600px;max-height:90vh;overflow-y:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
@@ -4810,8 +4826,8 @@ function migrate(s) {
     for (const entry of Object.values(s.history)) {
       if (!entry?.activities) continue;
       for (const k of Object.keys(entry.activities)) {
-        const v = Number(entry.activities[k]);
-        if (v > 1) entry.activities[k] = 1; // minutes → 1 séance
+        const v = entry.activities[k];
+        if (typeof v === 'number' && v > 1) entry.activities[k] = 1; // minutes → 1 séance
       }
     }
   }
@@ -7692,13 +7708,46 @@ function currentWeekDates() {
     return d;
   });
 }
+let _actTimePending = null; // { actId, dateKey }
 function toggleActivityDay(actId, dateKey) {
   const day = ensureHistoryEntry(dateKey);
-  if (day.activities[actId]) delete day.activities[actId];
-  else day.activities[actId] = 1;
-  saveState();
-  renderActivities();
-  renderPillars();
+  if (day.activities[actId]) {
+    // Décoche directement
+    delete day.activities[actId];
+    saveState(); renderActivities(); renderPillars();
+    if (document.querySelector('.view[data-view="activities"]')?.classList.contains("active")) renderActivityChart();
+  } else {
+    // Ouvre le popup heure
+    const act = state.activities.find(a => a.id === actId);
+    _actTimePending = { actId, dateKey };
+    document.getElementById('actTimeEmoji').textContent = act?.emoji || '✨';
+    document.getElementById('actTimeTitle').textContent = act?.name || '';
+    const d = new Date(dateKey + 'T12:00:00');
+    document.getElementById('actTimeDate').textContent = d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+    const now = new Date();
+    document.getElementById('actTimeInput').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    document.getElementById('actTimeModal').classList.add('open');
+  }
+}
+function _actTimeConfirm() {
+  if (!_actTimePending) return;
+  const { actId, dateKey } = _actTimePending;
+  const time = document.getElementById('actTimeInput').value;
+  const day = ensureHistoryEntry(dateKey);
+  day.activities[actId] = time ? { done: true, time } : 1;
+  _actTimePending = null;
+  document.getElementById('actTimeModal').classList.remove('open');
+  saveState(); renderActivities(); renderPillars();
+  if (document.querySelector('.view[data-view="activities"]')?.classList.contains("active")) renderActivityChart();
+}
+function _actTimeCancel() {
+  if (!_actTimePending) return;
+  const { actId, dateKey } = _actTimePending;
+  const day = ensureHistoryEntry(dateKey);
+  day.activities[actId] = 1;
+  _actTimePending = null;
+  document.getElementById('actTimeModal').classList.remove('open');
+  saveState(); renderActivities(); renderPillars();
   if (document.querySelector('.view[data-view="activities"]')?.classList.contains("active")) renderActivityChart();
 }
 function renderActivities() {
@@ -7709,12 +7758,15 @@ function renderActivities() {
     const weekTotal = activityWeekTotal(a.id);
     const dotsHtml = weekDates.map((d, i) => {
       const dk = todayKey(d);
-      const done = !!(state.history[dk]?.activities?.[a.id]);
+      const actVal = state.history[dk]?.activities?.[a.id];
+      const done = !!actVal;
+      const actTime = actVal?.time || null;
       const isToday = dk === todayStr;
       const cls = ["activity-day-dot", done ? "done" : "", isToday ? "today" : ""].filter(Boolean).join(" ");
       return `<div class="${cls}" onclick="toggleActivityDay('${a.id}','${dk}')" title="${dk}">
         <span class="dot-day-label">${DAY_LABELS[i]}</span>
         <span class="dot-day-mark"></span>
+        ${actTime ? `<span style="font-size:8px;color:${done?'#2f7a5a':'var(--ink-softer)'};line-height:1;margin-top:1px;">${actTime}</span>` : ''}
       </div>`;
     }).join("");
     return `
