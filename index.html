@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v826</title>
+<title>Mon Tableau de Vie 🌿 · v828</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -8124,22 +8124,23 @@ function renderActivityRetro() {
         return `<td style="text-align:center;padding:6px 2px 2px;font-size:12px;font-weight:700;color:var(--ink);">${total}</td>`;
       }).join('')}
     </tr>`;
-    // Ligne moyenne par mois
+    // Ligne moyenne par mois (basée sur les jours réellement suivis → équivalent mois de 30j)
+    const totalTrackedDays = monthData.reduce((s, md) => s + md.trackedDays, 0);
     html += `<tr>
       <td style="padding:2px 6px 2px 0;font-size:11px;color:var(--ink-softer);">Moy./mois</td>
       ${acts.map(a => {
         const total = monthData.reduce((s, md) => s + md.counts[a.id], 0);
-        const avg = months.length ? (total / months.length).toFixed(1).replace('.', ',') : '—';
+        const avgMonths = totalTrackedDays / 30;
+        const avg = avgMonths > 0 ? (total / avgMonths).toFixed(1).replace('.', ',') : '—';
         return `<td style="text-align:center;padding:2px 2px 2px;font-size:11px;color:var(--ink-soft);">${avg}</td>`;
       }).join('')}
     </tr>`;
-    // Ligne moyenne par semaine
+    // Ligne moyenne par semaine (sur les jours réellement suivis)
     html += `<tr>
       <td style="padding:2px 6px 6px 0;font-size:11px;color:var(--ink-softer);">Moy./sem.</td>
       ${acts.map(a => {
         const total = monthData.reduce((s, md) => s + md.counts[a.id], 0);
-        const nbDays = Math.max(1, Math.round((new Date() - new Date(allDks[0])) / 86400000) + 1);
-        const avg = (total / (nbDays / 7)).toFixed(1).replace('.', ',');
+        const avg = totalTrackedDays > 0 ? (total / (totalTrackedDays / 7)).toFixed(1).replace('.', ',') : '—';
         return `<td style="text-align:center;padding:2px 2px 6px;font-size:11px;color:var(--ink-soft);">${avg}</td>`;
       }).join('')}
     </tr>`;
@@ -8192,22 +8193,22 @@ function renderActivityRetro() {
         return `<td style="text-align:center;padding:8px 6px 4px;font-size:15px;font-weight:700;color:var(--ink);">${total}</td>`;
       }).join('')}
     </tr>`;
-    // Ligne moy./mois
+    // Ligne moy./mois (sur jours réellement suivis, base 30j)
+    const totalTrackedDaysD = monthData.reduce((s, md) => s + md.trackedDays, 0);
     html += `<tr>
       <td style="padding:2px 12px 2px 0;font-size:12px;color:var(--ink-softer);">Moy./mois</td>
       ${acts.map(a => {
         const total = monthData.reduce((s, md) => s + md.counts[a.id], 0);
-        const avg = months.length ? (total / months.length).toFixed(1).replace('.', ',') : '—';
+        const avg = totalTrackedDaysD > 0 ? (total / (totalTrackedDaysD / 30)).toFixed(1).replace('.', ',') : '—';
         return `<td style="text-align:center;padding:2px 6px;font-size:12px;color:var(--ink-soft);">${avg}</td>`;
       }).join('')}
     </tr>`;
-    // Ligne moy./sem.
+    // Ligne moy./sem. (sur jours réellement suivis)
     html += `<tr>
       <td style="padding:2px 12px 8px 0;font-size:12px;color:var(--ink-softer);">Moy./sem.</td>
       ${acts.map(a => {
         const total = monthData.reduce((s, md) => s + md.counts[a.id], 0);
-        const nbDays = Math.max(1, Math.round((new Date() - new Date(allDks[0])) / 86400000) + 1);
-        const avg = (total / (nbDays / 7)).toFixed(1).replace('.', ',');
+        const avg = totalTrackedDaysD > 0 ? (total / (totalTrackedDaysD / 7)).toFixed(1).replace('.', ',') : '—';
         return `<td style="text-align:center;padding:2px 6px 8px;font-size:12px;color:var(--ink-soft);">${avg}</td>`;
       }).join('')}
     </tr>`;
