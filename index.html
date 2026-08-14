@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v824</title>
+<title>Mon Tableau de Vie 🌿 · v826</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -8044,18 +8044,19 @@ function renderActivityRetro() {
   }
 
   // Pour chaque mois, compter les séances par activité + nb jours réellement suivis
-  const firstTrackedDk = allDks[0]; // ex: "2026-05-26"
   const monthData = months.map(ym => {
     const [y, m] = ym.split('-').map(Number);
     const daysInMonth = new Date(y, m, 0).getDate();
     const today = new Date(); today.setHours(0,0,0,0);
     // Dernier jour suivi dans ce mois
     const lastDay = Math.min(daysInMonth, ym === nowMonth ? today.getDate() : daysInMonth);
-    // Premier jour suivi dans ce mois (26 pour mai, 1 pour les autres)
-    const firstDayOfMonth = `${ym}-01`;
-    const firstDay = firstTrackedDk.slice(0,7) === ym
-      ? parseInt(firstTrackedDk.slice(8,10))
-      : 1;
+    // Premier jour ayant une activité cochée dans ce mois
+    let firstDay = lastDay;
+    for (let d = 1; d <= lastDay; d++) {
+      const dk = `${ym}-${String(d).padStart(2,'0')}`;
+      const entry = state.history[dk];
+      if (entry && Object.values(entry.activities || {}).some(v => v)) { firstDay = d; break; }
+    }
     const trackedDays = lastDay - firstDay + 1;
     const counts = {};
     acts.forEach(a => { counts[a.id] = 0; });
