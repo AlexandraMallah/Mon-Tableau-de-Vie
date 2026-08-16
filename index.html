@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v836</title>
+<title>Mon Tableau de Vie 🌿 · v838</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2761,6 +2761,7 @@
             <button onclick="setSkincareNb(30)" id="skincareBtn30" class="btn-soft" style="font-size:11px;padding:4px 8px;">30j</button>
             <button onclick="setSkincareNb(60)" id="skincareBtn60" class="btn-soft" style="font-size:11px;padding:4px 8px;">60j</button>
             <button onclick="setSkincareNb(90)" id="skincareBtn90" class="btn-soft" style="font-size:11px;padding:4px 8px;">90j</button>
+            <button onclick="setSkincareNb('all')" id="skcareBtn_all" class="btn-soft" style="font-size:11px;padding:4px 8px;">Tout</button>
           </div>
         </div>
         <div style="margin-bottom:8px;"><span id="skincareStreakBadge" style="font-size:13px;color:var(--ink-soft);"></span></div>
@@ -9495,11 +9496,17 @@ function renderPillSante() {
 let _skincareNb = 60;
 function setSkincareNb(n) {
   _skincareNb = n;
-  document.getElementById('skincareNbLabel').textContent = n;
-  [30,60,90].forEach(v => {
-    const btn = document.getElementById('skincareBtn'+v);
-    if (btn) btn.style.fontWeight = v === n ? '700' : '400';
+  const allDks = Object.keys(state.history || {}).sort();
+  const firstActDk = allDks.find(dk => Object.values(state.history[dk]?.habits || {}).some(v => v)) || allDks[0];
+  const nbTotal = n === 'all'
+    ? Math.ceil((new Date() - new Date(firstActDk)) / 86400000) + 1
+    : n;
+  document.getElementById('skincareNbLabel').textContent = n === 'all' ? 'tout' : n;
+  ['30','60','90','_all'].forEach(v => {
+    const btn = document.getElementById('skincareBtn'+v) || document.getElementById('skcareBtn'+v);
+    if (btn) btn.style.fontWeight = (String(n) === (v === '_all' ? 'all' : v)) ? '700' : '400';
   });
+  _skincareNb = nbTotal;
   renderSkincare();
 }
 function renderSkincare() {
