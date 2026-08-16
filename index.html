@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v834</title>
+<title>Mon Tableau de Vie 🌿 · v836</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2756,7 +2756,7 @@
     <div class="grid-two" style="margin-top:18px;">
       <div class="card">
         <div class="card-row" style="margin-bottom:14px;">
-          <h2 style="margin:0;">✨ Routines — <span id="skincareNbLabel">30</span> jours</h2>
+          <h2 style="margin:0;">✨ Routines — <span id="skincareNbLabel">60</span> jours</h2>
           <div style="display:flex;gap:4px;">
             <button onclick="setSkincareNb(30)" id="skincareBtn30" class="btn-soft" style="font-size:11px;padding:4px 8px;">30j</button>
             <button onclick="setSkincareNb(60)" id="skincareBtn60" class="btn-soft" style="font-size:11px;padding:4px 8px;">60j</button>
@@ -9492,7 +9492,7 @@ function renderPillSante() {
   if (pctEl) pctEl.textContent = pct + "%";
 }
 
-let _skincareNb = 30;
+let _skincareNb = 60;
 function setSkincareNb(n) {
   _skincareNb = n;
   document.getElementById('skincareNbLabel').textContent = n;
@@ -9585,7 +9585,7 @@ function renderSkincare() {
 
   // --- Grille 30 jours ---
   if (!grid30) return;
-  const dates30 = lastDates(_skincareNb).reverse();
+  const dates30 = lastDates(_skincareNb); // du plus ancien (gauche) au plus récent (droite)
 
   const skincareId = key => key === "matin" ? "h-skincare-matin" : "h-skincare-soir";
   const dotsRow = (key, color) => dates30.map(d => {
@@ -9613,11 +9613,11 @@ function renderSkincare() {
     <div style="display:flex;flex-direction:column;gap:6px;">
       <div style="display:flex;align-items:center;gap:6px;">
         <span style="font-size:12px;width:14px;flex-shrink:0;">☀️</span>
-        <div style="display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;padding-bottom:2px;">${dotsRow("matin", "#f7c9a3")}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;">${dotsRow("matin", "#f7c9a3")}</div>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
         <span style="font-size:12px;width:14px;flex-shrink:0;">🌙</span>
-        <div style="display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;padding-bottom:2px;">${dotsRow("soir", "#c9b6f0")}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;">${dotsRow("soir", "#c9b6f0")}</div>
       </div>
     </div>`;
 }
