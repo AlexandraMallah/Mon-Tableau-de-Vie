@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v840</title>
+<title>Mon Tableau de Vie 🌿 · v842</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2769,14 +2769,22 @@
       </div>
       <div class="card">
         <div class="card-row" style="margin-bottom:14px;">
-          <h2 style="margin:0;">💊 Suivi pilule — 90 jours</h2>
+          <div>
+            <h2 style="margin:0 0 6px;">💊 Suivi pilule — <span id="pillNbLabel">90</span> jours</h2>
+            <div style="display:flex;gap:4px;">
+              <button onclick="setPillNb(30)" id="pillBtn30" class="btn-soft" style="font-size:11px;padding:4px 8px;">30j</button>
+              <button onclick="setPillNb(60)" id="pillBtn60" class="btn-soft" style="font-size:11px;padding:4px 8px;">60j</button>
+              <button onclick="setPillNb(90)" id="pillBtn90" class="btn-soft" style="font-size:11px;padding:4px 8px;font-weight:700;">90j</button>
+              <button onclick="setPillNb('all')" id="pillBtnAll" class="btn-soft" style="font-size:11px;padding:4px 8px;">Tout</button>
+            </div>
+          </div>
           <div style="display:flex;gap:14px;flex-wrap:wrap;">
             <div style="text-align:center;">
               <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Streak</div>
               <strong id="pillStreakSante" style="font-size:20px;font-weight:700;color:#7c5cbf;">—</strong>
             </div>
             <div style="text-align:center;">
-              <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Ce mois</div>
+              <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;"><span id="pillPctLabel">Ce mois</span></div>
               <strong id="pillMonthPct" style="font-size:20px;font-weight:700;color:#4d9c7e;">—</strong>
             </div>
             <div style="text-align:center;">
@@ -2787,7 +2795,7 @@
         </div>
         <div id="pillCalendar" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
         <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;color:var(--ink-softer);flex-wrap:wrap;">
-          <span style="font-size:11px;color:var(--ink-softer);">← il y a 90 jours</span><span style="flex:1;"></span><span style="font-size:11px;color:var(--ink-softer);">aujourd'hui →</span>
+          <span id="pillLabelLeft" style="font-size:11px;color:var(--ink-softer);">← il y a 90 jours</span><span style="flex:1;"></span><span style="font-size:11px;color:var(--ink-softer);">aujourd'hui →</span>
         </div>
         <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--ink-softer);">
           <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#c9b6f0;display:inline-block;"></span>Prise</span>
@@ -9437,6 +9445,23 @@ function showHoverTip(e, text) { const t = _hoverTipEl(); t.textContent = text; 
 function moveHoverTip(e) { const t = _hoverTipEl(); t.style.left = (e.clientX + 12) + "px"; t.style.top = (e.clientY - 32) + "px"; }
 function hideHoverTip() { const t = document.getElementById("hoverTip"); if (t) t.style.display = "none"; }
 
+let _pillNb = 90;
+function setPillNb(n) {
+  const allDks = Object.keys(state.history || {}).sort();
+  const nb = n === 'all'
+    ? Math.ceil((new Date() - new Date(allDks[0])) / 86400000) + 1
+    : n;
+  _pillNb = nb;
+  const label = n === 'all' ? 'tout' : n;
+  document.getElementById('pillNbLabel').textContent = label;
+  document.getElementById('pillPctLabel').textContent = n === 'all' ? 'Depuis le début' : (n <= 31 ? 'Ce mois' : 'Sur la période');
+  document.getElementById('pillLabelLeft').textContent = n === 'all' ? '← depuis le début' : `← il y a ${n} jours`;
+  ['30','60','90','All'].forEach(v => {
+    const btn = document.getElementById('pillBtn'+v);
+    if (btn) btn.style.fontWeight = (String(n) === (v === 'All' ? 'all' : v)) ? '700' : '400';
+  });
+  renderPillSante();
+}
 function renderPillSante() {
   const calEl = document.getElementById("pillCalendar");
   const streakEl = document.getElementById("pillStreakSante");
@@ -9445,11 +9470,11 @@ function renderPillSante() {
   if (!calEl) return;
 
   const today = new Date(); today.setHours(0,0,0,0);
-  const todayK = todayKey(today); // date LOCALE (toISOString décalerait d'un jour)
+  const todayK = todayKey(today);
 
-  // Calendrier 90 jours
+  // Calendrier variable
   const days = [];
-  for (let i = 89; i >= 0; i--) {
+  for (let i = _pillNb - 1; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
     days.push(todayKey(d));
   }
@@ -9484,12 +9509,9 @@ function renderPillSante() {
   if (streakEl) streakEl.textContent = streak + " j";
   if (bestEl)   bestEl.textContent = best + " j";
 
-  // % ce mois
-  const now = new Date();
-  const firstOfMonth = todayKey(new Date(now.getFullYear(), now.getMonth(), 1));
-  const daysInMonth = days.filter(dk => dk >= firstOfMonth && dk <= todayK);
-  const takenInMonth = daysInMonth.filter(dk => !!state.history[dk]?.pillTaken).length;
-  const pct = daysInMonth.length ? Math.round(takenInMonth / daysInMonth.length * 100) : 0;
+  // % sur la période affichée
+  const takenInPeriod = days.filter(dk => !!state.history[dk]?.pillTaken).length;
+  const pct = days.length ? Math.round(takenInPeriod / days.length * 100) : 0;
   if (pctEl) pctEl.textContent = pct + "%";
 }
 
