@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v828</title>
+<title>Mon Tableau de Vie 🌿 · v830</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -9570,10 +9570,11 @@ function renderSkincare() {
   if (!grid30) return;
   const dates30 = lastDates(30).reverse();
 
+  const skincareId = key => key === "matin" ? "h-skincare-matin" : "h-skincare-soir";
   const dotsRow = (key, color) => dates30.map(d => {
     const k = todayKey(d);
     const h = state.history[k]?.habits || {};
-    const isDone  = routineComplete(h, key);
+    const isDone  = !!h[skincareId(key)];
     const isToday = k === todayK;
     const lbl = d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + (isDone ? " ✓" : "");
     return `<div data-tip="${lbl}" onmouseenter="showHoverTip(event,this.dataset.tip)" onmousemove="moveHoverTip(event)" onmouseleave="hideHoverTip()" title="${lbl}" style="
@@ -9585,8 +9586,8 @@ function renderSkincare() {
     "></div>`;
   }).join("");
 
-  const doneM = dates30.filter(d => routineComplete(state.history[todayKey(d)]?.habits || {}, "matin")).length;
-  const doneS = dates30.filter(d => routineComplete(state.history[todayKey(d)]?.habits || {}, "soir")).length;
+  const doneM = dates30.filter(d => !!(state.history[todayKey(d)]?.habits?.['h-skincare-matin'])).length;
+  const doneS = dates30.filter(d => !!(state.history[todayKey(d)]?.habits?.['h-skincare-soir'])).length;
 
   grid30.innerHTML = `
     <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">
