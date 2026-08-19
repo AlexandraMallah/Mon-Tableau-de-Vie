@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v844</title>
+<title>Mon Tableau de Vie 🌿 · v846</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -4436,14 +4436,14 @@
     <button onclick="closeRenameCatModal()" class="secondary" style="width:100%;">Fermer</button>
   </div>
 </div>
-<div class="modal-bg" id="dreamNoteModal" onclick="if(event.target===this)closeDreamNoteModal()">
+<div class="modal-bg" id="dreamNoteModal">
   <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
     <h2 id="dreamNoteTitle">🌙 Mon rêve</h2>
     <p style="font-size:13px;color:var(--ink-soft);margin:0 0 12px;">Tu veux noter ce dont tu te souviens ?</p>
-    <textarea id="dreamNoteText" placeholder="Décris ton rêve ici…" style="width:100%;min-height:120px;resize:vertical;"></textarea>
-    <div class="actions">
-      <button class="secondary" onclick="closeDreamNoteModal()">Fermer</button>
-      <button class="primary" onclick="saveDreamNote()">Enregistrer</button>
+    <textarea id="dreamNoteText" placeholder="Décris ton rêve ici…" style="width:100%;min-height:120px;resize:vertical;box-sizing:border-box;"></textarea>
+    <div class="actions" style="margin-top:14px;position:sticky;bottom:0;background:white;padding-top:8px;">
+      <button class="secondary" onclick="closeDreamNoteModal()">Annuler</button>
+      <button class="primary" onclick="saveDreamNote()">Enregistrer ✓</button>
     </div>
   </div>
 </div>
