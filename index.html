@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v846</title>
+<title>Mon Tableau de Vie 🌿 · v848</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -4440,6 +4440,7 @@
   <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
     <h2 id="dreamNoteTitle">🌙 Mon rêve</h2>
     <p style="font-size:13px;color:var(--ink-soft);margin:0 0 12px;">Tu veux noter ce dont tu te souviens ?</p>
+    <input type="hidden" id="dreamNoteType" value="" />
     <textarea id="dreamNoteText" placeholder="Décris ton rêve ici…" style="width:100%;min-height:120px;resize:vertical;box-sizing:border-box;"></textarea>
     <div class="actions" style="margin-top:14px;position:sticky;bottom:0;background:white;padding-top:8px;">
       <button class="secondary" onclick="closeDreamNoteModal()">Annuler</button>
@@ -5534,10 +5535,11 @@ function toggleEmotion(id) {
 let _dreamNoteType = null;
 function openDreamNoteModal(type) {
   _dreamNoteType = type;
+  const typeInput = document.getElementById('dreamNoteType');
+  if (typeInput) typeInput.value = type;
   const title = document.getElementById('dreamNoteTitle');
   if (title) title.textContent = type === 'dream' ? '🌙 Mon rêve' : '👹 Mon cauchemar';
   const ta = document.getElementById('dreamNoteText');
-  const dk = getSelectedDayKey();
   const t = getToday();
   if (!t.dreamNotes) t.dreamNotes = {};
   if (ta) ta.value = t.dreamNotes[type] || '';
@@ -5546,15 +5548,22 @@ function openDreamNoteModal(type) {
 function closeDreamNoteModal() {
   document.getElementById('dreamNoteModal').classList.remove('open');
   _dreamNoteType = null;
+  const typeInput = document.getElementById('dreamNoteType');
+  if (typeInput) typeInput.value = '';
 }
 function saveDreamNote() {
-  if (!_dreamNoteType) return;
+  // Lire le type depuis le champ caché en priorité (robuste si _dreamNoteType est null)
+  const typeInput = document.getElementById('dreamNoteType');
+  const type = (typeInput && typeInput.value) || _dreamNoteType;
+  if (!type) return;
   const ta = document.getElementById('dreamNoteText');
   const t = getToday();
   if (!t.dreamNotes) t.dreamNotes = {};
-  t.dreamNotes[_dreamNoteType] = ta ? ta.value.trim() : '';
+  t.dreamNotes[type] = ta ? ta.value.trim() : '';
   saveState();
-  closeDreamNoteModal();
+  document.getElementById('dreamNoteModal').classList.remove('open');
+  _dreamNoteType = null;
+  if (typeInput) typeInput.value = '';
   renderJournalDreamNotes();
 }
 
