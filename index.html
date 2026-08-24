@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v848</title>
+<title>Mon Tableau de Vie 🌿 · v850</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2824,11 +2824,16 @@
     </div>
     <div class="card" style="margin-bottom:18px;">
       <h2>🏦 Mes comptes</h2>
-      <div class="money-accounts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="money-accounts-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,var(--sky-soft) 100%);">
           <div class="label" id="accountCourantLabel">💳 Compte courant</div>
           <div class="value" id="accountCourant">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="accountCourantDetail"></div>
+        </div>
+        <div class="money-stat" style="background:linear-gradient(135deg,white 0%,#fff8e1 100%);cursor:pointer;" onclick="_toggleCashDetail()">
+          <div class="label">💵 Espèces en poche</div>
+          <div class="value" id="cashBalanceDisplay" style="color:#b8860b;">0,00 €</div>
+          <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">Cliquer pour gérer</div>
         </div>
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,var(--lavender-soft) 100%);">
           <div class="label">🏦 Compte épargne</div>
@@ -2838,22 +2843,16 @@
       </div>
       <p style="color:var(--ink-soft);font-size:12px;margin:10px 0 0;">💡 Quand tu ajoutes une transaction <strong>💰 Épargne</strong>, le montant est <strong>retiré du compte courant</strong> et <strong>ajouté au compte épargne</strong> automatiquement. Pour ajuster les soldes de départ : ⚙ Personnaliser.</p>
 
-      <!-- Espèces -->
-      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span style="font-size:15px;font-weight:700;color:var(--ink);">💵 Espèces en poche</span>
-          <span id="cashBalanceDisplay" style="font-size:20px;font-weight:800;color:#5a8a5a;"></span>
-          <span style="flex:1;"></span>
-          <span style="font-size:12px;color:var(--ink-softer);">Disponible total (CB + cash) : <strong id="totalDisponible" style="color:var(--ink);"></strong></span>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+      <!-- Espèces — panneau déroulant -->
+      <div id="cashDetailPanel" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
+        <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:8px;">💵 Gérer mes espèces</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <input type="number" id="cashAmountInput" placeholder="Montant €" step="0.01" min="0"
             style="width:110px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:14px;color:var(--ink);" />
-          <input type="text" id="cashNoteInput" placeholder="Motif (ex: resto, marché…)"
+          <input type="text" id="cashNoteInput" placeholder="Motif (ex: retrait, marché…)"
             style="flex:1;min-width:120px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:14px;color:var(--ink);" />
-          <button onclick="cashWithdrawal()" style="padding:7px 14px;border-radius:9px;border:none;background:#fff3cd;color:#7a5c00;font-weight:700;cursor:pointer;font-family:inherit;">🏧 Retrait</button>
+          <button onclick="cashWithdrawal()" style="padding:7px 14px;border-radius:9px;border:none;background:#fff3cd;color:#7a5c00;font-weight:700;cursor:pointer;font-family:inherit;">🏧 Retrait CB</button>
           <button onclick="addCash(1)"  style="padding:7px 14px;border-radius:9px;border:none;background:#d4edda;color:#2d6a35;font-weight:700;cursor:pointer;font-family:inherit;">+ Reçu</button>
-          <button onclick="addCash(-1)" style="padding:7px 14px;border-radius:9px;border:none;background:#fde8e8;color:#a33;font-weight:700;cursor:pointer;font-family:inherit;">− Dépensé</button>
           <button onclick="setCashBalance()" style="padding:7px 12px;border-radius:9px;border:1px solid var(--line);background:var(--bg-1);color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;">📍 Caler</button>
         </div>
         <div id="cashLog" style="margin-top:10px;display:flex;flex-direction:column;gap:3px;max-height:160px;overflow-y:auto;"></div>
@@ -10517,6 +10516,7 @@ function setTxType(t) {
   if (fromWrap) fromWrap.style.display = isExpense ? "flex" : "none";
   if (fromSel && isExpense) {
     fromSel.innerHTML = `<option value="">— Compte courant (défaut)</option>` +
+      `<option value="__cash__">💵 Espèces en poche</option>` +
       (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
   }
   if (fromSel && !isExpense) fromSel.value = "";
@@ -11120,6 +11120,10 @@ function renderAccounts() {
   document.getElementById("accountEpargneDetail").innerHTML =
     `Solde de départ : ${startE.toFixed(2)} € · Cumulé épargné : ${(e - startE >= 0 ? "+" : "")}${(e - startE).toFixed(2)} €<br>${editLinks("epargne")}`;
 }
+function _toggleCashDetail() {
+  const p = document.getElementById("cashDetailPanel");
+  if (p) p.style.display = p.style.display === "none" ? "block" : "none";
+}
 function renderCash() {
   if (!state.accounts) return;
   const bal = state.accounts.cashBalance || 0;
@@ -11127,7 +11131,6 @@ function renderCash() {
   const total = document.getElementById("totalDisponible");
   const logEl = document.getElementById("cashLog");
   if (disp) disp.textContent = bal.toFixed(2) + " €";
-  if (total) total.textContent = (balanceCourant() + bal).toFixed(2) + " €";
   if (logEl) {
     const log = (state.accounts.cashLog || []).slice().reverse();
     logEl.innerHTML = log.length ? log.map((e, i) => {
@@ -11379,6 +11382,12 @@ function addTransaction() {
   const fromSavEl = document.getElementById("txFromSavings");
   const fromSavingsAccount = ((txType === "expense" || txType === "external") && fromSavEl?.value) ? fromSavEl.value : "";
   state.transactions.unshift({ id: "tx" + Date.now(), date, type: txType, amount, category, note, reimbursable, mission, fixedCharge, exceptional, postdocMission, directSavingsAccount, fromSavingsAccount });
+  // Si prélevé sur les espèces, déduire du cashBalance
+  if (fromSavingsAccount === "__cash__" && (txType === "expense" || txType === "external")) {
+    if (!state.accounts.cashLog) state.accounts.cashLog = [];
+    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0, 10), amount, dir: "out", note: note || category });
+    state.accounts.cashBalance = (state.accounts.cashBalance || 0) - amount;
+  }
   document.getElementById("txAmount").value = "";
   document.getElementById("txNote").value = "";
   if (reimbursableEl) reimbursableEl.checked = false;
@@ -11484,6 +11493,7 @@ function setTxModalType(t, presetCategory) {
   if (fromWrap) fromWrap.style.display = isExp ? "flex" : "none";
   if (fromSel && isExp) {
     fromSel.innerHTML = `<option value="">— Compte courant (défaut)</option>` +
+      `<option value="__cash__">💵 Espèces en poche</option>` +
       (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
   }
 }
@@ -11515,7 +11525,25 @@ function saveTxFromModal() {
   const directSav = document.getElementById("txModalDirectSavings");
   tx.directSavingsAccount = (txModalType === "income" && directSav?.value) ? directSav.value : "";
   const fromSav = document.getElementById("txModalFromSavings");
-  tx.fromSavingsAccount = ((txModalType === "expense" || txModalType === "external") && fromSav?.value) ? fromSav.value : "";
+  const oldFromSav = tx.fromSavingsAccount || "";
+  const newFromSav = ((txModalType === "expense" || txModalType === "external") && fromSav?.value) ? fromSav.value : "";
+  tx.fromSavingsAccount = newFromSav;
+  // Ajuster cashBalance si le compte source a changé
+  if (!state.accounts) state.accounts = {};
+  if (!state.accounts.cashLog) state.accounts.cashLog = [];
+  if (oldFromSav === "__cash__" && newFromSav !== "__cash__") {
+    // N'était plus espèces — rembourser l'ancien montant
+    state.accounts.cashBalance = (state.accounts.cashBalance || 0) + tx.amount;
+    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount: tx.amount, dir: "in", note: "Correction édition — " + (tx.note || tx.category) });
+  } else if (oldFromSav !== "__cash__" && newFromSav === "__cash__") {
+    // Maintenant espèces — déduire
+    state.accounts.cashBalance = (state.accounts.cashBalance || 0) - amount;
+    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount, dir: "out", note: note || category });
+  } else if (oldFromSav === "__cash__" && newFromSav === "__cash__" && tx.amount !== amount) {
+    // Montant modifié, compte espèces inchangé — ajuster la différence
+    const diff = tx.amount - amount;
+    state.accounts.cashBalance = (state.accounts.cashBalance || 0) + diff;
+  }
   saveState();
   closeTxModal();
   renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
