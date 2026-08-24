@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v852</title>
+<title>Mon Tableau de Vie 🌿 · v854</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -1777,7 +1777,7 @@
         <div class="habit-list" id="habitList"></div>
         <div style="height:1px;background:var(--line);margin:14px 0;"></div>
         <div class="card-row" style="margin-bottom:10px;">
-          <h2 style="margin:0;font-size:15px;">✨ Routines</h2>
+          <h2 style="margin:0;font-size:15px;cursor:pointer;" onclick="_goToHealth('healthSkincareCard')" title="Voir dans Santé">✨ Routines <span style="font-size:11px;color:var(--ink-softer);">↗</span></h2>
           <span id="routineTodayBadge" style="font-size:12px;color:var(--ink-soft);"></span>
         </div>
         <div id="routineTodayBlock"></div>
@@ -1787,7 +1787,7 @@
             style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:2px solid var(--line);background:white;cursor:pointer;font-family:inherit;transition:all 0.2s;text-align:left;">
             <span id="pillEmoji" style="font-size:22px;">💊</span>
             <div style="flex:1;">
-              <div style="font-size:14px;font-weight:700;color:var(--ink);" id="pillLabel">Pilule du jour</div>
+              <div style="font-size:14px;font-weight:700;color:var(--ink);" id="pillLabel">Pilule du jour <span style="font-size:11px;color:var(--ink-softer);cursor:pointer;" onclick="event.stopPropagation();_goToHealth('healthPillCard')" title="Voir dans Santé">↗</span></div>
               <div style="font-size:12px;color:var(--ink-soft);" id="pillStreakLabel"></div>
             </div>
             <span id="pillCheck" style="font-size:20px;opacity:0.3;">✓</span>
@@ -2722,7 +2722,7 @@
         </div>
 
         <!-- Graphique kcal pleine largeur -->
-        <div style="margin-bottom:0;">
+        <div style="margin-bottom:0;" id="healthCalorieCard">
           <h2 style="margin:0 0 8px;font-size:14px;">🔥 Apport calorique</h2>
           <div class="chart-wrap" style="height:200px;"><canvas id="calorieChart"></canvas></div>
           <div id="calorieAvg" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;"></div>
@@ -2737,7 +2737,7 @@
       </div>
 
     <!-- 🌿 Pas -->
-    <div class="card" style="margin-top:18px;">
+    <div class="card" id="healthStepsCard" style="margin-top:18px;">
       <div class="card-row">
         <h2>🚶 Pas</h2>
         <span style="font-size:13px;color:var(--ink-soft);">Objectif : <strong>9000 pas</strong> · orange dès 7000</span>
@@ -2754,7 +2754,7 @@
 
     <!-- 🔁 Habitudes -->
     <div class="grid-two" style="margin-top:18px;">
-      <div class="card">
+      <div class="card" id="healthSkincareCard">
         <div class="card-row" style="margin-bottom:14px;">
           <h2 style="margin:0;">✨ Routines — <span id="skincareNbLabel">60</span> jours</h2>
           <div style="display:flex;gap:4px;">
@@ -2767,7 +2767,7 @@
         <div style="margin-bottom:8px;"><span id="skincareStreakBadge" style="font-size:13px;color:var(--ink-soft);"></span></div>
         <div id="skincare30Grid"></div>
       </div>
-      <div class="card">
+      <div class="card" id="healthPillCard">
         <div class="card-row" style="margin-bottom:14px;">
           <div>
             <h2 style="margin:0 0 6px;">💊 Suivi pilule — <span id="pillNbLabel">90</span> jours</h2>
@@ -5639,10 +5639,13 @@ function renderHabits() {
         <div class="habit habit-numeric ${isDone ? "done" : ""}">
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-              ${h.id === 'h-pas'
-                ? `<span style="font-size:14.5px;cursor:pointer;text-decoration:underline dotted var(--ink-softer);" onclick="document.querySelector('.tab[data-view=health]').click()" title="Voir le détail dans Santé">${escapeHtml(h.name)} ↗</span>`
-                : `<span style="font-size:14.5px;">${escapeHtml(h.name)}</span>`
-              }
+              ${(()=>{
+                const healthLinks = { 'h-pas': 'healthStepsCard', 'h-eau': 'healthCalorieCard', 'h-calories': 'healthCalorieCard', 'h-pilule': 'healthPillCard' };
+                const target = healthLinks[h.id] || (/calori|kcal/i.test(h.name) ? 'healthCalorieCard' : /pilule|pill/i.test(h.name) ? 'healthPillCard' : /pas\b/i.test(h.name) ? 'healthStepsCard' : null);
+                return target
+                  ? `<span style="font-size:14.5px;cursor:pointer;white-space:nowrap;" onclick="_goToHealth('${target}')" title="Voir dans Santé">${escapeHtml(h.name)} <span style="font-size:11px;color:var(--ink-softer);text-decoration:none;">↗</span></span>`
+                  : `<span style="font-size:14.5px;">${escapeHtml(h.name)}</span>`;
+              })()}
               <input type="number" value="${num || ''}" onchange="setHabitValue('${h.id}', this.value)" placeholder="0" min="0" step="${inputStep}" ${inputMax ? `max="${inputMax}"` : ""}
                 style="width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:right;background:white;" />
               <span style="font-size:11px;color:var(--ink-soft);">/ ${h.target}${h.unit ? " " + h.unit : ""}</span>
@@ -11082,6 +11085,10 @@ function deletePartialReimb(txId, reimbId) {
   renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderBudgetFeedback(); renderForecast();
 }
 
+function _goToHealth(sectionId) {
+  document.querySelector('.tab[data-view="health"]')?.click();
+  if (sectionId) setTimeout(() => { const el = document.getElementById(sectionId); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200);
+}
 function _courantName() { return state.accounts?.courantName || "Compte courant"; }
 const _ACCOUNT_EMOJI = { "livret a": "📗", "ldd": "📘", "ldds": "📘", "lea": "📘", "pea": "📈", "etf": "📊", "assurance vie": "🛡️", "assurance-vie": "🛡️", "lep": "🟡", "boursobank": "🟣", "bourso": "🟣", "fortuneo": "🔵", "n26": "⚫", "revolut": "💙", "degiro": "🟠", "trade republic": "🟢", "binance": "🟡", "crypto": "🪙", "or": "🥇", "immobilier": "🏠", "scpi": "🏢" };
 function _accountEmoji(name) {
