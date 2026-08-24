@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v850</title>
+<title>Mon Tableau de Vie 🌿 · v852</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -3823,7 +3823,7 @@
 </div>
 
 <!-- Modal heure activité -->
-<div class="modal-bg" id="actTimeModal" onclick="if(event.target===this)_actTimeCancel()">
+<div class="modal-bg" id="actTimeModal">
   <div class="modal" style="max-width:320px;text-align:center;" onclick="event.stopPropagation()">
     <div style="font-size:28px;margin-bottom:4px;" id="actTimeEmoji"></div>
     <h3 style="margin:0 0 4px;" id="actTimeTitle"></h3>
@@ -3831,6 +3831,8 @@
     <label style="font-size:13px;color:var(--ink-soft);display:block;margin-bottom:6px;">À quelle heure ?</label>
     <input type="time" id="actTimeInput"
       style="width:100%;padding:10px;border:1.5px solid var(--lavender);border-radius:12px;font-size:22px;text-align:center;font-family:inherit;color:var(--ink);background:white;box-sizing:border-box;" />
+    <input type="hidden" id="actTimePendingActId" value="" />
+    <input type="hidden" id="actTimePendingDateKey" value="" />
     <div style="display:flex;gap:8px;margin-top:16px;">
       <button class="btn-soft" style="flex:1;" onclick="_actTimeCancel()">Sans heure</button>
       <button class="btn-primary" style="flex:1;" onclick="_actTimeConfirm()">Valider ✓</button>
@@ -7742,6 +7744,8 @@ function toggleActivityDay(actId, dateKey) {
     // Ouvre le popup heure
     const act = state.activities.find(a => a.id === actId);
     _actTimePending = { actId, dateKey };
+    document.getElementById('actTimePendingActId').value = actId;
+    document.getElementById('actTimePendingDateKey').value = dateKey;
     document.getElementById('actTimeEmoji').textContent = act?.emoji || '✨';
     document.getElementById('actTimeTitle').textContent = act?.name || '';
     const d = new Date(dateKey + 'T12:00:00');
@@ -7752,22 +7756,28 @@ function toggleActivityDay(actId, dateKey) {
   }
 }
 function _actTimeConfirm() {
-  if (!_actTimePending) return;
-  const { actId, dateKey } = _actTimePending;
+  const actId = (document.getElementById('actTimePendingActId')?.value) || _actTimePending?.actId;
+  const dateKey = (document.getElementById('actTimePendingDateKey')?.value) || _actTimePending?.dateKey;
+  if (!actId || !dateKey) return;
   const time = document.getElementById('actTimeInput').value;
   const day = ensureHistoryEntry(dateKey);
   day.activities[actId] = time ? { done: true, time } : 1;
   _actTimePending = null;
+  document.getElementById('actTimePendingActId').value = '';
+  document.getElementById('actTimePendingDateKey').value = '';
   document.getElementById('actTimeModal').classList.remove('open');
   saveState(); renderActivities(); renderPillars();
   if (document.querySelector('.view[data-view="activities"]')?.classList.contains("active")) renderActivityChart();
 }
 function _actTimeCancel() {
-  if (!_actTimePending) return;
-  const { actId, dateKey } = _actTimePending;
+  const actId = (document.getElementById('actTimePendingActId')?.value) || _actTimePending?.actId;
+  const dateKey = (document.getElementById('actTimePendingDateKey')?.value) || _actTimePending?.dateKey;
+  if (!actId || !dateKey) { document.getElementById('actTimeModal').classList.remove('open'); return; }
   const day = ensureHistoryEntry(dateKey);
   day.activities[actId] = 1;
   _actTimePending = null;
+  document.getElementById('actTimePendingActId').value = '';
+  document.getElementById('actTimePendingDateKey').value = '';
   document.getElementById('actTimeModal').classList.remove('open');
   saveState(); renderActivities(); renderPillars();
   if (document.querySelector('.view[data-view="activities"]')?.classList.contains("active")) renderActivityChart();
@@ -10507,7 +10517,7 @@ function setTxType(t) {
   if (directWrap) directWrap.style.display = t === "income" ? "flex" : "none";
   if (directSel && t === "income") {
     directSel.innerHTML = `<option value="">— Compte courant (défaut)</option>` +
-      (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+      (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
   }
   if (directSel && t !== "income") directSel.value = "";
   const fromWrap = document.getElementById("txFromSavingsWrap");
@@ -10515,9 +10525,9 @@ function setTxType(t) {
   const isExpense = (t === "expense" || t === "external");
   if (fromWrap) fromWrap.style.display = isExpense ? "flex" : "none";
   if (fromSel && isExpense) {
-    fromSel.innerHTML = `<option value="">— Compte courant (défaut)</option>` +
+    fromSel.innerHTML = `<option value="">💳 Compte courant (défaut)</option>` +
       `<option value="__cash__">💵 Espèces en poche</option>` +
-      (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+      (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
   }
   if (fromSel && !isExpense) fromSel.value = "";
   populateTxCategories();
@@ -11073,6 +11083,12 @@ function deletePartialReimb(txId, reimbId) {
 }
 
 function _courantName() { return state.accounts?.courantName || "Compte courant"; }
+const _ACCOUNT_EMOJI = { "livret a": "📗", "ldd": "📘", "ldds": "📘", "lea": "📘", "pea": "📈", "etf": "📊", "assurance vie": "🛡️", "assurance-vie": "🛡️", "lep": "🟡", "boursobank": "🟣", "bourso": "🟣", "fortuneo": "🔵", "n26": "⚫", "revolut": "💙", "degiro": "🟠", "trade republic": "🟢", "binance": "🟡", "crypto": "🪙", "or": "🥇", "immobilier": "🏠", "scpi": "🏢" };
+function _accountEmoji(name) {
+  const key = (name || "").toLowerCase().trim();
+  for (const [k, e] of Object.entries(_ACCOUNT_EMOJI)) { if (key.includes(k)) return e + " "; }
+  return "🏦 ";
+}
 function saveCourantName() {
   if (!state.accounts) state.accounts = {};
   state.accounts.courantName = document.getElementById("courantNameInput")?.value.trim() || "";
@@ -11485,16 +11501,16 @@ function setTxModalType(t, presetCategory) {
   const directSel = document.getElementById("txModalDirectSavings");
   if (directSel && t === "income") {
     directSel.innerHTML = `<option value="">— Compte courant (défaut)</option>` +
-      (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+      (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
   }
   const fromWrap = document.getElementById("txModalFromSavingsWrap");
   const fromSel  = document.getElementById("txModalFromSavings");
   const isExp = (t === "expense" || t === "external");
   if (fromWrap) fromWrap.style.display = isExp ? "flex" : "none";
   if (fromSel && isExp) {
-    fromSel.innerHTML = `<option value="">— Compte courant (défaut)</option>` +
+    fromSel.innerHTML = `<option value="">💳 Compte courant (défaut)</option>` +
       `<option value="__cash__">💵 Espèces en poche</option>` +
-      (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+      (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
   }
 }
 function saveTxFromModal() {
@@ -12298,8 +12314,8 @@ function toggleVirementEpargne() {
   const cats = state.savingsCategories || [];
   const locked = state.savingsLocked || {};
   const unlocked = cats.filter(c => !locked[c]);
-  document.getElementById("virFrom").innerHTML = unlocked.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
-  document.getElementById("virTo").innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  document.getElementById("virFrom").innerHTML = unlocked.map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
+  document.getElementById("virTo").innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
   // Default: from first, to second
   if (cats.length > 1) document.getElementById("virTo").value = cats[1];
   document.getElementById("virDate").value = new Date().toISOString().slice(0, 10);
