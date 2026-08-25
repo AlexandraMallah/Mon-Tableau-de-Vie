@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v856</title>
+<title>Mon Tableau de Vie 🌿 · v858</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -5635,26 +5635,27 @@ function renderHabits() {
       const isSmall = (h.target || 1) <= 30;
       const inputStep = isSmall ? 1 : 100;
       const inputMax = isSmall ? (h.target * 5) : "";
+      const _healthTarget = (()=>{
+        const healthLinks = { 'h-pas': 'healthStepsCard', 'h-eau': 'healthCalorieCard', 'h-calories': 'healthCalorieCard', 'h-pilule': 'healthPillCard' };
+        return healthLinks[h.id] || (/calori|kcal/i.test(h.name) ? 'healthCalorieCard' : /pilule|pill/i.test(h.name) ? 'healthPillCard' : /pas\b/i.test(h.name) ? 'healthStepsCard' : null);
+      })();
+      const _nameSpan = _healthTarget
+        ? `<span style="font-size:14px;cursor:pointer;white-space:nowrap;font-weight:600;" onclick="_goToHealth('${_healthTarget}')" title="Voir dans Santé">${escapeHtml(h.name)} <span style="font-size:11px;color:var(--ink-softer);">↗</span></span>`
+        : `<span style="font-size:14px;font-weight:600;">${escapeHtml(h.name)}</span>`;
       return `
-        <div class="habit habit-numeric ${isDone ? "done" : ""}">
-          <div style="flex:1;min-width:0;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-              ${(()=>{
-                const healthLinks = { 'h-pas': 'healthStepsCard', 'h-eau': 'healthCalorieCard', 'h-calories': 'healthCalorieCard', 'h-pilule': 'healthPillCard' };
-                const target = healthLinks[h.id] || (/calori|kcal/i.test(h.name) ? 'healthCalorieCard' : /pilule|pill/i.test(h.name) ? 'healthPillCard' : /pas\b/i.test(h.name) ? 'healthStepsCard' : null);
-                return target
-                  ? `<span style="font-size:14.5px;cursor:pointer;white-space:nowrap;" onclick="_goToHealth('${target}')" title="Voir dans Santé">${escapeHtml(h.name)} <span style="font-size:11px;color:var(--ink-softer);text-decoration:none;">↗</span></span>`
-                  : `<span style="font-size:14.5px;">${escapeHtml(h.name)}</span>`;
-              })()}
-              <input type="number" value="${num || ''}" onchange="setHabitValue('${h.id}', this.value)" placeholder="0" min="0" step="${inputStep}" ${inputMax ? `max="${inputMax}"` : ""}
-                style="width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:right;background:white;" />
-              <span style="font-size:11px;color:var(--ink-soft);">/ ${h.target}${h.unit ? " " + h.unit : ""}</span>
-            </div>
-            <div style="background:white;height:5px;border-radius:999px;overflow:hidden;">
+        <div class="habit habit-numeric ${isDone ? "done" : ""}" style="flex-direction:column;align-items:stretch;gap:6px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${_nameSpan}
+            <div class="habit-streak ${streakClass}" style="margin-left:auto;flex-shrink:0;">${streakText}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="number" value="${num || ''}" onchange="setHabitValue('${h.id}', this.value)" placeholder="0" min="0" step="${inputStep}" ${inputMax ? `max="${inputMax}"` : ""}
+              style="width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:right;background:white;" />
+            <span style="font-size:11px;color:var(--ink-soft);">/ ${h.target}${h.unit ? " " + h.unit : ""}</span>
+            <div style="flex:1;background:white;height:5px;border-radius:999px;overflow:hidden;margin-left:4px;">
               <div style="width:${Math.min(100, pct)}%;height:100%;background:${barColor};transition:width 0.4s;"></div>
             </div>
           </div>
-          <div class="habit-streak ${streakClass}">${streakText}</div>
         </div>`;
     }
     return `
