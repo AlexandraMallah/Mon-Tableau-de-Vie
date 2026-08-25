@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v854</title>
+<title>Mon Tableau de Vie 🌿 · v856</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -9374,14 +9374,14 @@ function renderPill() {
     btn.style.background   = "#f3eeff";
     check.style.opacity    = "1";
     check.style.color      = "#7c5cbf";
-    label.textContent      = "Pilule prise ✓";
+    label.innerHTML        = `Pilule prise ✓ <span style="font-size:11px;color:#9b7fd4;cursor:pointer;" onclick="event.stopPropagation();_goToHealth('healthPillCard')" title="Voir dans Santé">↗</span>`;
     label.style.color      = "#7c5cbf";
   } else {
     btn.style.borderColor  = "var(--line)";
     btn.style.background   = "white";
     check.style.opacity    = "0.2";
     check.style.color      = "var(--ink-soft)";
-    label.textContent      = "Pilule du jour";
+    label.innerHTML        = `Pilule du jour <span style="font-size:11px;color:var(--ink-softer);cursor:pointer;" onclick="event.stopPropagation();_goToHealth('healthPillCard')" title="Voir dans Santé">↗</span>`;
     label.style.color      = "var(--ink)";
   }
   // Streak dans "Aujourd'hui"
