@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v858</title>
+<title>Mon Tableau de Vie 🌿 · v860</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -1700,6 +1700,13 @@
       <button class="btn-icon" onclick="openGestionModal()" style="background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
       <button class="btn-icon" onclick="cloudDiag()" title="Diagnostic sync" style="background:var(--lavender-soft);">🔍</button>
       <button class="btn-icon" onclick="openShortcutsEditor()" title="Gérer les raccourcis" style="background:var(--lavender-soft);">⚡</button>
+      <!-- Traduction -->
+      <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);">
+        <button id="langFR" onclick="_setLang('fr')" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">FR</button>
+        <button id="langEN" onclick="_setLang('en')" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">EN</button>
+        <button id="langES" onclick="_setLang('es')" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">ES</button>
+      </div>
+      <div id="google_translate_element" style="display:none;"></div>
       <button class="btn-icon" id="syncSignInBtn" onclick="signInWithGoogle()" style="background:linear-gradient(135deg,#e8f0fe,#d2e3fc);color:#1a73e8;font-weight:600;">☁️ Connexion</button>
       <div class="sync-row">
         <div id="syncUserAvatar" style="display:none;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:var(--shadow);font-size:13px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
@@ -20734,6 +20741,48 @@ function _micPulse(on) {
   </div>
 </div>
 
+<!-- Google Translate -->
+<script>
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({ pageLanguage: 'fr', includedLanguages: 'en,es', autoDisplay: false }, 'google_translate_element');
+}
+function _setLang(lang) {
+  // Met à jour les boutons visuellement
+  ['FR','EN','ES'].forEach(l => {
+    const btn = document.getElementById('lang' + l);
+    if (!btn) return;
+    const active = l.toLowerCase() === lang;
+    btn.style.background = active ? 'var(--lavender)' : 'none';
+    btn.style.color = active ? 'white' : 'var(--ink-soft)';
+    btn.style.fontWeight = active ? '700' : '600';
+  });
+  if (lang === 'fr') {
+    // Revenir au français : supprimer le cookie de traduction et recharger
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.alexandramallah.github.io';
+    if (document.cookie.includes('googtrans')) location.reload();
+    return;
+  }
+  // Déclencher la traduction via le select caché du widget
+  const sel = document.querySelector('#google_translate_element select');
+  if (sel) {
+    sel.value = lang;
+    sel.dispatchEvent(new Event('change'));
+  } else {
+    // Widget pas encore prêt — cookie direct
+    document.cookie = `googtrans=/fr/${lang}; path=/`;
+    document.cookie = `googtrans=/fr/${lang}; path=/; domain=.alexandramallah.github.io`;
+    location.reload();
+  }
+}
+</script>
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<style>
+/* Masquer la barre Google Translate native */
+.goog-te-banner-frame, .skiptranslate { display:none !important; }
+body { top: 0 !important; }
+.goog-te-gadget { display:none !important; }
+</style>
 
 </body>
 </html>
