@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v860</title>
+<title>Mon Tableau de Vie 🌿 · v861</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -8047,7 +8047,7 @@ function renderActivityChart() {
   const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
   const datasets = state.activities.map((a, i) => ({
     label: `${a.emoji} ${a.name}`,
-    data: dates.map(d => state.history[todayKey(d)]?.activities?.[a.id] || 0),
+    data: dates.map(d => { const v = state.history[todayKey(d)]?.activities?.[a.id]; return (v && (v === 1 || v === true || v?.done)) ? 1 : 0; }),
     backgroundColor: PASTEL_PALETTE[i % PASTEL_PALETTE.length],
     borderRadius: 6, borderSkipped: false,
   }));
