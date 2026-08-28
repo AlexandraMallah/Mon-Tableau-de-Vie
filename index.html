@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v884</title>
+<title>Mon Tableau de Vie 🌿 · v886</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2812,6 +2812,12 @@
       </div>
     </div>
 
+    <!-- 🩺 Suivi symptômes perso -->
+    <div class="card" id="customSymptomsSanteCard" style="margin-top:18px;display:none;">
+      <h2 style="margin:0 0 14px;">🩺 Suivi symptômes — 30 jours</h2>
+      <div id="customSymptomsSanteGrid"></div>
+    </div>
+
     <!-- 📈 Tendances -->
     <div class="card" style="margin-top:18px;">
       <h2>📈 Tendance prévisionnelle</h2>
@@ -5539,7 +5545,7 @@ function onViewChange(view) {
   if (view === "today") maybeLoadWeather();
   if (view === "work") updateWorkTabBadges();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
-  if (view === "health") { _healthMonthOffset = 0; _renderHealthMonthLabel(); renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); renderEnergyBalance(); }
+  if (view === "health") { _healthMonthOffset = 0; _renderHealthMonthLabel(); renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); renderCustomSymptomsSante(); renderEnergyBalance(); }
   if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
@@ -5638,8 +5644,10 @@ function _getEmotions() { return state.emotions && state.emotions.length ? state
 const _EM_EMOJIS = [
   ["😊","Contente"],["🎉","Excitée"],["🔥","Motivée"],["💪","Confiante"],["🌿","Sereine"],["🥰","Amoureuse"],
   ["😌","Paisible"],["✨","Légère"],["🎶","Joyeuse"],["💡","Inspirée"],["🤩","Émerveillée"],["🌸","Épanouie"],
+  ["🥹","Émue"],["😇","Apaisée"],["🌟","Rayonnante"],["🫶","Reconnaissante"],["😄","Enthousiaste"],
   ["😢","Triste"],["😤","Irritée"],["😡","En colère"],["🌀","Stressée"],["😴","Fatiguée"],["🤒","Malade"],
-  ["💔","Blessée"],["😰","Anxieuse"],["😶","Vide"],["😔","Mélancolique"],["🫥","Absente"],["😑","Neutre"]
+  ["💔","Blessée"],["😰","Anxieuse"],["😶","Vide"],["😔","Mélancolique"],["🫥","Absente"],["😑","Neutre"],
+  ["😒","Lasse"],["🫠","Débordée"],["😕","Perplexe"],["🥺","Vulnérable"],["😬","Mal à l'aise"],["🤯","Dépassée"]
 ];
 function _addEmotion() {
   document.getElementById("emModalEmoji").value = "😊";
@@ -9953,7 +9961,7 @@ function renderCustomSymptoms() {
 function _setSymptomValue(id, v) {
   const today = getToday();
   today[id] = today[id] === v ? null : v;
-  saveState(); renderCustomSymptoms();
+  saveState(); renderCustomSymptoms(); renderCustomSymptomsSante();
 }
 let _symSelectedType = "scale";
 const _SYM_EMOJIS = ["💊","🩸","🤰","🧠","💉","🩹","🌡️","😴","🫁","🦷","🏃","💪","🤒","🤢","😵","❤️","🫀","🦴","👁️","👂","🤧","🤕","💆","🍃"];
@@ -10005,7 +10013,7 @@ function _saveSymptomModal() {
   if (_editSymptomId) {
     const sym = state.customSymptoms.find(x => x.id === _editSymptomId);
     if (sym) { sym.name = name; sym.emoji = emoji; sym.subtitle = subtitle; sym.type = type; sym.unit = unit; }
-    saveState(); renderCustomSymptoms(); _closeSymptomModal(); return;
+    saveState(); renderCustomSymptoms(); renderCustomSymptomsSante(); _closeSymptomModal(); return;
   }
   const id = "sym_" + name.toLowerCase().replace(/[^a-z0-9]/g,"_").slice(0,20) + "_" + Date.now();
   if (!state.customSymptoms || !state.customSymptoms.length) state.customSymptoms = [...CUSTOM_SYMPTOMS_DEFAULT];
@@ -10196,6 +10204,44 @@ function setSkincareNb(n) {
   _skincareNb = nbTotal;
   renderSkincare();
 }
+function renderCustomSymptomsSante() {
+  const card = document.getElementById("customSymptomsSanteCard");
+  const grid = document.getElementById("customSymptomsSanteGrid");
+  if (!card || !grid) return;
+  const syms = state.customSymptoms || [];
+  if (!syms.length) { card.style.display = "none"; return; }
+  card.style.display = "";
+  // couleurs par niveau 0=meilleur → 4=pire
+  const levelColors = ["#aee0c8","#d4edbc","#ffe0a0","#ffb880","#ff9090"];
+  const dates30 = lastDates(30);
+  const todayK = todayKey();
+  grid.innerHTML = syms.map(sym => {
+    const dotsHtml = dates30.map(d => {
+      const k = todayKey(d);
+      const val = state.history[k]?.[sym.id];
+      const hasVal = val !== undefined && val !== null;
+      const bg = hasVal ? levelColors[val] : "var(--line)";
+      const isToday = k === todayK;
+      const lbl = d.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}) + (hasVal ? " · " + (sym.levels?.[val] || val) : "");
+      return `<div data-tip="${lbl}" onmouseenter="showHoverTip(event,this.dataset.tip)" onmousemove="moveHoverTip(event)" onmouseleave="hideHoverTip()" style="width:14px;height:14px;border-radius:3px;flex-shrink:0;background:${bg};${isToday?"outline:2px solid var(--lavender);outline-offset:1px;":""}"></div>`;
+    }).join("");
+    return `<div style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span style="font-size:14px;">${sym.emoji || "🔵"}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--ink);">${escapeHtml(sym.name)}</span>
+        <span style="font-size:11px;color:var(--ink-softer);margin-left:4px;">${escapeHtml(sym.subtitle || "")}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;">${dotsHtml}</div>
+      <div style="display:flex;gap:8px;margin-top:4px;font-size:10px;color:var(--ink-softer);">
+        <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:#aee0c8;display:inline-block;"></span>Bien</span>
+        <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:#ffe0a0;display:inline-block;"></span>Modéré</span>
+        <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:#ff9090;display:inline-block;"></span>Intense</span>
+        <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--line);display:inline-block;"></span>Non renseigné</span>
+      </div>
+    </div>`;
+  }).join("<div style='height:1px;background:var(--line);margin:10px 0;'></div>");
+}
+
 function renderSkincare() {
   const todayBlock    = document.getElementById("skincareTodayBlock");   // onglet Santé
   const todayAujourd = document.getElementById("routineTodayBlock");     // onglet Aujourd'hui
@@ -20638,6 +20684,9 @@ function toggleEditMode() {
   if (btn) btn.textContent = document.body.classList.contains('edit-mode') ? '✅ Terminer' : '✏️ Éditer';
   _renderFinanceCatLists();
   renderCustomSymptoms();
+  renderHabits();
+  renderSkincare();
+  renderPill();
 }
 
 const WORK_TAB_DEFAULTS = { postdoc: "Postdoc", candidatures: "Candidatures", valorisation: "Valorisation", teaching: "Enseignement" };
