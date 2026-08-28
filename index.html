@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v947</title>
+<title>Mon Tableau de Vie 🌿 · v949</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23184,7 +23184,6 @@ function googleTranslateElementInit() {
   new google.translate.TranslateElement({ pageLanguage: 'fr', includedLanguages: 'en,es', autoDisplay: false }, 'google_translate_element');
 }
 function _setLang(lang) {
-  // Met à jour les boutons visuellement
   ['FR','EN','ES'].forEach(l => {
     const btn = document.getElementById('lang' + l);
     if (!btn) return;
@@ -23194,22 +23193,28 @@ function _setLang(lang) {
     btn.style.fontWeight = active ? '700' : '600';
   });
   if (lang === 'fr') {
-    // Revenir au français : supprimer le cookie de traduction et recharger
+    const hadTrans = document.cookie.includes('googtrans');
     document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.alexandramallah.github.io';
-    if (document.cookie.includes('googtrans')) location.reload();
+    sessionStorage.removeItem('_gTransTarget');
+    if (hadTrans) { _noteFlushToLocalStorage(); window.location.href = window.location.href.split('?')[0]; }
     return;
   }
-  // Déclencher la traduction via le select caché du widget
+  // Anti-boucle : si on vient d'un reload pour cette langue et le widget n'est toujours pas là, on abandonne
+  if (sessionStorage.getItem('_gTransTarget') === lang) {
+    sessionStorage.removeItem('_gTransTarget');
+    return;
+  }
   const sel = document.querySelector('#google_translate_element select');
   if (sel) {
     sel.value = lang;
     sel.dispatchEvent(new Event('change'));
   } else {
-    // Widget pas encore prêt — cookie direct
     document.cookie = `googtrans=/fr/${lang}; path=/`;
     document.cookie = `googtrans=/fr/${lang}; path=/; domain=.alexandramallah.github.io`;
-    location.reload();
+    sessionStorage.setItem('_gTransTarget', lang);
+    _noteFlushToLocalStorage();
+    window.location.href = window.location.href.split('?')[0];
   }
 }
 </script>
