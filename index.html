@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v900</title>
+<title>Mon Tableau de Vie 🌿 · v902</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -1279,6 +1279,8 @@
     background: white;
   }
   .modal textarea { min-height: 80px; resize: vertical; }
+  .habit-suggest-chip { padding:5px 11px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg-1);font-family:inherit;font-size:12px;color:var(--ink);cursor:pointer;transition:all .12s;white-space:nowrap; }
+  .habit-suggest-chip:hover { background:var(--lavender-soft);border-color:var(--lavender);color:var(--ink); }
   .modal input:focus, .modal textarea:focus, .modal select:focus { outline: 2px solid var(--lavender); }
   .modal .item-edit {
     display: flex; align-items: center; gap: 8px;
@@ -3976,6 +3978,30 @@
       <h3 id="habitModalTitle" style="margin:0;font-size:18px;">✨ Nouvelle habitude</h3>
       <button onclick="_closeHabitModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
     </div>
+    <!-- Suggestions rapides -->
+    <div id="habitSuggestionsWrap" style="margin-bottom:18px;">
+      <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:8px;">SUGGESTIONS RAPIDES <span style="font-weight:400;font-size:10px;">(cliquer pour pré-remplir)</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Eau',{type:'numeric',target:2,unit:'L'})">💧 Eau</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Pas',{type:'numeric',target:8000,unit:'pas'})">🚶 Pas</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Lecture',{type:'numeric',target:30,unit:'min'})">📚 Lecture</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Méditation',{type:'numeric',target:10,unit:'min'})">🧘 Méditation</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Sport',{type:'boolean'})">🏋️ Sport</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Fruits & légumes',{type:'numeric',target:5,unit:'portions'})">🥗 Fruits &amp; légumes</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Caféine',{type:'numeric',target:2,unit:'tasses'})">☕ Caféine</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Alcool',{type:'boolean'})">🍷 Alcool (0 verre)</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Étirements',{type:'numeric',target:10,unit:'min'})">🤸 Étirements</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Journal',{type:'boolean'})">✍️ Journal</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('No social media',{type:'boolean'})">📵 No réseaux</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Ménage',{type:'boolean'})">🧹 Ménage</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Plantes',{type:'boolean'})">🪴 Plantes</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Protéines',{type:'numeric',target:80,unit:'g'})">🥩 Protéines</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Vitamines',{type:'boolean'})">💊 Vitamines</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Gratitude',{type:'boolean'})">🙏 Gratitude</button>
+      </div>
+      <div style="font-size:11px;color:var(--ink-softer);margin-top:8px;">💊 Suivi pilule &amp; 🩸 règles → section dédiée dans "Aujourd'hui"</div>
+    </div>
+    <div style="height:1px;background:var(--line);margin-bottom:16px;"></div>
     <div style="margin-bottom:14px;">
       <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom de l'habitude</div>
       <input type="text" id="habitModalName" placeholder="ex : Méditation, Lecture, Eau…" maxlength="40"
@@ -6048,6 +6074,15 @@ function renderHabits() {
   }).join("");
 }
 let _habitSelectedType = "boolean";
+function _applyHabitSuggest(name, opts) {
+  document.getElementById("habitModalName").value = name;
+  _selectHabitType(opts.type || "boolean");
+  if (opts.type === "numeric") {
+    document.getElementById("habitModalTarget").value = opts.target || "";
+    document.getElementById("habitModalUnit").value = opts.unit || "";
+  }
+  document.getElementById("habitModalName").focus();
+}
 function _selectHabitType(type) {
   _habitSelectedType = type;
   ["boolean","numeric"].forEach(t => {
@@ -6064,6 +6099,9 @@ function _openHabitModal(id) {
   document.getElementById("habitModalTarget").value = h ? h.target : "";
   document.getElementById("habitModalUnit").value = h ? (h.unit || "") : "";
   _selectHabitType(h ? h.type : "boolean");
+  // Masquer les suggestions en mode édition, afficher en mode création
+  const sw = document.getElementById("habitSuggestionsWrap");
+  if (sw) sw.style.display = h ? "none" : "";
   document.getElementById("habitModal").style.display = "flex";
   setTimeout(() => document.getElementById("habitModalName").focus(), 50);
 }
