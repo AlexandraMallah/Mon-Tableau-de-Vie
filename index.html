@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v906</title>
+<title>Mon Tableau de Vie 🌿 · v908</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -1767,6 +1767,7 @@
     <button class="tab" data-view="calendar">Calendrier</button>
     <button class="tab" data-view="journal">Journal</button>
     <button class="tab" data-view="pillars">Piliers</button>
+    <button id="helpNavBtn" onclick="openHelpForCurrentView()" title="Aide sur cette section" style="margin-left:auto;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">ℹ️ Aide</button>
   </nav>
 
   <!-- VIEW: TODAY -->
@@ -3917,6 +3918,24 @@
 </div>
 
 <!-- Modal confirmation générique -->
+<!-- Modal aide contextuelle -->
+<div class="modal-bg" id="helpModal" style="z-index:550;" onclick="event.target===this&&closeHelp()">
+  <div class="modal" style="max-width:520px;max-height:85vh;overflow-y:auto;" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <span id="helpIcon" style="font-size:32px;"></span>
+      <div style="flex:1;">
+        <h2 id="helpTitle" style="margin:0;font-size:18px;"></h2>
+        <div id="helpSubtitle" style="font-size:12px;color:var(--ink-soft);margin-top:2px;"></div>
+      </div>
+      <button onclick="closeHelp()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);padding:4px 8px;">✕</button>
+    </div>
+    <div id="helpBody" style="font-size:14px;color:var(--ink);line-height:1.7;"></div>
+    <div style="margin-top:18px;text-align:right;">
+      <button onclick="closeHelp()" style="padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Compris ✓</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="confirmModal" style="z-index:600;" onclick="event.target===this&&_closeConfirm(false)">
   <div class="modal" style="max-width:360px;padding:28px 24px;text-align:center;" onclick="event.stopPropagation()">
     <div id="confirmIcon" style="font-size:36px;margin-bottom:10px;">🗑️</div>
@@ -13150,6 +13169,9 @@ function renderSavingsChart() {
     const outAmt = state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "savings-out"; }).reduce((s, t) => s + t.amount, 0);
     return Math.max(0, inAmt - outAmt);
   });
+  const incomeData = periods.map(({ start, end }) =>
+    state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "income"; }).reduce((s, t) => s + t.amount, 0)
+  );
   savingsChart = new Chart(document.getElementById("savingsChart"), {
     type: "bar",
     data: { labels, datasets: [{ label: "Mis de côté", data, backgroundColor: "#c9b6f0", borderRadius: 8 }] },
@@ -13167,13 +13189,46 @@ function renderSavingsChart() {
           panel._openLabel = p.label;
         }
       },
-      plugins: { ...baseChartOpts().plugins, legend: { display: false },
-        tooltip: { ...baseChartOpts().plugins.tooltip, callbacks: { footer: () => "Cliquer pour le détail" } },
+      plugins: {
+        ...baseChartOpts().plugins,
+        legend: { display: false },
+        tooltip: { ...baseChartOpts().plugins.tooltip, callbacks: {
+          label: ctx => {
+            const saved = ctx.parsed.y;
+            const income = incomeData[ctx.dataIndex];
+            const pct = income > 0 ? Math.round((saved / income) * 100) : 0;
+            return [`${saved.toFixed(0)} € mis de côté`, income > 0 ? `${pct}% des revenus (${income.toFixed(0)} €)` : "Revenus non enregistrés"];
+          },
+          footer: () => "Cliquer pour le détail",
+        }},
+        // Label dans la barre : "x% des revenus"
+        datalabels: false,
       },
       scales: {
         x: { grid: { display: false }, ticks: { color: "#8a8499", autoSkip: true, maxTicksLimit: 6, maxRotation: 0 } },
         y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " €" }, beginAtZero: true },
       },
+      animation: { onComplete: function() {
+        const chart = this;
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.font = "bold 11px system-ui, sans-serif";
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        chart.data.datasets[0].data.forEach((val, i) => {
+          const income = incomeData[i];
+          if (!income || income <= 0 || val <= 0) return;
+          const pct = Math.round((val / income) * 100);
+          const meta = chart.getDatasetMeta(0);
+          const bar = meta.data[i];
+          if (!bar) return;
+          const barH = bar.height || 0;
+          if (barH < 20) return; // barre trop petite
+          ctx.fillText(pct + "% rev.", bar.x, bar.y + barH / 2);
+        });
+        ctx.restore();
+      }},
     },
   });
 }
@@ -15274,18 +15329,22 @@ async function saveGoogleCal() {
   result.style.background = "var(--lavender-soft)";
   result.innerHTML = "⏳ Connexion en cours…";
   const proxies = [
-    u => { const r = `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`; return { url: r, json: true }; },
+    u => ({ url: `https://corsproxy.io/?url=${encodeURIComponent(u)}`, json: false }),
+    u => ({ url: `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, json: true }),
     u => ({ url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`, json: false }),
+    u => ({ url: `https://proxy.cors.sh/${u}`, json: false }),
     u => ({ url: `https://thingproxy.freeboard.io/fetch/${u}`, json: false }),
-    u => ({ url: `https://cors-proxy.htmldriven.com/?url=${encodeURIComponent(u)}`, json: false }),
-    u => ({ url: `https://yacdn.org/serve/${u}`, json: false }),
+    u => ({ url: `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, json: false }),
+    u => ({ url: `https://cors-anywhere.herokuapp.com/${u}`, json: false }),
   ];
   let text = null;
-  const bustedUrl = url + (url.includes("?") ? "&" : "?") + "_cb=" + Date.now();
+  // Ne pas ajouter de cache-buster pour l'URL de base (certains proxies refusent les URLs avec trop de paramètres)
+  const bustedUrl = url;
   for (const proxyFn of proxies) {
+    result.innerHTML = `⏳ Test proxy ${proxies.indexOf(proxyFn) + 1}/${proxies.length}…`;
     try {
       const { url: proxyUrl, json } = proxyFn(bustedUrl);
-      const r = await fetch(proxyUrl, { cache: "no-store", signal: AbortSignal.timeout(12000) });
+      const r = await fetch(proxyUrl, { cache: "no-store", signal: AbortSignal.timeout(25000) });
       if (r.ok) {
         let tx = await r.text();
         if (json) { try { tx = JSON.parse(tx).contents || ""; } catch (_) { tx = ""; } }
@@ -15374,7 +15433,7 @@ async function syncGoogleCal(silent = false) {
     for (const proxy of proxies) {
       const bustedUrl = url + (url.includes("?") ? "&" : "?") + "_cb=" + Date.now();
       try {
-        const r = await fetch(proxy.build(bustedUrl), { signal: AbortSignal.timeout(12000), cache: "no-store" });
+        const r = await fetch(proxy.build(bustedUrl), { signal: AbortSignal.timeout(25000), cache: "no-store" });
         if (r.ok) {
           let tx = await r.text();
           if (proxy.json) { try { tx = JSON.parse(tx).contents || ""; } catch (_) { tx = ""; } }
@@ -21030,6 +21089,163 @@ function _removeFinanceIncomeCat(c) {
 
 /* ── Modales utilitaires (confirm / prompt) ─────────────────────── */
 let _confirmCb = null;
+// ===== AIDE CONTEXTUELLE =====
+const HELP_TEXTS = {
+  today: {
+    icon: "📅", title: "Aujourd'hui",
+    subtitle: "Ta vue quotidienne principale",
+    body: `
+      <p>C'est le cœur du dashboard. Chaque jour tu peux :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>🔄 Habitudes</strong> — Coche chaque habitude accomplie. Les habitudes numériques (eau, pas…) se remplissent progressivement. <em>Ex : clique 3× sur l'icône eau pour enregistrer 3 verres.</em></li>
+        <li><strong>😊 Bien-être</strong> — Note ton humeur (1-5 étoiles), ton énergie, et tes heures de sommeil. Ces données alimentent les graphiques de Santé.</li>
+        <li><strong>🌙 Couché / Réveil</strong> — Note tes heures de sommeil pour calculer la durée automatiquement.</li>
+        <li><strong>📓 Journal</strong> — Écris librement. L'app détecte automatiquement tes émotions (Joie, Stress, Fatigue…) et affiche des badges.</li>
+        <li><strong>◀ ▶</strong> — Navigue dans les jours passés pour compléter ou consulter une journée manquée.</li>
+      </ul>
+      <div style="background:var(--lavender-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 <strong>Astuce :</strong> En mode édition (✏️ en haut), tu peux ajouter, modifier ou supprimer des habitudes, et personnaliser la routine skincare.
+      </div>`
+  },
+  work: {
+    icon: "💼", title: "Travail",
+    subtitle: "Suivi de ta vie professionnelle de postdoc",
+    body: `
+      <p>La vue Travail est organisée en 6 sous-onglets :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>✅ Tâches</strong> — Crée des tâches avec priorité (🚨 urgent à ⚪ faible), deadline et jalons. La barre de couleur va du rouge (0%) au vert (100%). Un mini-calendrier à droite te montre les deadlines du mois.</li>
+        <li><strong>⏱ Temps</strong> — Enregistre tes heures de travail par catégorie. Vue semaine et statistiques. Les jours de congé déclarés sont exclus du calcul.</li>
+        <li><strong>🔬 Postdoc</strong> — Suivi de tes projets et missions de recherche avec budget missions.</li>
+        <li><strong>📋 Candidatures</strong> — Suivi de tes candidatures de poste (envoyée → entretien → résultat).</li>
+        <li><strong>🏆 Valorisation</strong> — Articles, communications, chapitres de livre.</li>
+        <li><strong>📚 Enseignement</strong> — Cours dispensés, heures et notes par cours.</li>
+      </ul>
+      <div style="background:var(--lavender-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 <strong>Congés :</strong> Déclare tes périodes de congés dans l'onglet Temps → icône 🌴. Les jours posés sont exclus des calculs d'heures et grisent automatiquement le pilier Travail.
+      </div>`
+  },
+  activities: {
+    icon: "🏃", title: "Activités",
+    subtitle: "Suivi de tes sports et loisirs",
+    body: `
+      <p>Enregistre toutes tes activités physiques et loisirs :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Ajouter une séance</strong> — Clique sur + à côté d'une activité pour logger une séance du jour. Tu peux ajouter durée et notes.</li>
+        <li><strong>Rétrospective</strong> — Tableau mensuel de toutes tes activités depuis le début. Intensité colorée selon la fréquence.</li>
+        <li><strong>Mode édition ✏️</strong> — Ajoute de nouvelles activités (nom, emoji, couleur) ou supprime les existantes. Toute nouvelle activité apparaît automatiquement dans la rétrospective.</li>
+      </ul>
+      <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 <strong>Exemple :</strong> Tu as fait 45 min de salle de sport → clique ▶ à côté de "Salle de sport", entre 45 min. La séance s'enregistre pour aujourd'hui et compte dans ta rétrospective mensuelle.
+      </div>`
+  },
+  health: {
+    icon: "❤️", title: "Santé",
+    subtitle: "Métriques corporelles et bien-être",
+    body: `
+      <p>Suit tes indicateurs de santé sur la durée :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>📊 Graphiques</strong> — Courbes de sommeil, humeur et énergie sur 30 jours. Les données viennent de l'onglet Aujourd'hui.</li>
+        <li><strong>⚖️ Poids</strong> — Saisis ton poids manuellement. Graphique d'évolution sur le temps.</li>
+        <li><strong>💊 Pilule</strong> — Calendrier de prise sur 90 jours avec streak et meilleure série.</li>
+        <li><strong>🌡 Symptômes</strong> — Crée des symptômes personnalisés (douleur, niveau 1-10) et suis leur évolution graphique.</li>
+        <li><strong>🌸 Hormones</strong> — Analyse automatique des facteurs qui affectent ton équilibre hormonal (alimentation, sommeil, stress, vie sociale) basée sur ton journal et tes habitudes.</li>
+      </ul>`
+  },
+  money: {
+    icon: "💰", title: "Finances",
+    subtitle: "Budget, dépenses et épargne",
+    body: `
+      <p>Suit toutes tes finances en un endroit :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>+ Nouvelle transaction</strong> — Ajoute une dépense, un revenu, une épargne ou un retrait. Choisis le type en haut du formulaire.</li>
+        <li><strong>🌡 Jauge budget</strong> — Compare ton rythme de dépenses à l'idéal (vert = ok, orange = un peu vite, rouge = dépassé). Le budget est défini dans Personnaliser → Finances.</li>
+        <li><strong>💰 Épargne</strong> — Chaque compte épargne est suivi séparément (Livret A, PEL, etc.) avec son solde et ses mouvements.</li>
+        <li><strong>💵 Espèces</strong> — Suivi de ton cash. Le retrait espèces déduit du compte source et ajoute au porte-monnaie.</li>
+        <li><strong>🧾 Hors compte</strong> — Dépenses qui ne passent pas par ton compte courant (compte joint, Revolut, PayPal…). N'affecte pas la jauge budget principale.</li>
+      </ul>
+      <div style="background:var(--peach-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 <strong>Charges fixes</strong> — Coche "Charge fixe" sur les transactions récurrentes (loyer, assurance…) : elles sont exclues de la jauge pour ne pas fausser le suivi des dépenses variables.
+      </div>`
+  },
+  domestic: {
+    icon: "🏠", title: "Domestique",
+    subtitle: "Maison, courses, plantes et to-do",
+    body: `
+      <p>Tout ce qui concerne ta vie à la maison :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>🗒️ Tâches</strong> — To-do liste domestique avec catégories et priorités (ménage, administratif, bricolage…).</li>
+        <li><strong>📝 Notes libres</strong> — Notes rapides avec titre, date et contenu. Idéal pour des infos à retenir (réfs fournisseur, codes, instructions).</li>
+        <li><strong>🛒 Courses</strong> — Liste de courses avec cases à cocher. Se réinitialise quand tu as tout coché.</li>
+        <li><strong>🌿 Plantes</strong> — Suivi de l'arrosage et de l'entretien de chaque plante.</li>
+        <li><strong>🍽 Repas</strong> — Planification des repas de la semaine.</li>
+      </ul>`
+  },
+  calendar: {
+    icon: "📆", title: "Calendrier",
+    subtitle: "Événements et synchronisation Google Agenda",
+    body: `
+      <p>Vue mensuelle de tous tes événements :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>+ Événement</strong> — Ajoute manuellement un événement (date, heure, lieu, couleur).</li>
+        <li><strong>🔗 Google Agenda</strong> — Connecte ton Google Agenda via l'URL iCal privée. Pour l'obtenir : Google Agenda → ⚙️ Paramètres → clique sur ton agenda → "Adresse secrète au format iCal" → bouton Copier. La sync se fait automatiquement toutes les 30 min.</li>
+        <li><strong>📁 Importer ICS</strong> — Importe un fichier .ics manuellement (si la sync auto ne fonctionne pas).</li>
+        <li><strong>Couleurs</strong> — Chaque source de calendrier a sa propre couleur. Les événements individuels héritent de la couleur Google Agenda.</li>
+      </ul>
+      <div style="background:var(--lavender-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 Si la sync automatique échoue (proxies CORS bloqués), clique "📁 Importer ICS" : télécharge le fichier .ics depuis Google Agenda → exporte → importe ici.
+      </div>`
+  },
+  pillars: {
+    icon: "🌟", title: "Piliers de vie",
+    subtitle: "Vue d'ensemble de ton équilibre de vie",
+    body: `
+      <p>Les Piliers mesurent ton équilibre sur 8 dimensions de vie :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Barre de progression</strong> — Score 0-100% calculé automatiquement chaque semaine à partir de tes données réelles (habitudes, tâches, dépenses, activités…).</li>
+        <li><strong>Cliquer sur une métrique</strong> — Voir le détail et les données brutes qui composent le score.</li>
+        <li><strong>⚙️ Mode édition</strong> — Modifie les objectifs de chaque indicateur (ex : changer "5 tâches/sem" à "3 tâches/sem").</li>
+        <li><strong>Radar</strong> — Graphique en toile d'araignée pour visualiser tes forces et faiblesses.</li>
+        <li><strong>Pilier Travail</strong> — Automatiquement grisé si tu as des congés déclarés cette semaine.</li>
+      </ul>
+      <div style="background:var(--lavender-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 Les scores sont calculés sur la semaine en cours. Un pilier à 0% ne veut pas dire échec — ça veut dire qu'il n'y a pas encore eu de données cette semaine.
+      </div>`
+  },
+  journal: {
+    icon: "📓", title: "Journal",
+    subtitle: "Entrées libres et analyse émotionnelle",
+    body: `
+      <p>Un journal personnel avec analyse automatique des émotions :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Écrire</strong> — Chaque entrée est datée. Tu peux écrire librement, sans contrainte de format.</li>
+        <li><strong>Émotions détectées</strong> — L'app analyse le texte et détecte automatiquement jusqu'à 8 émotions (Joie, Gratitude, Stress, Fatigue…) via des mots-clés français. Les badges s'affichent sous l'entrée.</li>
+        <li><strong>Historique</strong> — Toutes tes entrées passées avec leurs émotions détectées, les plus récentes en premier.</li>
+        <li><strong>Lien avec Aujourd'hui</strong> — Si tu as écrit un journal le jour courant, l'état émotionnel remonte dans "Comment je me sens" de la vue Aujourd'hui.</li>
+      </ul>
+      <div style="background:var(--butter-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 <strong>Exemple :</strong> Tu écris "j'ai passé une super soirée avec des amis, je suis épuisée mais contente" → l'app détecte Joie + Fatigue et affiche les badges correspondants.
+      </div>`
+  },
+};
+
+function openHelp(key) {
+  const h = HELP_TEXTS[key];
+  if (!h) return;
+  document.getElementById("helpIcon").textContent = h.icon;
+  document.getElementById("helpTitle").textContent = h.title;
+  document.getElementById("helpSubtitle").textContent = h.subtitle || "";
+  document.getElementById("helpBody").innerHTML = h.body;
+  document.getElementById("helpModal").classList.add("open");
+}
+function closeHelp() { document.getElementById("helpModal").classList.remove("open"); }
+function openHelpForCurrentView() {
+  const active = document.querySelector(".tab.active");
+  const view = active?.dataset?.view || "today";
+  // map view key → help key
+  const keyMap = { today: "today", work: "work", activities: "activities", health: "health", money: "money", domestic: "domestic", calendar: "calendar", journal: "journal", pillars: "pillars" };
+  openHelp(keyMap[view] || view);
+}
+
 function _showConfirm(msg, onYes, opts = {}) {
   _confirmCb = onYes;
   document.getElementById("confirmMsg").innerHTML = msg;
