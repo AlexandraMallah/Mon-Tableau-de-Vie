@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v888</title>
+<title>Mon Tableau de Vie 🌿 · v889</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2935,6 +2935,11 @@
             <select id="txFromSavings" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
               <option value="">— Compte courant (défaut)</option>
             </select>
+          </div>
+          <div id="txSavingsDestWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
+            Vers :
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="radio" name="savDest" id="savDestChecking" value="checking" checked style="cursor:pointer;" /> 💳 Compte courant</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="radio" name="savDest" id="savDestCash" value="cash" style="cursor:pointer;" /> 💵 Espèces</label>
           </div>
         </div>
         <div id="txMissionWrap" style="display:none;margin-bottom:6px;">
@@ -11113,7 +11118,12 @@ function _activeTxCatList() {
   if (txType === "savings-out") return (state.savingsCategories || []).filter(c => !(state.savingsLocked || {})[c]);
   return state.categories; // dépense + hors compte
 }
-function _txCatExtraOptions() { return ""; }
+function _txCatExtraOptions() {
+  if (txType === "savings" || txType === "savings-out") {
+    return `<option value="__addaccount__">➕ Ajouter un compte…</option>`;
+  }
+  return "";
+}
 function _refreshTxCategories(isPro) {
   const sel = document.getElementById("txCategory");
   if (!sel) return;
@@ -11128,6 +11138,7 @@ function onTxCategoryChange() {
   if (!sel) return;
   const list = _activeTxCatList();
   if (!list) return;
+  if (sel.value === "__addaccount__") { _addSavingsAccount(); return; }
   if (sel.value === "__newcat__") {
     _showPrompt("Nom de la nouvelle catégorie", "", name => {
       if (name && !list.includes(name)) { list.push(name); saveState(); }
@@ -11254,7 +11265,29 @@ function setTxType(t) {
       (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
   }
   if (fromSel && !isExpense) fromSel.value = "";
+  // Destination retrait épargne
+  const savDestWrap = document.getElementById("txSavingsDestWrap");
+  if (savDestWrap) {
+    savDestWrap.style.display = t === "savings-out" ? "flex" : "none";
+    if (t !== "savings-out") { const r = document.getElementById("savDestChecking"); if (r) r.checked = true; }
+  }
+  // Populate savings category with "+ Ajouter" option
   populateTxCategories();
+}
+
+function _addSavingsAccount() {
+  _showPrompt("Nom du nouveau compte", "", name => {
+    if (!name || !name.trim()) return;
+    const n = name.trim();
+    if (!state.savingsCategories.includes(n)) {
+      state.savingsCategories.push(n);
+      saveState();
+    }
+    populateTxCategories();
+    const sel = document.getElementById("txCategory");
+    if (sel) sel.value = n;
+    _renderFinanceCatLists();
+  });
 }
 function saveMoneyNote() {
   if (!state.moneyNote !== undefined) state.moneyNote = "";
@@ -11831,7 +11864,7 @@ function balanceCourant() {
     if (t.type === "income" && !t.directSavingsAccount) income += t.amount;
     else if (t.type === "expense" && !t.fromSavingsAccount) expense += t.amount;
     else if (t.type === "savings" && !t.isAdjustment) savings   += t.amount;
-    else if (t.type === "savings-out" && !t.isAdjustment) savingsOut += t.amount;
+    else if (t.type === "savings-out" && !t.isAdjustment && !t.toCash) savingsOut += t.amount; // toCash va dans les espèces, pas dans le courant
   }
   return start + income + savingsOut - expense - savings;
 }
@@ -12120,12 +12153,20 @@ function addTransaction() {
   const directSavingsAccount = (txType === "income" && directSavEl?.value) ? directSavEl.value : "";
   const fromSavEl = document.getElementById("txFromSavings");
   const fromSavingsAccount = ((txType === "expense" || txType === "external") && fromSavEl?.value) ? fromSavEl.value : "";
-  state.transactions.unshift({ id: "tx" + Date.now(), date, type: txType, amount, category, note, reimbursable, mission, fixedCharge, exceptional, postdocMission, directSavingsAccount, fromSavingsAccount });
+  const savDestEl = document.getElementById("savDestCash");
+  const toCash = txType === "savings-out" && savDestEl?.checked ? true : false;
+  state.transactions.unshift({ id: "tx" + Date.now(), date, type: txType, amount, category, note, reimbursable, mission, fixedCharge, exceptional, postdocMission, directSavingsAccount, fromSavingsAccount, toCash });
   // Si prélevé sur les espèces, déduire du cashBalance
   if (fromSavingsAccount === "__cash__" && (txType === "expense" || txType === "external")) {
     if (!state.accounts.cashLog) state.accounts.cashLog = [];
     state.accounts.cashLog.push({ date: new Date().toISOString().slice(0, 10), amount, dir: "out", note: note || category });
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) - amount;
+  }
+  // Si retrait épargne → espèces, ajouter au cashBalance (ne va PAS dans le compte courant)
+  if (txType === "savings-out" && toCash) {
+    if (!state.accounts.cashLog) state.accounts.cashLog = [];
+    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0, 10), amount, dir: "in", note: `Retrait ${category}` });
+    state.accounts.cashBalance = (state.accounts.cashBalance || 0) + amount;
   }
   document.getElementById("txAmount").value = "";
   document.getElementById("txNote").value = "";
