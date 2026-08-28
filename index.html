@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v873</title>
+<title>Mon Tableau de Vie 🌿 · v875</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -3854,6 +3854,75 @@
       <div class="spacer"></div>
       <button class="secondary" onclick="closeCodeModal()">Annuler</button>
       <button class="primary" onclick="saveCode()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ajout suivi santé -->
+<div class="modal-bg" id="symptomModal" onclick="event.target===this&&_closeSymptomModal()">
+  <div class="modal" style="max-width:480px;padding:28px 24px;" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h3 style="margin:0;font-size:18px;">✨ Nouveau suivi santé</h3>
+      <button onclick="_closeSymptomModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
+    </div>
+
+    <!-- Emoji + nom -->
+    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;">
+      <div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Emoji</div>
+        <input type="text" id="symModalEmoji" maxlength="4" placeholder="💊"
+          style="width:56px;padding:10px 6px;border:1.5px solid var(--line);border-radius:12px;font-size:24px;text-align:center;font-family:inherit;background:var(--bg-1);cursor:pointer;box-sizing:border-box;" />
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;max-width:200px;">
+          <span id="symEmojiSuggestions" style="display:contents;"></span>
+        </div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom du suivi</div>
+        <input type="text" id="symModalName" placeholder="ex : Migraine, Allergie, Tension…" maxlength="40"
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;" />
+        <div style="font-size:12px;color:var(--ink-soft);margin-top:8px;margin-bottom:4px;">Sous-titre <span style="opacity:0.6;">(optionnel — ex: localisation)</span></div>
+        <input type="text" id="symModalSubtitle" placeholder="ex : côté droit, estomac…" maxlength="40"
+          style="width:100%;padding:8px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;" />
+      </div>
+    </div>
+
+    <!-- Type de suivi -->
+    <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:8px;">TYPE DE SUIVI</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;" id="symTypeGrid">
+      <button onclick="_selectSymType('scale')" id="symType-scale" class="sym-type-btn active"
+        style="padding:12px;border-radius:14px;border:2px solid var(--lavender);background:var(--lavender-soft);cursor:pointer;font-family:inherit;text-align:left;">
+        <div style="font-size:20px;margin-bottom:4px;">😌 😕 😣 😖 🤢</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink);">Échelle de douleur</div>
+        <div style="font-size:11px;color:var(--ink-soft);">5 niveaux d'intensité</div>
+      </button>
+      <button onclick="_selectSymType('check')" id="symType-check" class="sym-type-btn"
+        style="padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--bg-1);cursor:pointer;font-family:inherit;text-align:left;">
+        <div style="font-size:20px;margin-bottom:4px;">☐ ✅</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink);">Oui / Non</div>
+        <div style="font-size:11px;color:var(--ink-soft);">Case à cocher simple</div>
+      </button>
+      <button onclick="_selectSymType('stars')" id="symType-stars" class="sym-type-btn"
+        style="padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--bg-1);cursor:pointer;font-family:inherit;text-align:left;">
+        <div style="font-size:20px;margin-bottom:4px;">⭐⭐⭐⭐⭐</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink);">Note 1 → 5</div>
+        <div style="font-size:11px;color:var(--ink-soft);">Intensité en étoiles</div>
+      </button>
+      <button onclick="_selectSymType('number')" id="symType-number" class="sym-type-btn"
+        style="padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--bg-1);cursor:pointer;font-family:inherit;text-align:left;">
+        <div style="font-size:20px;margin-bottom:4px;">🔢</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink);">Nombre + unité</div>
+        <div style="font-size:11px;color:var(--ink-soft);">ex : 37.5 °C, 130 mmHg</div>
+      </button>
+    </div>
+    <div id="symUnitRow" style="display:none;margin-bottom:14px;">
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Unité <span style="opacity:0.6;">(ex: °C, mg, km…)</span></div>
+      <input type="text" id="symModalUnit" maxlength="20" placeholder="ex : °C"
+        style="width:120px;padding:8px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);" />
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="_closeSymptomModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button onclick="_saveSymptomModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
     </div>
   </div>
 </div>
@@ -9600,23 +9669,55 @@ function _setSymptomValue(id, v) {
   today[id] = today[id] === v ? null : v;
   saveState(); renderCustomSymptoms();
 }
+let _symSelectedType = "scale";
+const _SYM_EMOJIS = ["💊","🩸","🤰","🧠","💉","🩹","🌡️","😴","🫁","🦷","🏃","💪","🤒","🤢","😵","❤️","🫀","🦴","👁️","👂","🤧","🤕","💆","🍃"];
+
 function _addCustomSymptom() {
-  const emoji = (prompt("Emoji du suivi :", "💊") || "").trim() || "💊";
-  const name = (prompt("Nom du suivi santé :", "") || "").trim();
-  if (!name) return;
-  const subtitle = (prompt("Sous-titre optionnel (ex: localisation) :", "") || "").trim();
-  const typeChoice = prompt(
-    "Type de suivi ?\n1 — Échelle douleur 😌→🤢 (5 niveaux)\n2 — Case à cocher ✓/✗ (oui/non)\n3 — Note ⭐ 1 à 5\n4 — Nombre + unité (ex: température)\n\nTape 1, 2, 3 ou 4 :", "1"
-  );
-  if (typeChoice === null) return;
-  const typeMap = { "1": "scale", "2": "check", "3": "stars", "4": "number" };
-  const type = typeMap[typeChoice?.trim()] || "scale";
-  let unit = "";
-  if (type === "number") unit = (prompt("Unité (ex: °C, mg, km…) :", "") || "").trim();
+  _symSelectedType = "scale";
+  document.getElementById("symModalEmoji").value = "💊";
+  document.getElementById("symModalName").value = "";
+  document.getElementById("symModalSubtitle").value = "";
+  document.getElementById("symModalUnit").value = "";
+  document.getElementById("symUnitRow").style.display = "none";
+  document.querySelectorAll(".sym-type-btn").forEach(b => {
+    b.style.borderColor = "var(--line)";
+    b.style.background = "var(--bg-1)";
+  });
+  const scaleBtn = document.getElementById("symType-scale");
+  if (scaleBtn) { scaleBtn.style.borderColor = "var(--lavender)"; scaleBtn.style.background = "var(--lavender-soft)"; }
+  const sugg = document.getElementById("symEmojiSuggestions");
+  if (sugg) {
+    sugg.innerHTML = _SYM_EMOJIS.map(e =>
+      `<span onclick="document.getElementById('symModalEmoji').value='${e}'" style="cursor:pointer;font-size:22px;padding:2px;" title="${e}">${e}</span>`
+    ).join("");
+  }
+  document.getElementById("symptomModal").style.display = "flex";
+}
+function _closeSymptomModal() {
+  document.getElementById("symptomModal").style.display = "none";
+}
+function _selectSymType(type) {
+  _symSelectedType = type;
+  document.querySelectorAll(".sym-type-btn").forEach(b => {
+    b.style.borderColor = "var(--line)";
+    b.style.background = "var(--bg-1)";
+  });
+  const btn = document.getElementById("symType-" + type);
+  if (btn) { btn.style.borderColor = "var(--lavender)"; btn.style.background = "var(--lavender-soft)"; }
+  document.getElementById("symUnitRow").style.display = type === "number" ? "block" : "none";
+}
+function _saveSymptomModal() {
+  const emoji = (document.getElementById("symModalEmoji").value || "").trim() || "💊";
+  const name = (document.getElementById("symModalName").value || "").trim();
+  if (!name) { document.getElementById("symModalName").focus(); return; }
+  const subtitle = (document.getElementById("symModalSubtitle").value || "").trim();
+  const type = _symSelectedType || "scale";
+  const unit = type === "number" ? (document.getElementById("symModalUnit").value || "").trim() : "";
   const id = "sym_" + name.toLowerCase().replace(/[^a-z0-9]/g,"_").slice(0,20) + "_" + Date.now();
   if (!state.customSymptoms || !state.customSymptoms.length) state.customSymptoms = [...CUSTOM_SYMPTOMS_DEFAULT];
   state.customSymptoms.push({ id, name, emoji, subtitle, type, unit });
   saveState(); renderCustomSymptoms();
+  _closeSymptomModal();
 }
 function _deleteCustomSymptom(id) {
   const syms = _getCustomSymptoms();
