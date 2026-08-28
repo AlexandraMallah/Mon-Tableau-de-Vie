@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v898</title>
+<title>Mon Tableau de Vie 🌿 · v900</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2061,6 +2061,19 @@
     </div>
   </div>
 
+  <!-- Modal : configuration d'un pilier -->
+  <div class="modal-bg" id="pillarConfigModal" onclick="if(event.target===this)closePillarConfig()">
+    <div class="modal" style="max-width:480px;max-height:85vh;overflow-y:auto;" onclick="event.stopPropagation()">
+      <h2 id="pillarConfigTitle" style="margin:0 0 4px;">⚙️ Configurer</h2>
+      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 14px;">Modifie les objectifs de chaque indicateur pour ce pilier.</p>
+      <div id="pillarConfigBody"></div>
+      <div class="actions" style="margin-top:16px;">
+        <button class="primary" onclick="savePillarConfig()">Enregistrer</button>
+        <button class="secondary" onclick="closePillarConfig()">Annuler</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal : nouvelle sous-liste -->
   <div class="modal-bg" id="newSectionModal" onclick="if(event.target===this)closeNewSectionModal()">
     <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
@@ -3602,7 +3615,7 @@
   <div class="modal" style="max-width:560px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
       <h2 style="margin:0;">⚙️ Réglages</h2>
-      <div style="display:flex;gap:6px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button id="settingsTabProfil"   onclick="switchSettingsTab('profil')"   style="padding:6px 14px;border-radius:20px;border:1px solid var(--lavender);background:var(--lavender-soft);font-family:inherit;font-size:13px;cursor:pointer;font-weight:600;color:var(--ink);">👤 Profil</button>
         <button id="settingsTabFinances" onclick="switchSettingsTab('finances')" style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">💰 Finances</button>
         <button id="settingsTabDonnees" onclick="switchSettingsTab('donnees')"  style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">💾 Données</button>
@@ -14235,8 +14248,10 @@ function countHolidaysInWeek(weekDates) {
     return dow >= 1 && dow <= 5 && holidayKeys.has(todayKey(d));
   }).length;
 }
-function computeMetric(m) {
+function computeMetric(m, override) {
   // Retourne un objet { score: 0-1, value: "...", label: m.label }
+  if (override?.disabled) return { score: 0, value: "désactivé", label: m.label };
+  if (override?.target !== undefined) m = { ...m, target: override.target };
   if (m.type === "budget-on-track") {
     const [start, end] = currentMonthRange();
     const now = new Date();
@@ -14485,8 +14500,78 @@ function showPillarDetail(pillarId, idx) {
 let _pdBdDown = false;
 function closePillarDetail() { document.getElementById("pillarDetailModal").classList.remove("open"); }
 
+let _pillarConfigId = null;
+function openPillarConfig(pillarId) {
+  const p = PILLAR_DEFS.find(x => x.id === pillarId);
+  if (!p) return;
+  _pillarConfigId = pillarId;
+  const overrides = (state.pillarOverrides || {})[pillarId] || {};
+  document.getElementById("pillarConfigTitle").textContent = `⚙️ ${p.emoji} ${p.name}`;
+  const typeLabels = {
+    "habit-avg": "Objectif / jour",
+    "wellbeing-avg": "Objectif (sur 5)",
+    "wellbeing-quality": null,
+    "activity-sessions": "Séances / semaine",
+    "any-activity-sessions": "Séances / semaine",
+    "cal-keywords-count": "Événements / semaine",
+    "tasks-done": "Tâches / semaine",
+    "worktime-sum": "Heures / semaine",
+    "tx-tracked": "Transactions / semaine",
+    "savings-month": "Objectif € / mois",
+    "budget-on-track": null,
+    "groceries-done": null,
+    "meal-plan-active": "Repas planifiés",
+    "plants-uptodate": null,
+    "journal-pct": "Jours / semaine",
+  };
+  document.getElementById("pillarConfigBody").innerHTML = p.metrics.map((m, i) => {
+    const ov = overrides[i] || {};
+    const currentTarget = ov.target !== undefined ? ov.target : m.target;
+    const unit = typeLabels[m.type];
+    if (!unit || m.target === undefined) {
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--line);">
+        <div style="font-size:13px;font-weight:600;color:var(--ink);">${escapeHtml(m.label)}</div>
+        <div style="font-size:11px;color:var(--ink-softer);margin-top:2px;">Indicateur automatique — non configurable</div>
+      </div>`;
+    }
+    const enabled = ov.disabled !== true;
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;color:var(--ink);">${escapeHtml(m.label)}</div>
+        <div style="font-size:11px;color:var(--ink-softer);margin-top:2px;">${unit}</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;">
+        <input type="checkbox" id="pco_en_${i}" ${enabled ? "checked" : ""} style="cursor:pointer;" /> Actif
+      </label>
+      <input type="number" id="pco_tgt_${i}" value="${currentTarget ?? ""}" min="0" step="0.5"
+        style="width:80px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
+    </div>`;
+  }).join("");
+  document.getElementById("pillarConfigModal").classList.add("open");
+}
+function closePillarConfig() { document.getElementById("pillarConfigModal").classList.remove("open"); }
+function savePillarConfig() {
+  const p = PILLAR_DEFS.find(x => x.id === _pillarConfigId);
+  if (!p) return;
+  if (!state.pillarOverrides) state.pillarOverrides = {};
+  if (!state.pillarOverrides[_pillarConfigId]) state.pillarOverrides[_pillarConfigId] = {};
+  p.metrics.forEach((m, i) => {
+    const tgtEl = document.getElementById(`pco_tgt_${i}`);
+    const enEl  = document.getElementById(`pco_en_${i}`);
+    if (!tgtEl) return;
+    const ov = {};
+    if (m.target !== undefined && tgtEl.value !== "") ov.target = parseFloat(tgtEl.value);
+    if (enEl) ov.disabled = !enEl.checked;
+    state.pillarOverrides[_pillarConfigId][i] = ov;
+  });
+  saveState();
+  closePillarConfig();
+  renderPillars();
+}
+
 function computePillarScore(pillar) {
-  const metrics = pillar.metrics.map(m => computeMetric(m));
+  const overrides = (state.pillarOverrides || {})[pillar.id] || {};
+  const metrics = pillar.metrics.map((m, i) => computeMetric(m, overrides[i]));
   const avg = metrics.reduce((s, m) => s + m.score, 0) / metrics.length;
   return { score: Math.round(avg * 100), metrics };
 }
@@ -14511,8 +14596,12 @@ function renderPillars() {
   cardsEl.innerHTML = computed.map(p => {
     const metricsHtml = p.metrics.map((m, i) => `
       <span class="pillar-metric ${metricClass(m.score)}" style="cursor:pointer;" onclick="showPillarDetail('${p.id}',${i})" title="Voir le détail">${escapeHtml(m.label)} : ${escapeHtml(m.value)} ›</span>`).join("");
+    const editBtn = document.body.classList.contains("edit-mode")
+      ? `<button class="edit-only" onclick="openPillarConfig('${p.id}')" title="Configurer les objectifs" style="position:absolute;top:8px;right:8px;padding:3px 8px;border-radius:8px;border:1px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">⚙️</button>`
+      : "";
     return `
-      <div class="pillar-card">
+      <div class="pillar-card" style="position:relative;">
+        ${editBtn}
         <div class="pillar-emoji" style="background:${p.bg};">${p.emoji}</div>
         <div class="pillar-info">
           <div class="pillar-name">${p.name}</div>
@@ -20903,6 +20992,7 @@ function toggleEditMode() {
   renderHabits();
   renderSkincare();
   renderPill();
+  renderPillars();
 }
 
 const WORK_TAB_DEFAULTS = { postdoc: "Postdoc", candidatures: "Candidatures", valorisation: "Valorisation", teaching: "Enseignement" };
