@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v881</title>
+<title>Mon Tableau de Vie 🌿 · v883</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -67,7 +67,7 @@
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
-  .container { max-width: 1180px; margin: 0 auto; padding: 28px 28px 80px; overflow-x: hidden; }
+  .container { max-width: 1180px; margin: 0 auto; padding: 28px 28px 80px; overflow-x: clip; }
 
   /* ========= HEADER ========= */
   header.top {
@@ -324,7 +324,7 @@
     font-family: inherit; font-size: 14px; color: var(--ink);
   }
   .weight-add input:focus { outline: 2px solid var(--sky); }
-  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
   .stat { background: #faf8fd; padding: 5px 8px; border-radius: 10px; text-align: center; align-self: start; }
   .stat-label { font-size: 10px; color: var(--ink-soft); margin-bottom: 1px; }
   .stat-val { font-size: 15px; font-weight: 600; }
@@ -8213,7 +8213,7 @@ function _saveActivityModal() {
   const editId = document.getElementById("actModalEditId").value;
   if (editId) {
     const a = state.activities.find(x => x.id === editId);
-    if (a) { a.name = name; a.emoji = emoji; a.hormones = autoHormones(name); a.goal = goal; }
+    if (a) { a.name = name; a.emoji = emoji; if (!a.hormonesManual) a.hormones = autoHormones(name); a.goal = goal; }
   } else {
     state.activities.push({ id: "a" + Date.now(), name, emoji, hormones: autoHormones(name), goal });
   }
@@ -8424,15 +8424,16 @@ function renderHormones() {
     const pct = Math.min(100, Math.round((d.score / h.target) * 100));
     const col = pct >= 70 ? "#16a34a" : pct >= 35 ? "#d97706" : "#94a3b8";
     const src = d.sources.slice(0,2).join(" · ") || "aucune source cette semaine";
-    return `<div class="hormone-legend-row" onclick="showHormoneDetail('${h.id}')">
+    const inEdit = document.body.classList.contains('edit-mode');
+    return `<div class="hormone-legend-row" onclick="${inEdit?`_openHormoneConfig('${h.id}')`:`showHormoneDetail('${h.id}')`}">
       <div class="hormone-legend-dot" style="background:${h.color};"></div>
       <div class="hormone-legend-body">
         <div class="hormone-legend-top">
           <span class="hormone-legend-name">${h.emoji} ${h.label}</span>
           <span class="hormone-legend-val" style="color:${col};">${d.score}/${h.target}j &nbsp;${pct}%</span>
-          <span style="color:var(--ink-softer);font-size:13px;">›</span>
+          <span style="color:var(--ink-softer);font-size:13px;">${inEdit?'⚙️':'›'}</span>
         </div>
-        <div class="hormone-legend-src">${src}</div>
+        <div class="hormone-legend-src">${inEdit?'<span style="color:var(--ink-softer);font-style:italic;font-size:11px;">Clique pour configurer</span>':src}</div>
       </div>
     </div>`;
   }).join("");
@@ -8443,6 +8444,35 @@ function renderHormones() {
   </div>`;
 }
 
+function _openHormoneConfig(hId) {
+  const h = HORMONES.find(x => x.id === hId);
+  if (!h) return;
+  document.getElementById("hcmEmoji").textContent = h.emoji;
+  document.getElementById("hcmTitle").textContent = h.label;
+  document.getElementById("hcmDesc").textContent = h.desc;
+  document.getElementById("hcmActivities").innerHTML = state.activities.map(a => {
+    const checked = (a.hormones || []).includes(hId);
+    return `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;background:${checked?'var(--mint-soft)':'var(--bg-1)'};border:1.5px solid ${checked?'var(--mint)':'var(--line)'};transition:all 0.15s;" onclick="_toggleHormoneAct('${a.id}','${hId}')">
+      <div style="width:20px;height:20px;border-radius:6px;border:2px solid ${checked?'var(--mint)':'var(--line)'};background:${checked?'var(--mint)':'white'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        ${checked?'<span style="color:white;font-size:11px;font-weight:700;">✓</span>':''}
+      </div>
+      <span style="font-size:14px;">${a.emoji} ${escapeHtml(a.name)}</span>
+    </label>`;
+  }).join("") || `<p style="color:var(--ink-softer);font-size:13px;">Aucune activité créée. Ajoute-en dans l'onglet Activités.</p>`;
+  document.getElementById("hormoneConfigModal").style.display = "flex";
+}
+function _toggleHormoneAct(actId, hId) {
+  const a = state.activities.find(x => x.id === actId);
+  if (!a) return;
+  if (!a.hormones) a.hormones = autoHormones(a.name);
+  a.hormonesManual = true;
+  if (a.hormones.includes(hId)) a.hormones = a.hormones.filter(h => h !== hId);
+  else a.hormones.push(hId);
+  saveState();
+  _openHormoneConfig(hId); // re-render the modal
+  renderHormones();
+}
+function _closeHormoneConfig() { document.getElementById("hormoneConfigModal").style.display = "none"; }
 function toggleActivityHormone(actId, hId) {
   const a = state.activities.find(x => x.id === actId);
   if (!a) return;
@@ -10999,11 +11029,7 @@ function _activeTxCatList() {
   if (txType === "savings-out") return (state.savingsCategories || []).filter(c => !(state.savingsLocked || {})[c]);
   return state.categories; // dépense + hors compte
 }
-function _txCatExtraOptions() {
-  return _activeTxCatList()
-    ? `<option value="__newcat__">➕ Nouvelle catégorie…</option><option value="__renamecat__">✏️ Renommer une catégorie…</option><option value="__delcat__">🗑️ Supprimer une catégorie…</option>`
-    : "";
-}
+function _txCatExtraOptions() { return ""; }
 function _refreshTxCategories(isPro) {
   const sel = document.getElementById("txCategory");
   if (!sel) return;
@@ -21490,6 +21516,21 @@ function _micPulse(on) {
   <div style="background:var(--card);border-radius:22px;padding:28px 24px;max-width:380px;width:92%;box-shadow:0 12px 48px rgba(60,50,80,.22);position:relative;">
     <button onclick="closeHormoneDetail()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-softer);">✕</button>
     <div id="hormoneDetailContent"></div>
+  </div>
+</div>
+
+<!-- Modal config hormone → activités -->
+<div id="hormoneConfigModal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)_closeHormoneConfig()">
+  <div style="background:var(--card);border-radius:22px;padding:28px 24px;max-width:420px;width:92%;box-shadow:0 12px 48px rgba(60,50,80,.22);" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <span id="hcmEmoji" style="font-size:28px;"></span>
+      <h3 id="hcmTitle" style="margin:0;font-size:18px;"></h3>
+      <button onclick="_closeHormoneConfig()" style="margin-left:auto;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-softer);">✕</button>
+    </div>
+    <p id="hcmDesc" style="font-size:12px;color:var(--ink-soft);margin:0 0 16px;"></p>
+    <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:10px;">ACTIVITÉS QUI CONTRIBUENT</div>
+    <div id="hcmActivities" style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;"></div>
+    <p style="font-size:11px;color:var(--ink-softer);margin:14px 0 0;">Les autres sources (calendrier, humeur, journal…) restent automatiques.</p>
   </div>
 </div>
 
