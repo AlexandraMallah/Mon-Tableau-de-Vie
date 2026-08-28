@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v935</title>
+<title>Mon Tableau de Vie 🌿 · v937</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5927,10 +5927,28 @@ const RING_COLORS = [
   { fg: "#b4d4f1", bg: "#dceaf7" },
   { fg: "#f7c9a3", bg: "#fce5d1" },
 ];
+const RING_COLORS_SERIEUX = [
+  { fg: "#1e3a5f", bg: "#c4d4e8" },
+  { fg: "#a06a3a", bg: "#ecd8c0" },
+  { fg: "#2e6090", bg: "#c0d4e4" },
+  { fg: "#b8903c", bg: "#ecddb8" },
+];
+const RING_COLORS_MINIMAL = [
+  { fg: "#111", bg: "#d4d4d4" },
+  { fg: "#2a2a2a", bg: "#d8d8d8" },
+  { fg: "#3a3a3a", bg: "#dcdcdc" },
+  { fg: "#4a4a4a", bg: "#e0e0e0" },
+];
+function _getRingColors() {
+  const b = document.body.classList;
+  if (b.contains("t-serieux")) return RING_COLORS_SERIEUX;
+  if (b.contains("t-minimal")) return RING_COLORS_MINIMAL;
+  return RING_COLORS;
+}
 function ringSvg(pct, idx) {
   const r = 30, c = 2 * Math.PI * r;
   const off = c * (1 - Math.min(1, pct));
-  const col = RING_COLORS[idx];
+  const col = _getRingColors()[idx] || _getRingColors()[0];
   return `
     <svg class="ring-svg" viewBox="0 0 72 72">
       <circle class="ring-bg" cx="36" cy="36" r="${r}" stroke="${col.bg}"></circle>
@@ -9538,6 +9556,7 @@ function routineComplete(habitsObj, key) {
 }
 const _ROUTINE_PRESETS = {
   matin: [
+    { emoji:"🪥", label:"Brossage dents" }, { emoji:"🧴", label:"Skincare matin" },
     { emoji:"🦷", label:"Flossing" }, { emoji:"🧴", label:"Crème solaire" },
     { emoji:"🧘", label:"Méditation" }, { emoji:"🤸", label:"Étirements" },
     { emoji:"💊", label:"Vitamines" }, { emoji:"🥤", label:"Grand verre d'eau" },
@@ -9546,15 +9565,16 @@ const _ROUTINE_PRESETS = {
     { emoji:"🧹", label:"Ranger" }, { emoji:"☀️", label:"Plein air" },
   ],
   soir: [
-    { emoji:"🦷", label:"Flossing" }, { emoji:"🧴", label:"Sérum nuit" },
-    { emoji:"📵", label:"No écran 30min" }, { emoji:"📖", label:"Lecture" },
-    { emoji:"🫁", label:"Respiration" }, { emoji:"✍️", label:"Journaling" },
-    { emoji:"🌿", label:"Tisane" }, { emoji:"🧘", label:"Méditation" },
-    { emoji:"💊", label:"Complément" }, { emoji:"🛁", label:"Bain/douche" },
-    { emoji:"🙏", label:"Gratitude" }, { emoji:"🌙", label:"Coucher calme" },
+    { emoji:"🪥", label:"Brossage dents" }, { emoji:"🧴", label:"Skincare soir" },
+    { emoji:"🦷", label:"Flossing" }, { emoji:"📵", label:"No écran 30min" },
+    { emoji:"📖", label:"Lecture" }, { emoji:"🫁", label:"Respiration" },
+    { emoji:"✍️", label:"Journaling" }, { emoji:"🌿", label:"Tisane" },
+    { emoji:"🧘", label:"Méditation" }, { emoji:"💊", label:"Complément" },
+    { emoji:"🛁", label:"Bain/douche" }, { emoji:"🙏", label:"Gratitude" },
+    { emoji:"🌙", label:"Coucher calme" },
   ]
 };
-const _ROUTINE_EMOJIS = ["☀️","🌙","🦷","🧴","💊","🤸","🧘","✍️","📖","🥤","🧹","🧠","🚶","🌿","🛁","🙏","💆","🎵","🌿","🫁","🍵","📵","🌸","💪","🍎","😴","🧖","🌊","🕯️","🎨","🪴","🐾"];
+const _ROUTINE_EMOJIS = ["🪥","☀️","🌙","🦷","🧴","💊","🤸","🧘","✍️","📖","🥤","🧹","🧠","🚶","🌿","🛁","🙏","💆","🎵","🫁","🍵","📵","🌸","💪","🍎","😴","🧖","🌊","🕯️","🎨","🪴","🐾","⏰","🧃","🫖","🧊","🪑","🎧"];
 let _routineItemKey = null, _routineItemEditId = null;
 function _addRoutineItem(key) { _openRoutineItemModal(key, null); }
 function _editRoutineItem(key, id) { _openRoutineItemModal(key, id); }
@@ -9565,7 +9585,7 @@ function _openRoutineItemModal(key, editId) {
   document.getElementById("routineItemModalTitle").textContent = (editId ? "✏️ Modifier" : (key==="matin"?"☀️":"🌙") + " Ajouter à") + " " + (meta.label || "la routine");
   document.getElementById("routineItemName").value = "";
   document.getElementById("routineItemEmoji").textContent = key === "matin" ? "☀️" : "🌙";
-  document.getElementById("routineItemEmojiPicker").style.display = "none";
+  document.getElementById("routineItemEmojiPicker").style.display = "";
   // Si édition, pré-remplir
   if (editId) {
     const item = (getRoutines()[key] || []).find(s => s.id === editId);
@@ -13239,9 +13259,10 @@ const CAT_PALETTE = [
   "#b8d8f5","#f5ebb0","#c8e5a8","#f5c49a","#c8c0ec","#b0ecda","#ecd0a0","#e8b0d4",
 ];
 const _CAT_PAL_SERIEUX = [
-  "#2e5fa3","#3d8b78","#c4922a","#4a6e8a","#4a7c5c","#8a5030","#5060a0","#2a7a6a",
-  "#7a4a28","#3a5888","#6a3878","#2a6848","#9a7020","#6a3040","#1e6858","#7a3860",
-  "#284870","#806020","#386840","#804020","#483880","#185848","#705818","#602848",
+  "#1e3a5f","#2e6090","#3a7ca5","#4a8a6e","#7a4f35","#a06a3a",
+  "#b8903c","#5a7890","#1a5048","#8a5030","#284878","#6a3828",
+  "#3a5a7a","#4a3860","#304838","#7a4828","#203858","#905028",
+  "#4a6848","#5a3020","#385880","#c47830","#2a4860","#7a5030",
 ];
 const _CAT_PAL_MINIMAL = [
   "#333","#555","#777","#444","#666","#888","#222","#999",
@@ -13527,12 +13548,14 @@ function renderMoneyFlowChart() {
       return td >= m && td < end && t.type === type && !t.reimbursable;
     }).reduce((s, t) => s + (t.partialReimbIncome ? 0 : t.amount), 0);
   };
+  const _isFlowS = document.body.classList.contains("t-serieux");
+  const _isFlowM = document.body.classList.contains("t-minimal");
   const flowDatasets = [
-    { label: "Revenus",         data: months.map(m => monthSum(m, "income")),       backgroundColor: "#aee0c8", borderRadius: 8 },
-    { label: "Dépenses",        data: months.map(m => monthSum(m, "expense")),      backgroundColor: "#efb8c8", borderRadius: 8 },
-    { label: "Épargne",         data: months.map(m => monthSum(m, "savings")),      backgroundColor: "#c9b6f0", borderRadius: 8 },
-    { label: "Retrait épargne", data: months.map(m => monthSum(m, "savings-out")),  backgroundColor: "#89d4cf", borderRadius: 8 },
-    { label: "Hors compte",     data: months.map(m => monthSum(m, "external")),     backgroundColor: "#f5e6a8", borderRadius: 8 },
+    { label: "Revenus",         data: months.map(m => monthSum(m, "income")),       backgroundColor: _isFlowS?"#3a7c6a":_isFlowM?"#333":"#aee0c8", borderRadius: 8 },
+    { label: "Dépenses",        data: months.map(m => monthSum(m, "expense")),      backgroundColor: _isFlowS?"#8a3030":_isFlowM?"#777":"#efb8c8", borderRadius: 8 },
+    { label: "Épargne",         data: months.map(m => monthSum(m, "savings")),      backgroundColor: _isFlowS?"#1e3a5f":_isFlowM?"#444":"#c9b6f0", borderRadius: 8 },
+    { label: "Retrait épargne", data: months.map(m => monthSum(m, "savings-out")),  backgroundColor: _isFlowS?"#2e6090":_isFlowM?"#888":"#89d4cf", borderRadius: 8 },
+    { label: "Hors compte",     data: months.map(m => monthSum(m, "external")),     backgroundColor: _isFlowS?"#b8903c":_isFlowM?"#aaa":"#f5e6a8", borderRadius: 8 },
   ];
   // Légende HTML custom — pleine largeur, espacement uniforme
   const legendEl = document.getElementById("flowLegend");
@@ -13728,7 +13751,13 @@ function renderSavings() {
   const el = document.getElementById("savingsBreakdown");
   if (!el || cats.length === 0) return;
   const maxBal = Math.max(...Object.values(balByCat), 1);
-  const COLORS = ["#9b72d4","#5bbcb8","#f5a623","#4a90d9","#e07bbd","#7cba6d"];
+  const _isSvS = document.body.classList.contains("t-serieux");
+  const _isSvM = document.body.classList.contains("t-minimal");
+  const COLORS = _isSvS
+    ? ["#1e3a5f","#3a7c6a","#b8903c","#2e6090","#7a4f35","#4a8a6e"]
+    : _isSvM
+    ? ["#222","#444","#666","#555","#888","#333"]
+    : ["#9b72d4","#5bbcb8","#f5a623","#4a90d9","#e07bbd","#7cba6d"];
   const lockedMap = state.savingsLocked || {};
   el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:4px;">` +
     cats.map((cat, i) => {
@@ -13937,9 +13966,11 @@ function renderSavingsChart() {
   const incomeData = periods.map(({ start, end }) =>
     state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "income"; }).reduce((s, t) => s + t.amount, 0)
   );
+  const _isSavS = document.body.classList.contains("t-serieux");
+  const _isSavM = document.body.classList.contains("t-minimal");
   savingsChart = new Chart(document.getElementById("savingsChart"), {
     type: "bar",
-    data: { labels, datasets: [{ label: "Mis de côté", data, backgroundColor: "#c9b6f0", borderRadius: 8 }] },
+    data: { labels, datasets: [{ label: "Mis de côté", data, backgroundColor: _isSavS?"#1e3a5f":_isSavM?"#444":"#c9b6f0", borderRadius: 8 }] },
     options: {
       ...baseChartOpts(),
       onClick: (_, els) => {
