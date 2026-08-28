@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v915</title>
+<title>Mon Tableau de Vie 🌿 · v917</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2861,17 +2861,20 @@
         <button class="edit-only" onclick="openSettings('finances')" style="padding:4px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;" title="Gérer les comptes épargne">⚙ Gérer les comptes</button>
       </div>
       <div class="money-accounts-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
-        <div class="money-stat" style="background:linear-gradient(135deg,white 0%,var(--sky-soft) 100%);">
+        <div class="money-stat" id="accountCourantCard" style="background:linear-gradient(135deg,white 0%,var(--sky-soft) 100%);position:relative;">
+          <button class="edit-only" onclick="openAccountEdit('courant')" title="Modifier ce compte" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);opacity:0.85;">✏️</button>
           <div class="label" id="accountCourantLabel">💳 Compte courant</div>
           <div class="value" id="accountCourant">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="accountCourantDetail"></div>
         </div>
-        <div class="money-stat" style="background:linear-gradient(135deg,white 0%,#fff8e1 100%);cursor:pointer;" onclick="_toggleCashDetail()">
-          <div class="label">💵 Espèces en poche</div>
+        <div class="money-stat" style="background:linear-gradient(135deg,white 0%,#fff8e1 100%);cursor:pointer;position:relative;" onclick="_toggleCashDetail()">
+          <button class="edit-only" onclick="event.stopPropagation();openAccountEdit('cash')" title="Modifier" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);opacity:0.85;">✏️</button>
+          <div class="label" id="cashAccountLabel">💵 Espèces en poche</div>
           <div class="value" id="cashBalanceDisplay" style="color:#b8860b;">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">Cliquer pour gérer</div>
         </div>
-        <div class="money-stat" style="background:linear-gradient(135deg,white 0%,var(--lavender-soft) 100%);">
+        <div class="money-stat" style="background:linear-gradient(135deg,white 0%,var(--lavender-soft) 100%);position:relative;">
+          <button class="edit-only" onclick="openAccountEdit('epargne')" title="Gérer les comptes épargne" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);opacity:0.85;">✏️</button>
           <div class="label">🏦 Compte épargne</div>
           <div class="value" id="accountEpargne" style="color:#6b4d99;">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="accountEpargneDetail"></div>
@@ -3828,6 +3831,18 @@
       <button onclick="editPlantFromDetail()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--lavender);background:white;color:var(--lavender);font-family:inherit;font-size:14px;cursor:pointer;">✏️ Modifier</button>
       <button onclick="deletePlantFromDetail()" style="padding:9px 18px;border-radius:10px;border:1px solid #fca5a5;background:white;color:#dc2626;font-family:inherit;font-size:14px;cursor:pointer;">🗑️ Supprimer</button>
       <button class="secondary" onclick="closePlantDetail()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;font-family:inherit;font-size:14px;cursor:pointer;">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal édition compte bancaire -->
+<div class="modal-bg" id="accountEditModal" onmousedown="_accEditBd=event.target===this" onclick="event.target===this&&_accEditBd&&closeAccountEdit()">
+  <div class="modal" style="max-width:440px;" onclick="event.stopPropagation()">
+    <h2 id="accountEditTitle" style="margin:0 0 18px;font-size:18px;">✏️ Modifier le compte</h2>
+    <div id="accountEditBody" style="display:flex;flex-direction:column;gap:14px;"></div>
+    <div style="margin-top:20px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+      <button onclick="closeAccountEdit()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;font-family:inherit;font-size:14px;cursor:pointer;">Annuler</button>
+      <button class="btn-primary" onclick="saveAccountEdit()">💾 Enregistrer</button>
     </div>
   </div>
 </div>
@@ -12173,7 +12188,9 @@ function renderAccounts() {
   document.getElementById("accountCourant").textContent = c.toFixed(2) + " €";
   document.getElementById("accountEpargne").textContent = e.toFixed(2) + " €";
   const lbl = document.getElementById("accountCourantLabel");
-  if (lbl) lbl.textContent = "💳 " + _courantName();
+  if (lbl) lbl.textContent = (state.accounts?.courantEmoji || "💳") + " " + _courantName();
+  const cashLbl = document.getElementById("cashAccountLabel");
+  if (cashLbl) cashLbl.textContent = (state.accounts?.cashEmoji || "💵") + " " + (state.accounts?.cashLabel || "Espèces en poche");
   const nameInput = document.getElementById("courantNameInput");
   if (nameInput && document.activeElement !== nameInput) nameInput.value = state.accounts?.courantName || "";
   renderCash();
@@ -12186,6 +12203,130 @@ function renderAccounts() {
     `Solde de départ : ${startC.toFixed(2)} € · Variation : ${(c - startC >= 0 ? "+" : "")}${(c - startC).toFixed(2)} €<br>${editLinks("courant")}`;
   document.getElementById("accountEpargneDetail").innerHTML =
     `Solde de départ : ${startE.toFixed(2)} € · Cumulé épargné : ${(e - startE >= 0 ? "+" : "")}${(e - startE).toFixed(2)} €<br>${editLinks("epargne")}`;
+}
+let _accountEditType = null;
+function openAccountEdit(type) {
+  _accountEditType = type;
+  const title = document.getElementById("accountEditTitle");
+  const body = document.getElementById("accountEditBody");
+  if (type === "courant") {
+    const name = state.accounts?.courantName || "Hello Bank";
+    const emoji = state.accounts?.courantEmoji || "💳";
+    const start = state.accounts?.courantStart ?? 0;
+    title.textContent = "✏️ Compte courant";
+    body.innerHTML = `
+      <div>
+        <label style="font-size:12px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px;">Emoji</label>
+        <input type="text" id="accEditEmoji" value="${escapeHtml(emoji)}" maxlength="4" style="width:60px;text-align:center;padding:8px;border:1px solid var(--line);border-radius:10px;font-size:20px;font-family:inherit;" />
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px;">Nom du compte</label>
+        <input type="text" id="accEditName" value="${escapeHtml(name)}" placeholder="ex : Hello Bank, Boursobank…" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px;">Solde de départ (€) <span style="font-weight:400;font-style:italic;">— point de référence initial</span></label>
+        <input type="number" id="accEditStart" value="${start}" step="0.01" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+      </div>
+      <div>
+        <button onclick="_accCalibrateNow()" style="width:100%;padding:9px;border-radius:10px;border:1.5px dashed var(--line);background:var(--bg-1);font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">📍 Caler sur le solde actuel (entrer mon vrai solde d'aujourd'hui)</button>
+      </div>`;
+  } else if (type === "cash") {
+    const lbl = state.accounts?.cashLabel || "Espèces en poche";
+    const emoji = state.accounts?.cashEmoji || "💵";
+    title.textContent = "✏️ Espèces en poche";
+    body.innerHTML = `
+      <div>
+        <label style="font-size:12px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px;">Emoji</label>
+        <input type="text" id="accEditEmoji" value="${escapeHtml(emoji)}" maxlength="4" style="width:60px;text-align:center;padding:8px;border:1px solid var(--line);border-radius:10px;font-size:20px;font-family:inherit;" />
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px;">Libellé</label>
+        <input type="text" id="accEditName" value="${escapeHtml(lbl)}" placeholder="Espèces en poche" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+      </div>`;
+  } else if (type === "epargne") {
+    title.textContent = "✏️ Comptes épargne";
+    const cats = state.savingsCategories || [];
+    const breakdown = state.accounts?.savingsBreakdown || {};
+    body.innerHTML = `
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px;">Clique sur un compte pour modifier son solde de départ. Renomme-le en éditant son nom directement.</p>
+      ${cats.map(c => `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);">
+          <span style="font-size:16px;">${_accountEmoji(c)}</span>
+          <input data-saving-name="${escapeHtml(c)}" class="acc-saving-name" value="${escapeHtml(c)}" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
+          <input data-saving-start="${escapeHtml(c)}" class="acc-saving-start" type="number" value="${(breakdown[c] || 0).toFixed(2)}" step="0.01" placeholder="Solde départ" style="width:110px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
+        </div>`).join("")}
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <input type="text" id="newSavAccName" placeholder="Nouveau compte épargne…" style="flex:1;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);" />
+        <button onclick="_addSavAccFromEdit()" style="padding:8px 14px;border-radius:10px;border:none;background:var(--lavender-soft);color:#6b4d99;font-weight:700;cursor:pointer;font-family:inherit;">Ajouter</button>
+      </div>`;
+  }
+  document.getElementById("accountEditModal").classList.add("open");
+}
+function _addSavAccFromEdit() {
+  const inp = document.getElementById("newSavAccName");
+  const name = inp?.value.trim();
+  if (!name) return;
+  if (!(state.savingsCategories || []).includes(name)) {
+    state.savingsCategories.push(name);
+    saveState();
+  }
+  openAccountEdit("epargne");
+}
+function _accCalibrateNow() {
+  const real = parseFloat(prompt("Ton solde réel aujourd'hui (en €) :"));
+  if (isNaN(real)) return;
+  const current = balanceCourant();
+  const currentStart = state.accounts?.courantStart || 0;
+  const newStart = currentStart + (real - current);
+  if (!state.accounts) state.accounts = {};
+  state.accounts.courantStart = newStart;
+  document.getElementById("accEditStart").value = newStart.toFixed(2);
+}
+function closeAccountEdit() {
+  document.getElementById("accountEditModal").classList.remove("open");
+  _accountEditType = null;
+}
+function saveAccountEdit() {
+  if (!state.accounts) state.accounts = {};
+  const type = _accountEditType;
+  if (type === "courant") {
+    const name = document.getElementById("accEditName")?.value.trim();
+    const emoji = document.getElementById("accEditEmoji")?.value.trim() || "💳";
+    const start = parseFloat(document.getElementById("accEditStart")?.value) || 0;
+    if (name) state.accounts.courantName = name;
+    state.accounts.courantEmoji = emoji;
+    state.accounts.courantStart = start;
+  } else if (type === "cash") {
+    const lbl = document.getElementById("accEditName")?.value.trim();
+    const emoji = document.getElementById("accEditEmoji")?.value.trim() || "💵";
+    if (lbl) state.accounts.cashLabel = lbl;
+    state.accounts.cashEmoji = emoji;
+  } else if (type === "epargne") {
+    // Renommage + soldes de départ des comptes épargne
+    const nameInputs = document.querySelectorAll(".acc-saving-name");
+    const startInputs = document.querySelectorAll(".acc-saving-start");
+    const newBreakdown = {};
+    const newCats = [];
+    nameInputs.forEach((inp, i) => {
+      const oldName = inp.dataset.savingName;
+      const newName = inp.value.trim() || oldName;
+      const startVal = parseFloat(startInputs[i]?.value) || 0;
+      // Renommer dans transactions
+      if (newName !== oldName) {
+        state.transactions.forEach(t => { if (t.category === oldName && (t.type === "savings" || t.type === "savings-out")) t.category = newName; });
+        const idx = state.savingsCategories.indexOf(oldName);
+        if (idx >= 0) state.savingsCategories[idx] = newName;
+      }
+      newBreakdown[newName] = startVal;
+      newCats.push(newName);
+    });
+    state.accounts.savingsBreakdown = newBreakdown;
+    state.savingsCategories = newCats;
+  }
+  saveState();
+  renderAccounts();
+  closeAccountEdit();
+  showToast("✅ Compte mis à jour");
 }
 function _toggleCashDetail() {
   const p = document.getElementById("cashDetailPanel");
