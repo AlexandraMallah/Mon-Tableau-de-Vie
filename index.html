@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v937</title>
+<title>Mon Tableau de Vie 🌿 · v939</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7644,7 +7644,7 @@ function renderTasks() {
     const dlText = t.deadline ? `${isEvent ? "📅" : "⏰"} ${formatDeadline(t.deadline)}` : "";
     const tagHtml = project ? `<span class="task-project-tag">${escapeHtml(project.name)}</span>` : "";
     const pct = taskProgress(t);
-    const progressColor = pct >= 100 ? (document.body.classList.contains('t-minimal') ? '#333' : document.body.classList.contains('t-serieux') ? '#3d8b78' : '#4ade80') : document.body.classList.contains('t-minimal') ? `hsl(0,0%,${Math.round(70 - pct * 0.4)}%)` : document.body.classList.contains('t-serieux') ? `hsl(${200 + Math.round(pct * 0.4)},${55 + Math.round(pct*0.15)}%,${45 - Math.round(pct*0.08)}%)` : `hsl(${Math.round(pct * 1.2)}, 72%, 52%)`;
+    const progressColor = pct >= 100 ? (document.body.classList.contains('t-minimal') ? '#333' : document.body.classList.contains('t-serieux') ? '#3d8b78' : '#4ade80') : document.body.classList.contains('t-minimal') ? `hsl(0,0%,${Math.round(70 - pct * 0.4)}%)` : document.body.classList.contains('t-serieux') ? `hsl(${210 - Math.round(pct * 0.4)},60%,${40 + Math.round(pct * 0.08)}%)` : `hsl(${Math.round(pct * 1.2)}, 72%, 52%)`;
     const progressHtml = pct > 0 ? `<div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%;background:${progressColor};"></div></div>` : "";
     const pctBadge = pct > 0 && !t.done ? `<span class="task-pct-badge" style="color:${progressColor};background:${progressColor}22;">${pct}%</span>` : "";
     const kindBadge = isEvent
@@ -8038,7 +8038,7 @@ function _getCurrentEditTask() {
   return state.work.postdocTasks.find(x => x.id === id);
 }
 function updateModalPreview(pct) {
-  const col = pct >= 100 ? (document.body.classList.contains('t-minimal') ? '#333' : document.body.classList.contains('t-serieux') ? '#3d8b78' : '#4ade80') : document.body.classList.contains('t-minimal') ? `hsl(0,0%,${Math.round(70 - pct * 0.4)}%)` : document.body.classList.contains('t-serieux') ? `hsl(${200 + Math.round(pct * 0.4)},${55 + Math.round(pct*0.15)}%,${45 - Math.round(pct*0.08)}%)` : `hsl(${Math.round(pct * 1.2)}, 72%, 52%)`;
+  const col = pct >= 100 ? (document.body.classList.contains('t-minimal') ? '#333' : document.body.classList.contains('t-serieux') ? '#3d8b78' : '#4ade80') : document.body.classList.contains('t-minimal') ? `hsl(0,0%,${Math.round(70 - pct * 0.4)}%)` : document.body.classList.contains('t-serieux') ? `hsl(${210 - Math.round(pct * 0.4)},60%,${40 + Math.round(pct * 0.08)}%)` : `hsl(${Math.round(pct * 1.2)}, 72%, 52%)`;
   const bar = document.getElementById("taskEditPreviewBar");
   const val = document.getElementById("taskEditProgressVal");
   if (bar) { bar.style.width = pct + "%"; bar.style.background = pct > 0 ? col : "transparent"; }
@@ -20966,6 +20966,13 @@ function applyTheme(id, persist = true) {
     if (chk)  chk.style.display  = t === id ? "" : "none";
     if (card) card.style.borderColor = t === id ? "var(--lavender)" : "var(--line)";
   });
+  // Re-rendre les éléments dont les couleurs sont calculées en JS (pas juste CSS)
+  if (typeof renderRings === "function") renderRings();
+  if (typeof renderTaskProgress === "function") renderTaskProgress();
+  if (typeof renderMoneyFlowChart === "function") renderMoneyFlowChart();
+  if (typeof renderSavings === "function") renderSavings();
+  if (typeof renderMoneyCatChart === "function") renderMoneyCatChart();
+  if (typeof renderMoneyCatAllChart === "function") renderMoneyCatAllChart();
 }
 function openSettings(tab) {
   document.getElementById("nameInput").value = state.name || "";
@@ -22255,9 +22262,9 @@ try {
   setupJournal();
   populateTxCategories();
   setTxType('expense');
-  renderAll();
-  // Synchroniser les boutons thème dans le header (sans sauvegarder — déjà en state)
+  // Appliquer le thème AVANT renderAll() pour que les couleurs JS soient correctes
   if (window._pendingTheme) applyTheme(window._pendingTheme, false);
+  renderAll();
   checkSeedBanner();
   // Météo au démarrage (onglet Aujourd'hui actif par défaut)
   setTimeout(fetchWeather, 800);
