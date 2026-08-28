@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v920</title>
+<title>Mon Tableau de Vie 🌿 · v922</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2871,7 +2871,6 @@
     <div class="card" style="margin-bottom:18px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
         <h2 style="margin:0;flex:1;">🏦 Mes comptes</h2>
-        <button class="edit-only" onclick="openSettings('finances')" style="padding:4px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;" title="Gérer les comptes épargne">⚙ Gérer les comptes</button>
       </div>
       <div class="money-accounts-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
         <div class="money-stat" id="accountCourantCard" style="background:linear-gradient(135deg,white 0%,var(--sky-soft) 100%);position:relative;">
@@ -11840,13 +11839,19 @@ function openExternalAccountsManager() {
   const _hf=document.getElementById("helpFooter"); if(_hf) _hf.style.display="none";
 }
 function _saveExtAccounts() {
-  const accounts = state.externalAccounts || [];
-  accounts.forEach((a, i) => {
+  if (!Array.isArray(state.externalAccounts)) state.externalAccounts = [];
+  state.externalAccounts.forEach((a, i) => {
     const nameEl = document.getElementById("extName_" + i);
     const emojiEl = document.getElementById("extEmoji_" + i);
     if (nameEl && nameEl.value.trim()) a.name = nameEl.value.trim();
-    if (emojiEl && emojiEl.value.trim()) a.emoji = emojiEl.value.trim();
+    if (emojiEl && emojiEl.value.trim()) a.emoji = emojiEl.value.trim().slice(0,2);
   });
+  // Nouveau compte ajouté via _addExtAcc
+  const newName = document.getElementById("extNewName");
+  const newEmoji = document.getElementById("extNewEmoji");
+  if (newName && newName.value.trim()) {
+    state.externalAccounts.push({ id: "ext-" + Date.now(), name: newName.value.trim(), emoji: (newEmoji?.value.trim().slice(0,2)) || "🧾" });
+  }
   saveState();
   closeHelp();
   const _hf2=document.getElementById("helpFooter"); if(_hf2) _hf2.style.display="";
@@ -11854,13 +11859,16 @@ function _saveExtAccounts() {
   showToast("✅ Comptes enregistrés");
 }
 function _addExtAcc() {
-  const name = prompt("Nom du nouveau compte (ex : Compte joint, Revolut…) :");
-  if (!name || !name.trim()) return;
-  const emoji = prompt("Emoji (ex : 🏦 💳 💶 👫) :") || "🧾";
-  state.externalAccounts.push({ id: "ext-" + Date.now(), name: name.trim(), emoji: emoji.trim().slice(0, 2) || "🧾" });
-  saveState();
-  renderExternalSummary();
-  openExternalAccountsManager();
+  // Ajoute un champ directement dans la liste existante
+  const listEl = document.getElementById("extAccList");
+  if (!listEl) return;
+  const newIdx = (state.externalAccounts || []).length;
+  const tempId = "ext-new-" + Date.now();
+  const row = document.createElement("div");
+  row.style.cssText = "display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);";
+  row.innerHTML = `<input value="🧾" maxlength="2" style="width:44px;text-align:center;padding:5px;border:1px solid var(--lavender);border-radius:8px;font-size:16px;font-family:inherit;" id="extNewEmoji" /><input placeholder="Nom du compte (ex : Revolut, Compte joint…)" style="flex:1;padding:6px 10px;border:1px solid var(--lavender);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" id="extNewName" />`;
+  listEl.appendChild(row);
+  document.getElementById("extNewName").focus();
 }
 function _delExtAcc(id) {
   if ((state.externalAccounts || []).length <= 1) { showToast("⚠️ Il faut au moins un compte."); return; }
