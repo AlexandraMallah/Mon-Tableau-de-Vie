@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v904</title>
+<title>Mon Tableau de Vie 🌿 · v906</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -3917,7 +3917,7 @@
 </div>
 
 <!-- Modal confirmation générique -->
-<div class="modal-bg" id="confirmModal" onclick="event.target===this&&_closeConfirm(false)">
+<div class="modal-bg" id="confirmModal" style="z-index:600;" onclick="event.target===this&&_closeConfirm(false)">
   <div class="modal" style="max-width:360px;padding:28px 24px;text-align:center;" onclick="event.stopPropagation()">
     <div id="confirmIcon" style="font-size:36px;margin-bottom:10px;">🗑️</div>
     <div id="confirmMsg" style="font-size:15px;color:var(--ink);line-height:1.5;margin-bottom:20px;"></div>
@@ -14293,25 +14293,35 @@ function computeMetric(m, override) {
   if (override?.disabled) return { score: 0, value: "désactivé", label: m.label };
   if (override?.target !== undefined) m = { ...m, target: override.target };
   if (m.type === "budget-on-track") {
-    const [start, end] = currentMonthRange();
+    const periods = _salaryPeriods();
+    const period = periods[periods.length - 1];
+    const { start, end: pEnd } = period;
     const now = new Date();
-    const totalDays   = Math.round((end - start) / 86400000);
-    const daysElapsed = Math.max(1, Math.round((now - start) / 86400000));
-    let spent = 0;
+    let spent = 0, fixedTotal = 0;
     for (const tx of state.transactions) {
       const d = new Date(tx.date);
-      if (d >= start && d < end && tx.type === "expense" && !tx.reimbursable) spent += txNetAmount(tx);
+      if (d >= start && d < pEnd && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable) {
+        const net = txNetAmount(tx);
+        spent += net;
+        if (tx.fixedCharge) fixedTotal += net;
+      }
     }
+    spent = Math.max(0, spent - fixedTotal);
     const remaining = balanceCourant();
     const budget = spent + remaining;
     if (budget <= 0) return { score: 0, value: "—", label: m.label };
-    // Rythme idéal : daysElapsed/totalDays du budget
-    const idealSpent = budget * (daysElapsed / totalDays);
-    // Score : 1 si on est en dessous ou à l'idéal, décroît si on dépasse
-    const ratio = spent / Math.max(1, idealSpent);
-    const score = Math.max(0, Math.min(1, 2 - ratio)); // 1 si ratio≤1, 0 si ratio≥2
+    const estimatedEnd = new Date(start.getFullYear(), start.getMonth() + 1, start.getDate());
+    const totalDays   = Math.max(1, Math.round((estimatedEnd - start) / 86400000));
+    const daysElapsed = Math.max(1, Math.floor((now - start) / 86400000) + 1);
+    const dailyActual = spent / daysElapsed;
+    const dailyIdeal  = budget / totalDays;
+    // Même logique que renderBudgetGauge : ratio dailyActual / dailyIdeal
+    const ratio = dailyIdeal > 0 ? dailyActual / dailyIdeal : 1;
+    // score : 1 si ≤ 1.0 (vert), décroît jusqu'à 0 si ≥ 1.5 (rouge)
+    const score = remaining < 0 ? 0 : Math.max(0, Math.min(1, (1.5 - ratio) / 0.5));
     const pct = Math.round((spent / budget) * 100);
-    return { score, value: `${pct}% consommé (j${daysElapsed}/${totalDays})`, label: m.label };
+    const label = remaining < 0 ? "Budget dépassé 🚨" : ratio >= 1.5 ? "Rythme trop élevé 🔴" : ratio >= 1.1 ? "Rythme un peu élevé ⚠️" : "Budget respecté ✓";
+    return { score, value: `${pct}% · ${label}`, label: m.label };
   }
   if (m.type === "habit-avg") {
     const habit = state.habits.find(h => h.id === m.habitId);
@@ -14609,6 +14619,20 @@ function savePillarConfig() {
   renderPillars();
 }
 
+function _isOnVacationThisWeek() {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const monday = new Date(now); monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
+  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+  // Vérifie si au moins un jour ouvré de la semaine est en congé selon state.admin.congesPeriodes
+  for (let i = 0; i <= 6; i++) {
+    const d = new Date(monday); d.setDate(monday.getDate() + i);
+    const dow = d.getDay();
+    if (dow === 0 || dow === 6) continue; // week-ends exclus
+    if (_isDayConge(todayKey(d))) return true;
+  }
+  return false;
+}
 function computePillarScore(pillar) {
   const overrides = (state.pillarOverrides || {})[pillar.id] || {};
   const metrics = pillar.metrics.map((m, i) => computeMetric(m, overrides[i]));
@@ -14628,17 +14652,32 @@ function renderPillars() {
   const rankingEl = document.getElementById("pillarsRanking");
   if (!cardsEl || !globalEl || !radarCanvas) return;
 
+  const onVacation = _isOnVacationThisWeek();
   const computed = PILLAR_DEFS.map(p => ({ ...p, ...computePillarScore(p) }));
-  const globalScore = Math.round(computed.reduce((s, p) => s + p.score, 0) / computed.length);
+  const activeComputed = computed.filter(p => !(p.id === "travail" && onVacation));
+  const globalScore = Math.round(activeComputed.reduce((s, p) => s + p.score, 0) / (activeComputed.length || 1));
   globalEl.textContent = globalScore + " / 100";
 
   // Cartes
   cardsEl.innerHTML = computed.map(p => {
-    const metricsHtml = p.metrics.map((m, i) => `
-      <span class="pillar-metric ${metricClass(m.score)}" style="cursor:pointer;" onclick="showPillarDetail('${p.id}',${i})" title="Voir le détail">${escapeHtml(m.label)} : ${escapeHtml(m.value)} ›</span>`).join("");
+    const isWorkOnVacation = p.id === "travail" && onVacation;
     const editBtn = document.body.classList.contains("edit-mode")
       ? `<button class="edit-only" onclick="openPillarConfig('${p.id}')" title="Configurer les objectifs" style="position:absolute;top:8px;right:8px;padding:3px 8px;border-radius:8px;border:1px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">⚙️</button>`
       : "";
+    if (isWorkOnVacation) {
+      return `
+        <div class="pillar-card" style="position:relative;opacity:0.55;filter:grayscale(0.6);">
+          ${editBtn}
+          <div class="pillar-emoji" style="background:#f0eef5;">🏖️</div>
+          <div class="pillar-info">
+            <div class="pillar-name">${p.name}</div>
+            <div style="font-size:12px;color:var(--ink-soft);margin-top:4px;font-style:italic;">En vacances — indicateurs suspendus</div>
+          </div>
+          <div class="pillar-score" style="color:var(--ink-softer);font-size:13px;">—</div>
+        </div>`;
+    }
+    const metricsHtml = p.metrics.map((m, i) => `
+      <span class="pillar-metric ${metricClass(m.score)}" style="cursor:pointer;" onclick="showPillarDetail('${p.id}',${i})" title="Voir le détail">${escapeHtml(m.label)} : ${escapeHtml(m.value)} ›</span>`).join("");
     return `
       <div class="pillar-card" style="position:relative;">
         ${editBtn}
@@ -15320,16 +15359,15 @@ async function syncGoogleCal(silent = false) {
   const url = state.googleCal?.url;
   if (!url) return;
   if (!silent) showToast("🔄 Synchronisation Google Agenda…");
-  // Proxies CORS testés en cascade (allorigins en tête : le plus fiable en juin 2026 ;
-  // les morts — thingproxy, cors-anywhere — ont été retirés)
   // Proxies CORS testés en cascade — mis à jour août 2026
-  // corsproxy.io retiré (401 payant), allorigins raw retiré (CORS cassé)
   const proxies = [
+    { build: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`, json: false },
     { build: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, json: true },
     { build: u => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`, json: false },
+    { build: u => `https://proxy.cors.sh/${u}`, json: false },
     { build: u => `https://thingproxy.freeboard.io/fetch/${u}`, json: false },
-    { build: u => `https://cors-proxy.htmldriven.com/?url=${encodeURIComponent(u)}`, json: false },
-    { build: u => `https://yacdn.org/serve/${u}`, json: false },
+    { build: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, json: false },
+    { build: u => `https://cors-anywhere.herokuapp.com/${u}`, json: false },
   ];
   let text = null;
   for (let pass = 0; pass < 2 && !text; pass++) {
