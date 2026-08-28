@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v934</title>
+<title>Mon Tableau de Vie 🌿 · v935</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7411,23 +7411,46 @@ function renderTaskProgress() {
     tasksByProject[key].total++;
     if (t.done) tasksByProject[key].done++;
   }
-  const CUSTOM_COLORS = [
-    { fg: "#f5a880", bg: "#fff3ef" },
-    { fg: "#80c4e8", bg: "#e8f5fb" },
-    { fg: "#d890c8", bg: "#faeef7" },
-    { fg: "#98d890", bg: "#edfaeb" },
-    { fg: "#c8a870", bg: "#faf3e8" },
-    { fg: "#a890d8", bg: "#f0edfb" },
+  const _isS = document.body.classList.contains("t-serieux");
+  const _isM = document.body.classList.contains("t-minimal");
+  const CUSTOM_COLORS = _isS ? [
+    { fg: "#2e5fa3", bg: "#dde6f4" }, { fg: "#3d8b78", bg: "#d0ece6" },
+    { fg: "#c4922a", bg: "#f5e9c4" }, { fg: "#4a6e8a", bg: "#d4e2ee" },
+    { fg: "#4a7c5c", bg: "#d0e8d8" }, { fg: "#8a5030", bg: "#f0ddd0" },
+  ] : _isM ? [
+    { fg: "#333", bg: "#ebebeb" }, { fg: "#555", bg: "#e4e4e4" },
+    { fg: "#777", bg: "#dedede" }, { fg: "#444", bg: "#e8e8e8" },
+    { fg: "#666", bg: "#e0e0e0" }, { fg: "#888", bg: "#d8d8d8" },
+  ] : [
+    { fg: "#f5a880", bg: "#fff3ef" }, { fg: "#80c4e8", bg: "#e8f5fb" },
+    { fg: "#d890c8", bg: "#faeef7" }, { fg: "#98d890", bg: "#edfaeb" },
+    { fg: "#c8a870", bg: "#faf3e8" }, { fg: "#a890d8", bg: "#f0edfb" },
   ];
   const sectionIds_prog = ["p-seed-postdoc", "p-seed-candidatures", "p-seed-prixthese", "p-seed-valo", "p-seed-enseignement", "p-seed-autre"];
   const customList = state.work.postdocProjects.filter(pr => !sectionIds_prog.includes(pr.id));
   const colorFor = (p) => {
-    if (isPostdocProject(p)) return { fg: "#6aaed6", bg: "var(--sky-soft)" };
-    if (isValoProject(p)) return { fg: "#e890a4", bg: "var(--pink-soft)" };
-    if (isTeachingProject(p)) return { fg: "#9d82d6", bg: "var(--lavender-soft)" };
-    if (isAutreProject(p)) return { fg: "#f5c842", bg: "#fdf6d8" };
-    if (isCandProject(p)) return { fg: "#72c4a2", bg: "#e6f7f1" };
-    if (isPrixTheseProject(p)) return { fg: "#d4b84a", bg: "#fdf5d8" };
+    if (_isS) {
+      if (isPostdocProject(p)) return { fg: "#2e5fa3", bg: "#dde6f4" };
+      if (isValoProject(p))    return { fg: "#c4922a", bg: "#f5e9c4" };
+      if (isTeachingProject(p))return { fg: "#5060a0", bg: "#dde0f0" };
+      if (isAutreProject(p))   return { fg: "#4a6e8a", bg: "#d4e2ee" };
+      if (isCandProject(p))    return { fg: "#3d8b78", bg: "#d0ece6" };
+      if (isPrixTheseProject(p))return { fg: "#8a5030", bg: "#f0ddd0" };
+    } else if (_isM) {
+      if (isPostdocProject(p)) return { fg: "#333", bg: "#ebebeb" };
+      if (isValoProject(p))    return { fg: "#555", bg: "#e4e4e4" };
+      if (isTeachingProject(p))return { fg: "#777", bg: "#dedede" };
+      if (isAutreProject(p))   return { fg: "#888", bg: "#d8d8d8" };
+      if (isCandProject(p))    return { fg: "#444", bg: "#e8e8e8" };
+      if (isPrixTheseProject(p))return { fg: "#666", bg: "#e0e0e0" };
+    } else {
+      if (isPostdocProject(p)) return { fg: "#6aaed6", bg: "var(--sky-soft)" };
+      if (isValoProject(p))    return { fg: "#e890a4", bg: "var(--pink-soft)" };
+      if (isTeachingProject(p))return { fg: "#9d82d6", bg: "var(--lavender-soft)" };
+      if (isAutreProject(p))   return { fg: "#f5c842", bg: "#fdf6d8" };
+      if (isCandProject(p))    return { fg: "#72c4a2", bg: "#e6f7f1" };
+      if (isPrixTheseProject(p))return { fg: "#d4b84a", bg: "#fdf5d8" };
+    }
     const ci = customList.findIndex(cp => cp.id === p.id);
     return CUSTOM_COLORS[Math.max(ci, 0) % CUSTOM_COLORS.length];
   };
