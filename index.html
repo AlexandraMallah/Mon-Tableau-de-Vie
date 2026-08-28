@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v896</title>
+<title>Mon Tableau de Vie 🌿 · v898</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -20009,12 +20009,19 @@ function renderSettingsLists() {
       <button class="del" onclick="removeActivity('${a.id}')">✕</button>
     </div>`;
   }).join("");
-  document.getElementById("catEditList").innerHTML = state.categories.map(c =>
-    `<div class="item-edit"><span>${escapeHtml(c)}</span><button class="del" onclick="removeCategory('${escapeHtml(c)}')">✕</button></div>`).join("");
-  document.getElementById("incomeCatEditList").innerHTML = state.incomeCategories.map(c =>
-    `<div class="item-edit"><span>${escapeHtml(c)}</span><button class="del" onclick="removeIncomeCategory('${escapeHtml(c)}')">✕</button></div>`).join("");
-  document.getElementById("savingsCatEditList").innerHTML = state.savingsCategories.map(c =>
-    `<div class="item-edit"><span>${escapeHtml(c)}</span><button class="del" onclick="removeSavingsCategory('${escapeHtml(c)}')">✕</button></div>`).join("");
+  const _catRow = (c, onRename, onDel) => {
+    const cEsc = escapeHtml(c);
+    return `<div class="item-edit" style="gap:4px;">
+      <span style="flex:1;min-width:0;cursor:pointer;" title="Double-cliquer pour renommer" ondblclick="this.style.display='none';this.nextElementSibling.style.display='';this.nextElementSibling.focus();this.nextElementSibling.select();">${cEsc}</span>
+      <input type="text" value="${cEsc}" style="display:none;flex:1;min-width:0;padding:3px 7px;border:1px solid var(--lavender);border-radius:7px;font-family:inherit;font-size:13px;color:var(--ink);"
+        onblur="if(this.value.trim()&&this.value.trim()!=='${cEsc}'){${onRename}(this.value.trim(),'${cEsc}');}else{this.style.display='none';this.previousElementSibling.style.display='';}"
+        onkeydown="if(event.key==='Enter'){this.blur();}if(event.key==='Escape'){this.value='${cEsc}';this.blur();}" />
+      <button class="del" onclick="${onDel}('${cEsc}')" style="flex-shrink:0;">✕</button>
+    </div>`;
+  };
+  document.getElementById("catEditList").innerHTML = state.categories.map(c => _catRow(c, "renameCategory", "removeCategory")).join("");
+  document.getElementById("incomeCatEditList").innerHTML = state.incomeCategories.map(c => _catRow(c, "renameIncomeCategory", "removeIncomeCategory")).join("");
+  document.getElementById("savingsCatEditList").innerHTML = state.savingsCategories.map(c => _catRow(c, "renameSavingsCategory", "removeSavingsCategory")).join("");
   document.getElementById("candTypeEditList").innerHTML = state.candidatureTypes.map(c =>
     `<div class="item-edit"><span>${escapeHtml(c)}</span><button class="del" onclick="removeCandType('${escapeHtml(c)}')">✕</button></div>`).join("");
 }
@@ -20023,6 +20030,24 @@ function removeActivity(id) { state.activities = state.activities.filter(a => a.
 function removeCategory(c) { state.categories = state.categories.filter(x => x !== c); renderSettingsLists(); }
 function removeIncomeCategory(c) { state.incomeCategories = state.incomeCategories.filter(x => x !== c); renderSettingsLists(); }
 function removeSavingsCategory(c) { state.savingsCategories = state.savingsCategories.filter(x => x !== c); renderSettingsLists(); }
+function renameCategory(newName, oldName) {
+  const idx = state.categories.indexOf(oldName);
+  if (idx >= 0) state.categories[idx] = newName;
+  state.transactions.forEach(t => { if (t.category === oldName && (t.type === "expense" || t.type === "external")) t.category = newName; });
+  saveState(); renderSettingsLists();
+}
+function renameIncomeCategory(newName, oldName) {
+  const idx = state.incomeCategories.indexOf(oldName);
+  if (idx >= 0) state.incomeCategories[idx] = newName;
+  state.transactions.forEach(t => { if (t.category === oldName && t.type === "income") t.category = newName; });
+  saveState(); renderSettingsLists();
+}
+function renameSavingsCategory(newName, oldName) {
+  const idx = state.savingsCategories.indexOf(oldName);
+  if (idx >= 0) state.savingsCategories[idx] = newName;
+  state.transactions.forEach(t => { if (t.category === oldName && (t.type === "savings" || t.type === "savings-out")) t.category = newName; });
+  saveState(); renderSettingsLists();
+}
 function removeCandType(c) { state.candidatureTypes = state.candidatureTypes.filter(x => x !== c); renderSettingsLists(); }
 function saveSettings() {
   state.name = document.getElementById("nameInput").value.trim();
