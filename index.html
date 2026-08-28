@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v865</title>
+<title>Mon Tableau de Vie 🌿 · v867</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -1319,6 +1319,27 @@
   .seed-banner-text p { margin: 4px 0 0; font-size: 13px; color: var(--ink-soft); max-width: 680px; }
   .seed-banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
+  /* ========= MODE ÉDITION ========= */
+  .edit-only { display: none !important; }
+  body.edit-mode .edit-only { display: inline-flex !important; }
+  body.edit-mode .edit-only.block { display: block !important; }
+  #editModeBtn { transition: all 0.2s; }
+  body.edit-mode #editModeBtn {
+    background: linear-gradient(135deg, #fdf6d8, #fff3cd) !important;
+    border-color: #f5c842 !important;
+    color: #8a6700 !important;
+    font-weight: 700;
+  }
+  body.edit-mode::after {
+    content: "✏️ Mode édition actif — clique sur ✏️ ou 🗑️ pour modifier";
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+    background: #fff3cd; color: #8a6700; border: 1.5px solid #f5c842;
+    padding: 8px 18px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 9999; pointer-events: none;
+    white-space: nowrap;
+  }
+  @media (max-width: 640px) { body.edit-mode::after { font-size: 11px; padding: 7px 12px; bottom: 8px; } }
+
   /* ========= RESPONSIVE ========= */
   @media (max-width: 880px) {
     .rings, .grid-three, .money-summary, .stat-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1693,6 +1714,7 @@
       <p class="date" id="todayDate"></p>
     </div>
     <div class="header-actions">
+      <button class="btn-icon" id="editModeBtn" onclick="toggleEditMode()" title="Activer le mode édition pour modifier l'application">✏️ Éditer</button>
       <button class="btn-icon" onclick="openPatchModal()" style="background:linear-gradient(135deg,var(--lavender-soft),var(--pink-soft));font-weight:600;">📥 Mise à jour</button>
       <button class="btn-icon" id="exportBtn" onclick="exportData()">↗ Exporter</button>
       <button class="btn-icon" id="importBtn" onclick="importData()">↙ Importer</button>
@@ -2149,10 +2171,10 @@
     <div class="sub-tabs">
       <button class="sub-tab active" data-sub="tasks">✅ Tâches</button>
       <button class="sub-tab" data-sub="time">⏱️ Temps</button>
-      <button class="sub-tab" data-sub="postdoc" id="workTab-postdoc" ondblclick="renameWorkTab('postdoc',this)">📘 <span id="workTabLabel-postdoc"></span></button>
-      <button class="sub-tab" data-sub="candidatures" id="workTab-candidatures" ondblclick="renameWorkTab('candidatures',this)">📋 <span id="workTabLabel-candidatures"></span></button>
-      <button class="sub-tab" data-sub="valorisation" id="workTab-valorisation" ondblclick="renameWorkTab('valorisation',this)">📝 <span id="workTabLabel-valorisation"></span></button>
-      <button class="sub-tab" data-sub="teaching" id="workTab-teaching" ondblclick="renameWorkTab('teaching',this)">📚 <span id="workTabLabel-teaching"></span></button>
+      <button class="sub-tab" data-sub="postdoc" id="workTab-postdoc">📘 <span id="workTabLabel-postdoc"></span><span class="edit-only" onclick="event.stopPropagation();renameWorkTab('postdoc',this)" style="margin-left:4px;font-size:10px;cursor:pointer;opacity:0.6;" title="Renommer">✏️</span></button>
+      <button class="sub-tab" data-sub="candidatures" id="workTab-candidatures">📋 <span id="workTabLabel-candidatures"></span><span class="edit-only" onclick="event.stopPropagation();renameWorkTab('candidatures',this)" style="margin-left:4px;font-size:10px;cursor:pointer;opacity:0.6;" title="Renommer">✏️</span></button>
+      <button class="sub-tab" data-sub="valorisation" id="workTab-valorisation">📝 <span id="workTabLabel-valorisation"></span><span class="edit-only" onclick="event.stopPropagation();renameWorkTab('valorisation',this)" style="margin-left:4px;font-size:10px;cursor:pointer;opacity:0.6;" title="Renommer">✏️</span></button>
+      <button class="sub-tab" data-sub="teaching" id="workTab-teaching">📚 <span id="workTabLabel-teaching"></span><span class="edit-only" onclick="event.stopPropagation();renameWorkTab('teaching',this)" style="margin-left:4px;font-size:10px;cursor:pointer;opacity:0.6;" title="Renommer">✏️</span></button>
       <button class="sub-tab" data-sub="notes">📓 Notes</button>
       <button class="sub-tab" data-sub="biblio">📖 Biblio</button>
     </div>
@@ -2233,7 +2255,7 @@
           <input type="number" id="timeAutre" step="0.25" min="0" placeholder="0" style="width:64px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#b8900a;background:white;text-align:center;" onchange="saveTimeWork()" />
           <span style="font-size:12px;color:var(--ink-soft);">h</span>
           <input type="text" id="timeAutreNote" placeholder="Préciser…" maxlength="120" style="flex:1;padding:4px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" oninput="saveTimeNote()" />
-          <button onclick="_addTimeCat()" style="padding:4px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;" title="Ajouter une catégorie de temps">+ Catégorie</button>
+          <button class="edit-only" onclick="_addTimeCat()" style="padding:4px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;" title="Ajouter une catégorie de temps">+ Catégorie</button>
         </div>
         <div style="padding:8px 12px;background:linear-gradient(135deg,var(--butter-soft),white);border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:13px;color:var(--ink-soft);">Total du jour</span>
@@ -2827,7 +2849,7 @@
     <div class="card" style="margin-bottom:18px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
         <h2 style="margin:0;flex:1;">🏦 Mes comptes</h2>
-        <button onclick="document.getElementById('settingsModal').classList.add('open')" style="padding:4px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;" title="Gérer les comptes épargne">⚙ Gérer les comptes</button>
+        <button class="edit-only" onclick="document.getElementById('settingsModal').classList.add('open')" style="padding:4px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;" title="Gérer les comptes épargne">⚙ Gérer les comptes</button>
       </div>
       <div class="money-accounts-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,var(--sky-soft) 100%);">
@@ -5492,7 +5514,7 @@ function renderEmotionGrid() {
       ontouchend="_epCancel()"
       ontouchmove="_epMove()"
       onclick="toggleEmotion('${e.id}')"
-      oncontextmenu="event.preventDefault();_deleteEmotion('${e.id}')"
+      oncontextmenu="if(document.body.classList.contains('edit-mode')){event.preventDefault();_deleteEmotion('${e.id}');}"
       style="
         display:flex;flex-direction:column;align-items:center;gap:3px;
         padding:8px 4px;border-radius:12px;
@@ -5503,7 +5525,7 @@ function renderEmotionGrid() {
       <span style="font-size:22px;">${e.emoji}</span>
       <span style="font-size:10px;color:var(--ink-soft);text-align:center;line-height:1.2;">${e.label}</span>
     </button>`;
-  }).join('') + `<button onclick="_addEmotion()" style="
+  }).join('') + `<button class="edit-only" onclick="_addEmotion()" style="
     display:flex;flex-direction:column;align-items:center;gap:3px;
     padding:8px 4px;border-radius:12px;border:2px dashed var(--line);background:var(--bg-1);
     cursor:pointer;font-family:inherit;color:var(--ink-softer);transition:all .15s;">
@@ -7838,12 +7860,12 @@ function renderActivities() {
     }).join("");
     return `
       <div class="activity-row">
-        <div class="activity-emoji" style="cursor:pointer;" onclick="_editActivity('${a.id}')" title="Modifier">${a.emoji || "✨"}</div>
+        <div class="activity-emoji">${a.emoji || "✨"}</div>
         <div class="activity-info">
           <div class="activity-name" style="display:flex;align-items:center;gap:6px;">
             ${escapeHtml(a.name)}
-            <span onclick="_editActivity('${a.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Modifier">✏️</span>
-            <span onclick="_deleteActivity('${a.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Supprimer">🗑️</span>
+            <span class="edit-only" onclick="_editActivity('${a.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Modifier">✏️</span>
+            <span class="edit-only" onclick="_deleteActivity('${a.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Supprimer">🗑️</span>
           </div>
           <div class="activity-meta">${weekTotal} séance${weekTotal !== 1 ? "s" : ""} cette semaine</div>
         </div>
@@ -14703,7 +14725,7 @@ function renderTimeCatsGrid() {
         style="width:52px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:${c.color};background:white;text-align:center;"
         onchange="saveTimeWork()" />
       <span style="font-size:12px;color:var(--ink-soft);">h</span>
-      <span onclick="_deleteTimeCat('${c.key}')" style="position:absolute;top:2px;right:4px;font-size:9px;color:var(--ink-softer);cursor:pointer;opacity:0.5;" title="Supprimer cette catégorie">✕</span>
+      <span class="edit-only" onclick="_deleteTimeCat('${c.key}')" style="position:absolute;top:2px;right:4px;font-size:9px;color:var(--ink-softer);cursor:pointer;opacity:0.5;" title="Supprimer cette catégorie">✕</span>
     </div>`).join("");
 }
 function fillTimeForm(dateKey) {
@@ -19934,6 +19956,12 @@ function toggleShortcut(id, on) {
   else state.shortcuts = state.shortcuts.filter(s => s.id !== id);
   saveState();
   renderShortcutsBar();
+}
+
+function toggleEditMode() {
+  document.body.classList.toggle('edit-mode');
+  const btn = document.getElementById('editModeBtn');
+  if (btn) btn.textContent = document.body.classList.contains('edit-mode') ? '✅ Terminer' : '✏️ Éditer';
 }
 
 const WORK_TAB_DEFAULTS = { postdoc: "Postdoc", candidatures: "Candidatures", valorisation: "Valorisation", teaching: "Enseignement" };
