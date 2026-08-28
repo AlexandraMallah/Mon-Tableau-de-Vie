@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v863</title>
+<title>Mon Tableau de Vie 🌿 · v865</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2149,10 +2149,10 @@
     <div class="sub-tabs">
       <button class="sub-tab active" data-sub="tasks">✅ Tâches</button>
       <button class="sub-tab" data-sub="time">⏱️ Temps</button>
-      <button class="sub-tab" data-sub="postdoc">📘 Postdoc</button>
-      <button class="sub-tab" data-sub="candidatures">📋 Candidatures</button>
-      <button class="sub-tab" data-sub="valorisation">📝 Valorisation</button>
-      <button class="sub-tab" data-sub="teaching">📚 Enseignement</button>
+      <button class="sub-tab" data-sub="postdoc" id="workTab-postdoc" ondblclick="renameWorkTab('postdoc',this)">📘 <span id="workTabLabel-postdoc"></span></button>
+      <button class="sub-tab" data-sub="candidatures" id="workTab-candidatures" ondblclick="renameWorkTab('candidatures',this)">📋 <span id="workTabLabel-candidatures"></span></button>
+      <button class="sub-tab" data-sub="valorisation" id="workTab-valorisation" ondblclick="renameWorkTab('valorisation',this)">📝 <span id="workTabLabel-valorisation"></span></button>
+      <button class="sub-tab" data-sub="teaching" id="workTab-teaching" ondblclick="renameWorkTab('teaching',this)">📚 <span id="workTabLabel-teaching"></span></button>
       <button class="sub-tab" data-sub="notes">📓 Notes</button>
       <button class="sub-tab" data-sub="biblio">📖 Biblio</button>
     </div>
@@ -2227,33 +2227,13 @@
           <input type="date" id="timeWorkDate" style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:white;color:var(--ink);" />
           <button class="btn-soft" onclick="resetTimeDateToToday()" style="font-size:12px;padding:7px 12px;">Aujourd'hui</button>
         </div>
-        <div class="time-cats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px;">
-          <div style="display:flex;align-items:center;gap:6px;background:var(--sky-soft);padding:7px 10px;border-radius:10px;">
-            <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">📘 Postdoc</span>
-            <input type="number" id="timePostdoc" step="0.25" min="0" placeholder="0" style="width:52px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#2b7ab0;background:white;text-align:center;" onchange="saveTimeWork()" />
-            <span style="font-size:12px;color:var(--ink-soft);">h</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;background:var(--pink-soft);padding:7px 10px;border-radius:10px;">
-            <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">📝 Valo</span>
-            <input type="number" id="timeValorisation" step="0.25" min="0" placeholder="0" style="width:52px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#c4547a;background:white;text-align:center;" onchange="saveTimeWork()" />
-            <span style="font-size:12px;color:var(--ink-soft);">h</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;background:var(--lavender-soft);padding:7px 10px;border-radius:10px;">
-            <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">📚 Ens.</span>
-            <input type="number" id="timeEnseignement" step="0.25" min="0" placeholder="0" style="width:52px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#7355b8;background:white;text-align:center;" onchange="saveTimeWork()" />
-            <span style="font-size:12px;color:var(--ink-soft);">h</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;background:#e6f7f1;padding:7px 10px;border-radius:10px;">
-            <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">📋 Cand.</span>
-            <input type="number" id="timeCandidatures" step="0.25" min="0" placeholder="0" style="width:52px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#3a8a6a;background:white;text-align:center;" onchange="saveTimeWork()" />
-            <span style="font-size:12px;color:var(--ink-soft);">h</span>
-          </div>
-        </div>
+        <div id="timeCatsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:8px;"></div>
         <div style="display:flex;align-items:center;gap:8px;background:#fdf6d8;padding:7px 10px;border-radius:10px;margin-bottom:8px;">
           <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">🔧 Autre</span>
           <input type="number" id="timeAutre" step="0.25" min="0" placeholder="0" style="width:64px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#b8900a;background:white;text-align:center;" onchange="saveTimeWork()" />
           <span style="font-size:12px;color:var(--ink-soft);">h</span>
           <input type="text" id="timeAutreNote" placeholder="Préciser…" maxlength="120" style="flex:1;padding:4px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" oninput="saveTimeNote()" />
+          <button onclick="_addTimeCat()" style="padding:4px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;" title="Ajouter une catégorie de temps">+ Catégorie</button>
         </div>
         <div style="padding:8px 12px;background:linear-gradient(135deg,var(--butter-soft),white);border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:13px;color:var(--ink-soft);">Total du jour</span>
@@ -2648,8 +2628,23 @@
   <section class="view" data-view="activities">
     <div class="grid-two">
       <div class="card">
-        <h2>Activités</h2>
-        <p style="color:var(--ink-soft);font-size:12px;margin:0 0 14px;">Clique sur un jour de la semaine pour marquer une séance ✓</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <h2 style="margin:0;">Activités</h2>
+          <button onclick="_toggleActivityForm()" style="padding:6px 14px;border-radius:999px;border:none;background:var(--mint-soft);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Nouvelle</button>
+        </div>
+        <p style="color:var(--ink-soft);font-size:12px;margin:0 0 10px;">Clique sur un jour de la semaine pour marquer une séance ✓</p>
+        <!-- Formulaire ajout/édition inline -->
+        <div id="activityForm" style="display:none;background:var(--bg-1);border-radius:14px;padding:12px;margin-bottom:12px;border:1px solid var(--line);">
+          <input type="hidden" id="actFormEditId" value="" />
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="text" id="actFormEmoji" placeholder="🏃" maxlength="4"
+              style="width:52px;padding:8px;border:1px solid var(--line);border-radius:10px;font-size:20px;text-align:center;font-family:inherit;background:white;" />
+            <input type="text" id="actFormName" placeholder="Nom de l'activité…"
+              style="flex:1;min-width:120px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;" />
+            <button onclick="_saveActivityForm()" style="padding:8px 16px;border-radius:10px;border:none;background:var(--mint);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">Enregistrer</button>
+            <button onclick="_cancelActivityForm()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:13px;">Annuler</button>
+          </div>
+        </div>
         <div class="activity-list" id="activityList"></div>
       </div>
       <div class="card">
@@ -2830,7 +2825,10 @@
       <textarea id="moneyNote" oninput="saveMoneyNote()" placeholder="Rappels, objectifs, idées…" style="width:100%;box-sizing:border-box;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--bg-1);line-height:1.5;outline:none;min-height:64px;max-height:600px;" rows="3"></textarea>
     </div>
     <div class="card" style="margin-bottom:18px;">
-      <h2>🏦 Mes comptes</h2>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+        <h2 style="margin:0;flex:1;">🏦 Mes comptes</h2>
+        <button onclick="document.getElementById('settingsModal').classList.add('open')" style="padding:4px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;" title="Gérer les comptes épargne">⚙ Gérer les comptes</button>
+      </div>
       <div class="money-accounts-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,var(--sky-soft) 100%);">
           <div class="label" id="accountCourantLabel">💳 Compte courant</div>
@@ -5360,7 +5358,7 @@ function _sqArray(q) { return Array.isArray(q) ? q : (q ? [q] : []); }
 function sleepQualClass(h) { return h < 7 ? "insuf" : h <= 9 ? "correct" : "bon"; }
 
 /* ===== ÉMOTIONS MANUELLES ===== */
-const EMOTIONS_LIST = [
+const EMOTIONS_DEFAULT = [
   { id: "contente",   label: "Contente",   emoji: "😊" },
   { id: "excitee",    label: "Excitée",    emoji: "🎉" },
   { id: "motivee",    label: "Motivée",    emoji: "🔥" },
@@ -5368,12 +5366,30 @@ const EMOTIONS_LIST = [
   { id: "calme",      label: "Sereine",    emoji: "🌿" },
   { id: "goumin",     label: "En goumin",  emoji: "💔" },
   { id: "fatiguee",   label: "Fatiguée",   emoji: "😴" },
-  { id: "anxieuse",   label: "Malade",      emoji: "🤒" },
+  { id: "anxieuse",   label: "Malade",     emoji: "🤒" },
   { id: "stressee",   label: "Stressée",   emoji: "🌀" },
   { id: "irritable",  label: "Irritable",  emoji: "😤" },
   { id: "colere",     label: "En colère",  emoji: "😡" },
   { id: "triste",     label: "Triste",     emoji: "😢" },
 ];
+function _getEmotions() { return state.emotions && state.emotions.length ? state.emotions : EMOTIONS_DEFAULT; }
+function _addEmotion() {
+  const emoji = prompt("Emoji de l'émotion :", "😌");
+  if (emoji === null) return;
+  const label = prompt("Nom de l'émotion :", "");
+  if (!label || !label.trim()) return;
+  if (!state.emotions) state.emotions = [...EMOTIONS_DEFAULT];
+  state.emotions.push({ id: "em" + Date.now(), label: label.trim(), emoji: emoji.trim() || "😶" });
+  saveState(); renderEmotionGrid();
+}
+function _deleteEmotion(id) {
+  if (!state.emotions) state.emotions = [...EMOTIONS_DEFAULT];
+  const e = state.emotions.find(x => x.id === id);
+  if (!e || !confirm(`Supprimer l'émotion « ${e.label} » ?`)) return;
+  state.emotions = state.emotions.filter(x => x.id !== id);
+  saveState(); renderEmotionGrid();
+}
+const EMOTIONS_LIST = EMOTIONS_DEFAULT; // alias de compatibilité
 
 /* Retourne le snapshot actif (< 10 min) ou null */
 function _emotionCurrentEntry(log) {
@@ -5410,7 +5426,7 @@ function _epMove() { _epMoved = true; _epCancel(); }
 
 function openEmotionPicker(id, btn) {
   _epId = id;
-  const em = EMOTIONS_LIST.find(e => e.id === id);
+  const em = _getEmotions().find(e => e.id === id);
   if (!em) return;
   const pk = document.getElementById('emotionIntensityPicker');
   document.getElementById('emotionPickerLabel').textContent = em.emoji + ' ' + em.label;
@@ -5464,7 +5480,8 @@ function renderEmotionGrid() {
   const t = getToday();
   const log = t.emotionLog || [];
   const current = _emotionCurrentEntry(log);
-  el.innerHTML = EMOTIONS_LIST.map(e => {
+  const emotions = _getEmotions();
+  el.innerHTML = emotions.map(e => {
     return `<button
       id="ebtn-${e.id}"
       onmousedown="_epStart('${e.id}',this,event)"
@@ -5475,6 +5492,7 @@ function renderEmotionGrid() {
       ontouchend="_epCancel()"
       ontouchmove="_epMove()"
       onclick="toggleEmotion('${e.id}')"
+      oncontextmenu="event.preventDefault();_deleteEmotion('${e.id}')"
       style="
         display:flex;flex-direction:column;align-items:center;gap:3px;
         padding:8px 4px;border-radius:12px;
@@ -5485,7 +5503,13 @@ function renderEmotionGrid() {
       <span style="font-size:22px;">${e.emoji}</span>
       <span style="font-size:10px;color:var(--ink-soft);text-align:center;line-height:1.2;">${e.label}</span>
     </button>`;
-  }).join('');
+  }).join('') + `<button onclick="_addEmotion()" style="
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:8px 4px;border-radius:12px;border:2px dashed var(--line);background:var(--bg-1);
+    cursor:pointer;font-family:inherit;color:var(--ink-softer);transition:all .15s;">
+    <span style="font-size:22px;">＋</span>
+    <span style="font-size:10px;text-align:center;line-height:1.2;">Ajouter</span>
+  </button>`;
 
   // Frise du jour
   const frise = document.getElementById('emotionFrise');
@@ -5496,7 +5520,7 @@ function renderEmotionGrid() {
   frise.innerHTML = allEntries.map((entry, i) => {
     const obj = _eObj(entry.emotions);
     const parts = Object.entries(obj).map(([id, lvl]) => {
-      const em = EMOTIONS_LIST.find(e => e.id === id);
+      const em = _getEmotions().find(e => e.id === id);
       if (!em) return '';
       return `<span style="display:inline-flex;align-items:center;gap:2px;background:var(--bg-2);border-radius:20px;padding:2px 7px;font-size:12px;">
         <span style="letter-spacing:-1px;">${em.emoji.repeat(lvl||1)}</span>
@@ -7814,9 +7838,13 @@ function renderActivities() {
     }).join("");
     return `
       <div class="activity-row">
-        <div class="activity-emoji">${a.emoji || "✨"}</div>
+        <div class="activity-emoji" style="cursor:pointer;" onclick="_editActivity('${a.id}')" title="Modifier">${a.emoji || "✨"}</div>
         <div class="activity-info">
-          <div class="activity-name">${escapeHtml(a.name)}</div>
+          <div class="activity-name" style="display:flex;align-items:center;gap:6px;">
+            ${escapeHtml(a.name)}
+            <span onclick="_editActivity('${a.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Modifier">✏️</span>
+            <span onclick="_deleteActivity('${a.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Supprimer">🗑️</span>
+          </div>
           <div class="activity-meta">${weekTotal} séance${weekTotal !== 1 ? "s" : ""} cette semaine</div>
         </div>
         <div class="activity-day-dots">${dotsHtml}</div>
@@ -7826,6 +7854,52 @@ function renderActivities() {
   renderHormones();
   renderSportPlanning();
   renderActivityRetro();
+}
+function _toggleActivityForm() {
+  const f = document.getElementById("activityForm");
+  const isOpen = f.style.display !== "none";
+  if (isOpen) { _cancelActivityForm(); return; }
+  document.getElementById("actFormEditId").value = "";
+  document.getElementById("actFormEmoji").value = "";
+  document.getElementById("actFormName").value = "";
+  f.style.display = "block";
+  document.getElementById("actFormName").focus();
+}
+function _editActivity(id) {
+  const a = state.activities.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById("actFormEditId").value = id;
+  document.getElementById("actFormEmoji").value = a.emoji || "";
+  document.getElementById("actFormName").value = a.name;
+  document.getElementById("activityForm").style.display = "block";
+  document.getElementById("actFormName").focus();
+}
+function _saveActivityForm() {
+  const name = document.getElementById("actFormName").value.trim();
+  if (!name) { document.getElementById("actFormName").focus(); return; }
+  const emoji = document.getElementById("actFormEmoji").value.trim() || "✨";
+  const editId = document.getElementById("actFormEditId").value;
+  if (editId) {
+    const a = state.activities.find(x => x.id === editId);
+    if (a) { a.name = name; a.emoji = emoji; a.hormones = autoHormones(name); }
+  } else {
+    state.activities.push({ id: "a" + Date.now(), name, emoji, hormones: autoHormones(name) });
+  }
+  _cancelActivityForm();
+  saveState(); renderActivities();
+}
+function _cancelActivityForm() {
+  document.getElementById("activityForm").style.display = "none";
+  document.getElementById("actFormEditId").value = "";
+  document.getElementById("actFormEmoji").value = "";
+  document.getElementById("actFormName").value = "";
+}
+function _deleteActivity(id) {
+  const a = state.activities.find(x => x.id === id);
+  if (!a) return;
+  if (!confirm(`Supprimer l'activité « ${a.name} » ?\nTon historique de séances sera conservé.`)) return;
+  state.activities = state.activities.filter(x => x.id !== id);
+  saveState(); renderActivities();
 }
 function activityWeekTotal(id) {
   return currentWeekDates().reduce((sum, d) => sum + (state.history[todayKey(d)]?.activities?.[id] ? 1 : 0), 0);
@@ -7901,14 +7975,15 @@ function computeHormones() {
     const hasJournal  = (entry.journal || "").trim().length > 0;
     const hasGoodMood = (entry.mood || 0) >= 4;
     const serActs     = state.activities.filter(a => acts[a.id] && (a.hormones || []).includes("serotonine"));
-    const wellEvs     = state.calEvents.filter(e => e.date === dk && wellnessRe.test(e.title || ""));
+    const _evOnDay = (e) => { try { return _eventDays(e).includes(dk); } catch(_) { return e.date === dk; } };
+    const wellEvs     = state.calEvents.filter(e => _evOnDay(e) && wellnessRe.test(e.title || ""));
     const serReasons  = [...(hasJournal?["journal"]:[]), ...(hasGoodMood?[`humeur ${entry.mood}/5`]:[]), ...serActs.map(a=>a.name), ...wellEvs.map(e=>e.title||"soin")];
     const serActive   = serReasons.length > 0;
     res.serotonine.days.push({ dk, label, active: serActive, reasons: serReasons });
     if (serActive) { res.serotonine.score++; serReasons.slice(0,2).forEach(r => res.serotonine.sources.push(r)); }
 
     // — Ocytocine (événements calendrier sociaux + soins bien-être + activités sociales)
-    const socEvs    = state.calEvents.filter(e => e.date === dk && socialRe.test(e.title || ""));
+    const socEvs    = state.calEvents.filter(e => _evOnDay(e) && socialRe.test(e.title || ""));
     const socialActRe = /danse|dance|cours|club|groupe|équipe|equipe|chorale|chant|théâtre|theatre|atelier|collectif|zumba|salsa|bénévol|benevol/i;
     const ocyActs   = state.activities.filter(a => acts[a.id] && (socialActRe.test(a.name) || (a.hormones || []).includes("ocytocine")));
     const ocyReasons = [...socEvs.map(e => e.title || "événement social"), ...wellEvs.map(e => e.title || "soin"), ...ocyActs.map(a => a.name)];
@@ -14560,13 +14635,17 @@ document.getElementById("icsFile")?.addEventListener("change", e => {
 });
 
 /* ========= TEMPS DE TRAVAIL ========= */
-const TIME_CATS = [
+const TIME_CATS_DEFAULT = [
   { key: "postdoc",      label: "Postdoc",      emoji: "📘", color: "#6aaed6", bg: "var(--sky-soft)" },
   { key: "valorisation", label: "Valorisation", emoji: "📝", color: "#e890a4", bg: "var(--pink-soft)" },
   { key: "enseignement", label: "Enseignement", emoji: "📚", color: "#9d82d6", bg: "var(--lavender-soft)" },
   { key: "candidatures", label: "Candidatures", emoji: "📋", color: "#72c4a2", bg: "#e6f7f1" },
-  { key: "autre",        label: "Autre",        emoji: "🔧", color: "#f5c842", bg: "#fdf6d8" },
 ];
+function getTimeCats() {
+  return (state.work && state.work.timeCats && state.work.timeCats.length) ? state.work.timeCats : TIME_CATS_DEFAULT;
+}
+// alias backward-compat
+Object.defineProperty(window, 'TIME_CATS', { get: getTimeCats, configurable: true });
 let timeBarChart, timeDonutChart, timeDonutAllChart;
 let _timeDonutOffset = 0; // 0 = 30 derniers jours, -1 = période précédente, etc.
 let _timeBarOffset = 0; // 0 = 14 derniers jours, -1 = période précédente (j-28 à j-15), etc.
@@ -14583,8 +14662,8 @@ function saveTimeWork() {
   const dateKey = getTimeDateKey();
   const day = ensureHistoryEntry(dateKey);
   if (!day.workTime) day.workTime = {};
-  for (const c of TIME_CATS) {
-    const el = document.getElementById("time" + c.label.charAt(0).toUpperCase() + c.label.slice(1));
+  for (const c of getTimeCats()) {
+    const el = document.getElementById("timeCat-" + c.key) || document.getElementById("time" + c.label.charAt(0).toUpperCase() + c.label.slice(1));
     const v = Number(el?.value) || 0;
     if (v > 0) day.workTime[c.key] = v;
     else delete day.workTime[c.key];
@@ -14612,15 +14691,47 @@ function saveTimeNote() {
   else delete day.workTime.autreNote;
   saveState();
 }
+function renderTimeCatsGrid() {
+  const grid = document.getElementById("timeCatsGrid");
+  if (!grid) return;
+  const cats = getTimeCats();
+  const wt = getWorkTime(getTimeDateKey());
+  grid.innerHTML = cats.map(c => `
+    <div style="display:flex;align-items:center;gap:6px;background:${c.bg};padding:7px 10px;border-radius:10px;position:relative;">
+      <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">${c.emoji} ${c.label.length > 8 ? c.label.slice(0,7)+'…' : c.label}</span>
+      <input type="number" id="timeCat-${c.key}" step="0.25" min="0" placeholder="0" value="${wt[c.key] || ''}"
+        style="width:52px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:${c.color};background:white;text-align:center;"
+        onchange="saveTimeWork()" />
+      <span style="font-size:12px;color:var(--ink-soft);">h</span>
+      <span onclick="_deleteTimeCat('${c.key}')" style="position:absolute;top:2px;right:4px;font-size:9px;color:var(--ink-softer);cursor:pointer;opacity:0.5;" title="Supprimer cette catégorie">✕</span>
+    </div>`).join("");
+}
 function fillTimeForm(dateKey) {
   const wt = getWorkTime(dateKey);
-  document.getElementById("timePostdoc").value = wt.postdoc || "";
-  document.getElementById("timeValorisation").value = wt.valorisation || "";
-  document.getElementById("timeEnseignement").value = wt.enseignement || "";
-  document.getElementById("timeCandidatures").value = wt.candidatures || "";
+  renderTimeCatsGrid();
   document.getElementById("timeAutre").value = wt.autre || "";
   const noteEl = document.getElementById("timeAutreNote");
   if (noteEl) noteEl.value = wt.autreNote || "";
+}
+function _addTimeCat() {
+  const emoji = (prompt("Emoji de la catégorie :", "📌") || "📌").trim();
+  if (emoji === null) return;
+  const label = prompt("Nom de la catégorie :", "");
+  if (!label || !label.trim()) return;
+  const key = "tc_" + label.trim().toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 20) + "_" + Date.now();
+  const colors = ["#7bc4e2","#e890a4","#9d82d6","#72c4a2","#f5c842","#f0a070","#a0d8a0"];
+  const bgs = ["var(--sky-soft)","var(--pink-soft)","var(--lavender-soft)","#e6f7f1","#fdf6d8","#fff0e8","#e8f4e8"];
+  const idx = getTimeCats().length % colors.length;
+  if (!state.work.timeCats || !state.work.timeCats.length) state.work.timeCats = [...TIME_CATS_DEFAULT];
+  state.work.timeCats.push({ key, label: label.trim(), emoji, color: colors[idx], bg: bgs[idx] });
+  saveState(); renderTimeView();
+}
+function _deleteTimeCat(key) {
+  const cat = getTimeCats().find(c => c.key === key);
+  if (!cat || !confirm(`Supprimer la catégorie « ${cat.label} » ?`)) return;
+  if (!state.work.timeCats || !state.work.timeCats.length) state.work.timeCats = [...TIME_CATS_DEFAULT];
+  state.work.timeCats = state.work.timeCats.filter(c => c.key !== key);
+  saveState(); renderTimeView();
 }
 function resetTimeDateToToday() {
   const i = document.getElementById("timeWorkDate");
@@ -18383,7 +18494,7 @@ function renderRecurringItems() {
     if (!counts[key]) counts[key] = { name: g.name, count: 0 };
     counts[key].count++;
   }
-  const recurring = Object.values(counts).filter(c => c.count >= 3).sort((a, b) => b.count - a.count);
+  const recurring = Object.values(counts).filter(c => c.count >= 2).sort((a, b) => b.count - a.count);
   if (!recurring.length) {
     target.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;padding:10px 0;">Pas encore assez d'historique pour détecter des récurrences. Continue à utiliser tes événements de courses, je détecterai les habitudes au bout de 3 achats du même article.</p>`;
     return;
@@ -19825,6 +19936,25 @@ function toggleShortcut(id, on) {
   renderShortcutsBar();
 }
 
+const WORK_TAB_DEFAULTS = { postdoc: "Postdoc", candidatures: "Candidatures", valorisation: "Valorisation", teaching: "Enseignement" };
+function _initWorkTabLabels() {
+  const names = state.work.subTabNames || {};
+  for (const [key, def] of Object.entries(WORK_TAB_DEFAULTS)) {
+    const el = document.getElementById("workTabLabel-" + key);
+    if (el) el.textContent = names[key] || def;
+  }
+}
+function renameWorkTab(key, btn) {
+  const current = (state.work.subTabNames || {})[key] || WORK_TAB_DEFAULTS[key] || key;
+  const newName = prompt("Renommer cet onglet :", current);
+  if (newName === null) return;
+  if (!state.work.subTabNames) state.work.subTabNames = {};
+  if (newName.trim()) state.work.subTabNames[key] = newName.trim();
+  else delete state.work.subTabNames[key];
+  saveState();
+  _initWorkTabLabels();
+}
+
 function renderAll() {
   renderHeader();
   renderTodayView();
@@ -19850,6 +19980,7 @@ function renderAll() {
   try { renderBiblioRefs(); } catch(e) { console.warn("[refs]",e); }
   // Barre de raccourcis (sinon jamais redessinée au démarrage sans cloud)
   renderShortcutsBar();
+  _initWorkTabLabels();
 }
 
 try {
