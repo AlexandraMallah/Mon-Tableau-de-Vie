@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v883</title>
+<title>Mon Tableau de Vie 🌿 · v884</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -3133,15 +3133,16 @@
   <!-- VIEW: DOMESTIC -->
   <section class="view" data-view="domestic">
     <div class="sub-tabs">
-      <button class="sub-tab active" data-sub="todo">📋 To-do du jour</button>
-      <button class="sub-tab" data-sub="domtasks">🗒️ Tâches</button>
+      <button class="sub-tab active" data-sub="notes">📝 Notes & To-do</button>
       <button class="sub-tab" data-sub="alimentation">🥗 Alimentation</button>
       <button class="sub-tab" data-sub="plants">🌱 Plantes</button>
     </div>
 
-    <!-- Sub: To-do du jour -->
-    <div class="sub-view active" data-sub="todo">
-      <div class="card">
+    <!-- Sub: Notes, listes & To-do (consolidé) -->
+    <div class="sub-view active" data-sub="notes">
+
+      <!-- To-do du jour -->
+      <div class="card" style="margin-bottom:14px;">
         <div class="work-header" style="margin-bottom:16px;">
           <h2 style="margin:0;">📋 To-do du jour <span class="count" id="todoCount"></span></h2>
           <span id="todoDoneLabel" style="font-size:13px;color:var(--ink-soft);"></span>
@@ -3155,26 +3156,35 @@
       </div>
 
       <!-- Mes listes -->
-      <div class="card" style="margin-top:14px;">
+      <div class="card" style="margin-bottom:14px;">
         <div class="work-header" style="margin-bottom:14px;">
           <h2 style="margin:0;">🗂️ Mes listes</h2>
           <button class="btn-primary" onclick="openNewListModal()">+ Nouvelle liste</button>
         </div>
         <div id="checklistsContainer"></div>
       </div>
-    </div>
 
-    <!-- Sub: Tâches domestiques -->
-    <div class="sub-view" data-sub="domtasks">
-      <div class="card">
-        <div class="work-header">
-          <h2 style="margin:0;">🗒️ Mes tâches <span class="count" id="domTaskCount"></span></h2>
-          <button class="btn-soft" id="domTaskShowDone" onclick="toggleDomTaskShowDone()" style="font-size:12px;">Voir terminées</button>
+      <!-- Notes libres -->
+      <div class="card" style="margin-bottom:14px;">
+        <div class="work-header" style="margin-bottom:14px;">
+          <h2 style="margin:0;">📓 Mes notes</h2>
+          <button class="btn-primary" onclick="_openFreeNoteModal(null)">+ Note</button>
         </div>
-        <p style="color:var(--ink-soft);font-size:13px;margin:-4px 0 14px;">🚨 urgent · 🔴 haute · 🟠 moyenne · ⚪ faible</p>
+        <div id="freeNotesList"></div>
+      </div>
 
-        <!-- Formulaire ajout -->
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#faf8fd;padding:12px;border-radius:14px;margin-bottom:16px;">
+      <!-- Tâches domestiques -->
+      <div class="card">
+        <div class="work-header" style="margin-bottom:10px;">
+          <h2 style="margin:0;">🗒️ Tâches <span class="count" id="domTaskCount"></span></h2>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-soft" id="domTaskShowDone" onclick="toggleDomTaskShowDone()" style="font-size:12px;">Voir terminées</button>
+            <button class="btn-primary" onclick="document.getElementById('domTaskFormRow').style.display=document.getElementById('domTaskFormRow').style.display==='none'?'flex':'none'">+ Tâche</button>
+          </div>
+        </div>
+        <p style="color:var(--ink-soft);font-size:13px;margin:-4px 0 10px;">🚨 urgent · 🔴 haute · 🟠 moyenne · ⚪ faible</p>
+        <!-- Formulaire ajout (masqué par défaut) -->
+        <div id="domTaskFormRow" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;background:#faf8fd;padding:12px;border-radius:14px;margin-bottom:14px;">
           <input type="text" id="newDomTaskName" placeholder="Nouvelle tâche…"
             style="flex:1;min-width:160px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);"
             onkeydown="if(event.key==='Enter')addDomesticTask()" />
@@ -3198,9 +3208,7 @@
             style="padding:9px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" />
           <button class="btn-primary" onclick="addDomesticTask()">Ajouter</button>
         </div>
-
-        <!-- Liste -->
-        <div id="domTaskList" style="max-height:520px;overflow-y:auto;padding-right:2px;"></div>
+        <div id="domTaskList" style="max-height:400px;overflow-y:auto;padding-right:2px;"></div>
       </div>
     </div>
 
@@ -4963,6 +4971,7 @@ function migrate(s) {
   s.domestique.chores = s.domestique.chores || [];
   s.domestique.plants = s.domestique.plants || [];
   s.domestique.tasks    = s.domestique.tasks    || [];
+  s.domestique.freeNotes = s.domestique.freeNotes || [];
   s.domestique.recipes           = s.domestique.recipes           || [];
   s.domestique.foodKcal          = s.domestique.foodKcal          || [];
   s.domestique.recipeCategories  = s.domestique.recipeCategories  || [];
@@ -15844,7 +15853,58 @@ function deleteTodoItem(id) {
   _renderAllTodo();
 }
 
-function renderDomestique() { renderTodo(); renderChecklists(); renderDomesticTasks(); renderMealPlan(); renderGroceries(); renderPlants(); renderRecipes(); renderFoodKcal(); }
+function renderDomestique() { renderTodo(); renderChecklists(); renderDomesticTasks(); renderFreeNotes(); renderMealPlan(); renderGroceries(); renderPlants(); renderRecipes(); renderFoodKcal(); }
+
+/* ========= NOTES LIBRES ========= */
+function renderFreeNotes() {
+  const el = document.getElementById("freeNotesList");
+  if (!el) return;
+  const notes = state.domestique?.freeNotes || [];
+  if (!notes.length) { el.innerHTML = `<p style="color:var(--ink-softer);font-size:13px;text-align:center;padding:14px;">Aucune note. Clique sur "+ Note" pour commencer.</p>`; return; }
+  const inEdit = document.body.classList.contains('edit-mode');
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;">` +
+    notes.map(n => {
+      const preview = (n.content || "").slice(0, 100).replace(/\n/g, " ");
+      const date = n.createdAt ? new Date(n.createdAt).toLocaleDateString("fr-FR", {day:"numeric",month:"short"}) : "";
+      return `<div onclick="_openFreeNoteModal('${n.id}')" style="background:var(--bg-1);border:1.5px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:box-shadow 0.15s;position:relative;" onmouseover="this.style.boxShadow='0 4px 16px rgba(120,100,160,0.12)'" onmouseout="this.style.boxShadow='none'">
+        ${inEdit ? `<button onclick="event.stopPropagation();_deleteFreeNote('${n.id}')" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:13px;cursor:pointer;color:var(--ink-softer);" title="Supprimer">🗑️</button>` : ""}
+        <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px;padding-right:${inEdit?'24px':'0'};">${escapeHtml(n.title || "Sans titre")}</div>
+        <div style="font-size:12px;color:var(--ink-soft);line-height:1.5;">${escapeHtml(preview)}${(n.content||"").length>100?"…":""}</div>
+        ${date?`<div style="font-size:10px;color:var(--ink-softer);margin-top:8px;">${date}</div>`:""}
+      </div>`;
+    }).join("") + `</div>`;
+}
+function _openFreeNoteModal(id) {
+  const n = id ? (state.domestique?.freeNotes||[]).find(x=>x.id===id) : null;
+  document.getElementById("freeNoteModalTitle").textContent = n ? "✏️ Modifier la note" : "📓 Nouvelle note";
+  document.getElementById("freeNoteEditId").value = id || "";
+  document.getElementById("freeNoteTitle").value = n?.title || "";
+  document.getElementById("freeNoteContent").value = n?.content || "";
+  document.getElementById("freeNoteModal").style.display = "flex";
+  setTimeout(() => document.getElementById(n?"freeNoteContent":"freeNoteTitle").focus(), 60);
+}
+function _closeFreeNoteModal() { document.getElementById("freeNoteModal").style.display = "none"; }
+function _saveFreeNote() {
+  const title   = document.getElementById("freeNoteTitle").value.trim();
+  const content = document.getElementById("freeNoteContent").value;
+  const id      = document.getElementById("freeNoteEditId").value;
+  if (!title && !content.trim()) return;
+  if (!state.domestique.freeNotes) state.domestique.freeNotes = [];
+  if (id) {
+    const n = state.domestique.freeNotes.find(x=>x.id===id);
+    if (n) { n.title = title; n.content = content; n.updatedAt = Date.now(); }
+  } else {
+    state.domestique.freeNotes.push({ id: "fn"+Date.now(), title, content, createdAt: Date.now() });
+  }
+  saveState(); _closeFreeNoteModal(); renderFreeNotes();
+}
+function _deleteFreeNote(id) {
+  const n = (state.domestique?.freeNotes||[]).find(x=>x.id===id);
+  _showConfirm(`Supprimer la note « ${n?.title||"Sans titre"} » ?`, () => {
+    state.domestique.freeNotes = state.domestique.freeNotes.filter(x=>x.id!==id);
+    saveState(); renderFreeNotes();
+  });
+}
 
 /* ========= LISTES / CHECKLISTS ========= */
 function _clAllItems(lst) {
@@ -21520,6 +21580,25 @@ function _micPulse(on) {
 </div>
 
 <!-- Modal config hormone → activités -->
+<!-- Modal note libre -->
+<div id="freeNoteModal" onclick="event.target===this&&_closeFreeNoteModal()" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--card);border-radius:22px;padding:28px 24px;max-width:520px;width:94%;box-shadow:0 12px 48px rgba(60,50,80,.22);" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <h3 id="freeNoteModalTitle" style="margin:0;font-size:18px;">📓 Nouvelle note</h3>
+      <button onclick="_closeFreeNoteModal()" style="margin-left:auto;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-softer);">✕</button>
+    </div>
+    <input type="text" id="freeNoteTitle" placeholder="Titre de la note…" maxlength="80"
+      style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:15px;font-weight:600;color:var(--ink);background:var(--bg-1);box-sizing:border-box;margin-bottom:10px;" />
+    <textarea id="freeNoteContent" placeholder="Écris ta note ici…" rows="8"
+      style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;resize:vertical;line-height:1.6;"></textarea>
+    <input type="hidden" id="freeNoteEditId" />
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+      <button onclick="_closeFreeNoteModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button onclick="_saveFreeNote()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <div id="hormoneConfigModal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)_closeHormoneConfig()">
   <div style="background:var(--card);border-radius:22px;padding:28px 24px;max-width:420px;width:92%;box-shadow:0 12px 48px rgba(60,50,80,.22);" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
