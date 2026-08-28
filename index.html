@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v910</title>
+<title>Mon Tableau de Vie 🌿 · v912</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -3420,17 +3420,8 @@
           <input type="file" id="icsFilePlants" accept=".ics" style="display:none;" onchange="detectPlantsFromICS(event)" />
         </div>
         <p style="color:var(--ink-soft);font-size:13px;margin:-8px 0 12px;">🟢 récemment arrosée · 🟠 bientôt · 🔴 a soif ! · Importe ton Google Agenda (.ics) pour détecter tes plantes automatiquement.</p>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;background:#faf8fd;padding:12px;border-radius:14px;align-items:center;">
-          <input type="text" id="newPlantEmoji" placeholder="🪴" style="width:52px;flex-shrink:0;padding:10px 8px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:16px;color:var(--ink);background:white;text-align:center;" />
-          <input type="text" id="newPlantName" placeholder="Nom de la plante" style="flex:1;min-width:120px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;" />
-          <select id="newPlantFreq" style="flex-shrink:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;">
-            <option value="2">Tous les 2 j</option>
-            <option value="3">Tous les 3 j</option>
-            <option value="7" selected>Hebdo</option>
-            <option value="14">Bimensuel</option>
-            <option value="30">Mensuel</option>
-          </select>
-          <button class="btn-primary" onclick="addPlant()" style="flex-shrink:0;">Ajouter</button>
+        <div style="margin-bottom:14px;">
+          <button class="btn-primary" onclick="openPlantForm()" style="font-size:13px;">➕ Nouvelle plante</button>
         </div>
         <div id="plantsWeekBar"></div>
         <div id="plantsList"></div>
@@ -3833,7 +3824,71 @@
     <div id="plantDetailNotes" style="background:#faf8fd;border-radius:12px;padding:14px 16px;font-size:14px;color:var(--ink);line-height:1.7;white-space:pre-wrap;min-height:60px;"></div>
     <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
       <button class="btn-primary" onclick="waterPlantFromDetail()" id="plantDetailWaterBtn">💧 Arroser maintenant</button>
+      <button onclick="editPlantFromDetail()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--lavender);background:white;color:var(--lavender);font-family:inherit;font-size:14px;cursor:pointer;">✏️ Modifier</button>
+      <button onclick="deletePlantFromDetail()" style="padding:9px 18px;border-radius:10px;border:1px solid #fca5a5;background:white;color:#dc2626;font-family:inherit;font-size:14px;cursor:pointer;">🗑️ Supprimer</button>
       <button class="secondary" onclick="closePlantDetail()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;font-family:inherit;font-size:14px;cursor:pointer;">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ajout / édition plante -->
+<div class="modal-bg" id="plantFormModal" onclick="if(event.target===this)closePlantForm()">
+  <div class="modal" style="max-width:480px;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+    <h2 id="plantFormTitle" style="margin:0 0 18px;">🌱 Nouvelle plante</h2>
+    <!-- Sélecteur emoji -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;font-weight:600;">Emoji</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;" id="plantEmojiPicker">
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌿')" title="🌿">🌿</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🪴')" title="🪴">🪴</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌵')" title="🌵">🌵</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌺')" title="🌺">🌺</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌸')" title="🌸">🌸</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌻')" title="🌻">🌻</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌹')" title="🌹">🌹</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌷')" title="🌷">🌷</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🪻')" title="🪻">🪻</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌾')" title="🌾">🌾</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🍀')" title="🍀">🍀</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌱')" title="🌱">🌱</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🍃')" title="🍃">🍃</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🎋')" title="🎋">🎋</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌴')" title="🌴">🌴</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌳')" title="🌳">🌳</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🍄')" title="🍄">🍄</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🪨')" title="🪨">🪨</span>
+        <input type="text" id="plantFormEmojiCustom" placeholder="autre…" maxlength="4" style="width:56px;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-size:18px;text-align:center;font-family:inherit;" oninput="selectPlantEmoji(this.value)" />
+      </div>
+      <div style="font-size:20px;text-align:center;padding:6px;background:#faf8fd;border-radius:8px;">Sélectionné : <span id="plantFormEmojiPreview">🪴</span></div>
+      <input type="hidden" id="plantFormEmoji" value="🪴" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label style="font-size:12px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px;">Nom de la plante *</label>
+        <input type="text" id="plantFormName" placeholder="ex : Monstera, Basilic, Cactus…" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;" />
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px;">Fréquence d'arrosage</label>
+        <select id="plantFormFreq" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;">
+          <option value="1">Tous les jours</option>
+          <option value="2">Tous les 2 jours</option>
+          <option value="3">Tous les 3 jours</option>
+          <option value="5">Tous les 5 jours</option>
+          <option value="7" selected>Chaque semaine</option>
+          <option value="10">Tous les 10 jours</option>
+          <option value="14">Toutes les 2 semaines</option>
+          <option value="21">Toutes les 3 semaines</option>
+          <option value="30">1 fois par mois</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px;">Notes d'arrosage <span style="font-weight:400;font-style:italic;">(méthode, quantité, conseils…)</span></label>
+        <textarea id="plantFormNotes" placeholder="ex : Arroser par le bas, laisser tremper 10 min. Éviter de mouiller les feuilles. Quantité : 200 ml." rows="4" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;resize:vertical;line-height:1.6;"></textarea>
+      </div>
+    </div>
+    <div style="margin-top:18px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+      <button onclick="closePlantForm()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;font-family:inherit;font-size:14px;cursor:pointer;">Annuler</button>
+      <button class="btn-primary" onclick="savePlantForm()">💾 Enregistrer</button>
     </div>
   </div>
 </div>
@@ -14452,7 +14507,7 @@ const PILLAR_DEFS = [
     metrics: [
       { type: "cal-keywords-count", keywords: ["ami", "amie", "amis", "copain", "copine", "copines", "pote", "soirée", "apéro", "déjeuner", "dejeuner", "dîner", "diner", "brunch", "repas", "goûter", "gouter", "lunch"], target: 2, label: "Moments avec des amis (obj. 2/sem)" },
       { type: "cal-keywords-count", keywords: ["famille", "maman", "papa", "parents", "frère", "sœur", "soeur", "frangine", "frangin", "mamie", "papi", "vacances", "week-end famille", "retrouvailles"], target: 1, label: "Moments en famille (obj. 1/sem)" },
-      { type: "activity-sessions", regex: "lecture|podcast|film|ciné|série|musique|guitare|piano|dessin|peinture|créat|art|photo|jeu|danse|concert|expo|musée|balade|promenade|jardinage|cuisine|bak|pâtiss|sortie", target: 3, label: "Activités plaisir (obj. 3/sem)" },
+      { type: "activity-sessions", regex: "lecture|podcast|film|ciné|série|musique|guitare|piano|dessin|peinture|créat|art|photo|jeu|danse|concert|expo|musée|balade|promenade|jardinage|cuisine|bak|pâtiss|sortie", target: 3, label: "Activités plaisir (obj. 3/sem)", description: "ex : lecture, film, musique, dessin, jardinage, balade, cuisine, expo, concert…" },
       { type: "cal-keywords-count", keywords: ["concert", "expo", "musée", "théâtr", "ciném", "spectacle", "festival", "vernissage"], target: 1, label: "Sortie culturelle (obj. 1/sem)" },
     ]
   },
@@ -14797,7 +14852,7 @@ function openPillarConfig(pillarId) {
     return `<div style="padding:10px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:600;color:var(--ink);">${escapeHtml(m.label)}</div>
-        <div style="font-size:11px;color:var(--ink-softer);margin-top:2px;">${unit}</div>
+        <div style="font-size:11px;color:var(--ink-softer);margin-top:2px;">${unit}${m.description ? ' · <em>' + escapeHtml(m.description) + '</em>' : ''}</div>
       </div>
       <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;">
         <input type="checkbox" id="pco_en_${i}" ${enabled ? "checked" : ""} style="cursor:pointer;" /> Actif
@@ -20200,17 +20255,64 @@ function waterPlantFromDetail() {
   waterPlant(_plantDetailId);
   closePlantDetail();
 }
-
-function addPlant() {
-  const name = document.getElementById("newPlantName").value.trim();
-  const emoji = document.getElementById("newPlantEmoji").value.trim() || "🪴";
-  const freq = Number(document.getElementById("newPlantFreq").value) || 7;
-  if (!name) return;
-  state.domestique.plants.push({ id: "pl" + Date.now(), name, emoji, wateringDays: freq, lastWatered: null });
-  document.getElementById("newPlantName").value = "";
-  document.getElementById("newPlantEmoji").value = "";
-  saveState(); renderPlants();
+function editPlantFromDetail() {
+  if (!_plantDetailId) return;
+  closePlantDetail();
+  openPlantForm(_plantDetailId);
 }
+function deletePlantFromDetail() {
+  if (!_plantDetailId) return;
+  const id = _plantDetailId;
+  closePlantDetail();
+  deletePlant(id);
+}
+
+let _plantFormEditId = null;
+function openPlantForm(editId) {
+  _plantFormEditId = editId || null;
+  const p = editId ? (state.domestique.plants||[]).find(x => x.id === editId) : null;
+  document.getElementById("plantFormTitle").textContent = p ? "✏️ Modifier la plante" : "🌱 Nouvelle plante";
+  const emoji = p?.emoji || "🪴";
+  document.getElementById("plantFormEmoji").value = emoji;
+  document.getElementById("plantFormEmojiPreview").textContent = emoji;
+  document.getElementById("plantFormEmojiCustom").value = "";
+  document.getElementById("plantFormName").value = p?.name || "";
+  document.getElementById("plantFormFreq").value = String(p?.wateringDays || 7);
+  document.getElementById("plantFormNotes").value = p?.notes || "";
+  _highlightPlantEmoji(emoji);
+  document.getElementById("plantFormModal").classList.add("open");
+}
+function closePlantForm() {
+  document.getElementById("plantFormModal").classList.remove("open");
+  _plantFormEditId = null;
+}
+function selectPlantEmoji(e) {
+  if (!e) return;
+  document.getElementById("plantFormEmoji").value = e;
+  document.getElementById("plantFormEmojiPreview").textContent = e;
+  _highlightPlantEmoji(e);
+}
+function _highlightPlantEmoji(sel) {
+  document.querySelectorAll("#plantEmojiPicker span").forEach(s => {
+    s.style.border = s.title === sel ? "2px solid var(--lavender)" : "2px solid transparent";
+    s.style.background = s.title === sel ? "#f3ecff" : "";
+  });
+}
+function savePlantForm() {
+  const name = document.getElementById("plantFormName").value.trim();
+  if (!name) { document.getElementById("plantFormName").focus(); return; }
+  const emoji = document.getElementById("plantFormEmoji").value || "🪴";
+  const freq = Number(document.getElementById("plantFormFreq").value) || 7;
+  const notes = document.getElementById("plantFormNotes").value.trim();
+  if (_plantFormEditId) {
+    const p = state.domestique.plants.find(x => x.id === _plantFormEditId);
+    if (p) { p.name = name; p.emoji = emoji; p.wateringDays = freq; p.notes = notes; }
+  } else {
+    state.domestique.plants.push({ id: "pl" + Date.now(), name, emoji, wateringDays: freq, notes, lastWatered: null });
+  }
+  saveState(); renderPlants(); closePlantForm();
+}
+function addPlant() { openPlantForm(); }
 function waterPlant(id) {
   const p = state.domestique.plants.find(x => x.id === id);
   if (p) { p.lastWatered = todayKey(); saveState(); renderPlants(); renderCalendar(); }
