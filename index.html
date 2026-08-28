@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v926</title>
+<title>Mon Tableau de Vie 🌿 · v927</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20875,12 +20875,12 @@ function switchSettingsTab(tab) {
     }
   });
 }
-function applyTheme(id) {
+function applyTheme(id, persist = true) {
   document.body.classList.remove("t-serieux","t-minimal");
   if (id === "serieux") document.body.classList.add("t-serieux");
   else if (id === "minimal") document.body.classList.add("t-minimal");
   state.uiTheme = id;
-  saveState();
+  if (persist) saveState();
   // Mettre à jour les boutons header
   ["smooth","serieux","minimal"].forEach(t => {
     const key = t.charAt(0).toUpperCase() + t.slice(1);
@@ -22149,8 +22149,8 @@ try {
   populateTxCategories();
   setTxType('expense');
   renderAll();
-  // Synchroniser les boutons thème dans le header
-  if (window._pendingTheme) applyTheme(window._pendingTheme);
+  // Synchroniser les boutons thème dans le header (sans sauvegarder — déjà en state)
+  if (window._pendingTheme) applyTheme(window._pendingTheme, false);
   checkSeedBanner();
   // Météo au démarrage (onglet Aujourd'hui actif par défaut)
   setTimeout(fetchWeather, 800);
