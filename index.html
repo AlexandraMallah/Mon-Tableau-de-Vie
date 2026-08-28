@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v932</title>
+<title>Mon Tableau de Vie 🌿 · v933</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5304,6 +5304,17 @@ function migrate(s) {
   s.customHolidays = s.customHolidays || [];
   s.calEvents = s.calEvents || [];
   s.calSources = s.calSources || [];
+  // Migration : anciens utilisateurs sans customSymptoms → on leur remet les anciens défauts
+  if (!s.customSymptoms || !s.customSymptoms.length) {
+    const isExistingUser = s.history && Object.keys(s.history).length > 0;
+    if (isExistingUser && !s._symptomsMigrated) {
+      s.customSymptoms = [
+        { id: "belly", name: "Mal de ventre", emoji: "🤰", subtitle: "estomac / intestins", type: "scale" },
+        { id: "endo",  name: "Endométriose",  emoji: "🩸", subtitle: "utérus", type: "scale" },
+      ];
+      s._symptomsMigrated = true;
+    }
+  }
   // Migration : comptes externes nommés (Hors compte)
   if (!Array.isArray(s.externalAccounts)) s.externalAccounts = [{ id: "ext-default", name: "Hors compte", emoji: "🧾" }];
   // Migration : transactions external sans externalAccountId → compte par défaut
