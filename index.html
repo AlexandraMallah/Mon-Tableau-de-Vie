@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v939</title>
+<title>Mon Tableau de Vie 🌿 · v941</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5341,8 +5341,11 @@ function migrate(s) {
   s.domestique.foodKcal          = s.domestique.foodKcal          || [];
   s.domestique.recipeCategories  = s.domestique.recipeCategories  || [];
   // Seed unique : 4 recettes ajoutées (juin 2026) — Apéritif + Dessert
+  // Uniquement pour les utilisateurs existants (avec historique) — nouveaux comptes démarrent sans recettes
   if (!s.domestique._seededAperoDessert) {
     s.domestique._seededAperoDessert = true;
+    const _isExistingUser = s.history && Object.keys(s.history).length > 0;
+    if (_isExistingUser) {
     const _ensureCat = label => {
       const existing = s.domestique.recipeCategories.find(c => (c || "").toLowerCase() === label.toLowerCase());
       if (existing) return existing;
@@ -5426,6 +5429,7 @@ function migrate(s) {
         s.domestique.recipes.unshift(r);
       }
     });
+    } // fin if (_isExistingUser)
   }
   s.domestique.mealPlan = s.domestique.mealPlan || {};
   s.domestique.mealEvents = s.domestique.mealEvents || [];
@@ -15803,14 +15807,22 @@ function renderCalLegend() {
   const el = document.getElementById("calLegend");
   if (!el) return;
   const dot = (color) => `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};margin-right:4px;vertical-align:middle;"></span>`;
-  el.innerHTML = `
-    <span>${dot("var(--red)")}Tâches</span>
-    <span>${dot("#0369a1")}📅 Événements</span>
-    <span>${dot("var(--lavender)")}Candidatures</span>
-    <span>${dot("var(--pink)")}Articles</span>
-    <span>${dot("var(--peach)")}Communications</span>
-    <span>${dot("var(--butter)")}Abonnements</span>
-    <span>${dot("#4d9c7e")}🌱 Plantes</span>`;
+  const tags = [];
+  const hasTasks = (state.tasks || []).some(t => t.deadline && !t.done);
+  const hasEvents = (state.calEvents || []).length > 0;
+  const hasCand = (state.work?.candidatures || []).length > 0;
+  const hasArticles = (state.work?.publications || []).length > 0;
+  const hasComms = (state.work?.communications || []).length > 0;
+  const hasSubs = (state.transactions || []).some(t => t.type === "expense" && t.fixedCharge);
+  const hasPlants = (state.domestique?.plants || []).length > 0;
+  if (hasTasks)   tags.push(`<span>${dot("var(--red)")}Tâches</span>`);
+  if (hasEvents)  tags.push(`<span>${dot("#0369a1")}📅 Événements</span>`);
+  if (hasCand)    tags.push(`<span>${dot("var(--lavender)")}Candidatures</span>`);
+  if (hasArticles) tags.push(`<span>${dot("var(--pink)")}Articles</span>`);
+  if (hasComms)   tags.push(`<span>${dot("var(--peach)")}Communications</span>`);
+  if (hasSubs)    tags.push(`<span>${dot("var(--butter)")}Abonnements</span>`);
+  if (hasPlants)  tags.push(`<span>${dot("#4d9c7e")}🌱 Plantes</span>`);
+  el.innerHTML = tags.join("");
 }
 function renderCalSourcesPanel() {
   const el = document.getElementById("calSourcesPanel");
