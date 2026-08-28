@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v929</title>
+<title>Mon Tableau de Vie 🌿 · v930</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4214,6 +4214,7 @@
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Eau',{type:'numeric',target:2,unit:'L'})">💧 Eau</button>
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Pas',{type:'numeric',target:8000,unit:'pas'})">🚶 Pas</button>
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Lecture',{type:'numeric',target:30,unit:'min'})">📚 Lecture</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Calories dépensées',{type:'numeric',target:1500,unit:'kcal'})">🔥 Calories</button>
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Fruits & légumes',{type:'numeric',target:5,unit:'portions'})">🥗 Fruits &amp; légumes</button>
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Protéines',{type:'numeric',target:80,unit:'g'})">🥩 Protéines</button>
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Caféine',{type:'numeric',target:2,unit:'tasses'})">☕ Caféine max</button>
@@ -5202,7 +5203,9 @@ const TYPE_COLORS = ["#c9b6f0", "#f7c9a3", "#b4d4f1", "#aee0c8", "#efb8c8", "#f5
 
 const DEFAULT_STATE = {
   name: "",
-  habits: [],
+  habits: [
+    { id: "h-pas", name: "9000 pas", type: "numeric", target: 9000, unit: "pas" },
+  ],
   activities: [],
   categories: ["Alimentation", "Logement", "Transport", "Loisirs", "Santé", "Autre"],
   incomeCategories: ["Salaire", "Prime", "Remboursement", "Autre revenu"],
