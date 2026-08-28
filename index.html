@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v879</title>
+<title>Mon Tableau de Vie 🌿 · v881</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2635,7 +2635,7 @@
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
           <h2 style="margin:0;">Activités</h2>
-          <button onclick="_toggleActivityForm()" style="padding:6px 14px;border-radius:999px;border:none;background:var(--mint-soft);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Nouvelle</button>
+          <button onclick="_openActivityModal(null)" style="padding:6px 14px;border-radius:999px;border:none;background:var(--mint-soft);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Nouvelle</button>
         </div>
         <p style="color:var(--ink-soft);font-size:12px;margin:0 0 10px;">Clique sur un jour de la semaine pour marquer une séance ✓</p>
         <!-- Formulaire ajout/édition inline -->
@@ -3956,6 +3956,42 @@
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button onclick="_closeHabitModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
       <button onclick="_saveHabitModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal nouvelle/édition activité -->
+<div class="modal-bg" id="activityModal" onclick="event.target===this&&_closeActivityModal()">
+  <div class="modal" style="max-width:500px;padding:28px 24px;" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <h3 id="actModalTitle" style="margin:0;font-size:18px;">✨ Nouvelle activité</h3>
+      <button onclick="_closeActivityModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
+    </div>
+    <!-- Emoji preview + nom -->
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
+      <div id="actModalEmojiPreview" style="font-size:36px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border:2px solid var(--mint);border-radius:14px;background:var(--mint-soft);flex-shrink:0;cursor:default;">🏃</div>
+      <input type="text" id="actModalName" placeholder="Nom de l'activité…" maxlength="40"
+        onkeydown="if(event.key==='Enter')_saveActivityModal()"
+        style="flex:1;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);" />
+    </div>
+    <!-- Grille emoji -->
+    <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:8px;">EMOJI</div>
+    <div id="actEmojiGrid" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;max-height:160px;overflow-y:auto;"></div>
+    <!-- Objectif -->
+    <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:8px;">OBJECTIF (optionnel)</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+      <input type="number" id="actModalGoalCount" min="1" max="31" placeholder="—"
+        style="width:72px;padding:9px 10px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:15px;font-weight:600;text-align:center;color:var(--ink);background:var(--bg-1);" />
+      <span style="font-size:14px;color:var(--ink-soft);">fois par</span>
+      <select id="actModalGoalPeriod" style="padding:9px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);cursor:pointer;">
+        <option value="week">semaine</option>
+        <option value="month">mois</option>
+      </select>
+    </div>
+    <input type="hidden" id="actModalEditId" value="" />
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="_closeActivityModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button onclick="_saveActivityModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--mint);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -8109,7 +8145,14 @@ function renderActivities() {
             <span class="edit-only" onclick="_editActivity('${a.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Modifier">✏️</span>
             <span class="edit-only" onclick="_deleteActivity('${a.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Supprimer">🗑️</span>
           </div>
-          <div class="activity-meta">${weekTotal} séance${weekTotal !== 1 ? "s" : ""} cette semaine</div>
+          <div class="activity-meta">${(() => {
+            if (!a.goal) return `${weekTotal} séance${weekTotal !== 1?"s":""} cette semaine`;
+            const actual = a.goal.period === "week" ? weekTotal : activityMonthTotal(a.id);
+            const label  = a.goal.period === "week" ? "sem." : "mois";
+            const pct    = Math.min(100, actual / a.goal.count);
+            const col    = pct >= 1 ? "var(--mint)" : pct >= 0.5 ? "var(--peach)" : "var(--rose)";
+            return `<span style="color:${col};font-weight:700;">${actual}/${a.goal.count}</span> <span style="color:var(--ink-softer);">× ce ${label}</span>`;
+          })()}</div>
         </div>
         <div class="activity-day-dots">${dotsHtml}</div>
       </div>`;
@@ -8119,44 +8162,70 @@ function renderActivities() {
   renderSportPlanning();
   renderActivityRetro();
 }
-function _toggleActivityForm() {
-  const f = document.getElementById("activityForm");
-  const isOpen = f.style.display !== "none";
-  if (isOpen) { _cancelActivityForm(); return; }
-  document.getElementById("actFormEditId").value = "";
-  document.getElementById("actFormEmoji").value = "";
-  document.getElementById("actFormName").value = "";
-  f.style.display = "block";
-  document.getElementById("actFormName").focus();
+function _toggleActivityForm() { _openActivityModal(null); }
+function _editActivity(id) { _openActivityModal(id); }
+function _cancelActivityForm() { document.getElementById("activityForm").style.display = "none"; }
+function _saveActivityForm() { _saveActivityModal(); }
+
+const _ACT_EMOJIS = [
+  "🏃","🚴","🏊","🧘","🏋️","🤸","🚶","🧗","⛹️","🏄","🎾","🥊","🥋","⛷️","🏂",
+  "🏌️","🎯","🎳","🏓","🏸","🏇","🤾","💃","🕺","🐕","🧹","🌱","🍳","🎵","🎸",
+  "🎨","📚","✍️","🎭","🎬","🎲","🧵","🧶","🚗","✈️","🛁","💆","🧖","🍵","🌙",
+];
+let _actModalEmoji = "🏃";
+
+function _openActivityModal(id) {
+  const a = id ? state.activities.find(x => x.id === id) : null;
+  _actModalEmoji = a?.emoji || "🏃";
+  document.getElementById("actModalTitle").textContent = a ? "✏️ Modifier l'activité" : "✨ Nouvelle activité";
+  document.getElementById("actModalEditId").value = id || "";
+  document.getElementById("actModalName").value = a?.name || "";
+  document.getElementById("actModalGoalCount").value = a?.goal?.count || "";
+  document.getElementById("actModalGoalPeriod").value = a?.goal?.period || "week";
+  document.getElementById("actModalEmojiPreview").textContent = _actModalEmoji;
+  document.getElementById("actEmojiGrid").innerHTML = _ACT_EMOJIS.map(e =>
+    `<button onclick="_selectActEmoji('${e}')" data-actemojikey="${e}" style="
+      font-size:22px;padding:6px 8px;border-radius:10px;cursor:pointer;font-family:inherit;
+      border:2px solid ${e===_actModalEmoji?'var(--mint)':'var(--line)'};
+      background:${e===_actModalEmoji?'var(--mint-soft)':'white'};
+      transition:all 0.1s;">${e}</button>`
+  ).join("");
+  document.getElementById("activityModal").style.display = "flex";
+  setTimeout(() => document.getElementById("actModalName").focus(), 80);
 }
-function _editActivity(id) {
-  const a = state.activities.find(x => x.id === id);
-  if (!a) return;
-  document.getElementById("actFormEditId").value = id;
-  document.getElementById("actFormEmoji").value = a.emoji || "";
-  document.getElementById("actFormName").value = a.name;
-  document.getElementById("activityForm").style.display = "block";
-  document.getElementById("actFormName").focus();
+function _selectActEmoji(e) {
+  _actModalEmoji = e;
+  document.getElementById("actModalEmojiPreview").textContent = e;
+  document.querySelectorAll("[data-actemojikey]").forEach(btn => {
+    const sel = btn.dataset.actemojikey === e;
+    btn.style.borderColor = sel ? "var(--mint)" : "var(--line)";
+    btn.style.background  = sel ? "var(--mint-soft)" : "white";
+  });
 }
-function _saveActivityForm() {
-  const name = document.getElementById("actFormName").value.trim();
-  if (!name) { document.getElementById("actFormName").focus(); return; }
-  const emoji = document.getElementById("actFormEmoji").value.trim() || "✨";
-  const editId = document.getElementById("actFormEditId").value;
+function _closeActivityModal() { document.getElementById("activityModal").style.display = "none"; }
+function _saveActivityModal() {
+  const name = document.getElementById("actModalName").value.trim();
+  if (!name) { document.getElementById("actModalName").focus(); return; }
+  const emoji = _actModalEmoji || "✨";
+  const goalCount = Number(document.getElementById("actModalGoalCount").value) || 0;
+  const goalPeriod = document.getElementById("actModalGoalPeriod").value;
+  const goal = goalCount > 0 ? { count: goalCount, period: goalPeriod } : null;
+  const editId = document.getElementById("actModalEditId").value;
   if (editId) {
     const a = state.activities.find(x => x.id === editId);
-    if (a) { a.name = name; a.emoji = emoji; a.hormones = autoHormones(name); }
+    if (a) { a.name = name; a.emoji = emoji; a.hormones = autoHormones(name); a.goal = goal; }
   } else {
-    state.activities.push({ id: "a" + Date.now(), name, emoji, hormones: autoHormones(name) });
+    state.activities.push({ id: "a" + Date.now(), name, emoji, hormones: autoHormones(name), goal });
   }
-  _cancelActivityForm();
+  _closeActivityModal();
   saveState(); renderActivities();
 }
-function _cancelActivityForm() {
-  document.getElementById("activityForm").style.display = "none";
-  document.getElementById("actFormEditId").value = "";
-  document.getElementById("actFormEmoji").value = "";
-  document.getElementById("actFormName").value = "";
+function activityMonthTotal(id) {
+  const now = new Date(); const y = now.getFullYear(), m = now.getMonth();
+  return Object.keys(state.history).filter(dk => {
+    const d = new Date(dk + "T12:00:00");
+    return d.getFullYear() === y && d.getMonth() === m && state.history[dk]?.activities?.[id];
+  }).length;
 }
 function _deleteActivity(id) {
   const a = state.activities.find(x => x.id === id);
