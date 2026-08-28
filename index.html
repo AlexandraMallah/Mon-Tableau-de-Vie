@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v925</title>
+<title>Mon Tableau de Vie 🌿 · v926</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1808,6 +1808,12 @@
       <button class="btn-icon" onclick="openGestionModal()" style="background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
       <button class="btn-icon" onclick="cloudDiag()" title="Diagnostic sync" style="background:var(--lavender-soft);">🔍</button>
       <button class="btn-icon" onclick="openShortcutsEditor()" title="Gérer les raccourcis" style="background:var(--lavender-soft);">⚡</button>
+      <!-- Thème visuel -->
+      <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);">
+        <button id="themeBtnSmooth"  onclick="applyTheme('smooth')"  title="Smooth"  style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">🌸</button>
+        <button id="themeBtnSerieux" onclick="applyTheme('serieux')" title="Sérieux" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">💼</button>
+        <button id="themeBtnMinimal" onclick="applyTheme('minimal')" title="Minimal" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">⬜</button>
+      </div>
       <!-- Traduction -->
       <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);">
         <button id="langFR" onclick="_setLang('fr')" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">FR</button>
@@ -5679,9 +5685,11 @@ function saveStateQuiet() { saveState(false); }
 let state = loadState();
 // Appliquer le thème sauvegardé immédiatement
 (function() {
-  const t = state.uiTheme;
+  const t = state.uiTheme || "smooth";
   if (t === "serieux") document.body.classList.add("t-serieux");
   else if (t === "minimal") document.body.classList.add("t-minimal");
+  // Init boutons header (DOM peut ne pas être prêt — on le refait dans renderApp)
+  window._pendingTheme = t;
 })();
 
 /* ========= UTILS ========= */
@@ -20873,9 +20881,17 @@ function applyTheme(id) {
   else if (id === "minimal") document.body.classList.add("t-minimal");
   state.uiTheme = id;
   saveState();
+  // Mettre à jour les boutons header
   ["smooth","serieux","minimal"].forEach(t => {
-    const chk  = document.getElementById("themeCheck" + t.charAt(0).toUpperCase() + t.slice(1));
-    const card = document.getElementById("themeCard"  + t.charAt(0).toUpperCase() + t.slice(1));
+    const key = t.charAt(0).toUpperCase() + t.slice(1);
+    const btn  = document.getElementById("themeBtn" + key);
+    const chk  = document.getElementById("themeCheck" + key);
+    const card = document.getElementById("themeCard"  + key);
+    if (btn) {
+      btn.style.background  = t === id ? "var(--lavender)" : "none";
+      btn.style.color       = t === id ? "white" : "var(--ink-soft)";
+      btn.style.fontWeight  = t === id ? "700" : "600";
+    }
     if (chk)  chk.style.display  = t === id ? "" : "none";
     if (card) card.style.borderColor = t === id ? "var(--lavender)" : "var(--line)";
   });
@@ -22133,6 +22149,8 @@ try {
   populateTxCategories();
   setTxType('expense');
   renderAll();
+  // Synchroniser les boutons thème dans le header
+  if (window._pendingTheme) applyTheme(window._pendingTheme);
   checkSeedBanner();
   // Météo au démarrage (onglet Aujourd'hui actif par défaut)
   setTimeout(fetchWeather, 800);
