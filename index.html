@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v918</title>
+<title>Mon Tableau de Vie 🌿 · v920</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2832,6 +2832,19 @@
       </div>
     </div>
 
+    <!-- 📊 Suivi des habitudes -->
+    <div class="card" id="habitsTrackingCard" style="margin-top:18px;">
+      <div class="card-row" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+        <h2 style="margin:0;flex:1;">📊 Mes habitudes</h2>
+        <div style="display:flex;gap:4px;">
+          <button onclick="setHabitNb(30)" id="habitBtn30" class="btn-soft" style="font-size:11px;padding:4px 8px;">30j</button>
+          <button onclick="setHabitNb(60)" id="habitBtn60" class="btn-soft" style="font-size:11px;padding:4px 8px;">60j</button>
+          <button onclick="setHabitNb(90)" id="habitBtn90" class="btn-soft" style="font-size:11px;padding:4px 8px;font-weight:700;">90j</button>
+        </div>
+      </div>
+      <div id="habitsTrackingGrid" style="display:flex;flex-direction:column;gap:18px;"></div>
+    </div>
+
     <!-- 🩺 Suivi symptômes perso -->
     <div class="card" id="customSymptomsSanteCard" style="margin-top:18px;display:none;">
       <h2 style="margin:0 0 14px;">🩺 Suivi symptômes — 30 jours</h2>
@@ -4078,7 +4091,7 @@
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Coucher avant 23h',{type:'boolean'})">🕙 Coucher tôt</button>
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Appeler un proche',{type:'boolean'})">🤝 Appeler un proche</button>
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Vitamines',{type:'boolean'})">💊 Vitamines</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Flossing',{type:'boolean'})">🦷 Flossing</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Lecture',{type:'boolean'})">📖 Lecture</button>
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Complément alimentaire',{type:'boolean'})">🧴 Complément</button>
       </div>
       <div style="font-size:11px;color:var(--ink-softer);margin-top:8px;">💊 Suivi pilule &amp; 🩸 règles → section dédiée dans "Aujourd'hui" · 🏋️ Sport &amp; 🧘 Méditation → Activités</div>
@@ -4188,6 +4201,26 @@
       </div>
     </div>
 
+    <!-- Presets suivi santé -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.05em;margin-bottom:8px;">EXEMPLES — cliquer pour remplir automatiquement</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <button type="button" onclick="_applySymPreset('💊','Migraine','côté gauche','scale')" class="habit-suggest-chip">💊 Migraine</button>
+        <button type="button" onclick="_applySymPreset('🔥','Douleur abdominale','localisation','scale')" class="habit-suggest-chip">🔥 Douleur abdominale</button>
+        <button type="button" onclick="_applySymPreset('🤧','Allergie','nez / yeux','check')" class="habit-suggest-chip">🤧 Allergie</button>
+        <button type="button" onclick="_applySymPreset('🌡️','Température','','number','°C')" class="habit-suggest-chip">🌡️ Température</button>
+        <button type="button" onclick="_applySymPreset('❤️','Tension artérielle','systolique','number','mmHg')" class="habit-suggest-chip">❤️ Tension</button>
+        <button type="button" onclick="_applySymPreset('😴','Qualité du sommeil','','stars')" class="habit-suggest-chip">😴 Qualité sommeil</button>
+        <button type="button" onclick="_applySymPreset('🧠','Concentration','','stars')" class="habit-suggest-chip">🧠 Concentration</button>
+        <button type="button" onclick="_applySymPreset('🫁','Essoufflement','','scale')" class="habit-suggest-chip">🫁 Essoufflement</button>
+        <button type="button" onclick="_applySymPreset('🤢','Nausée','','check')" class="habit-suggest-chip">🤢 Nausée</button>
+        <button type="button" onclick="_applySymPreset('💪','Douleur musculaire','localisation','scale')" class="habit-suggest-chip">💪 Douleur musculaire</button>
+        <button type="button" onclick="_applySymPreset('🦷','Douleur dentaire','','scale')" class="habit-suggest-chip">🦷 Douleur dentaire</button>
+        <button type="button" onclick="_applySymPreset('👁️','Fatigue oculaire','','scale')" class="habit-suggest-chip">👁️ Fatigue oculaire</button>
+      </div>
+    </div>
+    <div style="height:1px;background:var(--line);margin-bottom:14px;"></div>
+
     <!-- Type de suivi -->
     <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:8px;">TYPE DE SUIVI</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;" id="symTypeGrid">
@@ -4225,6 +4258,41 @@
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button onclick="_closeSymptomModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
       <button onclick="_saveSymptomModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal élément routine matin/soir -->
+<div class="modal-bg" id="routineItemModal" onmousedown="_rItemBd=event.target===this" onclick="event.target===this&&_rItemBd&&_closeRoutineItemModal()">
+  <div class="modal" style="max-width:480px;padding:24px;" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 id="routineItemModalTitle" style="margin:0;font-size:18px;">☀️ Ajouter à la routine</h3>
+      <button onclick="_closeRoutineItemModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
+    </div>
+    <!-- Suggestions rapides -->
+    <div id="routineItemPresets" style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.05em;margin-bottom:8px;">SUGGESTIONS RAPIDES</div>
+      <div id="routineItemPresetChips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
+    <div style="height:1px;background:var(--line);margin-bottom:14px;"></div>
+    <!-- Emoji + nom -->
+    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;">
+      <div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Emoji</div>
+        <div id="routineItemEmoji" style="width:54px;height:54px;border:2px solid var(--lavender);border-radius:12px;background:var(--bg-1);font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('routineItemEmojiPicker').style.display=document.getElementById('routineItemEmojiPicker').style.display==='none'?'flex':'none'">☀️</div>
+        <div id="routineItemEmojiPicker" style="display:none;flex-wrap:wrap;gap:4px;margin-top:6px;max-width:220px;">
+          <span id="routineItemEmojiGrid" style="display:contents;"></span>
+        </div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom de l'élément</div>
+        <input type="text" id="routineItemName" placeholder="ex : Flossing, Méditation…" maxlength="40"
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;" />
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="_closeRoutineItemModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button onclick="_saveRoutineItemModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
     </div>
   </div>
 </div>
@@ -6120,7 +6188,7 @@ function renderHabits() {
     const streakClass = streak >= 7 ? "hot" : "";
     const streakText = streak > 0 ? `🔥 ${streak}j` : "—";
     const inEdit = document.body.classList.contains('edit-mode');
-    const editBtns = inEdit ? `<span onclick="event.stopPropagation();_editHabit('${h.id}')" style="font-size:10px;color:var(--ink-softer);cursor:pointer;margin-left:4px;" title="Modifier">✏️</span><span onclick="event.stopPropagation();_deleteHabit('${h.id}')" style="font-size:10px;color:var(--ink-softer);cursor:pointer;" title="Supprimer">🗑️</span>` : "";
+    const editBtns = inEdit ? `<span style="display:inline-flex;gap:6px;margin-left:6px;"><span onclick="event.stopPropagation();_editHabit('${h.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Modifier">✏️</span><span onclick="event.stopPropagation();_deleteHabit('${h.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Supprimer">🗑️</span></span>` : "";
     if (h.type === "numeric") {
       const num = Number(value) || 0;
       const pct = Math.min(100, Math.round((num / (h.target || 1)) * 100));
@@ -9305,28 +9373,76 @@ function getRoutines() {
 function routineComplete(habitsObj, key) {
   return (getRoutines()[key] || []).every(s => !!habitsObj[s.id]);
 }
-function _addRoutineItem(key) {
-  _showPrompt(`Nom de l'élément (${ROUTINES_META[key].label})`, "", name => {
-    if (!name?.trim()) return;
-    const id = "h-routine-" + Date.now();
-    const emoji = key === "matin" ? "☀️" : "🌙";
-    getRoutines()[key].push({ id, label: name.trim(), emoji });
-    // Crée aussi l'habitude correspondante
-    if (!state.habits.find(h => h.id === id))
-      state.habits.push({ id, name: name.trim() + " " + emoji, type: "boolean" });
-    saveState(); renderSkincare(); renderHabits();
-  });
+const _ROUTINE_PRESETS = {
+  matin: [
+    { emoji:"🦷", label:"Flossing" }, { emoji:"🧴", label:"Crème solaire" },
+    { emoji:"🧘", label:"Méditation" }, { emoji:"🤸", label:"Étirements" },
+    { emoji:"💊", label:"Vitamines" }, { emoji:"🥤", label:"Grand verre d'eau" },
+    { emoji:"✍️", label:"Journaling" }, { emoji:"📖", label:"Lecture" },
+    { emoji:"🧠", label:"Affirmations" }, { emoji:"🚶", label:"Petite marche" },
+    { emoji:"🧹", label:"Ranger" }, { emoji:"☀️", label:"Plein air" },
+  ],
+  soir: [
+    { emoji:"🦷", label:"Flossing" }, { emoji:"🧴", label:"Sérum nuit" },
+    { emoji:"📵", label:"No écran 30min" }, { emoji:"📖", label:"Lecture" },
+    { emoji:"🫁", label:"Respiration" }, { emoji:"✍️", label:"Journaling" },
+    { emoji:"🌿", label:"Tisane" }, { emoji:"🧘", label:"Méditation" },
+    { emoji:"💊", label:"Complément" }, { emoji:"🛁", label:"Bain/douche" },
+    { emoji:"🙏", label:"Gratitude" }, { emoji:"🌙", label:"Coucher calme" },
+  ]
+};
+const _ROUTINE_EMOJIS = ["☀️","🌙","🦷","🧴","💊","🤸","🧘","✍️","📖","🥤","🧹","🧠","🚶","🌿","🛁","🙏","💆","🎵","🌿","🫁","🍵","📵","🌸","💪","🍎","😴","🧖","🌊","🕯️","🎨","🪴","🐾"];
+let _routineItemKey = null, _routineItemEditId = null;
+function _addRoutineItem(key) { _openRoutineItemModal(key, null); }
+function _editRoutineItem(key, id) { _openRoutineItemModal(key, id); }
+function _openRoutineItemModal(key, editId) {
+  _routineItemKey = key;
+  _routineItemEditId = editId;
+  const meta = ROUTINES_META[key] || {};
+  document.getElementById("routineItemModalTitle").textContent = (editId ? "✏️ Modifier" : (key==="matin"?"☀️":"🌙") + " Ajouter à") + " " + (meta.label || "la routine");
+  document.getElementById("routineItemName").value = "";
+  document.getElementById("routineItemEmoji").textContent = key === "matin" ? "☀️" : "🌙";
+  document.getElementById("routineItemEmojiPicker").style.display = "none";
+  // Si édition, pré-remplir
+  if (editId) {
+    const item = (getRoutines()[key] || []).find(s => s.id === editId);
+    if (item) { document.getElementById("routineItemName").value = item.label; document.getElementById("routineItemEmoji").textContent = item.emoji || "☀️"; }
+    document.getElementById("routineItemPresets").style.display = "none";
+  } else {
+    document.getElementById("routineItemPresets").style.display = "";
+  }
+  // Emoji grid
+  document.getElementById("routineItemEmojiGrid").innerHTML = _ROUTINE_EMOJIS.map(e =>
+    `<span onclick="document.getElementById('routineItemEmoji').textContent='${e}';document.getElementById('routineItemEmojiPicker').style.display='none';" style="cursor:pointer;font-size:22px;padding:3px;border-radius:8px;" onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background=''">${e}</span>`
+  ).join("");
+  // Preset chips
+  const chips = (_ROUTINE_PRESETS[key] || []);
+  document.getElementById("routineItemPresetChips").innerHTML = chips.map(p =>
+    `<button type="button" class="habit-suggest-chip" onclick="_applyRoutinePreset('${p.emoji}','${p.label.replace(/'/g,"\\'")}')"> ${p.emoji} ${p.label}</button>`
+  ).join("");
+  document.getElementById("routineItemModal").classList.add("open");
+  setTimeout(() => document.getElementById("routineItemName").focus(), 100);
 }
-function _editRoutineItem(key, id) {
-  const item = (getRoutines()[key] || []).find(s => s.id === id);
-  if (!item) return;
-  _showPrompt("Renommer l'élément", item.label, name => {
-    if (!name?.trim()) return;
-    item.label = name.trim();
-    const h = state.habits.find(h => h.id === id);
-    if (h) h.name = name.trim() + (h.name.match(/\s[\u{1F300}-\u{1FAFF}]/u)?.[0] || "");
-    saveState(); renderSkincare(); renderHabits();
-  });
+function _applyRoutinePreset(emoji, label) {
+  document.getElementById("routineItemEmoji").textContent = emoji;
+  document.getElementById("routineItemName").value = label;
+}
+function _closeRoutineItemModal() { document.getElementById("routineItemModal").classList.remove("open"); }
+function _saveRoutineItemModal() {
+  const name = document.getElementById("routineItemName").value.trim();
+  if (!name) { document.getElementById("routineItemName").focus(); return; }
+  const emoji = document.getElementById("routineItemEmoji").textContent || "☀️";
+  const key = _routineItemKey;
+  if (_routineItemEditId) {
+    const item = (getRoutines()[key] || []).find(s => s.id === _routineItemEditId);
+    if (item) { item.label = name; item.emoji = emoji; const h = state.habits.find(h => h.id === _routineItemEditId); if (h) h.name = name + " " + emoji; }
+  } else {
+    const id = "h-routine-" + Date.now();
+    getRoutines()[key].push({ id, label: name, emoji });
+    if (!state.habits.find(h => h.id === id)) state.habits.push({ id, name: name + " " + emoji, type: "boolean" });
+  }
+  _closeRoutineItemModal();
+  saveState(); renderSkincare(); renderHabits();
 }
 function _deleteRoutineItem(key, id) {
   const item = (getRoutines()[key] || []).find(s => s.id === id);
@@ -10147,6 +10263,13 @@ function _setSymptomValue(id, v) {
 let _symSelectedType = "scale";
 const _SYM_EMOJIS = ["💊","🩸","🤰","🧠","💉","🩹","🌡️","😴","🫁","🦷","🏃","💪","🤒","🤢","😵","❤️","🫀","🦴","👁️","👂","🤧","🤕","💆","🍃"];
 
+function _applySymPreset(emoji, name, subtitle, type, unit) {
+  document.getElementById("symModalEmoji").value = emoji;
+  document.getElementById("symModalName").value = name;
+  document.getElementById("symModalSubtitle").value = subtitle || "";
+  document.getElementById("symModalUnit").value = unit || "";
+  _selectSymType(type || "scale");
+}
 function _addCustomSymptom() {
   _editSymptomId = null;
   _symSelectedType = "scale";
@@ -10369,6 +10492,124 @@ function renderPillSante() {
   if (pctEl) pctEl.textContent = pct + "%";
 }
 
+// ── Suivi habitudes dans Santé ──────────────────────────────────────
+let _habitNb = 90;
+const _HABIT_SKIP = new Set(["h-eau","h-pas","h-pilule","h-skincare-matin","h-skincare-soir","h-calories"]);
+const _HABIT_PALETTE = ["#c9b6f0","#aee0c8","#f9c7c7","#b6d6f0","#f9e0b6","#d4f0b6","#f0b6d4","#b6f0e4","#f0d4b6","#b6b6f0"];
+function _habitColor(id) {
+  let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xfff;
+  return _HABIT_PALETTE[h % _HABIT_PALETTE.length];
+}
+function setHabitNb(n) {
+  _habitNb = n;
+  [30,60,90].forEach(v => { const b = document.getElementById("habitBtn"+v); if(b) b.style.fontWeight = v===n ? "700" : "400"; });
+  renderHabitsTracking();
+}
+function renderHabitsTracking() {
+  const el = document.getElementById("habitsTrackingGrid");
+  if (!el) return;
+  const habits = (state.habits || []).filter(h => !_HABIT_SKIP.has(h.id));
+  if (!habits.length) { el.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;font-style:italic;">Aucune habitude personnalisée. Crée-en depuis l'onglet Aujourd'hui !</p>`; return; }
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const days = [];
+  for (let i = _habitNb - 1; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    days.push(todayKey(d));
+  }
+
+  el.innerHTML = habits.map(h => {
+    const isNumeric = h.type === "numeric";
+    const target = h.target || 1;
+    const col = _habitColor(h.id);
+    const colDark = col.replace(/f/g, "c");
+
+    // Calcul streak & stats
+    let streak = 0, bestStreak = 0, cur = 0, doneCount = 0;
+    const allDks = Object.keys(state.history||{}).sort();
+    for (const dk of allDks) {
+      const val = state.history[dk]?.habits?.[h.id];
+      const done = isNumeric ? (Number(val)||0) >= target : !!val;
+      if (done) { cur++; bestStreak = Math.max(bestStreak, cur); } else cur = 0;
+    }
+    // streak courant (depuis aujourd'hui en remontant)
+    for (let i = 0; i < allDks.length; i++) {
+      const dk = allDks[allDks.length - 1 - i];
+      if (dk > todayKey(today)) continue;
+      const val = state.history[dk]?.habits?.[h.id];
+      const done = isNumeric ? (Number(val)||0) >= target : !!val;
+      if (done) streak++;
+      else break;
+    }
+    const doneInPeriod = days.filter(dk => {
+      const val = state.history[dk]?.habits?.[h.id];
+      return isNumeric ? (Number(val)||0) >= target : !!val;
+    }).length;
+    const pct = days.length ? Math.round(doneInPeriod / days.length * 100) : 0;
+
+    // Grille de cases
+    let gridHtml = "";
+    if (!isNumeric) {
+      // Cases colorées (booléen)
+      gridHtml = `<div style="display:flex;flex-wrap:wrap;gap:3px;">` +
+        days.map(dk => {
+          const val = state.history[dk]?.habits?.[h.id];
+          const done = !!val;
+          const isToday = dk === todayKey(today);
+          const [yy,mm,dd] = dk.split("-").map(Number);
+          const label = new Date(yy,mm-1,dd).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
+          const bg = isToday ? (done ? col.replace(/#/,"#") : "#dde8f5") : done ? col : "#f0eef5";
+          const op = done || isToday ? "1" : "0.45";
+          const border = isToday ? "2px solid #888" : "2px solid transparent";
+          return `<div data-tip="${label} · ${done?"✓ réalisée":"✗ non faite"}" onmouseenter="showHoverTip(event,this.dataset.tip)" onmousemove="moveHoverTip(event)" onmouseleave="hideHoverTip()" style="width:16px;height:16px;border-radius:4px;background:${bg};opacity:${op};border:${border};box-sizing:border-box;cursor:default;"></div>`;
+        }).join("") + `</div>`;
+    } else {
+      // Mini barres CSS (numérique)
+      const maxVal = Math.max(target * 1.5, ...days.map(dk => Number(state.history[dk]?.habits?.[h.id]||0)));
+      gridHtml = `<div style="display:flex;align-items:flex-end;gap:2px;height:48px;position:relative;">` +
+        `<div style="position:absolute;bottom:${Math.round((target/maxVal)*100)}%;left:0;right:0;border-top:1.5px dashed ${col};opacity:0.7;pointer-events:none;"></div>` +
+        days.map(dk => {
+          const val = Number(state.history[dk]?.habits?.[h.id]||0);
+          const done = val >= target;
+          const hPct = maxVal > 0 ? Math.min(100, Math.round((val/maxVal)*100)) : 0;
+          const isToday = dk === todayKey(today);
+          const [yy,mm,dd] = dk.split("-").map(Number);
+          const label = new Date(yy,mm-1,dd).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
+          const tip = `${label} · ${val} ${h.unit||""} (objectif ${target})`;
+          const barCol = isToday ? "#7c5cbf" : done ? col : (val > 0 ? "#ffe4b5" : "#f0eef5");
+          const op = val > 0 || isToday ? "1" : "0.4";
+          return `<div data-tip="${tip}" onmouseenter="showHoverTip(event,this.dataset.tip)" onmousemove="moveHoverTip(event)" onmouseleave="hideHoverTip()" style="flex:1;min-width:2px;max-width:14px;height:${Math.max(hPct,val>0?8:3)}%;background:${barCol};border-radius:3px 3px 0 0;opacity:${op};cursor:default;align-self:flex-end;"></div>`;
+        }).join("") + `</div>`;
+    }
+
+    return `<div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+        <span style="font-size:18px;">${h.emoji||"✨"}</span>
+        <span style="font-size:14px;font-weight:700;color:var(--ink);flex:1;">${escapeHtml(h.name)}</span>
+        ${isNumeric ? `<span style="font-size:11px;color:var(--ink-softer);">obj. ${target} ${h.unit||""}/j</span>` : ""}
+        <div style="display:flex;gap:14px;">
+          <div style="text-align:center;">
+            <div style="font-size:9px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Streak</div>
+            <strong style="font-size:16px;font-weight:700;color:${col.replace(/f/g,"9")};">${streak}j</strong>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">${_habitNb}j</div>
+            <strong style="font-size:16px;font-weight:700;color:#4d9c7e;">${pct}%</strong>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Record</div>
+            <strong style="font-size:16px;font-weight:700;color:var(--ink-soft);">${bestStreak}j</strong>
+          </div>
+        </div>
+      </div>
+      ${gridHtml}
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--ink-softer);">
+        <span>← il y a ${_habitNb} jours</span><span>aujourd'hui →</span>
+      </div>
+    </div>`;
+  }).join(`<hr style="border:none;border-top:1px solid var(--line);margin:0;">`);
+}
+
 let _skincareNb = 60;
 function setSkincareNb(n) {
   _skincareNb = n;
@@ -10511,7 +10752,7 @@ function renderSkincare() {
           <span style="font-size:13.5px;color:${isDone ? "var(--ink-soft)" : "var(--ink)"};
             text-decoration:${isDone ? "line-through" : "none"};">${s.emoji} ${s.label}</span>
         </div>
-        ${inEdit ? `<span onclick="_editRoutineItem('${key}','${s.id}')" style="font-size:11px;cursor:pointer;color:var(--ink-softer);padding:4px;" title="Renommer">✏️</span><span onclick="_deleteRoutineItem('${key}','${s.id}')" style="font-size:11px;cursor:pointer;color:var(--ink-softer);padding:4px;" title="Supprimer">🗑️</span>` : ""}
+        ${inEdit ? `<span style="display:inline-flex;gap:8px;margin-left:4px;"><span onclick="_editRoutineItem('${key}','${s.id}')" style="font-size:11px;cursor:pointer;color:var(--ink-softer);" title="Renommer">✏️</span><span onclick="_deleteRoutineItem('${key}','${s.id}')" style="font-size:11px;cursor:pointer;color:var(--ink-softer);" title="Supprimer">🗑️</span></span>` : ""}
       </div>`;
 
     return `
