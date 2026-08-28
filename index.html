@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v894</title>
+<title>Mon Tableau de Vie 🌿 · v896</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2842,7 +2842,7 @@
     <div class="card" style="margin-bottom:18px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
         <h2 style="margin:0;flex:1;">🏦 Mes comptes</h2>
-        <button class="edit-only" onclick="document.getElementById('settingsModal').classList.add('open')" style="padding:4px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;" title="Gérer les comptes épargne">⚙ Gérer les comptes</button>
+        <button class="edit-only" onclick="openSettings('finances')" style="padding:4px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;" title="Gérer les comptes épargne">⚙ Gérer les comptes</button>
       </div>
       <div class="money-accounts-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,var(--sky-soft) 100%);">
@@ -3599,74 +3599,92 @@
 </div>
 
 <div class="modal-bg" id="settingsModal">
-  <div class="modal">
-    <h2>Personnaliser</h2>
-    <label>Ton prénom</label>
-    <input type="text" id="nameInput" placeholder="Alexandra" />
-
-    <div class="section-title">Habitudes quotidiennes</div>
-    <div id="habitEditList"></div>
-    <input type="text" id="newHabitInput" placeholder="Nouvelle habitude (Entrée pour ajouter)" />
-
-    <div class="section-title">Activités</div>
-    <div id="activityEditList"></div>
-    <div style="display:flex;gap:8px;">
-      <input type="text" id="newActivityEmoji" placeholder="🏃" style="width:70px;text-align:center;" />
-      <input type="text" id="newActivityName" placeholder="Nouvelle activité (Entrée pour ajouter)" />
+  <div class="modal" style="max-width:560px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+      <h2 style="margin:0;">⚙️ Réglages</h2>
+      <div style="display:flex;gap:6px;">
+        <button id="settingsTabProfil"   onclick="switchSettingsTab('profil')"   style="padding:6px 14px;border-radius:20px;border:1px solid var(--lavender);background:var(--lavender-soft);font-family:inherit;font-size:13px;cursor:pointer;font-weight:600;color:var(--ink);">👤 Profil</button>
+        <button id="settingsTabFinances" onclick="switchSettingsTab('finances')" style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">💰 Finances</button>
+        <button id="settingsTabDonnees" onclick="switchSettingsTab('donnees')"  style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">💾 Données</button>
+      </div>
     </div>
 
-    <div class="section-title">Catégories de dépenses</div>
-    <div id="catEditList"></div>
-    <input type="text" id="newCatInput" placeholder="Nouvelle catégorie de dépense (Entrée pour ajouter)" />
+    <!-- Onglet Profil -->
+    <div id="settingsPanelProfil">
+      <label>Ton prénom</label>
+      <input type="text" id="nameInput" placeholder="Alexandra" />
 
-    <div class="section-title">Catégories de revenus</div>
-    <div id="incomeCatEditList"></div>
-    <input type="text" id="newIncomeCatInput" placeholder="Nouvelle catégorie de revenu (Entrée pour ajouter)" />
+      <div class="section-title" style="margin-top:16px;">Habitudes quotidiennes</div>
+      <div id="habitEditList"></div>
+      <input type="text" id="newHabitInput" placeholder="Nouvelle habitude (Entrée pour ajouter)" />
 
-    <div class="section-title">Catégories d'épargne</div>
-    <div id="savingsCatEditList"></div>
-    <input type="text" id="newSavingsCatInput" placeholder="Nouvelle catégorie d'épargne (Entrée pour ajouter)" />
+      <div class="section-title" style="margin-top:16px;">Activités</div>
+      <div id="activityEditList"></div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="newActivityEmoji" placeholder="🏃" style="width:70px;text-align:center;" />
+        <input type="text" id="newActivityName" placeholder="Nouvelle activité (Entrée pour ajouter)" />
+      </div>
 
-    <div class="section-title">🏠 Charges fixes mensuelles</div>
-    <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 8px;">Montant mensuel à exclure de la jauge "Budget de vie" (loyer, charges…). Ces dépenses restent visibles dans l'historique mais ne font pas sonner l'alarme.</p>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-      <input type="number" id="fixedChargesInput" step="0.01" min="0" placeholder="ex : 600"
-        style="width:140px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
-      <span style="font-size:13px;color:var(--ink-soft);">€ / mois</span>
+      <div class="section-title" style="margin-top:16px;">Types de candidatures</div>
+      <div id="candTypeEditList"></div>
+      <input type="text" id="newCandTypeInput" placeholder="Nouveau type (Entrée pour ajouter)" />
     </div>
 
-    <div class="section-title">🏦 Soldes de départ des comptes</div>
-    <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 8px;">Combien tu avais sur chaque compte au démarrage du dashboard.</p>
-    <div style="margin-bottom:10px;">
+    <!-- Onglet Finances -->
+    <div id="settingsPanelFinances" style="display:none;">
+      <div class="section-title">🏦 Mes comptes</div>
+      <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 10px;">Solde de départ de chaque compte au démarrage du dashboard.</p>
       <label style="font-size:12px;color:var(--ink-soft);">💳 Nom du compte courant</label>
-      <input type="text" id="courantNameInput" placeholder="ex : Hello Bank, Boursobank…" style="width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);box-sizing:border-box;margin-top:4px;" onchange="saveCourantName()" oninput="saveCourantName()" />
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div>
-        <label style="font-size:12px;color:var(--ink-soft);">💳 Compte courant (€)</label>
-        <input type="number" id="accountCourantStart" step="0.01" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+      <input type="text" id="courantNameInput" placeholder="ex : Hello Bank, Boursobank…" style="width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);box-sizing:border-box;margin:4px 0 10px;" onchange="saveCourantName()" oninput="saveCourantName()" />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div>
+          <label style="font-size:12px;color:var(--ink-soft);">💳 Solde courant de départ (€)</label>
+          <input type="number" id="accountCourantStart" step="0.01" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--ink-soft);">🏦 Solde épargne de départ (€)</label>
+          <input type="number" id="accountEpargneStart" step="0.01" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+        </div>
       </div>
-      <div>
-        <label style="font-size:12px;color:var(--ink-soft);">🏦 Compte épargne (€)</label>
-        <input type="number" id="accountEpargneStart" step="0.01" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+
+      <div class="section-title">🏠 Charges fixes mensuelles</div>
+      <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 8px;">Loyer, abonnements… Ce montant est exclu de la jauge "Budget de vie" pour ne pas fausser les alertes.</p>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <input type="number" id="fixedChargesInput" step="0.01" min="0" placeholder="ex : 600"
+          style="width:140px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
+        <span style="font-size:13px;color:var(--ink-soft);">€ / mois</span>
       </div>
+
+      <div class="section-title">📂 Catégories</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin:-4px 0 10px;">Personnalise les listes déroulantes du formulaire de transaction.</div>
+
+      <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:var(--ink);">− Dépenses</div>
+      <div id="catEditList"></div>
+      <input type="text" id="newCatInput" placeholder="Nouvelle catégorie (Entrée pour ajouter)" style="margin-bottom:12px;" />
+
+      <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:var(--ink);">+ Revenus</div>
+      <div id="incomeCatEditList"></div>
+      <input type="text" id="newIncomeCatInput" placeholder="Nouvelle catégorie (Entrée pour ajouter)" style="margin-bottom:12px;" />
+
+      <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:var(--ink);">💰 Épargne</div>
+      <div id="savingsCatEditList"></div>
+      <input type="text" id="newSavingsCatInput" placeholder="Nouveau compte épargne (Entrée pour ajouter)" />
     </div>
 
-    <div class="section-title">Types de candidatures</div>
-    <div id="candTypeEditList"></div>
-    <input type="text" id="newCandTypeInput" placeholder="Nouveau type (Entrée pour ajouter)" />
-
-    <div class="section-title">💾 Sauvegarde de mes données</div>
-    <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 8px;">Tes données vivent dans ce navigateur. Exporte un fichier pour les sauvegarder, changer d'appareil, ou les récupérer si l'adresse du site change. <strong>Pense à exporter de temps en temps.</strong></p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="secondary" onclick="exportData()" style="flex:1;min-width:150px;">📥 Exporter mes données</button>
-      <button class="secondary" onclick="importData()" style="flex:1;min-width:150px;">📤 Importer des données</button>
+    <!-- Onglet Données -->
+    <div id="settingsPanelDonnees" style="display:none;">
+      <div class="section-title">💾 Sauvegarde</div>
+      <p style="font-size:13px;color:var(--ink-soft);margin:-4px 0 14px;">Tes données vivent dans ce navigateur. Exporte régulièrement un fichier de sauvegarde pour ne rien perdre si tu changes d'appareil.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="secondary" onclick="exportData()" style="flex:1;min-width:150px;">📥 Exporter mes données</button>
+        <button class="secondary" onclick="importData()" style="flex:1;min-width:150px;">📤 Importer des données</button>
+      </div>
+      <p style="font-size:11px;color:var(--ink-softer);margin:10px 0 0;">⚠️ L'import <strong>remplace</strong> toutes les données actuelles. Une confirmation sera demandée.</p>
     </div>
-    <p style="font-size:11px;color:var(--ink-softer);margin:8px 0 0;">📤 L'import <strong>remplace</strong> les données actuelles par celles du fichier (une confirmation te sera demandée).</p>
 
     <div class="actions">
       <button class="primary" onclick="saveSettings()">Enregistrer</button>
-      <button class="secondary" onclick="closeSettings()">Annuler</button>
+      <button class="secondary" onclick="closeSettings()">Fermer</button>
     </div>
   </div>
 </div>
@@ -19834,7 +19852,21 @@ document.getElementById("newEventName")?.addEventListener("keydown", e => {
 });
 
 /* ========= SETTINGS MODAL ========= */
-function openSettings() {
+function switchSettingsTab(tab) {
+  ["profil","finances","donnees"].forEach(t => {
+    const panel = document.getElementById("settingsPanel" + t.charAt(0).toUpperCase() + t.slice(1));
+    const btn   = document.getElementById("settingsTab"   + t.charAt(0).toUpperCase() + t.slice(1));
+    const active = t === tab;
+    if (panel) panel.style.display = active ? "" : "none";
+    if (btn) {
+      btn.style.background     = active ? "var(--lavender-soft)" : "white";
+      btn.style.borderColor    = active ? "var(--lavender)"      : "var(--line)";
+      btn.style.color          = active ? "var(--ink)"           : "var(--ink-soft)";
+      btn.style.fontWeight     = active ? "600"                  : "400";
+    }
+  });
+}
+function openSettings(tab) {
   document.getElementById("nameInput").value = state.name || "";
   document.getElementById("accountCourantStart").value = parseFloat((state.accounts?.courantStart ?? 0).toFixed(2));
   document.getElementById("accountEpargneStart").value = parseFloat((state.accounts?.epargneStart ?? 0).toFixed(2));
@@ -19842,6 +19874,7 @@ function openSettings() {
   renderSettingsLists();
   ["newHabitInput", "newActivityName", "newActivityEmoji", "newCatInput", "newIncomeCatInput", "newSavingsCatInput", "newCandTypeInput"]
     .forEach(i => document.getElementById(i).value = "");
+  switchSettingsTab(tab || "profil");
   document.getElementById("settingsModal").classList.add("open");
 }
 function closeSettings() { document.getElementById("settingsModal").classList.remove("open"); }
