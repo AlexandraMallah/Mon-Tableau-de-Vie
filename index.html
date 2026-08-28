@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v871</title>
+<title>Mon Tableau de Vie 🌿 · v873</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -9554,9 +9554,9 @@ function renderCustomSymptoms() {
     if (type === "scale") {
       const scaleEmojis = ["😌","😕","😣","😖","🤢"];
       lbl = val != null ? (_SYMPTOM_LBLS[val] || "") : "";
-      inputHtml = `<div style="display:flex;gap:4px;flex-wrap:wrap;">${[0,1,2,3,4].map(v => `
+      inputHtml = `<div class="scale belly">${[0,1,2,3,4].map(v => `
         <button onclick="_setSymptomValue('${s.id}',${v})"
-          style="background:${val===v?'var(--lavender-soft)':'none'};border:1px solid ${val===v?'var(--lavender)':'var(--line)'};border-radius:8px;padding:5px 8px;cursor:pointer;font-size:16px;"
+          class="${val===v?'active':''}"
           title="${_SYMPTOM_LBLS[v]}">${scaleEmojis[v]}</button>`).join("")}</div>
         <div class="sleepquality-label">${lbl}</div>`;
     } else if (type === "check") {
