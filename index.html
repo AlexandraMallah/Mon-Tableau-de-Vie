@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v867</title>
+<title>Mon Tableau de Vie 🌿 · v869</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -1888,28 +1888,8 @@
               <button data-v="5">🌟</button>
             </div>
           </div>
-          <div class="wb-block">
-            <label>🤰 Mal de ventre <span style="font-weight:400;font-size:11px;color:var(--ink-softer);">estomac / intestins</span></label>
-            <div class="scale belly" id="bellyScale">
-              <button data-v="0" title="Aucune douleur">😌</button>
-              <button data-v="1" title="Légère gêne">😕</button>
-              <button data-v="2" title="Inconfort modéré">😣</button>
-              <button data-v="3" title="Douleur forte">😖</button>
-              <button data-v="4" title="Très forte douleur">🤢</button>
-            </div>
-            <div class="sleepquality-label" id="bellyLabel"></div>
-          </div>
-          <div class="wb-block">
-            <label>🩸 Endométriose <span style="font-weight:400;font-size:11px;color:var(--ink-softer);">utérus</span></label>
-            <div class="scale belly" id="endoScale">
-              <button data-v="0" title="Aucune douleur">😌</button>
-              <button data-v="1" title="Légère gêne">😕</button>
-              <button data-v="2" title="Inconfort modéré">😣</button>
-              <button data-v="3" title="Douleur forte">😖</button>
-              <button data-v="4" title="Très forte douleur">🤢</button>
-            </div>
-            <div class="sleepquality-label" id="endoLabel"></div>
-          </div>
+          <div id="customSymptomsBlocks"></div>
+          <button class="edit-only" onclick="_addCustomSymptom()" style="margin-top:6px;padding:5px 12px;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;">+ Ajouter un suivi santé</button>
         </div>
         <!-- Émotions manuelles -->
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
@@ -2887,6 +2867,32 @@
     </div>
     <div class="money-summary" id="moneySummary"></div>
     <div class="card" style="margin-bottom:18px;">
+      <!-- Panneau de gestion des catégories — visible uniquement en mode édition -->
+      <div class="edit-only block" style="margin-bottom:14px;padding:14px;background:var(--butter-soft);border-radius:14px;border:1.5px dashed #f5c842;">
+        <div style="font-size:13px;font-weight:700;color:#8a6700;margin-bottom:10px;">✏️ Gérer les catégories de dépenses et revenus</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;">💸 Dépenses</div>
+            <div id="financeCatList" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;"></div>
+            <div style="display:flex;gap:6px;">
+              <input type="text" id="newFinanceCatInput" placeholder="Nouvelle catégorie…" maxlength="40"
+                style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);"
+                onkeydown="if(event.key==='Enter')_addFinanceCat()" />
+              <button onclick="_addFinanceCat()" style="padding:6px 12px;border-radius:8px;border:none;background:var(--lavender);color:white;font-size:13px;cursor:pointer;font-family:inherit;">+</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;">💰 Revenus</div>
+            <div id="financeIncomeCatList" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;"></div>
+            <div style="display:flex;gap:6px;">
+              <input type="text" id="newFinanceIncomeCatInput" placeholder="Nouvelle catégorie…" maxlength="40"
+                style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);"
+                onkeydown="if(event.key==='Enter')_addFinanceIncomeCat()" />
+              <button onclick="_addFinanceIncomeCat()" style="padding:6px 12px;border-radius:8px;border:none;background:var(--mint);color:white;font-size:13px;cursor:pointer;font-family:inherit;">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <h2>Nouvelle transaction</h2>
       <div class="tx-form">
         <div class="type-toggle">
@@ -5760,13 +5766,7 @@ function renderWellbeing() {
   document.querySelectorAll("#energyScale button").forEach(b => b.classList.toggle("active", Number(b.dataset.v) === today.energy));
   const sqArr = _sqArray(today.sleepQuality);
   document.querySelectorAll("#sleepQualityScale button").forEach(b => b.classList.toggle("active", sqArr.includes(b.dataset.v)));
-  document.querySelectorAll("#bellyScale button").forEach(b => b.classList.toggle("active", Number(b.dataset.v) === (today.belly ?? -1)));
-  const bellyLbls = ["Ventre ok 😌","Légère gêne 😕","Inconfort 😣","Douleur 😖","Très douloureux 🤢"];
-  const bellyLbl = document.getElementById("bellyLabel");
-  if (bellyLbl) bellyLbl.textContent = today.belly != null ? bellyLbls[today.belly] || "" : "";
-  document.querySelectorAll("#endoScale button").forEach(b => b.classList.toggle("active", Number(b.dataset.v) === (today.endo ?? -1)));
-  const endoLbl = document.getElementById("endoLabel");
-  if (endoLbl) endoLbl.textContent = today.endo != null ? bellyLbls[today.endo] || "" : "";
+  renderCustomSymptoms();
   const sqLbl = document.getElementById("sleepQualityLabel");
   if (sqLbl) sqLbl.textContent = today.sleepQuality ? sleepQualityLabel(today.sleepQuality) : "";
 
@@ -5817,22 +5817,7 @@ function setupWellbeing() {
   document.querySelectorAll("#moodScale button").forEach(b => {
     b.onclick = () => { getToday().mood = Number(b.dataset.v); saveState(); renderTodayView(); };
   });
-  document.querySelectorAll("#bellyScale button").forEach(b => {
-    b.addEventListener("click", () => {
-      const v = Number(b.dataset.v);
-      const today = getToday();
-      today.belly = today.belly === v ? null : v;
-      saveState(); renderWellbeing();
-    });
-  });
-  document.querySelectorAll("#endoScale button").forEach(b => {
-    b.addEventListener("click", () => {
-      const v = Number(b.dataset.v);
-      const today = getToday();
-      today.endo = today.endo === v ? null : v;
-      saveState(); renderWellbeing();
-    });
-  });
+  // belly/endo scales now rendered dynamically in renderCustomSymptoms()
   document.querySelectorAll("#energyScale button").forEach(b => {
     b.onclick = () => { getToday().energy = Number(b.dataset.v); saveState(); renderTodayView(); };
   });
@@ -9503,6 +9488,78 @@ const CYCLE_COLORS = [
   {fill:"#c12a56",stroke:"#8c1a38"},
   {fill:"#8b0f38",stroke:"#5c0a24"},
 ];
+
+const CUSTOM_SYMPTOMS_DEFAULT = [
+  { id: "belly", name: "Mal de ventre", emoji: "🤰", subtitle: "estomac / intestins" },
+  { id: "endo",  name: "Endométriose",  emoji: "🩸", subtitle: "utérus" },
+];
+const _SYMPTOM_LBLS = ["Ok 😌","Légère gêne 😕","Inconfort 😣","Douleur 😖","Très douloureux 🤢"];
+function _getCustomSymptoms() {
+  return (state.customSymptoms && state.customSymptoms.length) ? state.customSymptoms : CUSTOM_SYMPTOMS_DEFAULT;
+}
+function renderCustomSymptoms() {
+  const container = document.getElementById("customSymptomsBlocks");
+  if (!container) return;
+  const today = getToday();
+  const syms = _getCustomSymptoms();
+  const inEditMode = document.body.classList.contains('edit-mode');
+  container.innerHTML = syms.map(s => {
+    const val = today[s.id] ?? null;
+    const lbl = val != null ? (_SYMPTOM_LBLS[val] || "") : "";
+    const btns = [0,1,2,3,4].map(v => `
+      <button onclick="_setSymptomValue('${s.id}',${v})"
+        style="background:none;border:1px solid ${val===v?'var(--lavender)':'var(--line)'};border-radius:8px;padding:5px 8px;cursor:pointer;font-size:16px;${val===v?'background:var(--lavender-soft);':''}"
+        title="${_SYMPTOM_LBLS[v]}">
+        ${["😌","😕","😣","😖","🤢"][v]}
+      </button>`).join("");
+    return `<div class="wb-block">
+      <label style="display:flex;align-items:center;gap:6px;">
+        ${s.emoji} ${escapeHtml(s.name)}
+        ${s.subtitle ? `<span style="font-weight:400;font-size:11px;color:var(--ink-softer);">${escapeHtml(s.subtitle)}</span>` : ""}
+        ${inEditMode ? `<span onclick="_deleteCustomSymptom('${s.id}')" style="margin-left:auto;font-size:11px;color:var(--ink-softer);cursor:pointer;opacity:0.6;" title="Supprimer ce suivi">🗑️</span>
+        <span onclick="_renameCustomSymptom('${s.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;opacity:0.6;" title="Renommer">✏️</span>` : ""}
+      </label>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">${btns}</div>
+      <div class="sleepquality-label">${lbl}</div>
+    </div>`;
+  }).join("");
+}
+function _setSymptomValue(id, v) {
+  const today = getToday();
+  today[id] = today[id] === v ? null : v;
+  saveState(); renderCustomSymptoms();
+}
+function _addCustomSymptom() {
+  const emoji = (prompt("Emoji du suivi :", "💊") || "").trim() || "💊";
+  const name = (prompt("Nom du suivi santé :", "") || "").trim();
+  if (!name) return;
+  const subtitle = (prompt("Sous-titre (optionnel, ex: localisation) :", "") || "").trim();
+  const id = "sym_" + name.toLowerCase().replace(/[^a-z0-9]/g,"_").slice(0,20) + "_" + Date.now();
+  if (!state.customSymptoms || !state.customSymptoms.length) state.customSymptoms = [...CUSTOM_SYMPTOMS_DEFAULT];
+  state.customSymptoms.push({ id, name, emoji, subtitle });
+  saveState(); renderCustomSymptoms();
+}
+function _deleteCustomSymptom(id) {
+  const syms = _getCustomSymptoms();
+  const s = syms.find(x => x.id === id);
+  if (!s || !confirm(`Supprimer le suivi « ${s.name} » ?`)) return;
+  if (!state.customSymptoms || !state.customSymptoms.length) state.customSymptoms = [...CUSTOM_SYMPTOMS_DEFAULT];
+  state.customSymptoms = state.customSymptoms.filter(x => x.id !== id);
+  saveState(); renderCustomSymptoms();
+}
+function _renameCustomSymptom(id) {
+  const syms = _getCustomSymptoms();
+  const s = syms.find(x => x.id === id);
+  if (!s) return;
+  const newName = (prompt("Nouveau nom :", s.name) || "").trim();
+  if (!newName) return;
+  const newEmoji = (prompt("Emoji :", s.emoji) || s.emoji).trim();
+  const newSub = (prompt("Sous-titre :", s.subtitle || "") || "").trim();
+  if (!state.customSymptoms || !state.customSymptoms.length) state.customSymptoms = [...CUSTOM_SYMPTOMS_DEFAULT];
+  const sym = state.customSymptoms.find(x => x.id === id);
+  if (sym) { sym.name = newName; sym.emoji = newEmoji || sym.emoji; sym.subtitle = newSub; }
+  saveState(); renderCustomSymptoms();
+}
 
 function renderCycle() {
   const d = getToday();
@@ -18953,7 +19010,7 @@ function renderPlants() {
         <div class="plant-row-actions">
           <span class="dom-status-badge ${s.cls}">${s.label}</span>
           <button class="dom-btn" onclick="waterPlant('${p.id}')">💧 Arroser</button>
-          <button class="dom-del" onclick="deletePlant('${p.id}')" title="Supprimer">✕</button>
+          <button class="dom-del edit-only" onclick="deletePlant('${p.id}')" title="Supprimer">✕</button>
         </div>
       </div>`).join("");
   // Auto-resize des textareas de notes — différé pour laisser le navigateur calculer les dimensions
@@ -19958,10 +20015,53 @@ function toggleShortcut(id, on) {
   renderShortcutsBar();
 }
 
+function _renderFinanceCatLists() {
+  const el = document.getElementById("financeCatList");
+  const el2 = document.getElementById("financeIncomeCatList");
+  if (el) el.innerHTML = (state.categories || []).map(c =>
+    `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--rose-soft);border-radius:20px;padding:3px 10px;font-size:12px;">
+      ${escapeHtml(c)}
+      <span onclick="_removeFinanceCat('${escapeHtml(c).replace(/'/g,"&#39;")}')" style="cursor:pointer;color:var(--ink-softer);font-size:10px;">✕</span>
+    </span>`).join("");
+  if (el2) el2.innerHTML = (state.incomeCategories || []).map(c =>
+    `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--mint-soft);border-radius:20px;padding:3px 10px;font-size:12px;">
+      ${escapeHtml(c)}
+      <span onclick="_removeFinanceIncomeCat('${escapeHtml(c).replace(/'/g,"&#39;")}')" style="cursor:pointer;color:var(--ink-softer);font-size:10px;">✕</span>
+    </span>`).join("");
+}
+function _addFinanceCat() {
+  const inp = document.getElementById("newFinanceCatInput");
+  const v = inp?.value.trim();
+  if (!v || (state.categories || []).includes(v)) { if (inp) inp.value = ""; return; }
+  if (!state.categories) state.categories = [];
+  state.categories.push(v);
+  inp.value = "";
+  saveState(); _renderFinanceCatLists(); renderMoney();
+}
+function _removeFinanceCat(c) {
+  state.categories = (state.categories || []).filter(x => x !== c);
+  saveState(); _renderFinanceCatLists(); renderMoney();
+}
+function _addFinanceIncomeCat() {
+  const inp = document.getElementById("newFinanceIncomeCatInput");
+  const v = inp?.value.trim();
+  if (!v || (state.incomeCategories || []).includes(v)) { if (inp) inp.value = ""; return; }
+  if (!state.incomeCategories) state.incomeCategories = [];
+  state.incomeCategories.push(v);
+  inp.value = "";
+  saveState(); _renderFinanceCatLists(); renderMoney();
+}
+function _removeFinanceIncomeCat(c) {
+  state.incomeCategories = (state.incomeCategories || []).filter(x => x !== c);
+  saveState(); _renderFinanceCatLists(); renderMoney();
+}
+
 function toggleEditMode() {
   document.body.classList.toggle('edit-mode');
   const btn = document.getElementById('editModeBtn');
   if (btn) btn.textContent = document.body.classList.contains('edit-mode') ? '✅ Terminer' : '✏️ Éditer';
+  _renderFinanceCatLists();
+  renderCustomSymptoms();
 }
 
 const WORK_TAB_DEFAULTS = { postdoc: "Postdoc", candidatures: "Candidatures", valorisation: "Valorisation", teaching: "Enseignement" };
