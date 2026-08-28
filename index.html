@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v943</title>
+<title>Mon Tableau de Vie 🌿 · v945</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5210,7 +5210,7 @@ const DEFAULT_STATE = {
   activities: [],
   categories: ["Alimentation", "Logement", "Transport", "Loisirs", "Santé", "Autre"],
   incomeCategories: ["Salaire", "Prime", "Remboursement", "Autre revenu"],
-  savingsCategories: ["Livret A", "LEP", "PEA", "Assurance vie"],
+  savingsCategories: [],
   candidatureTypes: [],
   contactRoles: ["Mentor", "Collaborateur", "Jury", "Rencontré en conf", "Famille", "Ami"],
   goals: [],
@@ -20978,13 +20978,8 @@ function applyTheme(id, persist = true) {
     if (chk)  chk.style.display  = t === id ? "" : "none";
     if (card) card.style.borderColor = t === id ? "var(--lavender)" : "var(--line)";
   });
-  // Re-rendre les éléments dont les couleurs sont calculées en JS (pas juste CSS)
-  if (typeof renderRings === "function") renderRings();
-  if (typeof renderTaskProgress === "function") renderTaskProgress();
-  if (typeof renderMoneyFlowChart === "function") renderMoneyFlowChart();
-  if (typeof renderSavings === "function") renderSavings();
-  if (typeof renderMoneyCatChart === "function") renderMoneyCatChart();
-  if (typeof renderMoneyCatAllChart === "function") renderMoneyCatAllChart();
+  // Re-rendre tout si l'utilisateur change de thème manuellement (pas au démarrage)
+  if (persist && typeof renderAll === "function") renderAll();
 }
 function openSettings(tab) {
   document.getElementById("nameInput").value = state.name || "";
@@ -21547,7 +21542,7 @@ function loadInitialData() {
   // ===== CATÉGORIES — merge in any missing defaults =====
   DEFAULT_STATE.categories.forEach(c => { if (!state.categories.includes(c)) state.categories.push(c); });
   DEFAULT_STATE.incomeCategories.forEach(c => { if (!state.incomeCategories.includes(c)) state.incomeCategories.push(c); });
-  DEFAULT_STATE.savingsCategories.forEach(c => { if (!state.savingsCategories.includes(c)) state.savingsCategories.push(c); });
+  // savingsCategories : pas de merge automatique — chaque utilisateur configure ses propres comptes épargne
 
   // ===== PROJETS POSTDOC =====
   state.work.postdocProjects.push(
