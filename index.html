@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v945</title>
+<title>Mon Tableau de Vie 🌿 · v947</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5282,17 +5282,8 @@ function migrate(s) {
   s.customHolidays = s.customHolidays || [];
   s.calEvents = s.calEvents || [];
   s.calSources = s.calSources || [];
-  // Migration : anciens utilisateurs sans customSymptoms → on leur remet les anciens défauts
-  if (!s.customSymptoms || !s.customSymptoms.length) {
-    const isExistingUser = s.history && Object.keys(s.history).length > 0;
-    if (isExistingUser && !s._symptomsMigrated) {
-      s.customSymptoms = [
-        { id: "belly", name: "Mal de ventre", emoji: "🤰", subtitle: "estomac / intestins", type: "scale" },
-        { id: "endo",  name: "Endométriose",  emoji: "🩸", subtitle: "utérus", type: "scale" },
-      ];
-      s._symptomsMigrated = true;
-    }
-  }
+  // Pas de symptoms par défaut — chaque utilisateur gère ses symptômes personnalisés via ses préférences
+  if (!s.customSymptoms) s.customSymptoms = [];
   // Migration : comptes externes nommés (Hors compte)
   if (!Array.isArray(s.externalAccounts)) s.externalAccounts = [{ id: "ext-default", name: "Hors compte", emoji: "🧾" }];
   // Migration : transactions external sans externalAccountId → compte par défaut
@@ -5500,17 +5491,7 @@ function migrate(s) {
   if (Array.isArray(s.work?.postdocProjects)) {
     const renames = { "p-seed-postdoc": "Postdoc", "p-seed-valo": "Valorisation", "p-seed-enseignement": "Enseignement", "p-seed-candidatures": "Candidatures", "p-seed-autre": "Autre", "p-seed-prixthese": "Prix de thèse" };
     s.work.postdocProjects.forEach(p => { if (renames[p.id]) p.name = renames[p.id]; });
-    // S'assure que les projets fixes existent — sauf si l'utilisateur les a supprimés volontairement
-    const deleted = s.work.deletedSeedIds || [];
-    if (!s.work.postdocProjects.find(p => p.id === "p-seed-candidatures") && !deleted.includes("p-seed-candidatures")) {
-      s.work.postdocProjects.push({ id: "p-seed-candidatures", name: "Candidatures", progress: 0, notes: "Candidatures MCF, MSCA, CNRS, ERC en cours." });
-    }
-    if (!s.work.postdocProjects.find(p => p.id === "p-seed-autre") && !deleted.includes("p-seed-autre")) {
-      s.work.postdocProjects.push({ id: "p-seed-autre", name: "Autre", progress: 0, notes: "Travail non categorise : jurys, soutenances blanches, formations, syndicat…" });
-    }
-    if (!s.work.postdocProjects.find(p => p.id === "p-seed-prixthese") && !deleted.includes("p-seed-prixthese")) {
-      s.work.postdocProjects.push({ id: "p-seed-prixthese", name: "Prix de thèse", progress: 0, notes: "Candidatures aux prix de thèse." });
-    }
+    // Anciens seeds supprimés — chaque utilisateur crée ses propres projets
   }
   // Migration : lier automatiquement les tâches MSCA/candidature au projet "Candidatures"
   if (Array.isArray(s.work?.postdocTasks) && Array.isArray(s.work?.postdocProjects)) {
