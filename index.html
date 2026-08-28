@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v949</title>
+<title>Mon Tableau de Vie 🌿 · v951</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5282,8 +5282,13 @@ function migrate(s) {
   s.customHolidays = s.customHolidays || [];
   s.calEvents = s.calEvents || [];
   s.calSources = s.calSources || [];
-  // Pas de symptoms par défaut — chaque utilisateur gère ses symptômes personnalisés via ses préférences
   if (!s.customSymptoms) s.customSymptoms = [];
+  // Nettoyage : retire les symptômes qui avaient été injectés par l'ancienne migration automatique
+  // Ils doivent venir uniquement du Firestore (compte Google) — pas du localStorage partagé
+  if (s._symptomsMigrated) {
+    s.customSymptoms = s.customSymptoms.filter(sym => sym.id !== "belly" && sym.id !== "endo");
+    delete s._symptomsMigrated;
+  }
   // Migration : comptes externes nommés (Hors compte)
   if (!Array.isArray(s.externalAccounts)) s.externalAccounts = [{ id: "ext-default", name: "Hors compte", emoji: "🧾" }];
   // Migration : transactions external sans externalAccountId → compte par défaut
@@ -21510,7 +21515,7 @@ function loadInitialData() {
   state.work.articles = state.work.articles.filter(a => !String(a.id || "").startsWith("ar-seed-"));
   state.work.communications = state.work.communications.filter(c => !String(c.id || "").startsWith("co-seed-"));
 
-  if (!state.name) state.name = "Alexandra";
+  // Le nom vient du compte Google (onAuthStateChanged) — ne pas écraser
   const now = new Date().toISOString();
 
   // ===== HABITUDES (remplace les défauts) =====
@@ -22328,6 +22333,8 @@ function _fbUpdateUI(user) {
       ? `<img src="${user.photoURL}" style="width:16px;height:16px;border-radius:50%;object-fit:cover;">`
       : `<div style="width:16px;height:16px;border-radius:50%;background:var(--lavender);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--ink);">${(user.displayName||user.email||"?")[0].toUpperCase()}</div>`;
     const firstName = (user.displayName || "").split(" ")[0] || user.email.split("@")[0];
+    // Auto-remplir state.name depuis Google si pas encore défini par l'utilisateur
+    if (!state.name && firstName) { state.name = firstName; saveState(); if (typeof renderAll === "function") { document.getElementById("greeting").textContent = getGreeting(); } }
     av.innerHTML = imgHtml + `<span style="font-size:13px;color:var(--ink);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${firstName}</span>`;
   } else {
     btn.style.display = "";
