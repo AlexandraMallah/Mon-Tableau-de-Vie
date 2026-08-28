@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v930</title>
+<title>Mon Tableau de Vie 🌿 · v931</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1906,8 +1906,16 @@
           <span id="routineTodayBadge" style="font-size:12px;color:var(--ink-soft);"></span>
         </div>
         <div id="routineTodayBlock"></div>
-        <!-- 💊 Pilule (habitude) -->
-        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);">
+        <!-- Toggles opt-in cycle/pilule (mode édition) -->
+        <div class="edit-only" style="margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bg-1);border:1px dashed var(--line);">
+          <div style="font-size:11px;font-weight:600;color:var(--ink-softer);letter-spacing:.05em;margin-bottom:8px;">🌸 CYCLE MENSTRUEL — activer le suivi :</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button onclick="_toggleFeature('pill')" id="featurePillBtn" style="padding:5px 12px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">💊 Suivi pilule</button>
+            <button onclick="_toggleFeature('cycle')" id="featureCycleBtn" style="padding:5px 12px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🩸 Suivi règles</button>
+          </div>
+        </div>
+        <!-- 💊 Pilule (opt-in) -->
+        <div id="pillSection" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:none;">
           <button id="pillBtn" onclick="togglePill()"
             style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:2px solid var(--line);background:white;cursor:pointer;font-family:inherit;transition:all 0.2s;text-align:left;">
             <span id="pillEmoji" style="font-size:22px;">💊</span>
@@ -1918,8 +1926,8 @@
             <span id="pillCheck" style="font-size:20px;opacity:0.3;">✓</span>
           </button>
         </div>
-        <!-- 🩸 Cycle menstruel -->
-        <div style="margin-top:10px;">
+        <!-- 🩸 Cycle menstruel (opt-in) -->
+        <div id="cycleSection" style="margin-top:10px;display:none;">
           <div id="cycleTrackerBtn"
             style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:2px solid var(--line);background:white;box-sizing:border-box;">
             <span style="font-size:22px;flex-shrink:0;">🩸</span>
@@ -5203,6 +5211,7 @@ const TYPE_COLORS = ["#c9b6f0", "#f7c9a3", "#b4d4f1", "#aee0c8", "#efb8c8", "#f5
 
 const DEFAULT_STATE = {
   name: "",
+  features: { pill: false, cycle: false },
   habits: [
     { id: "h-pas", name: "9000 pas", type: "numeric", target: 9000, unit: "pas" },
   ],
@@ -5619,19 +5628,21 @@ function migrate(s) {
     }
   } catch(migErr) { console.warn("[migration biblio]", migErr); }
 
-  // Migration : routines configurables — initialise state.routines depuis ROUTINES const
-  if (!s.routines) {
-    s.routines = {
-      matin: [
-        { id: "h-skincare-matin", label: "Skincare", emoji: "🧴" },
-        { id: "h-dents-matin",    label: "Brossage de dents", emoji: "🪥" },
-      ],
-      soir: [
-        { id: "h-skincare-soir", label: "Skincare", emoji: "🧴" },
-        { id: "h-dents-soir",    label: "Brossage de dents", emoji: "🪥" },
-        { id: "h-douche",        label: "Douche", emoji: "🚿" },
-      ]
-    };
+  // Migration : routines configurables
+  if (!s.routines) s.routines = { matin: [], soir: [] };
+  // Migration : features opt-in (pilule, cycle)
+  if (!s.features) s.features = { pill: false, cycle: false };
+  if (s.features.pill === undefined) s.features.pill = false;
+  if (s.features.cycle === undefined) s.features.cycle = false;
+  // Migration : auto-activer pilule si l'utilisateur a déjà des données pillTaken
+  if (!s.features.pill && s.history) {
+    const hasPillData = Object.values(s.history).some(d => d && d.pillTaken);
+    if (hasPillData) s.features.pill = true;
+  }
+  // Migration : auto-activer cycle si l'utilisateur a des données cycle
+  if (!s.features.cycle && s.history) {
+    const hasCycleData = Object.values(s.history).some(d => d && d.cycleFlow != null && d.cycleFlow > 0);
+    if (hasCycleData) s.features.cycle = true;
   }
 
   // Migration : supprimer les comptes épargne vides inutiles
@@ -10280,7 +10291,28 @@ function renderWeightGoalStatus() {
   else el.textContent = `✅ ${current} kg · objectif dépassé de ${Math.abs(diff).toFixed(1)} kg`;
 }
 
+function _toggleFeature(key) {
+  if (!state.features) state.features = {};
+  state.features[key] = !state.features[key];
+  saveState();
+  _syncFeatureSections();
+}
+function _syncFeatureSections() {
+  const f = state.features || {};
+  const pillSec  = document.getElementById("pillSection");
+  const cycleSec = document.getElementById("cycleSection");
+  const pillBtn2  = document.getElementById("featurePillBtn");
+  const cycleBtn2 = document.getElementById("featureCycleBtn");
+  if (pillSec)  pillSec.style.display  = f.pill  ? "" : "none";
+  if (cycleSec) cycleSec.style.display = f.cycle ? "" : "none";
+  if (pillBtn2)  { pillBtn2.style.background  = f.pill  ? "var(--lavender-soft)" : "white"; pillBtn2.style.borderColor  = f.pill  ? "var(--lavender)" : "var(--line)"; pillBtn2.style.color = f.pill  ? "var(--ink)" : "var(--ink-soft)"; }
+  if (cycleBtn2) { cycleBtn2.style.background = f.cycle ? "var(--lavender-soft)" : "white"; cycleBtn2.style.borderColor = f.cycle ? "var(--lavender)" : "var(--line)"; cycleBtn2.style.color = f.cycle ? "var(--ink)" : "var(--ink-soft)"; }
+  // Santé : pilule card
+  const pillCard = document.getElementById("healthPillCard");
+  if (pillCard) pillCard.style.display = f.pill ? "" : "none";
+}
 function renderPill() {
+  _syncFeatureSections();
   const d = getToday();
   const taken = !!d.pillTaken;
   const btn   = document.getElementById("pillBtn");
@@ -10478,6 +10510,7 @@ function _renameCustomSymptom(id) {
 }
 
 function renderCycle() {
+  _syncFeatureSections();
   const d = getToday();
   const sel = d.cycleFlow || 0;
   const container = document.getElementById("cycleDrops");
