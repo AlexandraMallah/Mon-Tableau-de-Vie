@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v875</title>
+<title>Mon Tableau de Vie 🌿 · v877</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -3858,6 +3858,108 @@
   </div>
 </div>
 
+<!-- Modal confirmation générique -->
+<div class="modal-bg" id="confirmModal" onclick="event.target===this&&_closeConfirm(false)">
+  <div class="modal" style="max-width:360px;padding:28px 24px;text-align:center;" onclick="event.stopPropagation()">
+    <div id="confirmIcon" style="font-size:36px;margin-bottom:10px;">🗑️</div>
+    <div id="confirmMsg" style="font-size:15px;color:var(--ink);line-height:1.5;margin-bottom:20px;"></div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="_closeConfirm(false)" style="padding:10px 22px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button id="confirmOkBtn" onclick="_closeConfirm(true)" style="padding:10px 22px;border-radius:12px;border:none;background:#f08080;color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal saisie texte générique -->
+<div class="modal-bg" id="promptModal" onclick="event.target===this&&_closePromptModal(false)">
+  <div class="modal" style="max-width:380px;padding:28px 24px;" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 id="promptModalTitle" style="margin:0;font-size:16px;"></h3>
+      <button onclick="_closePromptModal(false)" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
+    </div>
+    <input type="text" id="promptModalInput" style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;margin-bottom:16px;" onkeydown="if(event.key==='Enter')_closePromptModal(true)" />
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="_closePromptModal(false)" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button onclick="_closePromptModal(true)" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ajout émotion -->
+<div class="modal-bg" id="emotionModal" onclick="event.target===this&&_closeEmotionModal()">
+  <div class="modal" style="max-width:440px;padding:28px 24px;" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h3 style="margin:0;font-size:18px;">✨ Nouvelle émotion</h3>
+      <button onclick="_closeEmotionModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:16px;">
+      <div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Emoji</div>
+        <input type="text" id="emModalEmoji" maxlength="4" placeholder="😊"
+          style="width:56px;padding:10px 6px;border:1.5px solid var(--line);border-radius:12px;font-size:24px;text-align:center;font-family:inherit;background:var(--bg-1);box-sizing:border-box;" />
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom de l'émotion</div>
+        <input type="text" id="emModalLabel" placeholder="ex : Épanouie, Nostalgique, Fière…" maxlength="30"
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;" onkeydown="if(event.key==='Enter')_saveEmotionModal()" />
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:8px;">SUGGESTIONS RAPIDES</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;" id="emEmojiGrid"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="_closeEmotionModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button onclick="_saveEmotionModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ajout/édition habitude -->
+<div class="modal-bg" id="habitModal" onclick="event.target===this&&_closeHabitModal()">
+  <div class="modal" style="max-width:440px;padding:28px 24px;" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h3 id="habitModalTitle" style="margin:0;font-size:18px;">✨ Nouvelle habitude</h3>
+      <button onclick="_closeHabitModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom de l'habitude</div>
+      <input type="text" id="habitModalName" placeholder="ex : Méditation, Lecture, Eau…" maxlength="40"
+        style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;" />
+    </div>
+    <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:8px;">TYPE</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <button onclick="_selectHabitType('boolean')" id="habitType-boolean" class="sym-type-btn active"
+        style="padding:12px;border-radius:14px;border:2px solid var(--lavender);background:var(--lavender-soft);cursor:pointer;font-family:inherit;text-align:left;">
+        <div style="font-size:20px;margin-bottom:4px;">☐ ✅</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink);">Oui / Non</div>
+        <div style="font-size:11px;color:var(--ink-soft);">Fait ou pas fait</div>
+      </button>
+      <button onclick="_selectHabitType('numeric')" id="habitType-numeric" class="sym-type-btn"
+        style="padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--bg-1);cursor:pointer;font-family:inherit;text-align:left;">
+        <div style="font-size:20px;margin-bottom:4px;">🔢</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink);">Objectif chiffré</div>
+        <div style="font-size:11px;color:var(--ink-soft);">ex : 8000 pas, 2 L d'eau</div>
+      </button>
+    </div>
+    <div id="habitNumericRow" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Objectif</div>
+        <input type="number" id="habitModalTarget" min="1" placeholder="ex : 8000"
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;" />
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Unité</div>
+        <input type="text" id="habitModalUnit" placeholder="ex : pas, L, min" maxlength="20"
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;" />
+      </div>
+    </div>
+    <input type="hidden" id="habitModalId" value="" />
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="_closeHabitModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button onclick="_saveHabitModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal ajout suivi santé -->
 <div class="modal-bg" id="symptomModal" onclick="event.target===this&&_closeSymptomModal()">
   <div class="modal" style="max-width:480px;padding:28px 24px;" onclick="event.stopPropagation()">
@@ -5473,21 +5575,41 @@ const EMOTIONS_DEFAULT = [
   { id: "triste",     label: "Triste",     emoji: "😢" },
 ];
 function _getEmotions() { return state.emotions && state.emotions.length ? state.emotions : EMOTIONS_DEFAULT; }
+const _EM_EMOJIS = [
+  ["😊","Contente"],["🎉","Excitée"],["🔥","Motivée"],["💪","Confiante"],["🌿","Sereine"],["🥰","Amoureuse"],
+  ["😌","Paisible"],["✨","Légère"],["🎶","Joyeuse"],["💡","Inspirée"],["🤩","Émerveillée"],["🌸","Épanouie"],
+  ["😢","Triste"],["😤","Irritée"],["😡","En colère"],["🌀","Stressée"],["😴","Fatiguée"],["🤒","Malade"],
+  ["💔","Blessée"],["😰","Anxieuse"],["😶","Vide"],["😔","Mélancolique"],["🫥","Absente"],["😑","Neutre"]
+];
 function _addEmotion() {
-  const emoji = prompt("Emoji de l'émotion :", "😌");
-  if (emoji === null) return;
-  const label = prompt("Nom de l'émotion :", "");
-  if (!label || !label.trim()) return;
+  document.getElementById("emModalEmoji").value = "😊";
+  document.getElementById("emModalLabel").value = "";
+  const grid = document.getElementById("emEmojiGrid");
+  if (grid) grid.innerHTML = _EM_EMOJIS.map(([em,lbl]) =>
+    `<span onclick="document.getElementById('emModalEmoji').value='${em}';document.getElementById('emModalLabel').value=document.getElementById('emModalLabel').value||'${lbl}'"
+      title="${lbl}" style="cursor:pointer;font-size:22px;padding:4px 6px;border-radius:8px;border:1.5px solid transparent;transition:background 0.15s;"
+      onmouseover="this.style.background='var(--lavender-soft)'" onmouseout="this.style.background='transparent'">${em}</span>`
+  ).join("");
+  document.getElementById("emotionModal").style.display = "flex";
+  setTimeout(() => document.getElementById("emModalLabel").focus(), 50);
+}
+function _closeEmotionModal() { document.getElementById("emotionModal").style.display = "none"; }
+function _saveEmotionModal() {
+  const emoji = (document.getElementById("emModalEmoji").value || "").trim() || "😶";
+  const label = (document.getElementById("emModalLabel").value || "").trim();
+  if (!label) { document.getElementById("emModalLabel").focus(); return; }
   if (!state.emotions) state.emotions = [...EMOTIONS_DEFAULT];
-  state.emotions.push({ id: "em" + Date.now(), label: label.trim(), emoji: emoji.trim() || "😶" });
-  saveState(); renderEmotionGrid();
+  state.emotions.push({ id: "em" + Date.now(), label, emoji });
+  saveState(); renderEmotionGrid(); _closeEmotionModal();
 }
 function _deleteEmotion(id) {
   if (!state.emotions) state.emotions = [...EMOTIONS_DEFAULT];
   const e = state.emotions.find(x => x.id === id);
-  if (!e || !confirm(`Supprimer l'émotion « ${e.label} » ?`)) return;
-  state.emotions = state.emotions.filter(x => x.id !== id);
-  saveState(); renderEmotionGrid();
+  if (!e) return;
+  _showConfirm(`Supprimer l'émotion « ${e.label} » ?`, () => {
+    state.emotions = state.emotions.filter(x => x.id !== id);
+    saveState(); renderEmotionGrid();
+  });
 }
 const EMOTIONS_LIST = EMOTIONS_DEFAULT; // alias de compatibilité
 
@@ -5799,44 +5921,51 @@ function renderHabits() {
       </div>`;
   }).join("");
 }
-function _addHabit() {
-  const name = (prompt("Nom de l'habitude :", "") || "").trim();
-  if (!name) return;
-  const typeChoice = prompt(
-    "Type ?\n1 — Numérique (ex: 9000 pas, 30 min)\n2 — Booléen (case à cocher ✓/✗)\n\nTape 1 ou 2 :", "1"
-  );
-  if (typeChoice === null) return;
-  const isNumeric = typeChoice.trim() === "1";
-  let target = 1, unit = "";
-  if (isNumeric) {
-    const t = prompt("Objectif (nombre) :", "10");
-    if (t === null) return;
-    target = Number(t) || 10;
-    unit = (prompt("Unité (ex: pas, min, verres, kcal…) :", "") || "").trim();
-  }
-  const id = "h-custom-" + Date.now();
-  state.habits.push({ id, name, type: isNumeric ? "numeric" : "boolean", target, unit });
-  saveState(); renderHabits();
+let _habitSelectedType = "boolean";
+function _selectHabitType(type) {
+  _habitSelectedType = type;
+  ["boolean","numeric"].forEach(t => {
+    const b = document.getElementById("habitType-" + t);
+    if (b) { b.style.borderColor = t===type?"var(--lavender)":"var(--line)"; b.style.background = t===type?"var(--lavender-soft)":"var(--bg-1)"; }
+  });
+  document.getElementById("habitNumericRow").style.display = type === "numeric" ? "grid" : "none";
 }
-function _editHabit(id) {
-  const h = state.habits.find(x => x.id === id);
-  if (!h) return;
-  const name = (prompt("Nom :", h.name) || "").trim();
-  if (!name) return;
-  h.name = name;
-  if (h.type === "numeric") {
-    const t = prompt("Objectif :", h.target);
-    if (t !== null) h.target = Number(t) || h.target;
-    const u = prompt("Unité :", h.unit || "");
-    if (u !== null) h.unit = u.trim();
-  }
-  saveState(); renderHabits();
+function _openHabitModal(id) {
+  const h = id ? state.habits.find(x => x.id === id) : null;
+  document.getElementById("habitModalTitle").textContent = h ? "✏️ Modifier l'habitude" : "✨ Nouvelle habitude";
+  document.getElementById("habitModalId").value = id || "";
+  document.getElementById("habitModalName").value = h ? h.name : "";
+  document.getElementById("habitModalTarget").value = h ? h.target : "";
+  document.getElementById("habitModalUnit").value = h ? (h.unit || "") : "";
+  _selectHabitType(h ? h.type : "boolean");
+  document.getElementById("habitModal").style.display = "flex";
+  setTimeout(() => document.getElementById("habitModalName").focus(), 50);
 }
+function _closeHabitModal() { document.getElementById("habitModal").style.display = "none"; }
+function _saveHabitModal() {
+  const name = (document.getElementById("habitModalName").value || "").trim();
+  if (!name) { document.getElementById("habitModalName").focus(); return; }
+  const type = _habitSelectedType || "boolean";
+  const target = type === "numeric" ? (Number(document.getElementById("habitModalTarget").value) || 10) : 1;
+  const unit = type === "numeric" ? (document.getElementById("habitModalUnit").value || "").trim() : "";
+  const existingId = document.getElementById("habitModalId").value;
+  if (existingId) {
+    const h = state.habits.find(x => x.id === existingId);
+    if (h) { h.name = name; h.type = type; h.target = target; h.unit = unit; }
+  } else {
+    state.habits.push({ id: "h-custom-" + Date.now(), name, type, target, unit });
+  }
+  saveState(); renderHabits(); _closeHabitModal();
+}
+function _addHabit() { _openHabitModal(null); }
+function _editHabit(id) { _openHabitModal(id); }
 function _deleteHabit(id) {
   const h = state.habits.find(x => x.id === id);
-  if (!h || !confirm(`Supprimer l'habitude « ${h.name} » ?`)) return;
-  state.habits = state.habits.filter(x => x.id !== id);
-  saveState(); renderHabits();
+  if (!h) return;
+  _showConfirm(`Supprimer l'habitude « ${h.name} » ?`, () => {
+    state.habits = state.habits.filter(x => x.id !== id);
+    saveState(); renderHabits();
+  });
 }
 function toggleHabit(id) {
   const h = state.habits.find(x => x.id === id);
@@ -6525,9 +6654,11 @@ function admSaveMission() {
   saveState(); admCloseMission(); admRenderBudget();
 }
 function admDeleteMission() {
-  if (!_admMissionId || !confirm("Supprimer cette mission ?")) return;
-  state.admin.missions = state.admin.missions.filter(function(x){ return x.id !== _admMissionId; });
-  saveState(); admCloseMission(); admRenderBudget();
+  if (!_admMissionId) return;
+  _showConfirm("Supprimer cette mission ?", () => {
+    state.admin.missions = state.admin.missions.filter(function(x){ return x.id !== _admMissionId; });
+    saveState(); admCloseMission(); admRenderBudget();
+  });
 }
 
 /* -- Abonnement CRUD -- */
@@ -6574,15 +6705,19 @@ admSaveMission = function() {
 admDeleteMission = function() {
   var modal = document.getElementById("admMissionModal");
   if (modal.dataset.mode === "abo") {
+    if (!_admAboId) return;
     modal.dataset.mode = "";
-    if (!_admAboId || !confirm("Supprimer ?")) return;
-    state.admin.abonnement = state.admin.abonnement.filter(function(x){ return x.id !== _admAboId; });
-    saveState(); admCloseMission(); admRenderBudget();
+    _showConfirm("Supprimer ?", () => {
+      state.admin.abonnement = state.admin.abonnement.filter(function(x){ return x.id !== _admAboId; });
+      saveState(); admCloseMission(); admRenderBudget();
+    });
     return;
   }
-  if (!_admMissionId || !confirm("Supprimer cette mission ?")) return;
-  state.admin.missions = state.admin.missions.filter(function(x){ return x.id !== _admMissionId; });
-  saveState(); admCloseMission(); admRenderBudget();
+  if (!_admMissionId) return;
+  _showConfirm("Supprimer cette mission ?", () => {
+    state.admin.missions = state.admin.missions.filter(function(x){ return x.id !== _admMissionId; });
+    saveState(); admCloseMission(); admRenderBudget();
+  });
 };
 
 /* -- Conges CRUD -- */
@@ -6653,9 +6788,11 @@ function admSaveConge() {
   saveState(); admCloseConge(); admRenderConges();
 }
 function admDeleteConge() {
-  if (!_admCongeId || !confirm("Supprimer cette periode ?")) return;
-  state.admin.congesPeriodes = state.admin.congesPeriodes.filter(function(x){ return x.id !== _admCongeId; });
-  saveState(); admCloseConge(); admRenderConges();
+  if (!_admCongeId) return;
+  _showConfirm("Supprimer cette période ?", () => {
+    state.admin.congesPeriodes = state.admin.congesPeriodes.filter(function(x){ return x.id !== _admCongeId; });
+    saveState(); admCloseConge(); admRenderConges();
+  });
 }
 /* ========= FIN GESTION ADMINISTRATIVE ========= */
 
@@ -6710,10 +6847,10 @@ function addCourse() {
   renderTeachingHistory();
 }
 function deleteCourse(id) {
-  if (!confirm("Supprimer ce cours ?")) return;
-  state.work.teachingCourses = (state.work.teachingCourses || []).filter(c => c.id !== id);
-  saveState();
-  renderTeachingHistory();
+  _showConfirm("Supprimer ce cours ?", () => {
+    state.work.teachingCourses = (state.work.teachingCourses || []).filter(c => c.id !== id);
+    saveState(); renderTeachingHistory();
+  });
 }
 
 function renderAutreView() {
@@ -6940,30 +7077,23 @@ function _recordDeletedSeed(id) {
 function deleteProject() {
   const id = document.getElementById("projectModalId").value;
   if (!id) return;
-  if (!confirm("Supprimer cette section ? Les tâches liées resteront mais sans section assignée.")) return;
-  _recordDeletedSeed(id);
-  state.work.postdocProjects = state.work.postdocProjects.filter(p => p.id !== id);
-  state.work.postdocTasks.forEach(t => { if (t.projectId === id) t.projectId = ""; });
-  saveState();
-  closeProjectModal();
-  renderProjects();
-  renderTasks();
-  updateProjectSelect();
-  renderCustomSectionChips();
+  _showConfirm("Supprimer cette section ?<br><small style='opacity:0.7'>Les tâches liées resteront mais sans section assignée.</small>", () => {
+    _recordDeletedSeed(id);
+    state.work.postdocProjects = state.work.postdocProjects.filter(p => p.id !== id);
+    state.work.postdocTasks.forEach(t => { if (t.projectId === id) t.projectId = ""; });
+    saveState(); closeProjectModal(); renderProjects(); renderTasks(); updateProjectSelect(); renderCustomSectionChips();
+  });
 }
 function deleteCustomSection(id) {
   if (!id) return;
   const p = state.work.postdocProjects.find(x => x.id === id);
   if (!p) return;
-  if (!confirm(`Supprimer la section "${p.name}" ? Les tâches liées resteront mais sans section.`)) return;
-  _recordDeletedSeed(id);
-  state.work.postdocProjects = state.work.postdocProjects.filter(x => x.id !== id);
-  state.work.postdocTasks.forEach(t => { if (t.projectId === id) t.projectId = ""; });
-  saveState();
-  renderProjects();
-  renderTasks();
-  updateProjectSelect();
-  renderCustomSectionChips();
+  _showConfirm(`Supprimer la section « ${p.name} » ?<br><small style='opacity:0.7'>Les tâches liées resteront mais sans section.</small>`, () => {
+    _recordDeletedSeed(id);
+    state.work.postdocProjects = state.work.postdocProjects.filter(x => x.id !== id);
+    state.work.postdocTasks.forEach(t => { if (t.projectId === id) t.projectId = ""; });
+    saveState(); renderProjects(); renderTasks(); updateProjectSelect(); renderCustomSectionChips();
+  });
 }
 function renderCustomSectionChips() {
   const el = document.getElementById("customSectionChips");
@@ -7544,16 +7674,13 @@ function saveTaskEdit() {
 }
 function deleteTaskFromModal() {
   const id = document.getElementById("taskEditId").value;
-  if (!id || !confirm("Supprimer cette tâche ?")) return;
-  state.work.postdocTasks = state.work.postdocTasks.filter(t => t.id !== id);
-  saveState();
-  closeTaskEditModal();
-  renderTasks();
-  renderTaskBilan();
-  renderProjects();
-  renderCandidatures();
-  renderCalendar();
-  updateWorkTabBadges();
+  if (!id) return;
+  _showConfirm("Supprimer cette tâche ?", () => {
+    state.work.postdocTasks = state.work.postdocTasks.filter(t => t.id !== id);
+    saveState();
+    closeTaskEditModal();
+    renderTasks(); renderTaskBilan(); renderProjects(); renderCandidatures(); renderCalendar(); updateWorkTabBadges();
+  });
 }
 
 /* ========= WORK :: CANDIDATURES (KANBAN) ========= */
@@ -7669,11 +7796,11 @@ function saveCand() {
 }
 function deleteCand() {
   const id = document.getElementById("candModalId").value;
-  if (!id || !confirm("Supprimer cette candidature ?")) return;
-  state.work.candidatures = state.work.candidatures.filter(c => c.id !== id);
-  saveState();
-  closeCandModal();
-  renderCandidatures();
+  if (!id) return;
+  _showConfirm("Supprimer cette candidature ?", () => {
+    state.work.candidatures = state.work.candidatures.filter(c => c.id !== id);
+    saveState(); closeCandModal(); renderCandidatures();
+  });
 }
 
 /* ========= WORK :: ARTICLES ========= */
@@ -7758,11 +7885,11 @@ function saveArticle() {
 }
 function deleteArticle() {
   const id = document.getElementById("articleModalId").value;
-  if (!id || !confirm("Supprimer cet article ?")) return;
-  state.work.articles = state.work.articles.filter(a => a.id !== id);
-  saveState();
-  closeArticleModal();
-  renderArticles();
+  if (!id) return;
+  _showConfirm("Supprimer cet article ?", () => {
+    state.work.articles = state.work.articles.filter(a => a.id !== id);
+    saveState(); closeArticleModal(); renderArticles();
+  });
 }
 
 /* ========= WORK :: COMMUNICATIONS ========= */
@@ -7855,11 +7982,11 @@ function saveComm() {
 }
 function deleteComm() {
   const id = document.getElementById("commModalId").value;
-  if (!id || !confirm("Supprimer cette communication ?")) return;
-  state.work.communications = state.work.communications.filter(c => c.id !== id);
-  saveState();
-  closeCommModal();
-  renderCommunications();
+  if (!id) return;
+  _showConfirm("Supprimer cette communication ?", () => {
+    state.work.communications = state.work.communications.filter(c => c.id !== id);
+    saveState(); closeCommModal(); renderCommunications();
+  });
 }
 
 
@@ -8017,9 +8144,10 @@ function _cancelActivityForm() {
 function _deleteActivity(id) {
   const a = state.activities.find(x => x.id === id);
   if (!a) return;
-  if (!confirm(`Supprimer l'activité « ${a.name} » ?\nTon historique de séances sera conservé.`)) return;
-  state.activities = state.activities.filter(x => x.id !== id);
-  saveState(); renderActivities();
+  _showConfirm(`Supprimer l'activité « ${a.name} » ?<br><small style="opacity:0.7">Ton historique de séances sera conservé.</small>`, () => {
+    state.activities = state.activities.filter(x => x.id !== id);
+    saveState(); renderActivities();
+  });
 }
 function activityWeekTotal(id) {
   return currentWeekDates().reduce((sum, d) => sum + (state.history[todayKey(d)]?.activities?.[id] ? 1 : 0), 0);
@@ -9380,10 +9508,12 @@ function saveFoodEntry() {
 
 function deleteFoodEntry() {
   const id = document.getElementById("foodEntryId").value;
-  if (!id || !confirm("Supprimer cette entrée ?")) return;
-  const d = getToday();
-  if (d.foodLog) d.foodLog = d.foodLog.filter(x => x.id !== id);
-  saveState(); closeFoodEntry(); renderFoodLog();
+  if (!id) return;
+  _showConfirm("Supprimer cette entrée ?", () => {
+    const d = getToday();
+    if (d.foodLog) d.foodLog = d.foodLog.filter(x => x.id !== id);
+    saveState(); closeFoodEntry(); renderFoodLog();
+  });
 }
 
 function setFoodMood(emoji) {
@@ -9526,14 +9656,13 @@ function renderFoodLog() {
 
 function editCalLimit() {
   const current = state.health?.dailyCalLimit || 1500;
-  const v = prompt('Objectif calorique journalier (kcal) :', current);
-  if (!v) return;
-  const n = parseInt(v);
-  if (isNaN(n) || n < 500 || n > 10000) { alert('Valeur invalide (500-10000 kcal)'); return; }
-  if (!state.health) state.health = {};
-  state.health.dailyCalLimit = n;
-  saveState();
-  renderFoodLog();
+  _showPrompt("Objectif calorique journalier (kcal)", current, v => {
+    const n = parseInt(v);
+    if (isNaN(n) || n < 500 || n > 10000) { showToast("⚠️ Valeur invalide (500-10000 kcal)"); return; }
+    if (!state.health) state.health = {};
+    state.health.dailyCalLimit = n;
+    saveState(); renderFoodLog();
+  }, "number");
 }
 
 function saveWeightGoal() {
@@ -9673,7 +9802,9 @@ let _symSelectedType = "scale";
 const _SYM_EMOJIS = ["💊","🩸","🤰","🧠","💉","🩹","🌡️","😴","🫁","🦷","🏃","💪","🤒","🤢","😵","❤️","🫀","🦴","👁️","👂","🤧","🤕","💆","🍃"];
 
 function _addCustomSymptom() {
+  _editSymptomId = null;
   _symSelectedType = "scale";
+  document.querySelector("#symptomModal h3").textContent = "✨ Nouveau suivi santé";
   document.getElementById("symModalEmoji").value = "💊";
   document.getElementById("symModalName").value = "";
   document.getElementById("symModalSubtitle").value = "";
@@ -9713,6 +9844,12 @@ function _saveSymptomModal() {
   const subtitle = (document.getElementById("symModalSubtitle").value || "").trim();
   const type = _symSelectedType || "scale";
   const unit = type === "number" ? (document.getElementById("symModalUnit").value || "").trim() : "";
+  if (!state.customSymptoms || !state.customSymptoms.length) state.customSymptoms = [...CUSTOM_SYMPTOMS_DEFAULT];
+  if (_editSymptomId) {
+    const sym = state.customSymptoms.find(x => x.id === _editSymptomId);
+    if (sym) { sym.name = name; sym.emoji = emoji; sym.subtitle = subtitle; sym.type = type; sym.unit = unit; }
+    saveState(); renderCustomSymptoms(); _closeSymptomModal(); return;
+  }
   const id = "sym_" + name.toLowerCase().replace(/[^a-z0-9]/g,"_").slice(0,20) + "_" + Date.now();
   if (!state.customSymptoms || !state.customSymptoms.length) state.customSymptoms = [...CUSTOM_SYMPTOMS_DEFAULT];
   state.customSymptoms.push({ id, name, emoji, subtitle, type, unit });
@@ -9722,23 +9859,30 @@ function _saveSymptomModal() {
 function _deleteCustomSymptom(id) {
   const syms = _getCustomSymptoms();
   const s = syms.find(x => x.id === id);
-  if (!s || !confirm(`Supprimer le suivi « ${s.name} » ?`)) return;
-  if (!state.customSymptoms || !state.customSymptoms.length) state.customSymptoms = [...CUSTOM_SYMPTOMS_DEFAULT];
-  state.customSymptoms = state.customSymptoms.filter(x => x.id !== id);
-  saveState(); renderCustomSymptoms();
+  if (!s) return;
+  _showConfirm(`Supprimer le suivi « ${s.name} » ?`, () => {
+    if (!state.customSymptoms || !state.customSymptoms.length) state.customSymptoms = [...CUSTOM_SYMPTOMS_DEFAULT];
+    state.customSymptoms = state.customSymptoms.filter(x => x.id !== id);
+    saveState(); renderCustomSymptoms();
+  });
 }
+let _editSymptomId = null;
 function _renameCustomSymptom(id) {
   const syms = _getCustomSymptoms();
   const s = syms.find(x => x.id === id);
   if (!s) return;
-  const newName = (prompt("Nouveau nom :", s.name) || "").trim();
-  if (!newName) return;
-  const newEmoji = (prompt("Emoji :", s.emoji) || s.emoji).trim();
-  const newSub = (prompt("Sous-titre :", s.subtitle || "") || "").trim();
-  if (!state.customSymptoms || !state.customSymptoms.length) state.customSymptoms = [...CUSTOM_SYMPTOMS_DEFAULT];
-  const sym = state.customSymptoms.find(x => x.id === id);
-  if (sym) { sym.name = newName; sym.emoji = newEmoji || sym.emoji; sym.subtitle = newSub; }
-  saveState(); renderCustomSymptoms();
+  _editSymptomId = id;
+  document.getElementById("symModalEmoji").value = s.emoji || "💊";
+  document.getElementById("symModalName").value = s.name;
+  document.getElementById("symModalSubtitle").value = s.subtitle || "";
+  document.getElementById("symModalUnit").value = s.unit || "";
+  _selectSymType(s.type || "scale");
+  const sugg = document.getElementById("symEmojiSuggestions");
+  if (sugg) sugg.innerHTML = _SYM_EMOJIS.map(e =>
+    `<span onclick="document.getElementById('symModalEmoji').value='${e}'" style="cursor:pointer;font-size:22px;padding:2px;" title="${e}">${e}</span>`
+  ).join("");
+  document.querySelector("#symptomModal h3").textContent = "✏️ Modifier le suivi";
+  document.getElementById("symptomModal").style.display = "flex";
 }
 
 function renderCycle() {
@@ -10751,24 +10895,25 @@ function onTxCategoryChange() {
   const list = _activeTxCatList();
   if (!list) return;
   if (sel.value === "__newcat__") {
-    const name = (prompt("Nom de la nouvelle catégorie :") || "").trim();
-    if (name && !list.includes(name)) { list.push(name); saveState(); }
-    populateTxCategories();
-    sel.value = (name && list.includes(name)) ? name : (list[0] || "");
+    _showPrompt("Nom de la nouvelle catégorie", "", name => {
+      if (name && !list.includes(name)) { list.push(name); saveState(); }
+      populateTxCategories();
+      sel.value = (name && list.includes(name)) ? name : (list[0] || "");
+    });
+    sel.value = list[0] || "";
   } else if (sel.value === "__renamecat__") {
     openRenameCatModal(_activeTxCatList());
     populateTxCategories();
     sel.value = list[0] || "";
   } else if (sel.value === "__delcat__") {
     if (!list.length) { populateTxCategories(); return; }
-    const menu = list.map((c, i) => `${i + 1}. ${c}`).join("\n");
-    const v = prompt("Quelle catégorie supprimer ? Tape son numéro :\n\n" + menu);
-    const idx = parseInt(v) - 1;
-    if (idx >= 0 && idx < list.length) {
-      const removed = list[idx];
-      if (confirm(`Supprimer la catégorie « ${removed} » ?\n(les transactions existantes ne changent pas)`)) { list.splice(idx, 1); saveState(); }
+    const cur = sel.dataset.curval || list[0];
+    const idx = list.indexOf(cur);
+    if (idx >= 0) {
+      _showConfirm(`Supprimer la catégorie « ${cur} » ?<br><small style='opacity:0.7'>Les transactions existantes ne changent pas.</small>`, () => {
+        list.splice(idx, 1); saveState(); populateTxCategories(); sel.value = list[0] || "";
+      });
     }
-    populateTxCategories();
     sel.value = list[0] || "";
   }
 }
@@ -11269,12 +11414,12 @@ function editClaimedAmount(ids) {
   if (!txs.length) return;
   const fromClaims = txs.reduce((s, t) => s + (t.reimbClaimedAmount != null ? t.reimbClaimedAmount : 0), 0);
   const current = fromClaims > 0 ? fromClaims : txs.reduce((s, t) => s + t.amount, 0);
-  const v = prompt("Montant qui va être remboursé (€) :", current.toFixed(2));
-  if (v === null) return;
-  const amt = parseFloat((v + "").replace(",", "."));
-  if (isNaN(amt)) { alert("Montant invalide."); return; }
-  txs.forEach((t, i) => { t.reimbClaimedAmount = (i === 0) ? amt : null; });
-  saveState(); renderMoney();
+  _showPrompt("Montant à rembourser (€)", current.toFixed(2), v => {
+    const amt = parseFloat((v + "").replace(",", "."));
+    if (isNaN(amt)) { showToast("⚠️ Montant invalide."); return; }
+    txs.forEach((t, i) => { t.reimbClaimedAmount = (i === 0) ? amt : null; });
+    saveState(); renderMoney();
+  }, "number");
 }
 // Un frais "lancé" est finalement reçu sur le compte
 function confirmClaimedReceived(id) {
@@ -11539,19 +11684,19 @@ function addCash(dir) {
   saveState(); renderCash();
 }
 function setCashBalance() {
-  const v = prompt("Combien as-tu d'espèces en poche en ce moment ?", (state.accounts.cashBalance || 0).toFixed(2));
-  if (v === null) return;
-  const n = parseFloat(String(v).replace(",", "."));
-  if (isNaN(n) || n < 0) { alert("Montant invalide."); return; }
-  const old = state.accounts.cashBalance || 0;
-  const diff = n - old;
-  if (!state.accounts.cashLog) state.accounts.cashLog = [];
-  if (diff !== 0) {
-    const date = new Date().toISOString().slice(0,10);
-    state.accounts.cashLog.push({ date, amount: Math.abs(diff), dir: diff > 0 ? "in" : "out", note: "Mise à jour manuelle" });
-  }
-  state.accounts.cashBalance = n;
-  saveState(); renderCash();
+  _showPrompt("Espèces en poche actuellement (€)", (state.accounts.cashBalance || 0).toFixed(2), v => {
+    const n = parseFloat(String(v).replace(",", "."));
+    if (isNaN(n) || n < 0) { showToast("⚠️ Montant invalide."); return; }
+    const old = state.accounts.cashBalance || 0;
+    const diff = n - old;
+    if (!state.accounts.cashLog) state.accounts.cashLog = [];
+    if (diff !== 0) {
+      const date = new Date().toISOString().slice(0,10);
+      state.accounts.cashLog.push({ date, amount: Math.abs(diff), dir: diff > 0 ? "in" : "out", note: "Mise à jour manuelle" });
+    }
+    state.accounts.cashBalance = n;
+    saveState(); renderCash();
+  }, "number");
 }
 function deleteCashEntry(idx) {
   if (!state.accounts.cashLog) return;
@@ -11569,35 +11714,30 @@ function deleteCashEntry(idx) {
 function editAccountStart(account) {
   const current = account === "courant" ? (state.accounts?.courantStart || 0) : (state.accounts?.epargneStart || 0);
   const label = account === "courant" ? "compte courant 💳" : "compte épargne 🏦";
-  const v = prompt(`Solde de départ du ${label} (€)\n\nC'est combien tu avais sur ce compte AVANT de commencer à utiliser le dashboard (toutes les transactions enregistrées ici s'ajoutent ou se retirent à partir de ce point de référence).`, current);
-  if (v === null) return;
-  const n = Number(String(v).replace(",", "."));
-  if (isNaN(n)) { alert("Valeur invalide — entre un nombre comme 21 ou 2000.5"); return; }
-  if (!state.accounts) state.accounts = { courantStart: 0, epargneStart: 0 };
-  if (account === "courant") state.accounts.courantStart = n;
-  else state.accounts.epargneStart = n;
-  saveState();
-  renderAccounts();
+  _showPrompt(`Solde de départ du ${label} (€)`, current, v => {
+    const n = Number(String(v).replace(",", "."));
+    if (isNaN(n)) { showToast("⚠️ Valeur invalide — entre un nombre comme 21 ou 2000.5"); return; }
+    if (!state.accounts) state.accounts = { courantStart: 0, epargneStart: 0 };
+    if (account === "courant") state.accounts.courantStart = n;
+    else state.accounts.epargneStart = n;
+    saveState(); renderAccounts();
+  }, "number");
 }
 function setCurrentBalance(account) {
-  // Recalibrage : tu entres ton solde RÉEL maintenant, on déduit le solde de départ
   const label = account === "courant" ? "compte courant 💳" : "compte épargne 🏦";
-  const v = prompt(`Quel est le solde RÉEL de ton ${label} aujourd'hui (€) ?\n\nLe dashboard va recalculer automatiquement ton "solde de départ" en fonction des transactions déjà enregistrées.`);
-  if (v === null) return;
-  const n = Number(String(v).replace(",", "."));
-  if (isNaN(n)) { alert("Valeur invalide"); return; }
-
-  if (!state.accounts) state.accounts = { courantStart: 0, epargneStart: 0 };
-  // On ajuste le solde de départ du delta entre ce que le dashboard calcule et la réalité
-  if (account === "courant") {
-    const delta = n - balanceCourant();
-    state.accounts.courantStart = (state.accounts.courantStart || 0) + delta;
-  } else {
-    const delta = n - balanceEpargne();
-    state.accounts.epargneStart = (state.accounts.epargneStart || 0) + delta;
-  }
-  saveState();
-  renderAccounts();
+  _showPrompt(`Solde RÉEL de ton ${label} aujourd'hui (€)`, "", v => {
+    const n = Number(String(v).replace(",", "."));
+    if (isNaN(n)) { showToast("⚠️ Valeur invalide"); return; }
+    if (!state.accounts) state.accounts = { courantStart: 0, epargneStart: 0 };
+    if (account === "courant") {
+      const delta = n - balanceCourant();
+      state.accounts.courantStart = (state.accounts.courantStart || 0) + delta;
+    } else {
+      const delta = n - balanceEpargne();
+      state.accounts.epargneStart = (state.accounts.epargneStart || 0) + delta;
+    }
+    saveState(); renderAccounts();
+  }, "number");
 }
 function populateTxCategories() {
   const sel = document.getElementById("txCategory");
@@ -11915,11 +12055,12 @@ function saveTxFromModal() {
 }
 function deleteTxFromModal() {
   const id = document.getElementById("txModalId").value;
-  if (!id || !confirm("Supprimer cette transaction ?")) return;
-  state.transactions = state.transactions.filter(t => t.id !== id);
-  saveState();
-  closeTxModal();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  if (!id) return;
+  _showConfirm("Supprimer cette transaction ?", () => {
+    state.transactions = state.transactions.filter(t => t.id !== id);
+    saveState(); closeTxModal();
+    renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  });
 }
 document.getElementById("catDetailModal").addEventListener("click", e => { if (e.target.id === "catDetailModal") e.target.classList.remove("open"); });
 // 24 couleurs pastel toutes distinctes — assignées par index dans la liste des catégories
@@ -12593,12 +12734,10 @@ function confirmSavingsUpdate() {
 function editSavingsTxDesc(txId, cat) {
   const tx = state.transactions.find(t => t.id === txId);
   if (!tx) return;
-  const cur = tx.description || "";
-  const val = prompt(`Motif de ce mouvement :`, cur);
-  if (val === null) return;
-  tx.description = val.trim();
-  saveState();
-  openSavingsAccountModal(cat); // refresh popup
+  _showPrompt("Motif de ce mouvement", tx.description || "", v => {
+    tx.description = v.trim();
+    saveState(); openSavingsAccountModal(cat);
+  });
 }
 
 function toggleSavingsLock(cat) {
@@ -12610,13 +12749,13 @@ function toggleSavingsLock(cat) {
 
 function editSavingsStart(cat) {
   const cur = (state.accounts.savingsBreakdown || {})[cat] || 0;
-  const val = prompt(`Solde actuel de "${cat}" (€) :`, cur);
-  if (val === null) return;
-  const n = parseFloat(val.replace(",", "."));
-  if (isNaN(n)) return;
-  if (!state.accounts.savingsBreakdown) state.accounts.savingsBreakdown = {};
-  state.accounts.savingsBreakdown[cat] = n;
-  saveState(); renderSavings();
+  _showPrompt(`Solde actuel de « ${cat} » (€)`, cur, val => {
+    const n = parseFloat(val.replace(",", "."));
+    if (isNaN(n)) return;
+    if (!state.accounts.savingsBreakdown) state.accounts.savingsBreakdown = {};
+    state.accounts.savingsBreakdown[cat] = n;
+    saveState(); renderSavings();
+  }, "number");
 }
 function renderSavingsChart() {
   if (savingsChart) savingsChart.destroy();
@@ -13508,17 +13647,17 @@ function saveSub() {
 }
 function deleteSub() {
   const id = document.getElementById("subModalId").value;
-  if (!id || !confirm("Supprimer cet abonnement ?")) return;
-  state.subscriptions = state.subscriptions.filter(s => s.id !== id);
-  saveState();
-  closeSubModal();
-  renderSubs();
+  if (!id) return;
+  _showConfirm("Supprimer cet abonnement ?", () => {
+    state.subscriptions = state.subscriptions.filter(s => s.id !== id);
+    saveState(); closeSubModal(); renderSubs();
+  });
 }
 function deleteSubDirect(id) {
-  if (!confirm("Supprimer cet abonnement ?")) return;
-  state.subscriptions = state.subscriptions.filter(s => s.id !== id);
-  saveState();
-  renderSubs();
+  _showConfirm("Supprimer cet abonnement ?", () => {
+    state.subscriptions = state.subscriptions.filter(s => s.id !== id);
+    saveState(); renderSubs();
+  });
 }
 
 /* ========= GOALS ========= */
@@ -14335,33 +14474,18 @@ function deleteCalSource(id) {
   const src = state.calSources.find(s => s.id === id);
   if (!src) return;
   const count = state.calEvents.filter(e => e.sourceId === id).length;
-  if (!confirm(`Supprimer « ${src.name} » et ses ${count} événements ?`)) return;
-  state.calEvents = state.calEvents.filter(e => e.sourceId !== id);
-  state.calSources = state.calSources.filter(s => s.id !== id);
-  saveState();
-  renderCalendar();
+  _showConfirm(`Supprimer « ${src.name} » et ses ${count} événement(s) ?`, () => {
+    state.calEvents = state.calEvents.filter(e => e.sourceId !== id);
+    state.calSources = state.calSources.filter(s => s.id !== id);
+    saveState(); renderCalendar();
+  });
 }
 function manageCalSource(id) {
   // Conservé pour compat — redirige vers le panneau de couleurs
   showToast("👇 Utilise le panneau « Mes calendriers » sous la légende pour changer les couleurs et noms");
 }
 function manageCalSource(id) {
-  const src = state.calSources.find(s => s.id === id);
-  if (!src) return;
-  const action = prompt(`Calendrier « ${src.name} » (${src.color})\n\nOptions :\n1 — Renommer\n2 — Changer la couleur\n3 — Supprimer (avec ses événements)\n\nTape 1, 2 ou 3 :`);
-  if (action === "1") {
-    const n = prompt("Nouveau nom :", src.name);
-    if (n) { src.name = n.trim(); saveState(); renderCalendar(); }
-  } else if (action === "2") {
-    const c = prompt("Nouvelle couleur (hex, ex: #aee0c8) :", src.color);
-    if (c) { src.color = c.trim(); saveState(); renderCalendar(); }
-  } else if (action === "3") {
-    if (confirm(`Supprimer « ${src.name} » et ses événements ?`)) {
-      state.calEvents = state.calEvents.filter(e => e.sourceId !== id);
-      state.calSources = state.calSources.filter(s => s.id !== id);
-      saveState(); renderCalendar();
-    }
-  }
+  deleteCalSource(id);
 }
 function renderCalendar() {
   const monthLabelEl = document.getElementById("calMonthLabel");
@@ -14622,12 +14746,12 @@ function saveManualEvent() {
 }
 function deleteManualEvent() {
   const id = document.getElementById("manualEventId").value;
-  if (!id || !confirm("Supprimer cet événement ?")) return;
-  state.calEvents = state.calEvents.filter(e => e.id !== id);
-  saveState();
-  closeManualEventModal();
-  renderCalendar();
-  showToast("🗑️ Événement supprimé");
+  if (!id) return;
+  _showConfirm("Supprimer cet événement ?", () => {
+    state.calEvents = state.calEvents.filter(e => e.id !== id);
+    saveState(); closeManualEventModal(); renderCalendar();
+    showToast("🗑️ Événement supprimé");
+  });
 }
 
 function closeGoogleCalModal() {
@@ -14689,13 +14813,12 @@ async function saveGoogleCal() {
   }
 }
 function disconnectGoogleCal() {
-  if (!confirm("Déconnecter Google Agenda ?\n\nLes événements importés seront supprimés. Tes autres données (tâches, candidatures…) ne sont pas touchées.")) return;
-  state.googleCal = { url: "", lastSync: null };
-  state.calEvents = [];
-  saveState();
-  closeGoogleCalModal();
-  renderCalendar();
-  showToast("Google Agenda déconnecté");
+  _showConfirm("Déconnecter Google Agenda ?<br><small style='opacity:0.7'>Les événements importés seront supprimés. Tes autres données ne sont pas touchées.</small>", () => {
+    state.googleCal = { url: "", lastSync: null };
+    state.calEvents = [];
+    saveState(); closeGoogleCalModal(); renderCalendar();
+    showToast("Google Agenda déconnecté");
+  }, { icon: "🔌", okLabel: "Déconnecter", okColor: "#f08080" });
 }
 async function syncGoogleCal(silent = false) {
   const url = state.googleCal?.url;
@@ -14852,12 +14975,8 @@ document.getElementById("icsFile")?.addEventListener("change", e => {
       if (!result.events.length) { alert("Aucun événement trouvé dans ce fichier ICS."); return; }
       const detectedColor = result.color || "#aee0c8";
       const detectedName = result.name || f.name.replace(/\.ics$/i, "") || "Calendrier";
-      // Demande le nom + couleur (pré-rempli depuis le ICS)
-      const customName = prompt(`Nom de ce calendrier :\n\n(Détecté depuis le fichier : « ${detectedName} »)`, detectedName);
-      if (customName === null) return; // annulé
-      const customColor = prompt(`Couleur du calendrier (hexadécimal, ex: #44AAEA) :\n\n(Détectée depuis le fichier : ${detectedColor})\n\nAstuce : tu peux utiliser ces couleurs pastels :\n• Menthe : #aee0c8\n• Sky : #b4d4f1\n• Lavande : #c9b6f0\n• Pêche : #f7c9a3\n• Rose : #f5b6c9\n• Butter : #f5e6a8`, detectedColor);
-      if (customColor === null) return;
-
+      const customColor = detectedColor;
+      const _doImport = (customName) => {
       // Crée la source (ou met à jour si existe déjà avec ce nom)
       let source = state.calSources.find(s => s.name === customName);
       if (source) {
@@ -14882,11 +15001,15 @@ document.getElementById("icsFile")?.addEventListener("change", e => {
         description: p.description || "",
       }));
       state.calEvents.push(...newEvents);
-      saveState();
-      renderCalendar();
+      saveState(); renderCalendar();
       showToast(`✨ ${newEvents.length} événements importés (« ${customName} »)`);
+      }; // end _doImport
+      _showPrompt("Nom de ce calendrier", detectedName, name => {
+        if (!name?.trim()) return;
+        _doImport(name.trim());
+      });
     } catch (err) {
-      alert("Erreur de parsing du fichier ICS : " + err.message);
+      showToast("❌ Erreur de parsing du fichier ICS : " + err.message);
     }
   };
   reader.readAsText(f);
@@ -14973,24 +15096,25 @@ function fillTimeForm(dateKey) {
   if (noteEl) noteEl.value = wt.autreNote || "";
 }
 function _addTimeCat() {
-  const emoji = (prompt("Emoji de la catégorie :", "📌") || "📌").trim();
-  if (emoji === null) return;
-  const label = prompt("Nom de la catégorie :", "");
-  if (!label || !label.trim()) return;
-  const key = "tc_" + label.trim().toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 20) + "_" + Date.now();
-  const colors = ["#7bc4e2","#e890a4","#9d82d6","#72c4a2","#f5c842","#f0a070","#a0d8a0"];
-  const bgs = ["var(--sky-soft)","var(--pink-soft)","var(--lavender-soft)","#e6f7f1","#fdf6d8","#fff0e8","#e8f4e8"];
-  const idx = getTimeCats().length % colors.length;
-  if (!state.work.timeCats || !state.work.timeCats.length) state.work.timeCats = [...TIME_CATS_DEFAULT];
-  state.work.timeCats.push({ key, label: label.trim(), emoji, color: colors[idx], bg: bgs[idx] });
-  saveState(); renderTimeView();
+  _showPrompt("Nom de la catégorie de temps", "", label => {
+    if (!label?.trim()) return;
+    const key = "tc_" + label.trim().toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 20) + "_" + Date.now();
+    const colors = ["#7bc4e2","#e890a4","#9d82d6","#72c4a2","#f5c842","#f0a070","#a0d8a0"];
+    const bgs = ["var(--sky-soft)","var(--pink-soft)","var(--lavender-soft)","#e6f7f1","#fdf6d8","#fff0e8","#e8f4e8"];
+    const idx = getTimeCats().length % colors.length;
+    if (!state.work.timeCats || !state.work.timeCats.length) state.work.timeCats = [...TIME_CATS_DEFAULT];
+    state.work.timeCats.push({ key, label: label.trim(), emoji: "📌", color: colors[idx], bg: bgs[idx] });
+    saveState(); renderTimeView();
+  });
 }
 function _deleteTimeCat(key) {
   const cat = getTimeCats().find(c => c.key === key);
-  if (!cat || !confirm(`Supprimer la catégorie « ${cat.label} » ?`)) return;
-  if (!state.work.timeCats || !state.work.timeCats.length) state.work.timeCats = [...TIME_CATS_DEFAULT];
-  state.work.timeCats = state.work.timeCats.filter(c => c.key !== key);
-  saveState(); renderTimeView();
+  if (!cat) return;
+  _showConfirm(`Supprimer la catégorie « ${cat.label} » ?`, () => {
+    if (!state.work.timeCats || !state.work.timeCats.length) state.work.timeCats = [...TIME_CATS_DEFAULT];
+    state.work.timeCats = state.work.timeCats.filter(c => c.key !== key);
+    saveState(); renderTimeView();
+  });
 }
 function resetTimeDateToToday() {
   const i = document.getElementById("timeWorkDate");
@@ -15805,15 +15929,17 @@ function saveNewSection() {
 }
 function deleteCLSection(li, si) {
   const lst = state.domestique.checklists[li];
-  if (!confirm(`Supprimer la sous-liste "${lst.sections[si].name}" ?`)) return;
-  lst.sections.splice(si, 1);
-  saveState(); renderChecklists();
+  _showConfirm(`Supprimer la sous-liste « ${lst.sections[si].name} » ?`, () => {
+    lst.sections.splice(si, 1);
+    saveState(); renderChecklists();
+  });
 }
 function deleteChecklist(li) {
   const lst = state.domestique.checklists[li];
-  if (!confirm(`Supprimer la liste "${lst.name}" ?`)) return;
-  state.domestique.checklists.splice(li, 1);
-  saveState(); renderChecklists();
+  _showConfirm(`Supprimer la liste « ${lst.name} » ?`, () => {
+    state.domestique.checklists.splice(li, 1);
+    saveState(); renderChecklists();
+  });
 }
 function moveCLSection(li, si, dir) {
   const sections = state.domestique.checklists[li].sections;
@@ -16226,9 +16352,11 @@ function saveRecipe() {
 
 function deleteRecipe() {
   const id = document.getElementById("recipeModalId").value;
-  if (!id || !confirm("Supprimer cette recette ?")) return;
-  state.domestique.recipes = state.domestique.recipes.filter(r => r.id !== id);
-  saveState(); closeRecipeModal(); renderRecipes();
+  if (!id) return;
+  _showConfirm("Supprimer cette recette ?", () => {
+    state.domestique.recipes = state.domestique.recipes.filter(r => r.id !== id);
+    saveState(); closeRecipeModal(); renderRecipes();
+  });
 }
 
 /* ---- Alimentation inner tabs ---- */
@@ -16301,9 +16429,10 @@ function saveFoodKcal() {
   saveState(); closeFoodKcalForm(); renderFoodKcal();
 }
 function deleteFoodKcal(id) {
-  if (!confirm('Supprimer cet aliment ?')) return;
-  state.domestique.foodKcal = (state.domestique.foodKcal || []).filter(f => f.id !== id);
-  saveState(); renderFoodKcal();
+  _showConfirm("Supprimer cet aliment ?", () => {
+    state.domestique.foodKcal = (state.domestique.foodKcal || []).filter(f => f.id !== id);
+    saveState(); renderFoodKcal();
+  });
 }
 function renderFoodKcal() {
   const el = document.getElementById('foodKcalList');
@@ -16540,38 +16669,36 @@ function switchBiblioProject(id) {
 }
 
 function addBiblioProject() {
-  const name = prompt("Nom du projet bibliographique :");
-  if (!name?.trim()) return;
-  if (!state.work.biblioProjects) state.work.biblioProjects = [];
-  const id = "bproj" + Date.now();
-  state.work.biblioProjects.push({ id, name: name.trim(), biblio: _biblioDef() });
-  _biblioProjectId = id;
-  saveState();
-  renderBiblioProjectSelect();
-  switchBiblioPanel("refs");
+  _showPrompt("Nom du projet bibliographique", "", name => {
+    if (!name?.trim()) return;
+    if (!state.work.biblioProjects) state.work.biblioProjects = [];
+    const id = "bproj" + Date.now();
+    state.work.biblioProjects.push({ id, name: name.trim(), biblio: _biblioDef() });
+    _biblioProjectId = id;
+    saveState(); renderBiblioProjectSelect(); switchBiblioPanel("refs");
+  });
 }
 
 function renameBiblioProject() {
   const projects = _getBiblioProjects();
   const p = projects.find(x => x.id === _biblioProjectId);
   if (!p) return;
-  const name = prompt("Nouveau nom :", p.name);
-  if (!name?.trim()) return;
-  p.name = name.trim();
-  saveState();
-  renderBiblioProjectSelect();
+  _showPrompt("Nouveau nom du projet", p.name, name => {
+    if (!name?.trim()) return;
+    p.name = name.trim();
+    saveState(); renderBiblioProjectSelect();
+  });
 }
 
 function deleteBiblioProject() {
   const projects = _getBiblioProjects();
   const p = projects.find(x => x.id === _biblioProjectId);
   if (!p) return;
-  if (!confirm(`Supprimer le projet "${p.name}" et toutes ses données ?`)) return;
-  state.work.biblioProjects = projects.filter(x => x.id !== _biblioProjectId);
-  _biblioProjectId = state.work.biblioProjects[0]?.id || null;
-  saveState();
-  renderBiblioProjectSelect();
-  switchBiblioPanel("refs");
+  _showConfirm(`Supprimer le projet « ${p.name} » et toutes ses données ?`, () => {
+    state.work.biblioProjects = projects.filter(x => x.id !== _biblioProjectId);
+    _biblioProjectId = state.work.biblioProjects[0]?.id || null;
+    saveState(); renderBiblioProjectSelect(); switchBiblioPanel("refs");
+  });
 }
 
 let _biblioPanel = "refs";
@@ -17162,12 +17289,14 @@ function saveRef() {
 }
 function deleteRef() {
   const id = document.getElementById("refModalId").value;
-  if (!id || !confirm("Supprimer cette référence et tous ses extraits ?")) return;
-  const b = _getActiveBiblio() || _biblioDef();
-  b.refs     = (b.refs||[]).filter(r => r.id !== id);
-  b.extracts = (b.extracts||[]).filter(e => e.refId !== id);
-  _setActiveBiblio(b);
-  saveState(); closeRefModal(); renderBiblioRefs();
+  if (!id) return;
+  _showConfirm("Supprimer cette référence et tous ses extraits ?", () => {
+    const b = _getActiveBiblio() || _biblioDef();
+    b.refs     = (b.refs||[]).filter(r => r.id !== id);
+    b.extracts = (b.extracts||[]).filter(e => e.refId !== id);
+    _setActiveBiblio(b);
+    saveState(); closeRefModal(); renderBiblioRefs();
+  });
 }
 
 // ── Codes ─────────────────────────────────────────────────────
@@ -17338,7 +17467,8 @@ function saveCode() {
 
 function deleteCode() {
   const id = document.getElementById("codeModalId").value;
-  if (!id || !confirm("Supprimer ce code et ses sous-codes ? Les extraits associés le perdront.")) return;
+  if (!id) return;
+  _showConfirm("Supprimer ce code et ses sous-codes ?<br><small style='opacity:0.7'>Les extraits associés le perdront.</small>", () => { if(true) {
   const projects = _getBiblioProjects();
   const p = projects.find(x => x.id === _biblioProjectId) || projects[0];
   if (!p?.biblio) return;
@@ -17351,6 +17481,7 @@ function deleteCode() {
   p.biblio.codes = (p.biblio.codes||[]).filter(c => !toDelete.has(c.id));
   (p.biblio.extracts||[]).forEach(e => { e.codes = (e.codes||[]).filter(cid => !toDelete.has(cid)); });
   saveState(); closeCodeModal(); renderBiblioCodes();
+  }});
 }
 
 // ── Extraits ──────────────────────────────────────────────────
@@ -17734,11 +17865,13 @@ function saveExtract() {
 }
 function deleteExtract() {
   const id = document.getElementById("extractModalId").value;
-  if (!id || !confirm("Supprimer cet extrait ?")) return;
-  const b = _getActiveBiblio() || _biblioDef();
-  b.extracts = (b.extracts||[]).filter(e => e.id !== id);
-  _setActiveBiblio(b);
-  saveState(); closeExtractModal(); renderBiblioExtracts();
+  if (!id) return;
+  _showConfirm("Supprimer cet extrait ?", () => {
+    const b = _getActiveBiblio() || _biblioDef();
+    b.extracts = (b.extracts||[]).filter(e => e.id !== id);
+    _setActiveBiblio(b);
+    saveState(); closeExtractModal(); renderBiblioExtracts();
+  });
 }
 
 // ── Vue par code ──────────────────────────────────────────────
@@ -17869,7 +18002,7 @@ function renderZoteroSources() {
 }
 
 function deleteZoteroSource(source) {
-  if (!confirm(`Supprimer toutes les références de la source "${source}" ?`)) return;
+  _showConfirm(`Supprimer toutes les références de la source « ${source} » ?`, () => { if(true) {
   const b = _getActiveBiblio() || _biblioDef();
   const before = (b.refs||[]).length;
   b.refs = (b.refs||[]).filter(r => {
@@ -17881,10 +18014,9 @@ function deleteZoteroSource(source) {
   b.extracts = (b.extracts||[]).filter(e => refIds.has(e.refId));
   _setActiveBiblio(b);
   saveState();
-  renderZoteroSources();
-  renderBiblioCollectionTree();
-  renderBiblioRefs();
+  renderZoteroSources(); renderBiblioCollectionTree(); renderBiblioRefs();
   showToast(`🗑️ ${before - b.refs.length} références supprimées`);
+  }});
 }
 
 function loadZoteroConfig() {
@@ -18191,9 +18323,10 @@ function toggleDomesticTask(id) {
 }
 
 function deleteDomesticTask(id) {
-  if (!confirm("Supprimer cette tâche ?")) return;
-  state.domestique.tasks = (state.domestique.tasks || []).filter(t => t.id !== id);
-  saveState(); renderDomesticTasks();
+  _showConfirm("Supprimer cette tâche ?", () => {
+    state.domestique.tasks = (state.domestique.tasks || []).filter(t => t.id !== id);
+    saveState(); renderDomesticTasks();
+  });
 }
 
 /* ========= PLANNING DE REPAS ========= */
@@ -18596,10 +18729,12 @@ function _addRecipeDishTo(ev, rec) {
 }
 function deleteMealEvent(id) {
   const ev = (state.domestique.mealEvents || []).find(e => e.id === id);
-  if (!ev || !confirm(`Supprimer « ${ev.name} » ?`)) return;
-  _removeMealEventFromPlan(ev);
-  state.domestique.mealEvents = state.domestique.mealEvents.filter(e => e.id !== id);
-  saveState(); renderMealEvents(); try { renderMealWeekGrid(); } catch (e) {}
+  if (!ev) return;
+  _showConfirm(`Supprimer « ${ev.name} » ?`, () => {
+    _removeMealEventFromPlan(ev);
+    state.domestique.mealEvents = state.domestique.mealEvents.filter(e => e.id !== id);
+    saveState(); renderMealEvents(); try { renderMealWeekGrid(); } catch (e) {}
+  });
 }
 function createGroceryFromMeal(mealEventId) {
   const ev = (state.domestique.mealEvents || []).find(e => e.id === mealEventId);
@@ -18793,14 +18928,14 @@ function deleteGroceryEvent(id) {
   const ev = state.domestique.groceryEvents.find(e => e.id === id);
   if (!ev) return;
   const items = state.domestique.groceries.filter(g => g.eventId === id);
-  if (!confirm(`Supprimer l'événement « ${ev.name} » et ses ${items.length} article(s) ?`)) return;
-  state.domestique.groceryEvents = state.domestique.groceryEvents.filter(e => e.id !== id);
-  // Sauvegarder les articles cochés dans l'historique avant suppression
-  if (!state.domestique.purchaseHistory) state.domestique.purchaseHistory = [];
-  state.domestique.groceries.filter(g => g.eventId === id && g.checked)
-    .forEach(g => state.domestique.purchaseHistory.push({ name: g.name, date: todayKey() }));
-  state.domestique.groceries = state.domestique.groceries.filter(g => g.eventId !== id);
-  saveState(); renderGroceries();
+  _showConfirm(`Supprimer la liste « ${ev.name} » et ses ${items.length} article(s) ?`, () => {
+    state.domestique.groceryEvents = state.domestique.groceryEvents.filter(e => e.id !== id);
+    if (!state.domestique.purchaseHistory) state.domestique.purchaseHistory = [];
+    state.domestique.groceries.filter(g => g.eventId === id && g.checked)
+      .forEach(g => state.domestique.purchaseHistory.push({ name: g.name, date: todayKey() }));
+    state.domestique.groceries = state.domestique.groceries.filter(g => g.eventId !== id);
+    saveState(); renderGroceries();
+  });
 }
 function addGroceryItem(eventId, name) {
   name = (name || "").trim();
@@ -18825,9 +18960,10 @@ function deleteGrocery(id) {
 function clearAllCheckedGroceries() {
   const checked = state.domestique.groceries.filter(g => g.checked).length;
   if (!checked) return;
-  if (!confirm(`Supprimer les ${checked} articles cochés ?`)) return;
-  state.domestique.groceries = state.domestique.groceries.filter(g => !g.checked);
-  saveState(); renderGroceries();
+  _showConfirm(`Supprimer les ${checked} article(s) cochés ?`, () => {
+    state.domestique.groceries = state.domestique.groceries.filter(g => !g.checked);
+    saveState(); renderGroceries();
+  });
 }
 function addRecurringToLatestEvent(name) {
   if (!state.domestique.groceryEvents.length) {
@@ -18894,9 +19030,10 @@ function markChoreDone(id) {
   if (c) { c.lastDone = todayKey(); saveState(); renderChores(); renderCalendar(); }
 }
 function deleteChore(id) {
-  if (!confirm("Supprimer cette tâche ménagère ?")) return;
-  state.domestique.chores = state.domestique.chores.filter(c => c.id !== id);
-  saveState(); renderChores();
+  _showConfirm("Supprimer cette tâche ménagère ?", () => {
+    state.domestique.chores = state.domestique.chores.filter(c => c.id !== id);
+    saveState(); renderChores();
+  });
 }
 
 // --- Plantes — détection depuis ICS ---
@@ -19256,9 +19393,10 @@ function updatePlantNotes(id, value) {
   if (p) { p.notes = value.trim(); saveState(); }
 }
 function deletePlant(id) {
-  if (!confirm("Supprimer cette plante ?")) return;
-  state.domestique.plants = state.domestique.plants.filter(p => p.id !== id);
-  saveState(); renderPlants();
+  _showConfirm("Supprimer cette plante ?", () => {
+    state.domestique.plants = state.domestique.plants.filter(p => p.id !== id);
+    saveState(); renderPlants();
+  });
 }
 
 // Enter to add (groceries — nouveau modèle événement)
@@ -19325,18 +19463,19 @@ function importData() {
         alert("Ce fichier ne ressemble pas à une sauvegarde du Tableau de Vie.");
         return;
       }
-      if (!confirm("⚠️ Importer va REMPLACER toutes les données actuelles de ce navigateur par celles du fichier.\n\n💡 Conseil : exporte d'abord une sauvegarde de l'état actuel (au cas où).\n\nContinuer ?")) return;
-      try {
-        if (isDump) {
-          for (const k in data) localStorage.setItem(k, data[k]);
-        } else {
-          localStorage.setItem(STORE_KEY, JSON.stringify(data));
+      _showConfirm("⚠️ Importer va REMPLACER toutes tes données actuelles par celles du fichier.<br><small style='opacity:0.7'>💡 Exporte d'abord une sauvegarde si tu veux garder l'état actuel.</small>", () => {
+        try {
+          if (isDump) {
+            for (const k in data) localStorage.setItem(k, data[k]);
+          } else {
+            localStorage.setItem(STORE_KEY, JSON.stringify(data));
+          }
+          showToast("📤 Données importées — rechargement…");
+          setTimeout(() => location.reload(), 700);
+        } catch (err) {
+          showToast("❌ Erreur lors de l'import : " + err.message);
         }
-        showToast("📤 Données importées — rechargement…");
-        setTimeout(() => location.reload(), 700);
-      } catch (err) {
-        alert("Erreur lors de l'import : " + err.message);
-      }
+      }, { icon: "⚠️", okLabel: "Importer", okColor: "#f08080" });
     };
     reader.readAsText(file);
   };
@@ -19499,11 +19638,11 @@ document.getElementById("importFile").addEventListener("change", e => {
   reader.onload = ev => {
     try {
       const imported = JSON.parse(ev.target.result);
-      if (confirm("Cela remplacera toutes tes données actuelles. Continuer ?")) {
+      _showConfirm("Cela remplacera toutes tes données actuelles. Continuer ?", () => {
         state = migrate({ ...DEFAULT_STATE, ...imported });
         saveState(); renderAll();
-      }
-    } catch (err) { alert("Fichier invalide : " + err.message); }
+      }, { icon: "⚠️", okLabel: "Remplacer", okColor: "#f08080" });
+    } catch (err) { showToast("❌ Fichier invalide : " + err.message); }
   };
   reader.readAsText(f);
   e.target.value = "";
@@ -19718,12 +19857,11 @@ function dismissSeed() {
   document.getElementById("seedBanner").style.display = "none";
 }
 function confirmReseed() {
-  if (!confirm("Recharger toutes les données pré-remplies depuis ton CV ?\n\nCela va écraser : habitudes, projets, tâches, candidatures, articles, communications, contacts pré-remplis.\n\nTes saisies manuelles (humeur, sport, transactions, journal, poids, eau, etc.) sont conservées.\n\nLa page va se recharger automatiquement.")) return;
-  loadInitialData();
-  closeSettings();
-  showToast("✨ Données rechargées · Rechargement de la page…");
-  // Force un reload complet pour éliminer tout problème de cache/render partiel
-  setTimeout(() => { window.location.href = "/Mon-Tableau-de-Vie/?_r=" + Date.now(); }, 700);
+  _showConfirm("Recharger les données pré-remplies ?<br><small style='opacity:0.7'>Habitudes, projets, tâches, candidatures… seront réinitialisés. Tes saisies manuelles sont conservées.</small>", () => {
+    loadInitialData(); closeSettings();
+    showToast("✨ Données rechargées · Rechargement…");
+    setTimeout(() => { window.location.href = "/Mon-Tableau-de-Vie/?_r=" + Date.now(); }, 700);
+  }, { icon: "🔄", okLabel: "Recharger", okColor: "#f08080" });
 }
 function showToast(message) {
   let toast = document.getElementById("appToast");
@@ -20236,6 +20374,39 @@ function _removeFinanceIncomeCat(c) {
   saveState(); _renderFinanceCatLists(); renderMoney();
 }
 
+/* ── Modales utilitaires (confirm / prompt) ─────────────────────── */
+let _confirmCb = null;
+function _showConfirm(msg, onYes, opts = {}) {
+  _confirmCb = onYes;
+  document.getElementById("confirmMsg").innerHTML = msg;
+  document.getElementById("confirmIcon").textContent = opts.icon || "🗑️";
+  const okBtn = document.getElementById("confirmOkBtn");
+  okBtn.textContent = opts.okLabel || "Supprimer";
+  okBtn.style.background = opts.okColor || "#f08080";
+  document.getElementById("confirmModal").style.display = "flex";
+}
+function _closeConfirm(ok) {
+  document.getElementById("confirmModal").style.display = "none";
+  if (ok && typeof _confirmCb === "function") _confirmCb();
+  _confirmCb = null;
+}
+let _promptCb = null;
+function _showPrompt(title, defaultVal, onOk, inputType = "text") {
+  _promptCb = onOk;
+  document.getElementById("promptModalTitle").textContent = title;
+  const inp = document.getElementById("promptModalInput");
+  inp.type = inputType; inp.value = defaultVal ?? "";
+  document.getElementById("promptModal").style.display = "flex";
+  setTimeout(() => inp.select(), 50);
+}
+function _closePromptModal(ok) {
+  const val = document.getElementById("promptModalInput").value;
+  document.getElementById("promptModal").style.display = "none";
+  if (ok && typeof _promptCb === "function") _promptCb(val);
+  _promptCb = null;
+}
+/* ─────────────────────────────────────────────────────────────────── */
+
 function toggleEditMode() {
   document.body.classList.toggle('edit-mode');
   const btn = document.getElementById('editModeBtn');
@@ -20254,13 +20425,12 @@ function _initWorkTabLabels() {
 }
 function renameWorkTab(key, btn) {
   const current = (state.work.subTabNames || {})[key] || WORK_TAB_DEFAULTS[key] || key;
-  const newName = prompt("Renommer cet onglet :", current);
-  if (newName === null) return;
-  if (!state.work.subTabNames) state.work.subTabNames = {};
-  if (newName.trim()) state.work.subTabNames[key] = newName.trim();
-  else delete state.work.subTabNames[key];
-  saveState();
-  _initWorkTabLabels();
+  _showPrompt("Renommer cet onglet", current, newName => {
+    if (!state.work.subTabNames) state.work.subTabNames = {};
+    if (newName.trim()) state.work.subTabNames[key] = newName.trim();
+    else delete state.work.subTabNames[key];
+    saveState(); _initWorkTabLabels();
+  });
 }
 
 function renderAll() {
@@ -20732,7 +20902,7 @@ async function cloudDiag() {
 // ⬇️ Récupérer : remplace les données locales par celles du cloud
 async function cloudPull() {
   if (!_fbUser || !_fbDb) return;
-  if (!confirm("⬇️ Récupérer les données du cloud et REMPLACER celles de cet appareil ?\n\n💡 Conseil : si tu as un doute, fais d'abord un export (⚙ Réglages).")) return;
+  _showConfirm("⬇️ Récupérer les données du cloud et REMPLACER celles de cet appareil ?<br><small style='opacity:0.7'>💡 Fais d'abord un export si tu as un doute.</small>", async () => {
   try {
     _fbSetStatus("syncing");
     const [stateSnap, workSnap, biblioSnap] = await Promise.all([
@@ -20765,19 +20935,21 @@ async function cloudPull() {
     closeSyncMenu();
     showToast("⬇️ Données du cloud récupérées — rechargement…");
     setTimeout(() => { window.location.href = '/Mon-Tableau-de-Vie/?_r=' + Date.now(); }, 700);
-  } catch (e) { alert("Erreur : " + e.message); _fbSetStatus("error"); }
+  } catch (e) { showToast("❌ Erreur : " + e.message); _fbSetStatus("error"); }
+  }, { icon: "⬇️", okLabel: "Récupérer", okColor: "#9d82d6" });
 }
 // ⬆️ Envoyer : remplace les données du cloud par celles de cet appareil
 async function cloudPush() {
   if (!_fbUser || !_fbDb) return;
-  if (!confirm("⬆️ Envoyer les données de CET appareil vers le cloud et REMPLACER celles du cloud ?")) return;
+  _showConfirm("⬆️ Envoyer les données de CET appareil vers le cloud et REMPLACER celles du cloud ?", async () => {
   state.lastModified = Date.now();
   await _fbSaveNow();
   closeSyncMenu();
   showToast("⬆️ Données envoyées vers le cloud");
+  }, { icon: "⬆️", okLabel: "Envoyer", okColor: "#9d82d6" });
 }
 function cloudSignOut() {
-  if (!confirm("Se déconnecter du cloud ?\n(Tes données locales restent intactes)")) return;
+  _showConfirm("Se déconnecter du cloud ?<br><small style='opacity:0.7'>Tes données locales restent intactes.</small>", () => {
   if (_fbUnsub) _fbUnsub();
   _fbAuth.signOut().then(() => {
     _fbUser = null;
@@ -20786,6 +20958,7 @@ function cloudSignOut() {
     closeSyncMenu();
     showToast("Déconnecté du cloud");
   });
+  }, { icon: "🔌", okLabel: "Déconnecter", okColor: "#f08080" });
 }
 
 // ——— Init (lancé au démarrage si la config est remplie) ———
@@ -20924,32 +21097,32 @@ function toggleNoteGroup(gid) {
 }
 
 function addNoteGroup() {
-  const name = prompt("Nom du groupe :");
-  if (!name?.trim()) return;
-  const emoji = prompt("Emoji (optionnel) :", "📁") || "📁";
-  const id = "ng" + Date.now();
-  state.work.workNotes = state.work.workNotes || [];
-  state.work.workNotes.push({ id, name: name.trim(), emoji, notes: [] });
-  _currentNoteGroupId = id;
-  saveState(); renderWorkNotes();
+  _showPrompt("Nom du groupe", "", name => {
+    if (!name?.trim()) return;
+    const id = "ng" + Date.now();
+    state.work.workNotes = state.work.workNotes || [];
+    state.work.workNotes.push({ id, name: name.trim(), emoji: "📁", notes: [] });
+    _currentNoteGroupId = id;
+    saveState(); renderWorkNotes();
+  });
 }
 
 function renameNoteGroup(gid) {
   const g = (state.work.workNotes||[]).find(x => x.id === gid);
   if (!g) return;
-  const name = prompt("Nouveau nom :", g.name);
-  if (!name?.trim()) return;
-  g.name = name.trim();
-  const emoji = prompt("Emoji :", g.emoji || "📁");
-  if (emoji) g.emoji = emoji;
-  saveState(); renderWorkNotes();
+  _showPrompt("Nouveau nom du groupe", g.name, name => {
+    if (!name?.trim()) return;
+    g.name = name.trim();
+    saveState(); renderWorkNotes();
+  });
 }
 
 function deleteNoteGroup(gid) {
-  if (!confirm("Supprimer ce groupe et toutes ses notes ?")) return;
-  state.work.workNotes = (state.work.workNotes||[]).filter(g => g.id !== gid);
-  if (_currentNoteGroupId === gid) { _currentNoteGroupId = null; _currentNoteId = null; showNoteEditor(false); }
-  saveState(); renderWorkNotes();
+  _showConfirm("Supprimer ce groupe et toutes ses notes ?", () => {
+    state.work.workNotes = (state.work.workNotes||[]).filter(g => g.id !== gid);
+    if (_currentNoteGroupId === gid) { _currentNoteGroupId = null; _currentNoteId = null; showNoteEditor(false); }
+    saveState(); renderWorkNotes();
+  });
 }
 
 function addNote(gid) {
@@ -21043,10 +21216,11 @@ function saveCurrentNote() {
 function deleteNote(gid, nid) {
   const g = (state.work.workNotes||[]).find(x => x.id === gid);
   if (!g) return;
-  if (!confirm("Supprimer cette note ?")) return;
-  g.notes = g.notes.filter(n => n.id !== nid);
-  if (_currentNoteId === nid) { _currentNoteId = null; showNoteEditor(false); }
-  saveState(); renderWorkNotes();
+  _showConfirm("Supprimer cette note ?", () => {
+    g.notes = g.notes.filter(n => n.id !== nid);
+    if (_currentNoteId === nid) { _currentNoteId = null; showNoteEditor(false); }
+    saveState(); renderWorkNotes();
+  });
 }
 
 function noteCmd(cmd) {
