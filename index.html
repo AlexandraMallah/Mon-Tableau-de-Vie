@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v928</title>
+<title>Mon Tableau de Vie 🌿 · v929</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5202,26 +5202,12 @@ const TYPE_COLORS = ["#c9b6f0", "#f7c9a3", "#b4d4f1", "#aee0c8", "#efb8c8", "#f5
 
 const DEFAULT_STATE = {
   name: "",
-  habits: [
-    { id: "h-pas", name: "9000 pas", type: "numeric", target: 9000, unit: "pas" },
-    { id: "h-eau", name: "1 L d'eau", type: "numeric", target: 4, unit: "verres" },
-    { id: "h-lecture", name: "Lire 30 min", type: "numeric", target: 30, unit: "min" },
-    { id: "h-cal-dep", name: "Calories dépensées", type: "numeric", target: 1500, unit: "kcal" },
-    { id: "h-skincare-matin", name: "Skincare matin ☀️", type: "boolean" },
-    { id: "h-skincare-soir", name: "Skincare soir 🌙", type: "boolean" },
-    { id: "h-dents-matin", name: "Brossage dents matin ☀️", type: "boolean" },
-    { id: "h-dents-soir", name: "Brossage dents soir 🌙", type: "boolean" },
-    { id: "h-douche", name: "Douche 🚿", type: "boolean" },
-  ],
-  activities: [
-    { id: "a1", name: "Sport", emoji: "🏋️" },
-    { id: "a2", name: "Méditation", emoji: "🧘" },
-    { id: "a3", name: "Danse", emoji: "💃" },
-  ],
-  categories: ["Alimentation", "Logement", "Transport", "Loisirs", "Cadeau", "Sport", "Esthétique", "Santé", "Travail", "Abonnements audiovisuels", "Abonnement IA", "Autre"],
-  incomeCategories: ["Salaire (postdoc)", "Salaire (vacations)", "Prime", "Remboursement", "Catsitting", "Autre revenu"],
-  savingsCategories: ["Livret A", "LEP", "PEA", "ETF", "BoursoBank", "Assurance vie"],
-  candidatureTypes: ["MCF", "MSCA", "CNRS", "ERC ACCESS"],
+  habits: [],
+  activities: [],
+  categories: ["Alimentation", "Logement", "Transport", "Loisirs", "Santé", "Autre"],
+  incomeCategories: ["Salaire", "Prime", "Remboursement", "Autre revenu"],
+  savingsCategories: ["Livret A", "LEP", "PEA", "Assurance vie"],
+  candidatureTypes: [],
   contactRoles: ["Mentor", "Collaborateur", "Jury", "Rencontré en conf", "Famille", "Ami"],
   goals: [],
   transactions: [],
@@ -5262,13 +5248,7 @@ function migrate(s) {
   s.activities = s.activities || DEFAULT_STATE.activities;
   s.categories = s.categories || DEFAULT_STATE.categories;
   s.incomeCategories = s.incomeCategories || DEFAULT_STATE.incomeCategories;
-  // Ajout des nouvelles catégories de revenus manquantes
-  if (!s.incomeCategories.includes("Catsitting")) s.incomeCategories.splice(-1, 0, "Catsitting"); // avant "Autre revenu"
   s.savingsCategories = s.savingsCategories || DEFAULT_STATE.savingsCategories;
-  if (!s.savingsCategories.includes("Frais annuels / Projets")) s.savingsCategories.splice(-1, 0, "Frais annuels / Projets");
-  if (!s.savingsCategories.includes("Livret A")) s.savingsCategories.unshift("Livret A");
-  if (!s.savingsCategories.includes("ETF")) s.savingsCategories.splice(s.savingsCategories.indexOf("PEA") + 1, 0, "ETF");
-  if (!s.savingsCategories.includes("BoursoBank")) s.savingsCategories.splice(s.savingsCategories.indexOf("ETF") + 1, 0, "BoursoBank");
   s.candidatureTypes = s.candidatureTypes || DEFAULT_STATE.candidatureTypes;
   s.contactRoles = s.contactRoles || DEFAULT_STATE.contactRoles;
   s.goals = s.goals || [];
@@ -5312,22 +5292,13 @@ function migrate(s) {
     }
     s.calEvents.forEach(e => { if (!e.sourceId) e.sourceId = "src-default"; });
   }
-  // Migration : skincare matin + soir (remplace l'ancienne h-skincare unique)
-  if (Array.isArray(s.habits)) {
-    s.habits = s.habits.filter(h => h.id !== "h-skincare"); // retire l'ancienne
+  // Migration : skincare matin + soir (remplace l'ancienne h-skincare unique, pour les anciens comptes)
+  if (Array.isArray(s.habits) && s.habits.find(h => h.id === "h-skincare")) {
+    s.habits = s.habits.filter(h => h.id !== "h-skincare");
     if (!s.habits.find(h => h.id === "h-skincare-matin"))
       s.habits.push({ id: "h-skincare-matin", name: "Skincare matin ☀️", type: "boolean" });
     if (!s.habits.find(h => h.id === "h-skincare-soir"))
       s.habits.push({ id: "h-skincare-soir", name: "Skincare soir 🌙", type: "boolean" });
-    // Migration : brossage de dents + douche
-    if (!s.habits.find(h => h.id === "h-dents-matin"))
-      s.habits.push({ id: "h-dents-matin", name: "Brossage dents matin ☀️", type: "boolean" });
-    if (!s.habits.find(h => h.id === "h-dents-soir"))
-      s.habits.push({ id: "h-dents-soir", name: "Brossage dents soir 🌙", type: "boolean" });
-    if (!s.habits.find(h => h.id === "h-douche"))
-      s.habits.push({ id: "h-douche", name: "Douche 🚿", type: "boolean" });
-  if (!s.habits.find(h => h.id === "h-cal-dep"))
-    s.habits.push({ id: "h-cal-dep", name: "Calories dépensées", type: "numeric", target: 1500, unit: "kcal" });
   }
   // Garantit que les 3 habitudes essentielles restent toujours numériques (résiste aux Recharger avec ancien cache)
   if (Array.isArray(s.habits)) {
@@ -10345,10 +10316,7 @@ const CYCLE_COLORS = [
   {fill:"#8b0f38",stroke:"#5c0a24"},
 ];
 
-const CUSTOM_SYMPTOMS_DEFAULT = [
-  { id: "belly", name: "Mal de ventre", emoji: "🤰", subtitle: "estomac / intestins" },
-  { id: "endo",  name: "Endométriose",  emoji: "🩸", subtitle: "utérus" },
-];
+const CUSTOM_SYMPTOMS_DEFAULT = [];
 const _SYMPTOM_LBLS = ["Ok 😌","Légère gêne 😕","Inconfort 😣","Douleur 😖","Très douloureux 🤢"];
 function _getCustomSymptoms() {
   return (state.customSymptoms && state.customSymptoms.length) ? state.customSymptoms : CUSTOM_SYMPTOMS_DEFAULT;
