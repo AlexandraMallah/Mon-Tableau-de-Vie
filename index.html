@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v890</title>
+<title>Mon Tableau de Vie 🌿 · v892</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -58,7 +58,9 @@
 
   * { box-sizing: border-box; }
   html { color-scheme: light; background: #fdf6f0; } /* fond clair immédiat avant CSS vars */
-  html, body { margin: 0; padding: 0; overflow-x: hidden; }
+  html, body { margin: 0; padding: 0; }
+  html { overflow-x: clip; } /* clip ≠ hidden : n'empêche pas position:sticky */
+  body { overflow-x: clip; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
     color: var(--ink);
@@ -2694,7 +2696,7 @@
             <button class="btn-icon" onclick="saveBodyComp()" style="white-space:nowrap;">Enregistrer</button>
           </div>
         </div>
-        <div class="stat-grid">
+        <div class="stat-grid" style="margin-top:20px;">
           <div class="stat">
             <div class="stat-label">Poids</div>
             <div class="stat-val" id="weightToday">—</div>
@@ -8313,7 +8315,7 @@ function computeHormones() {
   const res = {};
   HORMONES.forEach(h => { res[h.id] = { score: 0, sources: [], days: [] }; });
 
-  const socialRe = /ami|amie|copain|copine|soirée|apéro|sortie|famille|maman|papa|parents|frère|sœur|soeur|frangine|frangin|mamie|papi|déjeuner|dejeuner|\bd[ée]j(?=[\s.]|$)|dîner|diner|\bd[îi]n(?=[\s.]|$)|brunch|repas|goûter|gouter|lunch|resto|restau|picnic|pique-nique|anniversaire|fête|fete/i;
+  const socialRe = /ami|amie|copain|copine|soirée|apéro|sortie|famille|maman|papa|parents|frère|sœur|soeur|frangine|frangin|mamie|papi|déjeuner|dejeuner|\bd[ée]j(?=[\s.]|$)|dîner|diner|\bd[îi]n(?=[\s.]|$)|brunch|repas|goûter|gouter|lunch|resto|restau|picnic|pique-nique|anniversaire|fête|fete|vacances|retrouvailles|week-end famille/i;
   // Soins bien-être (calendrier) → comptent en sérotonine (détente) et ocytocine (toucher/soin)
   const wellnessRe = /massage|spa|sauna|hammam|thalasso|cure|soin|réflexo|reflexo|relaxation|kiné|kine|ostéo|osteo|esthéti|estheti|institut|manucure|onglerie/i;
 
@@ -14149,7 +14151,7 @@ const PILLAR_DEFS = [
     id: "fun-social", name: "Loisirs & Social", emoji: "🎉", color: "#fbbf24", bg: "#fffbeb",
     metrics: [
       { type: "cal-keywords-count", keywords: ["ami", "amie", "amis", "copain", "copine", "copines", "pote", "soirée", "apéro", "déjeuner", "dejeuner", "dîner", "diner", "brunch", "repas", "goûter", "gouter", "lunch"], target: 2, label: "Moments avec des amis (obj. 2/sem)" },
-      { type: "cal-keywords-count", keywords: ["famille", "maman", "papa", "parents", "frère", "sœur", "soeur", "frangine", "frangin", "mamie", "papi"], target: 1, label: "Moments en famille (obj. 1/sem)" },
+      { type: "cal-keywords-count", keywords: ["famille", "maman", "papa", "parents", "frère", "sœur", "soeur", "frangine", "frangin", "mamie", "papi", "vacances", "week-end famille", "retrouvailles"], target: 1, label: "Moments en famille (obj. 1/sem)" },
       { type: "activity-sessions", regex: "lecture|podcast|film|ciné|série|musique|guitare|piano|dessin|peinture|créat|art|photo|jeu|danse|concert|expo|musée|balade|promenade|jardinage|cuisine|bak|pâtiss|sortie", target: 3, label: "Activités plaisir (obj. 3/sem)" },
       { type: "cal-keywords-count", keywords: ["concert", "expo", "musée", "théâtr", "ciném", "spectacle", "festival", "vernissage"], target: 1, label: "Sortie culturelle (obj. 1/sem)" },
     ]
@@ -14359,8 +14361,15 @@ function computeMetric(m) {
   if (m.type === "cal-keywords-count") {
     const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
     const k7 = todayKey(sevenAgo);
+    const kNow = todayKey(new Date());
     const re = new RegExp((m.keywords || []).join("|"), "i");
-    const count = state.calEvents.filter(e => (e.date || "") >= k7 && re.test(e.title || "")).length;
+    // Un événement compte s'il chevauche la fenêtre (fin >= k7 ET début <= aujourd'hui)
+    const count = state.calEvents.filter(e => {
+      if (!re.test(e.title || "")) return false;
+      const eEnd = e.endDate || e.date || "";
+      const eStart = e.date || "";
+      return eEnd >= k7 && eStart <= kNow;
+    }).length;
     const unit = count > 1 ? " évén." : " évén.";
     return { score: Math.min(1, count / m.target), value: count === 0 ? "aucun" : count + unit, label: m.label };
   }
