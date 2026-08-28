@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v914</title>
+<title>Mon Tableau de Vie 🌿 · v915</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2992,6 +2992,7 @@
         </div>
         <div class="tx-form-inputs">
           <input type="number" id="txAmount" placeholder="Montant (€)" step="0.01" />
+          <span id="txCatLabel" style="font-size:12px;color:var(--ink-soft);white-space:nowrap;display:none;"></span>
           <select id="txCategory" onchange="onTxCategoryChange()"></select>
           <input type="text" id="txNote" placeholder="Note (optionnel)" />
           <input type="date" id="txDate" />
@@ -3994,7 +3995,7 @@
       <button onclick="closeHelp()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);padding:4px 8px;">✕</button>
     </div>
     <div id="helpBody" style="font-size:14px;color:var(--ink);line-height:1.7;"></div>
-    <div style="margin-top:18px;text-align:right;">
+    <div id="helpFooter" style="margin-top:18px;text-align:right;">
       <button onclick="closeHelp()" style="padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Compris ✓</button>
     </div>
   </div>
@@ -11460,6 +11461,13 @@ function setTxType(t) {
   if (extAccSel && t === "external") {
     extAccSel.innerHTML = (state.externalAccounts || []).map(a => `<option value="${escapeHtml(a.id)}">${a.emoji} ${escapeHtml(a.name)}</option>`).join("");
   }
+  // Label contextuel du select catégorie
+  const catLbl = document.getElementById("txCatLabel");
+  if (catLbl) {
+    if (t === "savings-out") { catLbl.textContent = "Compte débité :"; catLbl.style.display = "inline"; }
+    else if (t === "savings") { catLbl.textContent = "Vers le compte :"; catLbl.style.display = "inline"; }
+    else { catLbl.style.display = "none"; }
+  }
   // Populate savings category with "+ Ajouter" option
   populateTxCategories();
 }
@@ -11592,7 +11600,7 @@ function openExternalAccountsManager() {
     </div>`;
   document.getElementById("helpModal").classList.add("open");
   // Masquer le bouton "Compris" par défaut
-  document.querySelector("#helpModal .modal > div:last-child").style.display = "none";
+  const _hf=document.getElementById("helpFooter"); if(_hf) _hf.style.display="none";
 }
 function _saveExtAccounts() {
   const accounts = state.externalAccounts || [];
@@ -11604,7 +11612,7 @@ function _saveExtAccounts() {
   });
   saveState();
   closeHelp();
-  document.querySelector("#helpModal .modal > div:last-child").style.display = "";
+  const _hf2=document.getElementById("helpFooter"); if(_hf2) _hf2.style.display="";
   renderExternalSummary();
   showToast("✅ Comptes enregistrés");
 }
@@ -11624,7 +11632,7 @@ function _delExtAcc(id) {
     ? "Ce compte a des transactions — elles seront rattachées au premier compte. Supprimer ?"
     : "Supprimer ce compte ?";
   closeHelp();
-  document.querySelector("#helpModal .modal > div:last-child").style.display = "";
+  const _hf2=document.getElementById("helpFooter"); if(_hf2) _hf2.style.display="";
   _showConfirm(msg, () => {
     const fallback = (state.externalAccounts.find(a => a.id !== id) || {}).id || "ext-default";
     state.transactions.forEach(t => { if (t.type === "external" && t.externalAccountId === id) t.externalAccountId = fallback; });
@@ -13429,11 +13437,11 @@ function renderSavingsChart() {
           const text = pct + "% rev.";
           ctx.font = "bold 10px system-ui, sans-serif";
           const textW = ctx.measureText(text).width;
-          ctx.fillStyle = "rgba(107,77,153,0.18)";
+          ctx.fillStyle = "rgba(255,255,255,0.22)";
           ctx.beginPath();
           ctx.roundRect(centerX - textW / 2 - 4, centerY - 8, textW + 8, 16, 4);
           ctx.fill();
-          ctx.fillStyle = "#5a3d8a";
+          ctx.fillStyle = "#ffffff";
           ctx.fillText(text, centerX, centerY);
         });
         ctx.restore();
