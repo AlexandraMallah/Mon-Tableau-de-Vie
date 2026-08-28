@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v912</title>
+<title>Mon Tableau de Vie 🌿 · v914</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -3813,7 +3813,7 @@
 </div>
 
 <!-- Modal détail plante -->
-<div class="modal-bg" id="plantDetailModal" onclick="if(event.target===this)closePlantDetail()">
+<div class="modal-bg" id="plantDetailModal" onmousedown="_plantDetailBd=event.target===this" onclick="event.target===this&&_plantDetailBd&&closePlantDetail()">
   <div class="modal" style="max-width:420px;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
     <div style="text-align:center;margin-bottom:16px;">
       <div id="plantDetailEmoji" style="font-size:48px;line-height:1;margin-bottom:8px;">🪴</div>
@@ -3832,7 +3832,7 @@
 </div>
 
 <!-- Modal ajout / édition plante -->
-<div class="modal-bg" id="plantFormModal" onclick="if(event.target===this)closePlantForm()">
+<div class="modal-bg" id="plantFormModal" onmousedown="_plantFormBd=event.target===this" onclick="event.target===this&&_plantFormBd&&closePlantForm()">
   <div class="modal" style="max-width:480px;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
     <h2 id="plantFormTitle" style="margin:0 0 18px;">🌱 Nouvelle plante</h2>
     <!-- Sélecteur emoji -->
@@ -3983,7 +3983,7 @@
 
 <!-- Modal confirmation générique -->
 <!-- Modal aide contextuelle -->
-<div class="modal-bg" id="helpModal" style="z-index:550;" onclick="event.target===this&&closeHelp()">
+<div class="modal-bg" id="helpModal" style="z-index:550;" onmousedown="_helpBdDown=event.target===this" onclick="event.target===this&&_helpBdDown&&closeHelp()">
   <div class="modal" style="max-width:520px;max-height:85vh;overflow-y:auto;" onclick="event.stopPropagation()">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
       <span id="helpIcon" style="font-size:32px;"></span>
