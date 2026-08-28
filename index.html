@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v933</title>
+<title>Mon Tableau de Vie 🌿 · v934</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1394,17 +1394,6 @@
   .modal .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
   /* ========= SEED BANNER ========= */
-  .seed-banner {
-    background: linear-gradient(135deg, var(--lavender-soft), var(--pink-soft));
-    border-radius: 20px; padding: 18px 22px; margin-bottom: 20px;
-    display: flex; align-items: center; gap: 16px;
-    justify-content: space-between; flex-wrap: wrap;
-    box-shadow: var(--shadow);
-  }
-  .seed-banner-text strong { font-size: 15px; }
-  .seed-banner-text p { margin: 4px 0 0; font-size: 13px; color: var(--ink-soft); max-width: 680px; }
-  .seed-banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
-
   /* ========= MODE ÉDITION ========= */
   .edit-only { display: none !important; }
   body.edit-mode .edit-only { display: inline-flex !important; }
@@ -1831,17 +1820,6 @@
 
   <!-- Barre de raccourcis -->
   <div id="shortcutsBar" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0;margin-bottom:4px;min-height:0;"></div>
-
-  <div id="seedBanner" class="seed-banner" style="display:none;">
-    <div class="seed-banner-text">
-      <strong>Bienvenue Alexandra ✨</strong>
-      <p>Je peux pré-remplir ton dashboard avec l'intégralité de ton CV : <strong>4 projets</strong> (postdoc élites mobiles + valorisation thèse + enseignement + affiliations), <strong>14 tâches</strong> dont 3 🚨 urgentes (Amsterdam demain, MSCA 30 mai, article international), <strong>4 candidatures</strong> (MCF / CNRS / MSCA / ERC), <strong>8 articles</strong>, <strong>29 communications</strong> (à venir + passées + médias) et <strong>16 contacts</strong>. Tu pourras tout modifier après.</p>
-    </div>
-    <div class="seed-banner-actions">
-      <button class="btn-primary" onclick="loadInitialData()">Pré-remplir</button>
-      <button class="btn-soft" onclick="dismissSeed()">Plus tard</button>
-    </div>
-  </div>
 
   <nav class="tabs" id="tabs">
     <button class="tab active" data-view="today">Aujourd'hui</button>
@@ -21455,21 +21433,9 @@ function applyPatch(p) {
 }
 
 /* ========= SEED / PRE-FILL ========= */
-function checkSeedBanner() {
-  if (!state.seeded) document.getElementById("seedBanner").style.display = "";
-}
-function dismissSeed() {
-  state.seeded = true;
-  saveState();
-  document.getElementById("seedBanner").style.display = "none";
-}
-function confirmReseed() {
-  _showConfirm("Recharger les données pré-remplies ?<br><small style='opacity:0.7'>Habitudes, projets, tâches, candidatures… seront réinitialisés. Tes saisies manuelles sont conservées.</small>", () => {
-    loadInitialData(); closeSettings();
-    showToast("✨ Données rechargées · Rechargement…");
-    setTimeout(() => { window.location.href = "/Mon-Tableau-de-Vie/?_r=" + Date.now(); }, 700);
-  }, { icon: "🔄", okLabel: "Recharger", okColor: "#f08080" });
-}
+function checkSeedBanner() { /* bannière supprimée */ }
+function dismissSeed() {}
+function confirmReseed() {}
 function showToast(message) {
   let toast = document.getElementById("appToast");
   if (!toast) {
