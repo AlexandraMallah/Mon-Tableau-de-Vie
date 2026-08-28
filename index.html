@@ -13,9 +13,11 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v923</title>
+<title>Mon Tableau de Vie 🌿 · v925</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -54,6 +56,83 @@
 
     --shadow: 0 6px 20px rgba(120, 100, 160, 0.08);
     --shadow-hover: 0 10px 28px rgba(120, 100, 160, 0.14);
+
+    --nav-bg: rgba(253, 246, 240, 0.93);
+    --nav-ink: var(--ink);
+    --radius-card: 16px;
+    --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+  }
+
+  /* ===== THÈME SÉRIEUX ===== */
+  body.t-serieux {
+    --bg-1: #eef1f6;
+    --bg-2: #dde6f2;
+    --card: #ffffff;
+    --ink: #1b2d3e;
+    --ink-soft: #5c6e7e;
+    --ink-softer: #8aacca;
+    --line: #cfd8e6;
+    --lavender: #2e5fa3;
+    --lavender-soft: #dde6f4;
+    --pink: #6496c8;
+    --pink-soft: #c8daf0;
+    --peach: #d4a843;
+    --peach-soft: #f5e9c4;
+    --mint: #4a9e8c;
+    --mint-soft: #c0e5df;
+    --sky: #5b8dc4;
+    --sky-soft: #c4d9ee;
+    --rose: #9e6a9e;
+    --rose-soft: #dcc4dc;
+    --butter: #d4a843;
+    --butter-soft: #f5e9c4;
+    --lilac: #6b82b2;
+    --lilac-soft: #c4cedf;
+    --red: #b34040;
+    --orange: #b07030;
+    --green: #357a60;
+    --shadow: 0 1px 5px rgba(20, 40, 70, 0.08);
+    --shadow-hover: 0 4px 14px rgba(20, 40, 70, 0.14);
+    --nav-bg: rgba(27, 45, 62, 0.97);
+    --nav-ink: #e8f0f8;
+    --radius-card: 8px;
+    --font-main: "IBM Plex Sans", "Segoe UI", sans-serif;
+  }
+
+  /* ===== THÈME MINIMAL ===== */
+  body.t-minimal {
+    --bg-1: #f5f5f5;
+    --bg-2: #ebebeb;
+    --card: #ffffff;
+    --ink: #111111;
+    --ink-soft: #555555;
+    --ink-softer: #999999;
+    --line: #e0e0e0;
+    --lavender: #1a1a1a;
+    --lavender-soft: #ebebeb;
+    --pink: #444444;
+    --pink-soft: #e0e0e0;
+    --peach: #666666;
+    --peach-soft: #e8e8e8;
+    --mint: #333333;
+    --mint-soft: #e4e4e4;
+    --sky: #555555;
+    --sky-soft: #e0e0e0;
+    --rose: #777777;
+    --rose-soft: #e8e8e8;
+    --butter: #888888;
+    --butter-soft: #eeeeee;
+    --lilac: #444444;
+    --lilac-soft: #e4e4e4;
+    --red: #b00000;
+    --orange: #cc6600;
+    --green: #007a40;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.12);
+    --nav-bg: rgba(255, 255, 255, 0.97);
+    --nav-ink: #111111;
+    --radius-card: 4px;
+    --font-main: "DM Sans", "Helvetica Neue", sans-serif;
   }
 
   * { box-sizing: border-box; }
@@ -62,7 +141,7 @@
   html { overflow-x: clip; } /* clip ≠ hidden : n'empêche pas position:sticky */
   body { overflow-x: clip; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+    font-family: var(--font-main);
     color: var(--ink);
     background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 100%);
     min-height: 100vh;
@@ -106,7 +185,8 @@
     position: sticky;
     top: 10px;
     z-index: 100;
-    background: rgba(253, 246, 240, 0.93);
+    background: var(--nav-bg);
+    color: var(--nav-ink);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     padding: 10px 14px;
@@ -187,7 +267,7 @@
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
   /* ========= GENERIC CARD ========= */
-  .card { background: var(--card); border-radius: 22px; padding: 24px; box-shadow: var(--shadow); }
+  .card { background: var(--card); border-radius: var(--radius-card, 22px); padding: 24px; box-shadow: var(--shadow); }
   .card h2 { margin: 0 0 16px; font-size: 16px; font-weight: 600; letter-spacing: 0.2px; }
   .card h2 .count { font-size: 13px; color: var(--ink-soft); font-weight: 500; margin-left: 8px; }
   .card-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
@@ -3637,7 +3717,8 @@
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button id="settingsTabProfil"   onclick="switchSettingsTab('profil')"   style="padding:6px 14px;border-radius:20px;border:1px solid var(--lavender);background:var(--lavender-soft);font-family:inherit;font-size:13px;cursor:pointer;font-weight:600;color:var(--ink);">👤 Profil</button>
         <button id="settingsTabFinances" onclick="switchSettingsTab('finances')" style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">💰 Finances</button>
-        <button id="settingsTabDonnees" onclick="switchSettingsTab('donnees')"  style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">💾 Données</button>
+        <button id="settingsTabDonnees"    onclick="switchSettingsTab('donnees')"    style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">💾 Données</button>
+        <button id="settingsTabApparence" onclick="switchSettingsTab('apparence')" style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">🎨 Apparence</button>
       </div>
     </div>
 
@@ -3682,6 +3763,56 @@
       <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:var(--ink);">💰 Épargne</div>
       <div id="savingsCatEditList"></div>
       <input type="text" id="newSavingsCatInput" placeholder="Nouveau compte épargne (Entrée pour ajouter)" />
+    </div>
+
+    <!-- Onglet Apparence -->
+    <div id="settingsPanelApparence" style="display:none;">
+      <div class="section-title">🎨 Thème visuel</div>
+      <p style="font-size:13px;color:var(--ink-soft);margin:-4px 0 16px;">Choisis l'ambiance de ton tableau de bord.</p>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div id="themeCardSmooth" onclick="applyTheme('smooth')" style="cursor:pointer;border-radius:12px;border:2px solid var(--lavender);background:linear-gradient(135deg,#fdf6f0,#f3ecff);padding:14px 16px;display:flex;align-items:center;gap:12px;">
+          <span style="font-size:28px;">🌸</span>
+          <div>
+            <div style="font-weight:600;font-size:14px;color:#4a4458;">Smooth</div>
+            <div style="font-size:12px;color:#8a8499;margin-top:2px;">Tons pastels doux · lavande &amp; menthe · actuel</div>
+            <div style="display:flex;gap:4px;margin-top:6px;">
+              <span style="width:14px;height:14px;border-radius:50%;background:#c9b6f0;display:inline-block;"></span>
+              <span style="width:14px;height:14px;border-radius:50%;background:#aee0c8;display:inline-block;"></span>
+              <span style="width:14px;height:14px;border-radius:50%;background:#f7c9a3;display:inline-block;"></span>
+              <span style="width:14px;height:14px;border-radius:50%;background:#efb8c8;display:inline-block;"></span>
+            </div>
+          </div>
+          <span id="themeCheckSmooth" style="margin-left:auto;font-size:20px;">✓</span>
+        </div>
+        <div id="themeCardSerieux" onclick="applyTheme('serieux')" style="cursor:pointer;border-radius:12px;border:2px solid #cfd8e6;background:linear-gradient(135deg,#eef1f6,#dde6f2);padding:14px 16px;display:flex;align-items:center;gap:12px;">
+          <span style="font-size:28px;">💼</span>
+          <div>
+            <div style="font-weight:600;font-size:14px;color:#1b2d3e;">Sérieux</div>
+            <div style="font-size:12px;color:#5c6e7e;margin-top:2px;">Bleu ardoise &amp; or · sobre et professionnel</div>
+            <div style="display:flex;gap:4px;margin-top:6px;">
+              <span style="width:14px;height:14px;border-radius:50%;background:#2e5fa3;display:inline-block;"></span>
+              <span style="width:14px;height:14px;border-radius:50%;background:#4a9e8c;display:inline-block;"></span>
+              <span style="width:14px;height:14px;border-radius:50%;background:#d4a843;display:inline-block;"></span>
+              <span style="width:14px;height:14px;border-radius:50%;background:#1b2d3e;display:inline-block;"></span>
+            </div>
+          </div>
+          <span id="themeCheckSerieux" style="margin-left:auto;font-size:20px;display:none;">✓</span>
+        </div>
+        <div id="themeCardMinimal" onclick="applyTheme('minimal')" style="cursor:pointer;border-radius:12px;border:2px solid #e0e0e0;background:linear-gradient(135deg,#f5f5f5,#ebebeb);padding:14px 16px;display:flex;align-items:center;gap:12px;">
+          <span style="font-size:28px;">⬜</span>
+          <div>
+            <div style="font-weight:600;font-size:14px;color:#111;">Minimal</div>
+            <div style="font-size:12px;color:#555;margin-top:2px;">Noir, blanc, gris · épuré et concentré</div>
+            <div style="display:flex;gap:4px;margin-top:6px;">
+              <span style="width:14px;height:14px;border-radius:50%;background:#111;display:inline-block;"></span>
+              <span style="width:14px;height:14px;border-radius:50%;background:#555;display:inline-block;"></span>
+              <span style="width:14px;height:14px;border-radius:50%;background:#999;display:inline-block;"></span>
+              <span style="width:14px;height:14px;border-radius:50%;background:#e0e0e0;border:1px solid #ccc;display:inline-block;"></span>
+            </div>
+          </div>
+          <span id="themeCheckMinimal" style="margin-left:auto;font-size:20px;display:none;">✓</span>
+        </div>
+      </div>
     </div>
 
     <!-- Onglet Données -->
@@ -5546,6 +5677,12 @@ function saveState(userAction = true) {
 // Sauvegarde silencieuse : localStorage uniquement, sans toucher au lastModified ni Firebase
 function saveStateQuiet() { saveState(false); }
 let state = loadState();
+// Appliquer le thème sauvegardé immédiatement
+(function() {
+  const t = state.uiTheme;
+  if (t === "serieux") document.body.classList.add("t-serieux");
+  else if (t === "minimal") document.body.classList.add("t-minimal");
+})();
 
 /* ========= UTILS ========= */
 function todayKey(d = new Date()) {
@@ -20716,9 +20853,10 @@ document.getElementById("newEventName")?.addEventListener("keydown", e => {
 
 /* ========= SETTINGS MODAL ========= */
 function switchSettingsTab(tab) {
-  ["profil","finances","donnees"].forEach(t => {
-    const panel = document.getElementById("settingsPanel" + t.charAt(0).toUpperCase() + t.slice(1));
-    const btn   = document.getElementById("settingsTab"   + t.charAt(0).toUpperCase() + t.slice(1));
+  ["profil","finances","donnees","apparence"].forEach(t => {
+    const key = t.charAt(0).toUpperCase() + t.slice(1);
+    const panel = document.getElementById("settingsPanel" + key);
+    const btn   = document.getElementById("settingsTab"   + key);
     const active = t === tab;
     if (panel) panel.style.display = active ? "" : "none";
     if (btn) {
@@ -20729,6 +20867,19 @@ function switchSettingsTab(tab) {
     }
   });
 }
+function applyTheme(id) {
+  document.body.classList.remove("t-serieux","t-minimal");
+  if (id === "serieux") document.body.classList.add("t-serieux");
+  else if (id === "minimal") document.body.classList.add("t-minimal");
+  state.uiTheme = id;
+  saveState();
+  ["smooth","serieux","minimal"].forEach(t => {
+    const chk  = document.getElementById("themeCheck" + t.charAt(0).toUpperCase() + t.slice(1));
+    const card = document.getElementById("themeCard"  + t.charAt(0).toUpperCase() + t.slice(1));
+    if (chk)  chk.style.display  = t === id ? "" : "none";
+    if (card) card.style.borderColor = t === id ? "var(--lavender)" : "var(--line)";
+  });
+}
 function openSettings(tab) {
   document.getElementById("nameInput").value = state.name || "";
   // comptes gérés directement via ✏️ sur les cartes (openAccountEdit)
@@ -20736,6 +20887,14 @@ function openSettings(tab) {
   ["newHabitInput", "newActivityName", "newActivityEmoji", "newCatInput", "newIncomeCatInput", "newSavingsCatInput", "newCandTypeInput"]
     .forEach(i => document.getElementById(i).value = "");
   switchSettingsTab(tab || "profil");
+  // Rafraîchir les checkmarks de thème
+  const curTheme = state.uiTheme || "smooth";
+  ["smooth","serieux","minimal"].forEach(t => {
+    const chk  = document.getElementById("themeCheck" + t.charAt(0).toUpperCase() + t.slice(1));
+    const card = document.getElementById("themeCard"  + t.charAt(0).toUpperCase() + t.slice(1));
+    if (chk)  chk.style.display  = t === curTheme ? "" : "none";
+    if (card) card.style.borderColor = t === curTheme ? "var(--lavender)" : "var(--line)";
+  });
   document.getElementById("settingsModal").classList.add("open");
 }
 function closeSettings() { document.getElementById("settingsModal").classList.remove("open"); }
