@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v877</title>
+<title>Mon Tableau de Vie 🌿 · v879</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -3915,7 +3915,7 @@
 
 <!-- Modal ajout/édition habitude -->
 <div class="modal-bg" id="habitModal" onclick="event.target===this&&_closeHabitModal()">
-  <div class="modal" style="max-width:440px;padding:28px 24px;" onclick="event.stopPropagation()">
+  <div class="modal" style="max-width:440px;padding:28px 24px;" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
       <h3 id="habitModalTitle" style="margin:0;font-size:18px;">✨ Nouvelle habitude</h3>
       <button onclick="_closeHabitModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
@@ -3940,7 +3940,7 @@
         <div style="font-size:11px;color:var(--ink-soft);">ex : 8000 pas, 2 L d'eau</div>
       </button>
     </div>
-    <div id="habitNumericRow" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+    <div id="habitNumericRow" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
       <div>
         <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Objectif</div>
         <input type="number" id="habitModalTarget" min="1" placeholder="ex : 8000"
@@ -5221,6 +5221,21 @@ function migrate(s) {
     }
   } catch(migErr) { console.warn("[migration biblio]", migErr); }
 
+  // Migration : routines configurables — initialise state.routines depuis ROUTINES const
+  if (!s.routines) {
+    s.routines = {
+      matin: [
+        { id: "h-skincare-matin", label: "Skincare", emoji: "🧴" },
+        { id: "h-dents-matin",    label: "Brossage de dents", emoji: "🪥" },
+      ],
+      soir: [
+        { id: "h-skincare-soir", label: "Skincare", emoji: "🧴" },
+        { id: "h-dents-soir",    label: "Brossage de dents", emoji: "🪥" },
+        { id: "h-douche",        label: "Douche", emoji: "🚿" },
+      ]
+    };
+  }
+
   // Migration : supprimer les comptes épargne vides inutiles
   const toRemove = ["Compte épargne", "Autre épargne", "Frais annuels / Projets"];
   s.savingsCategories = (s.savingsCategories || []).filter(c => {
@@ -5871,7 +5886,8 @@ function computeStreak(habitId) {
 function renderHabits() {
   const today = getToday();
   // Les habitudes de routine ont leur propre section — on les exclut ici
-  const ROUTINE_IDS = new Set(["h-skincare-matin","h-skincare-soir","h-dents-matin","h-dents-soir","h-douche"]);
+  const allRoutineIds = [...(getRoutines().matin || []), ...(getRoutines().soir || [])].map(s => s.id);
+  const ROUTINE_IDS = new Set(allRoutineIds);
   const visibleHabits = state.habits.filter(h => !ROUTINE_IDS.has(h.id));
   const done = visibleHabits.filter(h => isHabitDone(h, today.habits[h.id])).length;
   document.getElementById("habitCount").textContent = `${done}/${visibleHabits.length}`;
@@ -7026,8 +7042,7 @@ function updateProjectSelect() {
   let html = `<option value="">— Sans section —</option>` +
     fixedProjects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
   if (customProjects.length) {
-    html += `<option disabled>──────────</option>` +
-      customProjects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
+    html += customProjects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
   }
   sel.innerHTML = html;
   sel.value = cur;
@@ -7106,9 +7121,12 @@ function renderCustomSectionChips() {
       border:1px solid var(--lavender);border-radius:999px;padding:3px 10px 3px 12px;
       font-size:11px;color:var(--ink-soft);">
       ${escapeHtml(p.name)}
+      <button onclick="openProjectModal('${p.id}')" title="Modifier cette section"
+        style="background:none;border:none;cursor:pointer;color:var(--ink-softer);
+        font-size:11px;line-height:1;padding:0;margin-left:2px;">✏️</button>
       <button onclick="deleteCustomSection('${p.id}')" title="Supprimer cette section"
         style="background:none;border:none;cursor:pointer;color:var(--ink-softer);
-        font-size:13px;line-height:1;padding:0;margin-left:2px;">&times;</button>
+        font-size:13px;line-height:1;padding:0;">&times;</button>
     </span>`).join("");
 }
 
@@ -7633,8 +7651,7 @@ function openTaskEditModal(id) {
   let pHtml = `<option value="">— Sans section —</option>` +
     fixedProjects2.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
   if (customProjects2.length) {
-    pHtml += `<option disabled>──────────</option>` +
-      customProjects2.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
+    pHtml += customProjects2.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
   }
   pSel.innerHTML = pHtml;
   pSel.value = t.projectId || "";
@@ -8970,26 +8987,58 @@ function renderStepsStats() {
   `;
 }
 /* ========= ROUTINES MATIN / SOIR ========= */
-const ROUTINES = {
-  matin: {
-    label: "Routine matin", emoji: "☀️", color: "#f7c9a3",
-    steps: [
-      { id: "h-skincare-matin", label: "Skincare",         emoji: "🧴" },
-      { id: "h-dents-matin",    label: "Brossage de dents", emoji: "🪥" },
-    ]
-  },
-  soir: {
-    label: "Routine soir", emoji: "🌙", color: "#c9b6f0",
-    steps: [
-      { id: "h-skincare-soir", label: "Skincare",         emoji: "🧴" },
-      { id: "h-dents-soir",    label: "Brossage de dents", emoji: "🪥" },
-      { id: "h-douche",        label: "Douche",            emoji: "🚿" },
-    ]
-  }
+const ROUTINES_META = {
+  matin: { label: "Routine matin", emoji: "☀️", color: "#f7c9a3" },
+  soir:  { label: "Routine soir",  emoji: "🌙", color: "#c9b6f0" },
 };
-
+function getRoutines() {
+  if (!state.routines) state.routines = {
+    matin: [
+      { id: "h-skincare-matin", label: "Skincare", emoji: "🧴" },
+      { id: "h-dents-matin",    label: "Brossage de dents", emoji: "🪥" },
+    ],
+    soir: [
+      { id: "h-skincare-soir", label: "Skincare", emoji: "🧴" },
+      { id: "h-dents-soir",    label: "Brossage de dents", emoji: "🪥" },
+      { id: "h-douche",        label: "Douche", emoji: "🚿" },
+    ]
+  };
+  return state.routines;
+}
 function routineComplete(habitsObj, key) {
-  return ROUTINES[key].steps.every(s => !!habitsObj[s.id]);
+  return (getRoutines()[key] || []).every(s => !!habitsObj[s.id]);
+}
+function _addRoutineItem(key) {
+  _showPrompt(`Nom de l'élément (${ROUTINES_META[key].label})`, "", name => {
+    if (!name?.trim()) return;
+    const id = "h-routine-" + Date.now();
+    const emoji = key === "matin" ? "☀️" : "🌙";
+    getRoutines()[key].push({ id, label: name.trim(), emoji });
+    // Crée aussi l'habitude correspondante
+    if (!state.habits.find(h => h.id === id))
+      state.habits.push({ id, name: name.trim() + " " + emoji, type: "boolean" });
+    saveState(); renderSkincare(); renderHabits();
+  });
+}
+function _editRoutineItem(key, id) {
+  const item = (getRoutines()[key] || []).find(s => s.id === id);
+  if (!item) return;
+  _showPrompt("Renommer l'élément", item.label, name => {
+    if (!name?.trim()) return;
+    item.label = name.trim();
+    const h = state.habits.find(h => h.id === id);
+    if (h) h.name = name.trim() + (h.name.match(/\s[\u{1F300}-\u{1FAFF}]/u)?.[0] || "");
+    saveState(); renderSkincare(); renderHabits();
+  });
+}
+function _deleteRoutineItem(key, id) {
+  const item = (getRoutines()[key] || []).find(s => s.id === id);
+  if (!item) return;
+  _showConfirm(`Supprimer « ${item.label} » de la routine ?`, () => {
+    state.routines[key] = state.routines[key].filter(s => s.id !== id);
+    state.habits = state.habits.filter(h => h.id !== id);
+    saveState(); renderSkincare(); renderHabits();
+  }, { icon: "🗑️", okLabel: "Supprimer", okColor: "#f08080" });
 }
 
 /* ========= PILULE ========= */
@@ -10072,41 +10121,47 @@ function renderSkincare() {
   if (routineBadge) routineBadge.innerHTML = streakHtml;
 
   // --- Sections cases à cocher (partagées entre les deux onglets) ---
+  const inEdit = document.body.classList.contains('edit-mode');
   const routineSection = (key) => {
-    const r = ROUTINES[key];
-    const done = r.steps.map(s => !!habits[s.id]);
+    const meta = ROUTINES_META[key];
+    const steps = getRoutines()[key] || [];
+    const done = steps.map(s => !!habits[s.id]);
     const nb   = done.filter(Boolean).length;
-    const full = nb === r.steps.length;
+    const full = nb === steps.length;
 
     const checkRow = (s, isDone) => `
-      <div onclick="toggleSkincare('${s.id}')" style="
-        display:flex;align-items:center;gap:12px;
-        padding:9px 12px;border-radius:12px;cursor:pointer;
-        transition:background 0.15s;
-        background:${isDone ? `${r.color}18` : "transparent"};
-      ">
-        <div style="
-          width:22px;height:22px;border-radius:6px;flex-shrink:0;
-          background:${isDone ? r.color : "white"};
-          border:2px solid ${isDone ? r.color : "var(--line)"};
-          display:flex;align-items:center;justify-content:center;
-          transition:all 0.15s;
-        ">${isDone ? `<span style="color:white;font-weight:700;font-size:12px;">✓</span>` : ""}</div>
-        <span style="font-size:13.5px;color:${isDone ? "var(--ink-soft)" : "var(--ink)"};
-          text-decoration:${isDone ? "line-through" : "none"};">${s.emoji} ${s.label}</span>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <div onclick="toggleSkincare('${s.id}')" style="
+          flex:1;display:flex;align-items:center;gap:12px;
+          padding:9px 12px;border-radius:12px;cursor:pointer;
+          transition:background 0.15s;
+          background:${isDone ? `${meta.color}18` : "transparent"};
+        ">
+          <div style="
+            width:22px;height:22px;border-radius:6px;flex-shrink:0;
+            background:${isDone ? meta.color : "white"};
+            border:2px solid ${isDone ? meta.color : "var(--line)"};
+            display:flex;align-items:center;justify-content:center;
+            transition:all 0.15s;
+          ">${isDone ? `<span style="color:white;font-weight:700;font-size:12px;">✓</span>` : ""}</div>
+          <span style="font-size:13.5px;color:${isDone ? "var(--ink-soft)" : "var(--ink)"};
+            text-decoration:${isDone ? "line-through" : "none"};">${s.emoji} ${s.label}</span>
+        </div>
+        ${inEdit ? `<span onclick="_editRoutineItem('${key}','${s.id}')" style="font-size:11px;cursor:pointer;color:var(--ink-softer);padding:4px;" title="Renommer">✏️</span><span onclick="_deleteRoutineItem('${key}','${s.id}')" style="font-size:11px;cursor:pointer;color:var(--ink-softer);padding:4px;" title="Supprimer">🗑️</span>` : ""}
       </div>`;
 
     return `
       <div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;padding:0 4px;">
-          <span style="font-size:15px;">${r.emoji}</span>
-          <span style="font-size:13px;font-weight:700;color:var(--ink);">${r.label}</span>
+          <span style="font-size:15px;">${meta.emoji}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--ink);">${meta.label}</span>
           <span style="margin-left:auto;font-size:12px;font-weight:600;
-            color:${full ? r.color : "var(--ink-softer)"};">
-            ${full ? "✓ Complète" : `${nb}/${r.steps.length}`}
+            color:${full ? meta.color : "var(--ink-softer)"};">
+            ${full ? "✓ Complète" : `${nb}/${steps.length}`}
           </span>
+          ${inEdit ? `<button onclick="_addRoutineItem('${key}')" style="font-size:11px;padding:2px 8px;border-radius:999px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;font-family:inherit;">+ Ajouter</button>` : ""}
         </div>
-        ${r.steps.map((s, i) => checkRow(s, done[i])).join("")}
+        ${steps.map((s, i) => checkRow(s, done[i])).join("")}
       </div>`;
   };
 
@@ -15085,7 +15140,10 @@ function renderTimeCatsGrid() {
         style="width:52px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:${c.color};background:white;text-align:center;"
         onchange="saveTimeWork()" />
       <span style="font-size:12px;color:var(--ink-soft);">h</span>
-      <span class="edit-only" onclick="_deleteTimeCat('${c.key}')" style="position:absolute;top:2px;right:4px;font-size:9px;color:var(--ink-softer);cursor:pointer;opacity:0.5;" title="Supprimer cette catégorie">✕</span>
+      <span class="edit-only" style="position:absolute;top:2px;right:4px;display:flex;gap:4px;">
+        <span onclick="_editTimeCat('${c.key}')" style="font-size:9px;color:var(--ink-softer);cursor:pointer;opacity:0.5;" title="Renommer">✏️</span>
+        <span onclick="_deleteTimeCat('${c.key}')" style="font-size:9px;color:var(--ink-softer);cursor:pointer;opacity:0.5;" title="Supprimer">✕</span>
+      </span>
     </div>`).join("");
 }
 function fillTimeForm(dateKey) {
@@ -15104,6 +15162,18 @@ function _addTimeCat() {
     const idx = getTimeCats().length % colors.length;
     if (!state.work.timeCats || !state.work.timeCats.length) state.work.timeCats = [...TIME_CATS_DEFAULT];
     state.work.timeCats.push({ key, label: label.trim(), emoji: "📌", color: colors[idx], bg: bgs[idx] });
+    saveState(); renderTimeView();
+  });
+}
+function _editTimeCat(key) {
+  const cats = getTimeCats();
+  const cat = cats.find(c => c.key === key);
+  if (!cat) return;
+  _showPrompt("Nouveau nom de la catégorie", cat.label, newLabel => {
+    if (!newLabel?.trim()) return;
+    if (!state.work.timeCats || !state.work.timeCats.length) state.work.timeCats = [...TIME_CATS_DEFAULT];
+    const c = state.work.timeCats.find(c => c.key === key);
+    if (c) c.label = newLabel.trim();
     saveState(); renderTimeView();
   });
 }
