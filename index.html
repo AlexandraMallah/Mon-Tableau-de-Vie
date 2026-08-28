@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v902</title>
+<title>Mon Tableau de Vie 🌿 · v904</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -3985,21 +3985,23 @@
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Eau',{type:'numeric',target:2,unit:'L'})">💧 Eau</button>
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Pas',{type:'numeric',target:8000,unit:'pas'})">🚶 Pas</button>
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Lecture',{type:'numeric',target:30,unit:'min'})">📚 Lecture</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Méditation',{type:'numeric',target:10,unit:'min'})">🧘 Méditation</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Sport',{type:'boolean'})">🏋️ Sport</button>
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Fruits & légumes',{type:'numeric',target:5,unit:'portions'})">🥗 Fruits &amp; légumes</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Caféine',{type:'numeric',target:2,unit:'tasses'})">☕ Caféine</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Alcool',{type:'boolean'})">🍷 Alcool (0 verre)</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Étirements',{type:'numeric',target:10,unit:'min'})">🤸 Étirements</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Journal',{type:'boolean'})">✍️ Journal</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('No social media',{type:'boolean'})">📵 No réseaux</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Ménage',{type:'boolean'})">🧹 Ménage</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Plantes',{type:'boolean'})">🪴 Plantes</button>
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Protéines',{type:'numeric',target:80,unit:'g'})">🥩 Protéines</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Caféine',{type:'numeric',target:2,unit:'tasses'})">☕ Caféine max</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Sans alcool',{type:'boolean'})">🍷 Sans alcool</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Étirements',{type:'numeric',target:10,unit:'min'})">🤸 Étirements</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Exercice respiratoire',{type:'boolean'})">🫁 Respiration</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Journal',{type:'boolean'})">✍️ Journal</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Sans réseaux sociaux',{type:'boolean'})">📵 No réseaux</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Temps d\'écran',{type:'numeric',target:2,unit:'h max'})">📺 Temps écran</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Plein air',{type:'boolean'})">☀️ Plein air</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Coucher avant 23h',{type:'boolean'})">🕙 Coucher tôt</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Appeler un proche',{type:'boolean'})">🤝 Appeler un proche</button>
         <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Vitamines',{type:'boolean'})">💊 Vitamines</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Gratitude',{type:'boolean'})">🙏 Gratitude</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Flossing',{type:'boolean'})">🦷 Flossing</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Complément alimentaire',{type:'boolean'})">🧴 Complément</button>
       </div>
-      <div style="font-size:11px;color:var(--ink-softer);margin-top:8px;">💊 Suivi pilule &amp; 🩸 règles → section dédiée dans "Aujourd'hui"</div>
+      <div style="font-size:11px;color:var(--ink-softer);margin-top:8px;">💊 Suivi pilule &amp; 🩸 règles → section dédiée dans "Aujourd'hui" · 🏋️ Sport &amp; 🧘 Méditation → Activités</div>
     </div>
     <div style="height:1px;background:var(--line);margin-bottom:16px;"></div>
     <div style="margin-bottom:14px;">
