@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v922</title>
+<title>Mon Tableau de Vie 🌿 · v923</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -11853,6 +11853,8 @@ function _saveExtAccounts() {
     state.externalAccounts.push({ id: "ext-" + Date.now(), name: newName.value.trim(), emoji: (newEmoji?.value.trim().slice(0,2)) || "🧾" });
   }
   saveState();
+  // Envoi immédiat vers Firebase (pas de délai de 800ms) pour éviter que le listener cloud écrase
+  _fbFlushPending();
   closeHelp();
   const _hf2=document.getElementById("helpFooter"); if(_hf2) _hf2.style.display="";
   renderExternalSummary();
