@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v992</title>
+<title>Mon Tableau de Vie 🌿 · v993</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5650,12 +5650,12 @@ function migrate(s) {
   // Migration : aligner les noms de projets sur les sous-onglets Travail + assigner couleurs distinctes
   if (Array.isArray(s.work?.postdocProjects)) {
     const seedMeta = {
-      "p-seed-postdoc":      { name: "Postdoc",       emoji: "📗", color: "#b4d4f1", bg: "#dceaf7" },
-      "p-seed-valo":         { name: "Valorisation",  emoji: "📝", color: "#aee0c8", bg: "#d8f0e5" },
-      "p-seed-enseignement": { name: "Enseignement",  emoji: "📚", color: "#f7c9a3", bg: "#fce5d1" },
-      "p-seed-candidatures": { name: "Candidatures",  emoji: "📋", color: "#efb8c8", bg: "#fae3eb" },
-      "p-seed-autre":        { name: "Autre",         emoji: "🗂️", color: "#c9b6f0", bg: "#e6dcfa" },
-      "p-seed-prixthese":    { name: "Prix de thèse", emoji: "🏆", color: "#f5e6a8", bg: "#fbf3d1" },
+      "p-seed-postdoc":      { name: "Postdoc",       emoji: "📗", color: "#ddd0f7", bg: "#f0eafd" },
+      "p-seed-valo":         { name: "Valorisation",  emoji: "📝", color: "#b5e3d0", bg: "#daf3ea" },
+      "p-seed-enseignement": { name: "Enseignement",  emoji: "📚", color: "#f9c4ae", bg: "#fde8dc" },
+      "p-seed-candidatures": { name: "Candidatures",  emoji: "📋", color: "#fad4df", bg: "#fdeef2" },
+      "p-seed-autre":        { name: "Autre",         emoji: "🗂️", color: "#add9f4", bg: "#d8eefb" },
+      "p-seed-prixthese":    { name: "Prix de thèse", emoji: "🏆", color: "#f7e49d", bg: "#fdf6d0" },
     };
     s.work.postdocProjects.forEach(p => {
       const meta = seedMeta[p.id];
