@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v954</title>
+<title>Mon Tableau de Vie 🌿 · v955</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11907,17 +11907,23 @@ function setTxType(t) {
 }
 
 function _addSavingsAccount() {
-  _showPrompt("Nom du nouveau compte", "", name => {
+  _showPrompt("Nom du nouveau compte épargne", "", name => {
     if (!name || !name.trim()) return;
     const n = name.trim();
-    if (!state.savingsCategories.includes(n)) {
-      state.savingsCategories.push(n);
+    _showPrompt("Emoji pour ce compte (ex: 📗, 🏦, 📈) — laisser vide pour défaut", "", emoji => {
+      if (!state.savingsCategories.includes(n)) state.savingsCategories.push(n);
+      if (emoji && emoji.trim()) {
+        if (!state.accounts) state.accounts = {};
+        if (!state.accounts.savingsEmojis) state.accounts.savingsEmojis = {};
+        state.accounts.savingsEmojis[n] = emoji.trim().slice(0, 4);
+      }
       saveState();
-    }
-    populateTxCategories();
-    const sel = document.getElementById("txCategory");
-    if (sel) sel.value = n;
-    _renderFinanceCatLists();
+      populateTxCategories();
+      const sel = document.getElementById("txCategory");
+      if (sel) sel.value = n;
+      _renderFinanceCatLists();
+      renderAccounts();
+    });
   });
 }
 function saveMoneyNote() {
@@ -12580,6 +12586,8 @@ function _goToHealth(sectionId) {
 function _courantName() { return state.accounts?.courantName || "Compte courant"; }
 const _ACCOUNT_EMOJI = { "livret a": "📗", "ldd": "📘", "ldds": "📘", "lea": "📘", "pea": "📈", "etf": "📊", "assurance vie": "🛡️", "assurance-vie": "🛡️", "lep": "🟡", "boursobank": "🟣", "bourso": "🟣", "fortuneo": "🔵", "n26": "⚫", "revolut": "💙", "degiro": "🟠", "trade republic": "🟢", "binance": "🟡", "crypto": "🪙", "or": "🥇", "immobilier": "🏠", "scpi": "🏢" };
 function _accountEmoji(name) {
+  const custom = state.accounts?.savingsEmojis?.[name];
+  if (custom) return custom + " ";
   const key = (name || "").toLowerCase().trim();
   for (const [k, e] of Object.entries(_ACCOUNT_EMOJI)) { if (key.includes(k)) return e + " "; }
   return "🏦 ";
