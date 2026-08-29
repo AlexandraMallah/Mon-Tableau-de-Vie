@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1002</title>
+<title>Mon Tableau de Vie 🌿 · v1003</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16145,6 +16145,98 @@ const PILLAR_DEFS = [
   },
 ];
 
+// Catalogue de toutes les métriques disponibles dans l'app (pour les ajouter aux piliers)
+const BASE_METRIC_CATALOGUE = [
+  // Santé / corps
+  {_catId:"wba-sleep",  group:"💪 Santé", type:"wellbeing-avg", field:"sleep", label:"Sommeil", target:8},
+  {_catId:"wbq-sleep",  group:"💪 Santé", type:"wellbeing-quality", field:"sleepQuality", label:"Qualité du sommeil"},
+  {_catId:"wba-weight", group:"💪 Santé", type:"wellbeing-avg", field:"weight", label:"Poids suivi", target:65},
+  // Bien-être
+  {_catId:"wba-mood",   group:"🧘 Bien-être", type:"wellbeing-avg", field:"mood", label:"Humeur", target:5},
+  {_catId:"wba-energy", group:"🧘 Bien-être", type:"wellbeing-avg", field:"energy", label:"Énergie", target:5},
+  // Activités physiques
+  {_catId:"act-any",    group:"🏃 Activités", type:"any-activity-sessions", label:"Activité physique (toutes)", target:3},
+  {_catId:"act-sport",  group:"🏃 Activités", type:"activity-sessions", regex:"sport|salle|danse|gym|yoga|course à pied|natation|pilates|crossfit", label:"Sport (gym, yoga, natation…)", target:3},
+  {_catId:"act-medit",  group:"🏃 Activités", type:"activity-sessions", regex:"médit|sophrolog|yoga|respir|tai.chi|qi.gong|pleine.conscience", label:"Méditation / relaxation", target:2},
+  {_catId:"act-plaisir",group:"🏃 Activités", type:"activity-sessions", regex:"lecture|podcast|film|ciné|série|musique|dessin|peinture|art|photo|jeu|danse|concert|expo|balade|jardinage|cuisine|bak|pâtiss", label:"Activités plaisir (loisirs)", target:3},
+  // Travail
+  {_catId:"wk-tasks",   group:"💼 Travail", type:"tasks-done", label:"Tâches finies/semaine", target:5},
+  {_catId:"wk-time",    group:"💼 Travail", type:"worktime-sum", label:"Heures travaillées/semaine", target:40},
+  // Finances
+  {_catId:"fi-tx",      group:"💰 Finances", type:"tx-tracked", label:"Dépenses tracées/semaine", target:5},
+  {_catId:"fi-save",    group:"💰 Finances", type:"savings-month", label:"Épargne du mois (€)", target:1000},
+  {_catId:"fi-budget",  group:"💰 Finances", type:"budget-on-track", label:"Budget respecté"},
+  // Domestique
+  {_catId:"dom-grocer", group:"🏠 Domestique", type:"groceries-done", label:"Courses à jour"},
+  {_catId:"dom-meals",  group:"🏠 Domestique", type:"meal-plan-active", label:"Planning repas fait", target:3},
+  {_catId:"dom-plants", group:"🏠 Domestique", type:"plants-uptodate", label:"Plantes arrosées"},
+  // Social / Calendrier
+  {_catId:"cal-amis",   group:"🎉 Social", type:"cal-keywords-count", keywords:["ami","amie","amis","copain","copine","copines","soirée","apéro","dîner","brunch","repas","pote"], label:"Moments avec des amis", target:2},
+  {_catId:"cal-fam",    group:"🎉 Social", type:"cal-keywords-count", keywords:["famille","maman","papa","parents","frère","sœur","soeur","mamie","papi"], label:"Moments en famille", target:1},
+  {_catId:"cal-culture",group:"🎉 Social", type:"cal-keywords-count", keywords:["concert","expo","musée","théâtr","ciném","spectacle","festival","vernissage"], label:"Sorties culturelles", target:1},
+  // Journal
+  {_catId:"jrnl-pct",   group:"📓 Journal", type:"journal-pct", label:"Journaling régulier", target:4},
+];
+
+function _buildMetricCatId(m) {
+  // Génère un identifiant unique à partir des propriétés d'une métrique
+  return m._catId || (m.type + (m.habitId||m.field||m.regex||""));
+}
+
+function _pillarAllMetricIds(pillarId) {
+  // Retourne tous les _catId déjà présents (base + extra)
+  const p = PILLAR_DEFS.find(x => x.id === pillarId); if (!p) return new Set();
+  const extra = ((state.pillarOverrides||{})[pillarId]||{}).extraMetrics || [];
+  const baseIds = new Set(p.metrics.map(_buildMetricCatId));
+  extra.forEach(m => baseIds.add(_buildMetricCatId(m)));
+  return baseIds;
+}
+
+function _getCatalogueForPillar(pillarId) {
+  // Catalogue complet : items statiques + toutes les habitudes utilisateur non déjà présentes
+  const used = _pillarAllMetricIds(pillarId);
+  const items = BASE_METRIC_CATALOGUE.filter(m => !used.has(_buildMetricCatId(m)));
+  // Habitudes utilisateur non déjà dans le catalogue
+  (state.habits || []).forEach(h => {
+    const catId = "hab-" + h.id;
+    if (!used.has(catId)) {
+      const existing = BASE_METRIC_CATALOGUE.find(m => m._catId && m._catId.includes(h.id));
+      if (!existing) {
+        items.push({_catId: catId, group:"📋 Mes habitudes", type:"habit-avg", habitId: h.id,
+          label: h.name, target: h.target || 1});
+      }
+    }
+  });
+  return items;
+}
+
+function _addExtraMetric(catId) {
+  const pillarId = _pillarConfigId;
+  if (!pillarId) return;
+  const allItems = BASE_METRIC_CATALOGUE.concat((state.habits||[]).map(h => ({
+    _catId:"hab-"+h.id, group:"📋 Mes habitudes", type:"habit-avg", habitId:h.id, label:h.name, target:h.target||1
+  })));
+  const item = allItems.find(m => m._catId === catId);
+  if (!item) return;
+  if (!state.pillarOverrides) state.pillarOverrides = {};
+  if (!state.pillarOverrides[pillarId]) state.pillarOverrides[pillarId] = {};
+  if (!state.pillarOverrides[pillarId].extraMetrics) state.pillarOverrides[pillarId].extraMetrics = [];
+  const {_catId, group, ...metricDef} = item;
+  state.pillarOverrides[pillarId].extraMetrics.push({...metricDef, _catId});
+  saveState();
+  openPillarConfig(pillarId); // re-render
+}
+
+function _removeExtraMetric(idx) {
+  const pillarId = _pillarConfigId;
+  if (!pillarId) return;
+  const extra = ((state.pillarOverrides||{})[pillarId]||{}).extraMetrics;
+  if (!extra) return;
+  extra.splice(idx, 1);
+  saveState();
+  openPillarConfig(pillarId); // re-render
+}
+
 function _last7Days() { return lastDates(7); }
 
 /* Jours fériés français — algorithme de Butcher/Meeus pour Pâques */
@@ -16470,7 +16562,8 @@ function openPillarConfig(pillarId) {
     "plants-uptodate": null,
     "journal-pct": "Jours / semaine",
   };
-  document.getElementById("pillarConfigBody").innerHTML = p.metrics.map((m, i) => {
+  const extraMetrics = (overrides.extraMetrics || []);
+  const baseHtml = p.metrics.map((m, i) => {
     const ov = overrides[i] || {};
     const currentTarget = ov.target !== undefined ? ov.target : m.target;
     const unit = typeLabels[m.type];
@@ -16493,6 +16586,36 @@ function openPillarConfig(pillarId) {
         style="width:80px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
     </div>`;
   }).join("");
+
+  // Métriques ajoutées manuellement
+  const extraHtml = extraMetrics.length ? `<div style="margin-top:14px;"><div style="font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Indicateurs ajoutés</div>` +
+    extraMetrics.map((m, ei) => {
+      const unit = typeLabels[m.type];
+      return `<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--ink);">${escapeHtml(m.label)}</div>
+          ${unit && m.target !== undefined ? `<div style="font-size:11px;color:var(--ink-softer);">${unit}</div>` : ''}
+        </div>
+        <button onclick="_removeExtraMetric(${ei})" title="Retirer" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:0 2px;">✕</button>
+      </div>`;
+    }).join("") + `</div>` : "";
+
+  // Catalogue de métriques disponibles
+  const catalogue = _getCatalogueForPillar(pillarId);
+  const groups = {};
+  catalogue.forEach(m => { if (!groups[m.group]) groups[m.group] = []; groups[m.group].push(m); });
+  const catHtml = Object.keys(groups).length ? `<div style="margin-top:16px;border-top:2px dashed var(--line);padding-top:14px;">
+    <div style="font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">➕ Ajouter un indicateur</div>
+    ${Object.entries(groups).map(([grp, items]) => `
+      <div style="margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--ink-softer);margin-bottom:5px;">${grp}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          ${items.map(m => `<button onclick="_addExtraMetric('${escapeHtml(m._catId)}')" style="font-size:12px;padding:4px 10px;border-radius:999px;border:1.5px solid var(--line);background:white;color:var(--ink);cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='var(--lavender-soft)'" onmouseout="this.style.background='white'">${escapeHtml(m.label)}</button>`).join("")}
+        </div>
+      </div>`).join("")}
+  </div>` : `<div style="margin-top:14px;font-size:12px;color:var(--ink-softer);font-style:italic;text-align:center;">Tous les indicateurs disponibles sont déjà présents dans ce pilier.</div>`;
+
+  document.getElementById("pillarConfigBody").innerHTML = baseHtml + extraHtml + catHtml;
   document.getElementById("pillarConfigModal").classList.add("open");
 }
 function closePillarConfig() { document.getElementById("pillarConfigModal").classList.remove("open"); }
@@ -16532,8 +16655,11 @@ function _isOnVacationThisWeek() {
 function computePillarScore(pillar) {
   const overrides = (state.pillarOverrides || {})[pillar.id] || {};
   const metrics = pillar.metrics.map((m, i) => computeMetric(m, overrides[i]));
-  const avg = metrics.reduce((s, m) => s + m.score, 0) / metrics.length;
-  return { score: Math.round(avg * 100), metrics };
+  // Métriques ajoutées manuellement
+  const extraMetrics = (overrides.extraMetrics || []).map(m => computeMetric(m, {}));
+  const all = metrics.concat(extraMetrics);
+  const avg = all.reduce((s, m) => s + m.score, 0) / (all.length || 1);
+  return { score: Math.round(avg * 100), metrics: all };
 }
 function metricClass(score) {
   if (score >= 0.7) return "good";
