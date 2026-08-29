@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v998</title>
+<title>Mon Tableau de Vie 🌿 · v999</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -237,6 +237,17 @@
     background: var(--lilac-soft); border-color: transparent;
     color: var(--ink); font-weight: 600;
   }
+  /* Fiche projet universelle */
+  .proj-fiche-tab-btn {
+    background: transparent; border: 1px solid var(--line); color: var(--ink-soft);
+    padding: 6px 12px; border-radius: 999px; cursor: pointer;
+    font-size: 12px; transition: all 0.2s; font-family: inherit;
+  }
+  .proj-fiche-tab-btn:hover { color: var(--ink); background: white; }
+  .proj-fiche-tab-btn.active { background: var(--lavender-soft); border-color: var(--lavender); color: var(--ink); font-weight: 600; }
+  .proj-fiche-panel { display: none; }
+  .proj-fiche-panel.active { display: block; }
+  [contenteditable][data-placeholder]:empty:before { content: attr(data-placeholder); color: var(--ink-softer); pointer-events: none; }
   .food-tab {
     background: transparent; border: 1px solid var(--line); color: var(--ink-soft);
     padding: 6px 14px; border-radius: 999px; cursor: pointer;
@@ -2248,7 +2259,7 @@
       <input type="hidden" id="persoProjectEmoji" value="🎉" />
       <label>Nom du projet</label>
       <input type="text" id="persoProjectName" placeholder="Ex : Organisation mariage, Anniversaire, Déménagement…" />
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px;">
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px;">
         <span onclick="document.getElementById('persoProjectName').value=this.textContent" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">💍 Organisation mariage</span>
         <span onclick="document.getElementById('persoProjectName').value=this.textContent" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">🎂 Anniversaire</span>
         <span onclick="document.getElementById('persoProjectName').value=this.textContent" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">📦 Déménagement</span>
@@ -2489,113 +2500,7 @@
       </div>
     </div>
 
-    <!-- Sub: Candidatures -->
-    <div class="sub-view" data-sub="candidatures">
-      <div class="card" style="margin-bottom:18px;">
-        <div class="card-row">
-          <h2>📋 Candidatures <span class="count" id="candProjectCount"></span></h2>
-        </div>
-        <div id="candidaturesProjectCard"></div>
-      </div>
-      <div id="candTasksCard" style="display:none;margin-bottom:14px;"></div>
-      <div class="card">
-        <div class="work-header">
-          <h2 style="margin:0;">Suivi candidatures <span class="count" id="candCount"></span></h2>
-          <button class="btn-primary" onclick="openCandModal()">+ Nouvelle candidature</button>
-        </div>
-        <div class="kanban" id="kanban"></div>
-      </div>
-    </div>
-
-    <!-- Sub: Valorisation -->
-    <div class="sub-view" data-sub="valorisation">
-      <div class="card" style="margin-bottom:18px;">
-        <div class="card-row">
-          <h2>📝 Valorisation de thèse</h2>
-        </div>
-        <div id="valorisationProjectCard"></div>
-      </div>
-      <div class="card" style="margin-bottom:18px;">
-        <div class="work-header">
-          <h2 style="margin:0;">📄 Articles <span class="count" id="articleCount"></span></h2>
-          <button class="btn-primary" onclick="openArticleModal()">+ Nouvel article</button>
-        </div>
-        <div class="kanban" id="articleKanban"></div>
-      </div>
-      <div class="card">
-        <div class="work-header">
-          <h2 style="margin:0;">🎤 Communications <span class="count" id="commCount"></span></h2>
-          <button class="btn-primary" onclick="openCommModal()">+ Nouvelle communication</button>
-        </div>
-        <div class="kanban" id="commKanban"></div>
-      </div>
-    </div>
-
-    <!-- Sub: Enseignement -->
-    <div class="sub-view" data-sub="teaching">
-      <div class="card" style="margin-bottom:18px;">
-        <div class="card-row">
-          <h2>📚 Enseignement <span class="count" id="teachingCount"></span></h2>
-        </div>
-        <div id="teachingProjectCard"></div>
-      </div>
-      <div class="grid-two-eq" style="margin-bottom:18px;">
-        <div class="card">
-          <h2>📊 Statistiques cumulées</h2>
-          <div class="stat-grid">
-            <div class="stat" style="background:var(--lavender-soft);">
-              <div class="stat-label">Heures totales (eq. TD)</div>
-              <div class="stat-val" style="color:#6b4d99;">294 h</div>
-              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">depuis 2021 (5 ans)</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">Établissements</div>
-              <div class="stat-val">5</div>
-              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">Paris 1 · EHESS · CNAM · UCO · UPEC</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">Cours en cours</div>
-              <div class="stat-val">1</div>
-              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">2025-2026</div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <h2>🗓️ Cours actuel (2025-2026)</h2>
-          <div style="padding:14px;border-radius:14px;background:linear-gradient(135deg,var(--lavender-soft),var(--sky-soft));margin-top:8px;">
-            <div style="font-weight:600;font-size:15px;">TD « Cartographie et graphique »</div>
-            <div style="font-size:13px;color:var(--ink-soft);margin-top:4px;">Université Paris 1 Panthéon-Sorbonne · UFR de géographie · L1 S2 · <strong>24h équivalent TD</strong></div>
-            <div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">Approfondissement analyse statistique univariée, méthodes typologie, traitement et représentations de l'information géographique. Excel · Magrit · Inkscape.</div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-row">
-          <h2>📜 Historique des cours</h2>
-          <button class="btn-primary" onclick="openAddCourseForm()">+ Ajouter</button>
-        </div>
-        <div id="addCourseForm" style="display:none;background:#faf8fd;border-radius:12px;padding:14px;margin-bottom:14px;">
-          <div style="display:grid;grid-template-columns:1fr 1fr 2fr 1fr 1fr 80px auto;gap:8px;align-items:center;">
-            <input type="text" id="newCourseYear" placeholder="2025-2026" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
-            <input type="text" id="newCourseSchool" placeholder="Établissement" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
-            <input type="text" id="newCourseName" placeholder="Intitulé du cours" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
-            <input type="text" id="newCourseLevel" placeholder="Niveau" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
-            <input type="text" id="newCourseType" placeholder="Type" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
-            <input type="number" id="newCourseHours" placeholder="h" min="0" step="0.5" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:center;" />
-            <button onclick="addCourse()" style="padding:7px 12px;background:var(--lavender-soft);border:1px solid var(--lavender);border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;white-space:nowrap;">✓ OK</button>
-          </div>
-        </div>
-        <div style="overflow-x:auto;">
-          <table class="data-table" id="teachingHistoryTable">
-            <thead>
-              <tr><th>Année</th><th>Établissement</th><th>Cours</th><th>Niveau</th><th>Type</th><th style="text-align:right;">Heures</th><th></th></tr>
-            </thead>
-            <tbody id="teachingHistoryBody"></tbody>
-          </table>
-        </div>
-        <div id="teachingHistoryTotal" style="text-align:right;font-weight:700;font-size:14px;margin-top:8px;color:var(--ink);"></div>
-      </div>
-    </div>
+    <!-- Sous-vues seed projects générées dynamiquement par renderWorkProjectTabs() -->
 
     <!-- Sub: Notes -->
     <div class="sub-view" data-sub="notes">
@@ -5696,6 +5601,10 @@ function migrate(s) {
         p.bg    = meta.bg;
         if (!p.emoji) p.emoji = meta.emoji;
       }
+      // Migration : champs fiche projet universelle
+      if (!p.checklist) p.checklist = [];
+      if (!p.links) p.links = [];
+      if (p.ficheNotes === undefined) p.ficheNotes = "";
     });
   }
   // Migration : lier automatiquement les tâches MSCA/candidature au projet "Candidatures"
@@ -6828,6 +6737,273 @@ const _SEED_SUB_MAP = {
   "p-seed-enseignement": { sub: "teaching",       emoji: "📚", label: "Enseignement" },
 };
 
+/* ========= FICHE PROJET UNIVERSELLE ========= */
+var _projFicheActiveTab = {};
+
+function _switchProjFicheTab(projId, tab) {
+  _projFicheActiveTab[projId] = tab;
+  const fiche = document.querySelector(`.proj-fiche[data-projid="${projId}"]`);
+  if (!fiche) return;
+  fiche.querySelectorAll(".proj-fiche-tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  fiche.querySelectorAll(".proj-fiche-panel").forEach(p => p.classList.toggle("active", p.dataset.panel === tab));
+  if (tab === "tasks") _renderProjFicheTasks(projId);
+  if (tab === "temps") _renderProjFicheTemps(projId);
+  if (tab === "checklist") _renderProjFicheChecklist(projId);
+  if (tab === "notes") _renderProjFicheNotes(projId);
+  if (tab === "links") _renderProjFicheLinks(projId);
+  if (tab === "suivi") _renderProjFicheSuivi(projId);
+}
+
+function _renderProjFicheTasks(projId) {
+  const container = document.querySelector(`.proj-fiche[data-projid="${projId}"] .proj-fiche-panel[data-panel="tasks"]`);
+  if (!container) return;
+  const p = (state.work.postdocProjects || []).find(pp => pp.id === projId);
+  const col = p?.color || "#b8a5e8";
+  const tasks = (state.work.postdocTasks || []).filter(t => t.projectId === projId);
+  const sorted = tasks.sort((a,b)=>{ const ord={urgent:0,high:1,medium:2,low:3}; return (ord[a.priority]??2)-(ord[b.priority]??2); });
+  const rows = sorted.length
+    ? sorted.map(t => `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:${t.done?"var(--bg-1)":"white"};border:1px solid var(--line);margin-bottom:6px;opacity:${t.done?0.6:1};">
+        <input type="checkbox" ${t.done?"checked":""} onchange="_toggleTaskFromProjTab('${t.id}',this.checked)" style="accent-color:${col};" />
+        <span style="flex:1;font-size:14px;${t.done?"text-decoration:line-through;color:var(--ink-soft);":"color:var(--ink);"}">${escapeHtml(t.name||"")}</span>
+        ${t.deadline?`<span style="font-size:11px;color:var(--ink-softer);">${t.deadline.slice(5).replace("-","/")} </span>`:""}
+      </div>`).join("")
+    : `<p style="color:var(--ink-soft);font-size:13px;font-style:italic;margin:20px 0;">Aucune tâche. Ajoute-en depuis ✅ Tâches ou avec le bouton ci-dessous.</p>`;
+  container.innerHTML = rows + `<button onclick="_addTaskFromProjTab('${projId}')" style="margin-top:8px;width:100%;padding:9px;border-radius:10px;border:1.5px dashed var(--line);background:var(--bg-1);font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">+ Ajouter une tâche</button>`;
+}
+
+function _renderProjFicheTemps(projId) {
+  const container = document.querySelector(`.proj-fiche[data-projid="${projId}"] .proj-fiche-panel[data-panel="temps"]`);
+  if (!container) return;
+  let totalH = 0, thisWeekH = 0, thisMonthH = 0;
+  const today = new Date();
+  const weekStart = new Date(today); weekStart.setDate(today.getDate() - ((today.getDay()+6)%7)); weekStart.setHours(0,0,0,0);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  Object.entries(state.history || {}).forEach(([dk, day]) => {
+    const h = (day.workTime || {})[projId] || 0;
+    if (!h) return;
+    totalH += h;
+    const d = new Date(dk);
+    if (d >= weekStart) thisWeekH += h;
+    if (d >= monthStart) thisMonthH += h;
+  });
+  const fmt = h => h < 1 ? `${Math.round(h*60)} min` : `${Math.floor(h)}h${h%1 ? Math.round((h%1)*60).toString().padStart(2,"0") : ""}`;
+  container.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+      <div style="background:var(--bg-1);border-radius:12px;padding:14px;text-align:center;">
+        <div style="font-size:11px;color:var(--ink-soft);margin-bottom:4px;">Cette semaine</div>
+        <div style="font-size:22px;font-weight:800;color:var(--ink);">${fmt(thisWeekH)}</div>
+      </div>
+      <div style="background:var(--bg-1);border-radius:12px;padding:14px;text-align:center;">
+        <div style="font-size:11px;color:var(--ink-soft);margin-bottom:4px;">Ce mois</div>
+        <div style="font-size:22px;font-weight:800;color:var(--ink);">${fmt(thisMonthH)}</div>
+      </div>
+      <div style="background:var(--lavender-soft);border-radius:12px;padding:14px;text-align:center;">
+        <div style="font-size:11px;color:var(--ink-soft);margin-bottom:4px;">Total</div>
+        <div style="font-size:22px;font-weight:800;color:var(--lilac);">${fmt(totalH)}</div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--ink-softer);text-align:center;">Enregistre des heures depuis l'onglet ⏱ Temps</p>`;
+}
+
+function _renderProjFicheChecklist(projId) {
+  const container = document.querySelector(`.proj-fiche[data-projid="${projId}"] .proj-fiche-panel[data-panel="checklist"]`);
+  if (!container) return;
+  const p = (state.work.postdocProjects || []).find(pp => pp.id === projId);
+  if (!p) return;
+  if (!p.checklist) p.checklist = [];
+  const col = p.color || "var(--lavender)";
+  const items = p.checklist.map(item => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:${item.done?"var(--bg-1)":"white"};border:1px solid var(--line);margin-bottom:6px;">
+      <input type="checkbox" ${item.done?"checked":""} onchange="_toggleProjChecklist('${projId}','${item.id}',this.checked)" style="accent-color:${col};flex-shrink:0;" />
+      <span style="flex:1;font-size:14px;${item.done?"text-decoration:line-through;color:var(--ink-soft);":""}">${escapeHtml(item.text)}</span>
+      <button onclick="_deleteProjChecklist('${projId}','${item.id}')" style="background:none;border:none;color:var(--ink-soft);font-size:14px;cursor:pointer;padding:2px 4px;opacity:0.4;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.4">✕</button>
+    </div>`).join("");
+  container.innerHTML = (items || `<p style="color:var(--ink-soft);font-size:13px;font-style:italic;margin:0 0 12px;">Aucune entrée. Ajoute des choses à faire rapidement.</p>`) + `
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input type="text" id="projChecklistInput-${projId}" placeholder="Nouvelle entrée…" maxlength="200"
+        onkeydown="if(event.key==='Enter')_addProjChecklist('${projId}')"
+        style="flex:1;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" />
+      <button onclick="_addProjChecklist('${projId}')" style="padding:8px 14px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:600;cursor:pointer;font-family:inherit;font-size:13px;">+ Ajouter</button>
+    </div>`;
+}
+function _addProjChecklist(projId) {
+  const inp = document.getElementById(`projChecklistInput-${projId}`);
+  if (!inp) return;
+  const text = inp.value.trim(); if (!text) return;
+  const p = (state.work.postdocProjects || []).find(pp => pp.id === projId);
+  if (!p) return;
+  if (!p.checklist) p.checklist = [];
+  p.checklist.push({ id: "cl" + Date.now(), text, done: false });
+  saveState(); _renderProjFicheChecklist(projId);
+  const inp2 = document.getElementById(`projChecklistInput-${projId}`);
+  if (inp2) { inp2.value = ""; inp2.focus(); }
+}
+function _toggleProjChecklist(projId, itemId, done) {
+  const p = (state.work.postdocProjects || []).find(pp => pp.id === projId);
+  const item = p?.checklist?.find(i => i.id === itemId);
+  if (item) { item.done = done; saveState(); _renderProjFicheChecklist(projId); }
+}
+function _deleteProjChecklist(projId, itemId) {
+  const p = (state.work.postdocProjects || []).find(pp => pp.id === projId);
+  if (!p?.checklist) return;
+  p.checklist = p.checklist.filter(i => i.id !== itemId);
+  saveState(); _renderProjFicheChecklist(projId);
+}
+
+function _renderProjFicheNotes(projId) {
+  const container = document.querySelector(`.proj-fiche[data-projid="${projId}"] .proj-fiche-panel[data-panel="notes"]`);
+  if (!container) return;
+  const p = (state.work.postdocProjects || []).find(pp => pp.id === projId);
+  if (!p) return;
+  if (p.ficheNotes === undefined) p.ficheNotes = "";
+  container.innerHTML = `<div id="projNotes-${projId}" contenteditable="true"
+    data-placeholder="Tes notes pour ce projet : objectifs, comptes-rendus, idées…"
+    style="min-height:300px;outline:none;font-family:inherit;font-size:14px;color:var(--ink);line-height:1.8;padding:4px;cursor:text;"
+    oninput="_saveProjFicheNotes('${projId}',this)"></div>`;
+  const el = document.getElementById(`projNotes-${projId}`);
+  if (el) el.innerHTML = p.ficheNotes || "";
+}
+var _projNotesTimer = {};
+function _saveProjFicheNotes(projId, el) {
+  clearTimeout(_projNotesTimer[projId]);
+  _projNotesTimer[projId] = setTimeout(() => {
+    const p = (state.work.postdocProjects || []).find(pp => pp.id === projId);
+    if (p) { p.ficheNotes = el.innerHTML; saveState(); }
+  }, 800);
+}
+
+function _renderProjFicheLinks(projId) {
+  const container = document.querySelector(`.proj-fiche[data-projid="${projId}"] .proj-fiche-panel[data-panel="links"]`);
+  if (!container) return;
+  const p = (state.work.postdocProjects || []).find(pp => pp.id === projId);
+  if (!p) return;
+  if (!p.links) p.links = [];
+  const items = p.links.map(lk => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:white;border:1px solid var(--line);margin-bottom:6px;">
+      <a href="${escapeHtml(lk.url)}" target="_blank" rel="noopener" style="flex:1;font-size:14px;color:var(--lilac);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(lk.url)}">🔗 ${escapeHtml(lk.label)}</a>
+      <button onclick="_deleteProjLink('${projId}','${lk.id}')" style="background:none;border:none;color:var(--ink-soft);font-size:14px;cursor:pointer;padding:2px 4px;opacity:0.4;flex-shrink:0;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.4">✕</button>
+    </div>`).join("");
+  container.innerHTML = (items || `<p style="color:var(--ink-soft);font-size:13px;font-style:italic;margin:0 0 12px;">Aucun lien pour l'instant.</p>`) + `
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;background:var(--bg-1);border-radius:12px;padding:12px;">
+      <input type="text" id="projLinkLabel-${projId}" placeholder="Nom du lien (ex: Mon Drive)" maxlength="100"
+        style="padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" />
+      <input type="url" id="projLinkUrl-${projId}" placeholder="https://…" maxlength="500"
+        onkeydown="if(event.key==='Enter')_addProjLink('${projId}')"
+        style="padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" />
+      <button onclick="_addProjLink('${projId}')" style="padding:8px 14px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:600;cursor:pointer;font-family:inherit;font-size:13px;">+ Ajouter le lien</button>
+    </div>`;
+}
+function _addProjLink(projId) {
+  const labelEl = document.getElementById(`projLinkLabel-${projId}`);
+  const urlEl   = document.getElementById(`projLinkUrl-${projId}`);
+  if (!labelEl || !urlEl) return;
+  const label = labelEl.value.trim(); let url = urlEl.value.trim();
+  if (!label || !url) return;
+  if (!url.startsWith("http")) url = "https://" + url;
+  const p = (state.work.postdocProjects || []).find(pp => pp.id === projId);
+  if (!p) return;
+  if (!p.links) p.links = [];
+  p.links.push({ id: "lk" + Date.now(), label, url });
+  saveState(); _renderProjFicheLinks(projId);
+}
+function _deleteProjLink(projId, linkId) {
+  const p = (state.work.postdocProjects || []).find(pp => pp.id === projId);
+  if (!p?.links) return;
+  p.links = p.links.filter(lk => lk.id !== linkId);
+  saveState(); _renderProjFicheLinks(projId);
+}
+
+function _renderProjFicheSuivi(projId) {
+  // Déléguer aux fonctions de rendu existantes — elles écrivent dans les IDs contenus dans la fiche
+  if (projId === "p-seed-candidatures") renderCandidatures();
+  else if (projId === "p-seed-valo") renderValorisationView();
+  else if (projId === "p-seed-enseignement") renderTeachingView();
+}
+
+function renderProjectFiche(p) {
+  const col = p.color || "#b8a5e8";
+  const activeTab = _projFicheActiveTab[p.id] || "tasks";
+  const hasSuivi = ["p-seed-candidatures","p-seed-valo","p-seed-enseignement"].includes(p.id);
+  const suiviLabel = p.id === "p-seed-candidatures" ? "📊 Candidatures" :
+                     p.id === "p-seed-valo"         ? "📊 Publications" :
+                     p.id === "p-seed-enseignement" ? "📊 Cours" : "";
+  const tabs = [
+    { key:"tasks",     label:"✅ Tâches" },
+    { key:"temps",     label:"⏱ Temps" },
+    { key:"checklist", label:"📝 Checklist" },
+    { key:"notes",     label:"📓 Notes" },
+    { key:"links",     label:"🔗 Liens" },
+    ...(hasSuivi ? [{ key:"suivi", label:suiviLabel }] : []),
+  ];
+
+  // Contenu des onglets Suivi spécialisés (IDs préservés pour les fonctions existantes)
+  const suiviInner = p.id === "p-seed-candidatures" ? `
+    <div id="candTasksCard" style="display:none;margin-bottom:14px;"></div>
+    <div class="card">
+      <div class="work-header">
+        <h2 style="margin:0;">Suivi candidatures <span class="count" id="candCount"></span></h2>
+        <button class="btn-primary" onclick="openCandModal()">+ Nouvelle candidature</button>
+      </div>
+      <div class="kanban" id="kanban"></div>
+    </div>` :
+  p.id === "p-seed-valo" ? `
+    <div class="card" style="margin-bottom:18px;">
+      <div class="work-header">
+        <h2 style="margin:0;">📄 Articles <span class="count" id="articleCount"></span></h2>
+        <button class="btn-primary" onclick="openArticleModal()">+ Nouvel article</button>
+      </div>
+      <div class="kanban" id="articleKanban"></div>
+    </div>
+    <div class="card">
+      <div class="work-header">
+        <h2 style="margin:0;">🎤 Communications <span class="count" id="commCount"></span></h2>
+        <button class="btn-primary" onclick="openCommModal()">+ Nouvelle communication</button>
+      </div>
+      <div class="kanban" id="commKanban"></div>
+    </div>` :
+  p.id === "p-seed-enseignement" ? `
+    <div class="card">
+      <div class="card-row">
+        <h2>📜 Historique des cours <span class="count" id="teachingCount"></span></h2>
+        <button class="btn-primary" onclick="openAddCourseForm()">+ Ajouter</button>
+      </div>
+      <div id="addCourseForm" style="display:none;background:#faf8fd;border-radius:12px;padding:14px;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 2fr 1fr 1fr 80px auto;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="newCourseYear" placeholder="2025-2026" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+          <input type="text" id="newCourseSchool" placeholder="Établissement" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+          <input type="text" id="newCourseName" placeholder="Intitulé du cours" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+          <input type="text" id="newCourseLevel" placeholder="Niveau" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+          <input type="text" id="newCourseType" placeholder="Type" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+          <input type="number" id="newCourseHours" placeholder="h" min="0" step="0.5" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:center;" />
+          <button onclick="addCourse()" style="padding:7px 12px;background:var(--lavender-soft);border:1px solid var(--lavender);border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;">✓ OK</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" id="teachingHistoryTable">
+          <thead><tr><th>Année</th><th>Établissement</th><th>Cours</th><th>Niveau</th><th>Type</th><th style="text-align:right;">Heures</th><th></th></tr></thead>
+          <tbody id="teachingHistoryBody"></tbody>
+        </table>
+      </div>
+      <div id="teachingHistoryTotal" style="text-align:right;font-weight:700;font-size:14px;margin-top:8px;color:var(--ink);"></div>
+    </div>` : "";
+
+  const tabBtns = tabs.map(t => `<button class="proj-fiche-tab-btn${activeTab===t.key?" active":""}" data-tab="${t.key}" onclick="_switchProjFicheTab('${p.id}','${t.key}')">${t.label}</button>`).join("");
+  const panels = tabs.map(t => `<div class="proj-fiche-panel${activeTab===t.key?" active":""}" data-panel="${t.key}">${t.key==="suivi"?suiviInner:""}</div>`).join("");
+
+  return `<div class="proj-fiche" data-projid="${p.id}">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span style="font-size:26px;">${p.emoji||"📁"}</span>
+      <h2 style="margin:0;flex:1;color:var(--ink);">${escapeHtml(p.name)}</h2>
+      <button onclick="openTimeCatsModal()" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;">✏️ Modifier</button>
+    </div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:12px;border-bottom:1.5px solid var(--line);">
+      ${tabBtns}
+    </div>
+    ${panels}
+  </div>`;
+}
+/* ========= FIN FICHE PROJET ========= */
+
 function renderWorkProjectTabs() {
   const tabsEl   = document.getElementById("workDynamicTabs");
   const viewsEl  = document.getElementById("workDynamicViews");
@@ -6838,55 +7014,31 @@ function renderWorkProjectTabs() {
 
   const projects = state.work.postdocProjects || [];
 
-  // Nettoyer les vues dynamiques custom précédentes
+  // Nettoyer les vues dynamiques précédentes
   viewsEl.innerHTML = "";
 
-  // Construire les boutons + vues
+  // Tous les projets → fiche générique
   const tabBtns = projects.map(p => {
-    const seedInfo = _SEED_SUB_MAP[p.id];
-    const sub = seedInfo ? seedInfo.sub : "proj-" + p.id;
-    const emoji = p.emoji || (seedInfo ? seedInfo.emoji : "📁");
-    const label = p.name;
-    const col = p.color || "#b8a5e8";
+    const sub = "proj-" + p.id;
+    const emoji = p.emoji || "📁";
 
-    // Créer la vue si custom (non-seed)
-    if (!seedInfo) {
-      // Supprimer l'ancienne si elle existe
-      const old = workSection.querySelector(`.sub-view[data-sub="${sub}"]`);
-      if (old) old.remove();
-      // Tâches filtrées par ce projet
-      const tasks = (state.work.postdocTasks || []).filter(t => t.projectId === p.id);
-      const taskRows = tasks.length
-        ? tasks.sort((a,b)=> { const ord={urgent:0,high:1,medium:2,low:3}; return (ord[a.priority]??2)-(ord[b.priority]??2); })
-            .map(t => `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:${t.done?"var(--bg-1)":"white"};border:1px solid var(--line);margin-bottom:6px;opacity:${t.done?0.6:1};">
-              <input type="checkbox" ${t.done?"checked":""} onchange="_toggleTaskFromProjTab('${t.id}',this.checked)" style="accent-color:${col};" />
-              <span style="flex:1;font-size:14px;${t.done?"text-decoration:line-through;color:var(--ink-soft);":"color:var(--ink);"}">${escapeHtml(t.name||"")}</span>
-              ${t.deadline?`<span style="font-size:11px;color:var(--ink-softer);">${t.deadline.slice(5).replace("-","/")} </span>`:""}
-            </div>`).join("")
-        : `<p style="color:var(--ink-soft);font-size:13px;font-style:italic;">Aucune tâche pour ce projet.</p>`;
+    // Créer la sub-view avec la fiche
+    const old = workSection.querySelector(`.sub-view[data-sub="${sub}"]`);
+    if (old) old.remove();
+    const viewDiv = document.createElement("div");
+    viewDiv.className = "sub-view";
+    viewDiv.dataset.sub = sub;
+    viewDiv.innerHTML = renderProjectFiche(p);
+    viewsEl.appendChild(viewDiv);
 
-      const viewDiv = document.createElement("div");
-      viewDiv.className = "sub-view";
-      viewDiv.dataset.sub = sub;
-      viewDiv.innerHTML = `
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-          <span style="font-size:22px;">${emoji}</span>
-          <h2 style="margin:0;flex:1;">${escapeHtml(label)}</h2>
-          <button onclick="openProjectModal('${p.id}')" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;">✏️ Modifier</button>
-        </div>
-        <div id="projTabTasks-${p.id}">${taskRows}</div>
-        <button onclick="_addTaskFromProjTab('${p.id}')" style="margin-top:10px;width:100%;padding:9px;border-radius:10px;border:1.5px dashed var(--line);background:var(--bg-1);font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">+ Ajouter une tâche</button>`;
-      viewsEl.appendChild(viewDiv);
-    }
-
-    return `<button class="sub-tab" data-sub="${sub}" onclick="_workProjTabClick(this,'${sub}')">${emoji} ${escapeHtml(label)}</button>`;
+    return `<button class="sub-tab" data-sub="${sub}" onclick="_workProjTabClick(this,'${sub}')">${emoji} ${escapeHtml(p.name)}</button>`;
   }).join("");
 
   tabsEl.innerHTML = tabBtns;
 
-  // Ré-attacher les listeners statiques si besoin
+  // Attacher les listeners aux onglets statiques (Tâches, Temps, Notes, Administratif)
   workSection.querySelectorAll(".sub-tab:not([data-proj-listener])").forEach(t => {
-    if (t.closest("#workDynamicTabs")) return; // handled by onclick
+    if (t.closest("#workDynamicTabs")) return;
     t.dataset.projListener = "1";
     t.addEventListener("click", () => {
       workSection.querySelectorAll(".sub-tab").forEach(x => x.classList.remove("active"));
@@ -6895,6 +7047,17 @@ function renderWorkProjectTabs() {
       const v = workSection.querySelector(`.sub-view[data-sub="${t.dataset.sub}"]`);
       if (v) v.classList.add("active");
     });
+  });
+
+  // Rendre les panels actifs initialement
+  projects.forEach(p => {
+    const activeTab = _projFicheActiveTab[p.id] || "tasks";
+    _renderProjFicheTasks(p.id);
+    if (activeTab === "temps") _renderProjFicheTemps(p.id);
+    if (activeTab === "checklist") _renderProjFicheChecklist(p.id);
+    if (activeTab === "notes") _renderProjFicheNotes(p.id);
+    if (activeTab === "links") _renderProjFicheLinks(p.id);
+    if (activeTab === "suivi") _renderProjFicheSuivi(p.id);
   });
 }
 
@@ -8825,7 +8988,7 @@ function renderCandidatures() {
     }
   }
 
-  document.getElementById("candCount").textContent = state.work.candidatures.length ? `(${state.work.candidatures.length})` : "";
+  const _candCountEl = document.getElementById("candCount"); if (_candCountEl) _candCountEl.textContent = state.work.candidatures.length ? `(${state.work.candidatures.length})` : "";
   const cols = CAND_STATUSES.map(status => {
     const cards = state.work.candidatures.filter(c => c.status === status);
     const cardsHtml = cards.length ? cards.map(c => renderCandCard(c)).join("") :
@@ -8841,7 +9004,7 @@ function renderCandidatures() {
         ${cardsHtml}
       </div>`;
   }).join("");
-  document.getElementById("kanban").innerHTML = cols;
+  const _kanbanEl = document.getElementById("kanban"); if (_kanbanEl) _kanbanEl.innerHTML = cols;
 }
 function renderCandCard(c) {
   const col = typeColor(c.type, state.candidatureTypes);
@@ -18545,14 +18708,17 @@ function renderRecipeCategoryTabs() {
   if (!el) return;
   const allActive = !_recipeCategoryFilter;
   const recipes = state.domestique.recipes || [];
-  const PASTELS = ["#e7dcff","#d6f3e4","#ffe3d3","#ffd9e6","#d6ecff","#fff3c4","#e6e0f8","#d9f0ec"];
+  const _isSerieux = document.body.classList.contains("t-serieux");
+  const PASTELS = _isSerieux
+    ? ["#d4e4ef","#d4e4d8","#ead8c4","#e4d0bc","#ccdce8","#ddd4bc","#d8dce4","#c8d8d0"]
+    : ["#e7dcff","#d6f3e4","#ffe3d3","#ffd9e6","#d6ecff","#fff3c4","#e6e0f8","#d9f0ec"];
   const card = (label, count, active, onclick, bg, delCat) => `
     <div onclick="${onclick}" style="position:relative;background:${bg};border:2px solid ${active?'rgba(74,68,88,.55)':'transparent'};border-radius:16px;padding:14px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:74px;box-shadow:var(--shadow);text-align:center;">
       <div style="font-weight:700;font-size:13px;color:var(--ink);line-height:1.2;">${label}</div>
       <div style="font-size:11px;color:var(--ink-soft);">${count} recette${count>1?'s':''}</div>
       ${delCat!=null?`<button onclick="event.stopPropagation();deleteRecipeCategory('${delCat}')" title="Supprimer cette catégorie" style="position:absolute;top:3px;right:5px;background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:.55;padding:0 2px;">✕</button>`:''}
     </div>`;
-  let cards = card("Toutes", recipes.length, allActive, "filterRecipeCategory('')", "#efeaf8", null);
+  let cards = card("Toutes", recipes.length, allActive, "filterRecipeCategory('')", _isSerieux ? "#d8d4cc" : "#efeaf8", null);
   cats.forEach((cat, i) => {
     const n = recipes.filter(r => r.category === cat).length;
     cards += card(escapeHtml(cat), n, _recipeCategoryFilter === cat, `filterRecipeCategory('${escapeHtml(cat)}')`, PASTELS[i % PASTELS.length], escapeHtml(cat));
@@ -23281,14 +23447,19 @@ const HELP_TEXTS = {
   },
   "domestic-alimentation": {
     icon: "🥗", title: "Alimentation",
-    subtitle: "Repas, recettes et suivi calorique",
+    subtitle: "Repas, recettes, courses et suivi calorique",
     body: `
-      <p>Planifie et suis ton alimentation :</p>
+      <p>La section Alimentation est un <strong>écosystème connecté</strong> : chaque partie alimente les autres. Voici comment tout s'articule :</p>
       <ul style="padding-left:18px;margin:10px 0;">
-        <li><strong>🍽 Planning repas</strong> — Planifie tes repas de la semaine (matin, midi, soir). Clique sur un créneau pour noter ce que tu mangeras.</li>
-        <li><strong>📖 Recettes</strong> — Sauvegarde tes recettes favorites avec ingrédients et instructions. Retrouve-les facilement.</li>
-        <li><strong>🔥 Suivi calorique</strong> — Si tu as activé l'habitude "Apport calorique" dans Aujourd'hui, les calories se cumulent ici avec un graphique.</li>
-      </ul>`
+        <li><strong>📖 Recettes</strong> — Crée tes recettes avec ingrédients (quantités, calories) et instructions. Tu peux les classer par catégorie (Plat en sauce, Salade, Dessert…). C'est la <em>base de tout le reste</em>.</li>
+        <li><strong>🍽 Planning repas</strong> — Planifie chaque repas de la semaine (matin, midi, soir). Quand tu cliques sur un créneau, tu peux y associer une de tes recettes existantes — ou saisir un repas libre. Le planning se remplit depuis ta bibliothèque de recettes.</li>
+        <li><strong>🛒 Liste de courses</strong> — Depuis le planning repas, clique sur <em>Générer la liste de courses</em> : l'application calcule automatiquement tous les ingrédients nécessaires pour la semaine et les ajoute à ta liste de courses. Plus besoin de tout noter à la main.</li>
+        <li><strong>🔥 Suivi calorique</strong> — Dans l'onglet <strong>Aujourd'hui</strong>, l'habitude "Apport calorique" te permet d'enregistrer ce que tu manges en piochant dans tes recettes (les calories sont déjà calculées). Le total du jour apparaît dans Aujourd'hui et le graphique cumulatif dans Alimentation.</li>
+        <li><strong>🥦 Kcal aliments</strong> — Une base d'aliments bruts (100g) pour estimer les calories de plats faits maison sans recette complète.</li>
+      </ul>
+      <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 <strong>Circuit idéal :</strong> Crée tes recettes → planifie ta semaine en les utilisant → génère ta liste de courses en un clic → coche ce que tu manges dans Aujourd'hui pour suivre tes calories.
+      </div>`
   },
   "domestic-plants": {
     icon: "🌱", title: "Plantes",
