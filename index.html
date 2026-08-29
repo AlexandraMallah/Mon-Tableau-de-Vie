@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v980</title>
+<title>Mon Tableau de Vie 🌿 · v981</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2194,6 +2194,63 @@
     </div>
   </div>
 
+  <!-- Modal : Ajout tâche projet Travail -->
+  <div class="modal-bg" id="workProjTaskModal" onclick="if(event.target===this)_closeWorkProjTaskModal()">
+    <div class="modal" style="max-width:400px;" onclick="event.stopPropagation()">
+      <h3 style="margin:0 0 16px;font-size:17px;">✅ Nouvelle tâche</h3>
+      <input type="hidden" id="workProjTaskProjectId" />
+      <input type="text" id="workProjTaskName" placeholder="Nom de la tâche…" maxlength="100"
+        style="width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;"
+        onkeydown="if(event.key==='Enter')_saveWorkProjTask()" />
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+        <button onclick="_closeWorkProjTaskModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+        <button onclick="_saveWorkProjTask()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal : Projet personnel Domestique -->
+  <div class="modal-bg" id="persoProjectModal" onclick="if(event.target===this)closePersoProjectModal()">
+    <div class="modal" style="max-width:460px;" onclick="event.stopPropagation()">
+      <h2 id="persoProjectModalTitle" style="margin:0 0 6px;">✨ Nouveau projet</h2>
+      <p class="modal-hint">Crée un espace d'organisation pour un projet de vie : mariage, anniversaire, déménagement, vacances… Tu peux y ajouter des notes libres, des listes à cocher, un budget et une date cible.</p>
+      <input type="hidden" id="persoProjectModalId" />
+      <label>Emoji</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div id="persoProjectEmojiPreview" style="font-size:26px;cursor:pointer;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--bg-1);border:1px solid var(--line);">🎉</div>
+        <div id="persoProjectEmojiPicker" style="display:flex;flex-wrap:wrap;gap:5px;flex:1;max-height:90px;overflow-y:auto;padding:6px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);"></div>
+      </div>
+      <input type="hidden" id="persoProjectEmoji" value="🎉" />
+      <label>Nom du projet</label>
+      <input type="text" id="persoProjectName" placeholder="Ex : Organisation mariage, Anniversaire, Déménagement…" />
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px;">
+        <span onclick="document.getElementById('persoProjectName').value=this.textContent" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">💍 Organisation mariage</span>
+        <span onclick="document.getElementById('persoProjectName').value=this.textContent" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">🎂 Anniversaire</span>
+        <span onclick="document.getElementById('persoProjectName').value=this.textContent" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">📦 Déménagement</span>
+        <span onclick="document.getElementById('persoProjectName').value=this.textContent" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">✈️ Voyage</span>
+        <span onclick="document.getElementById('persoProjectName').value=this.textContent" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">🏠 Travaux</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label>Date cible <span style="font-size:11px;font-weight:400;color:var(--ink-softer);">(optionnel)</span></label>
+          <input type="date" id="persoProjectDate" />
+        </div>
+        <div>
+          <label>Budget total (€) <span style="font-size:11px;font-weight:400;color:var(--ink-softer);">(optionnel)</span></label>
+          <input type="number" id="persoProjectBudget" placeholder="Ex : 5000" min="0" step="50" />
+        </div>
+      </div>
+      <label>Description <span style="font-size:11px;font-weight:400;color:var(--ink-softer);">(optionnel)</span></label>
+      <textarea id="persoProjectDesc" placeholder="Contexte, idées, contraintes…" style="min-height:70px;"></textarea>
+      <div class="actions">
+        <button class="danger" id="persoProjectDeleteBtn" onclick="_deletePersoProject()" style="display:none;">Supprimer</button>
+        <div class="spacer"></div>
+        <button class="secondary" onclick="closePersoProjectModal()">Annuler</button>
+        <button class="primary" onclick="savePersoProject()">Créer</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal : synchronisation cloud -->
   <div class="modal-bg" id="syncMenuModal" onclick="if(event.target===this)closeSyncMenu()">
     <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
@@ -3268,11 +3325,14 @@
 
   <!-- VIEW: DOMESTIC -->
   <section class="view" data-view="domestic">
-    <div class="sub-tabs">
+    <div class="sub-tabs" id="domesticSubTabs">
       <button class="sub-tab active" data-sub="notes">📝 Notes & To-do</button>
       <button class="sub-tab" data-sub="alimentation">🥗 Alimentation</button>
       <button class="sub-tab" data-sub="plants">🌱 Plantes</button>
+      <div id="persoProjectTabs" style="display:contents;"></div>
+      <button onclick="openPersoProjectModal()" style="padding:5px 12px;border-radius:20px;border:1.5px dashed var(--line);background:white;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">+ Projet</button>
     </div>
+    <div id="persoProjectViews"></div>
 
     <!-- Sub: Notes, listes & To-do (consolidé) -->
     <div class="sub-view active" data-sub="notes">
@@ -4427,10 +4487,10 @@
     </div>
     <div style="height:1px;background:var(--line);margin-bottom:14px;"></div>
     <!-- Emoji + nom -->
-    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;">
+    <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px;">
       <div>
         <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Emoji</div>
-        <div id="routineItemEmoji" style="width:54px;height:54px;border:2px solid var(--lavender);border-radius:12px;background:var(--bg-1);font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('routineItemEmojiPicker').style.display=document.getElementById('routineItemEmojiPicker').style.display==='none'?'flex':'none'">☀️</div>
+        <div id="routineItemEmoji" style="width:46px;height:46px;border:2px solid var(--lavender);border-radius:12px;background:var(--bg-1);font-size:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('routineItemEmojiPicker').style.display=document.getElementById('routineItemEmojiPicker').style.display==='none'?'flex':'none'">☀️</div>
         <div id="routineItemEmojiPicker" style="display:none;flex-wrap:wrap;gap:4px;margin-top:6px;max-width:220px;">
           <span id="routineItemEmojiGrid" style="display:contents;"></span>
         </div>
@@ -5413,6 +5473,7 @@ function migrate(s) {
   s.domestique.plants = s.domestique.plants || [];
   s.domestique.tasks    = s.domestique.tasks    || [];
   s.domestique.freeNotes = s.domestique.freeNotes || [];
+  s.domestique.persoProjects = s.domestique.persoProjects || [];
   s.domestique.recipes           = s.domestique.recipes           || [];
   s.domestique.foodKcal          = s.domestique.foodKcal          || [];
   s.domestique.recipeCategories  = s.domestique.recipeCategories  || [];
@@ -5548,6 +5609,9 @@ function migrate(s) {
   s.work = s.work || { postdocTasks: [], postdocProjects: [], candidatures: [], articles: [], communications: [] };
   s.work.postdocTasks = s.work.postdocTasks || [];
   s.work.postdocProjects = s.work.postdocProjects || [];
+  if (s.work.postdocProjects.length === 0) {
+    s.work.postdocProjects = [{ id: "p-default-mon-projet", name: "Mon Projet", emoji: "📁", color: "#b8a5e8", bg: "#f0ebff" }];
+  }
   s.work.deletedSeedIds = s.work.deletedSeedIds || [];
   s.work.candidatures = s.work.candidatures || [];
   s.work.articles = s.work.articles || [];
@@ -6792,10 +6856,18 @@ function _toggleTaskFromProjTab(taskId, done) {
   if (t) { t.done = done; saveState(); renderTasks(); renderWorkProjectTabs(); }
 }
 function _addTaskFromProjTab(projectId) {
-  const name = prompt("Nom de la tâche :");
-  if (!name || !name.trim()) return;
-  state.work.postdocTasks.unshift({ id: "t" + Date.now(), name: name.trim(), projectId, priority: "medium", done: false, createdAt: new Date().toISOString() });
-  saveState(); renderTasks(); renderWorkProjectTabs();
+  document.getElementById("workProjTaskProjectId").value = projectId;
+  document.getElementById("workProjTaskName").value = "";
+  document.getElementById("workProjTaskModal").classList.add("open");
+  setTimeout(() => document.getElementById("workProjTaskName").focus(), 80);
+}
+function _closeWorkProjTaskModal() { document.getElementById("workProjTaskModal").classList.remove("open"); }
+function _saveWorkProjTask() {
+  const projectId = document.getElementById("workProjTaskProjectId").value;
+  const name = document.getElementById("workProjTaskName").value.trim();
+  if (!name) return;
+  state.work.postdocTasks.unshift({ id: "t" + Date.now(), name, projectId, priority: "medium", done: false, createdAt: new Date().toISOString() });
+  saveState(); _closeWorkProjTaskModal(); renderTasks(); renderWorkProjectTabs();
 }
 
 function renderProjects() {
@@ -17656,7 +17728,290 @@ function deleteTodoItem(id) {
   _renderAllTodo();
 }
 
-function renderDomestique() { renderTodo(); renderChecklists(); renderDomesticTasks(); renderFreeNotes(); renderMealPlan(); renderGroceries(); renderPlants(); renderRecipes(); renderFoodKcal(); }
+function renderDomestique() { renderTodo(); renderChecklists(); renderDomesticTasks(); renderFreeNotes(); renderMealPlan(); renderGroceries(); renderPlants(); renderRecipes(); renderFoodKcal(); renderPersoProjects(); }
+
+// ============================================================
+// PROJETS PERSONNELS DOMESTIQUE
+// ============================================================
+const _PERSO_EMOJIS = ["🎉","💍","🎂","🎁","🏠","✈️","📦","🌸","🎊","🏡","🧳","🎓","🍽️","🎪","⛵","🏕️","🌍","🎭","🎨","🍾","🌺","💐","🎶","🎄","🌙","⭐","🦋","🌈"];
+const _PERSO_PALETTE = [
+  {color:"#c9a0dc",bg:"#f5ecff"},{color:"#7fc2b0",bg:"#e8f7f3"},{color:"#e8a87c",bg:"#fff3eb"},
+  {color:"#85b4de",bg:"#e8f2fb"},{color:"#d48fb0",bg:"#fce8f2"},{color:"#a8c882",bg:"#eef7e6"}
+];
+
+function _persoAutoColor() {
+  const idx = (state.domestique.persoProjects||[]).length % _PERSO_PALETTE.length;
+  return _PERSO_PALETTE[idx];
+}
+function _initPersoEmojiPicker() {
+  const p = document.getElementById("persoProjectEmojiPicker");
+  if (!p || p.children.length) return;
+  p.innerHTML = _PERSO_EMOJIS.map(e =>
+    `<span onclick="_pickPersoEmoji('${e}')" style="cursor:pointer;font-size:18px;padding:3px;border-radius:6px;" onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background='';">${e}</span>`
+  ).join("");
+}
+function _pickPersoEmoji(e) {
+  document.getElementById("persoProjectEmoji").value = e;
+  document.getElementById("persoProjectEmojiPreview").textContent = e;
+}
+function openPersoProjectModal(id) {
+  const isEdit = !!id;
+  document.getElementById("persoProjectModalTitle").textContent = isEdit ? "✏️ Modifier le projet" : "✨ Nouveau projet";
+  document.getElementById("persoProjectModalId").value = id || "";
+  document.getElementById("persoProjectDeleteBtn").style.display = isEdit ? "" : "none";
+  document.querySelector("#persoProjectModal .primary").textContent = isEdit ? "Enregistrer" : "Créer";
+  const em = isEdit ? ((state.domestique.persoProjects||[]).find(p=>p.id===id)?.emoji || "🎉") : "🎉";
+  if (isEdit) {
+    const pp = (state.domestique.persoProjects||[]).find(p=>p.id===id)||{};
+    document.getElementById("persoProjectName").value = pp.name||"";
+    document.getElementById("persoProjectDate").value = pp.date||"";
+    document.getElementById("persoProjectBudget").value = pp.budget||"";
+    document.getElementById("persoProjectDesc").value = pp.desc||"";
+    document.getElementById("persoProjectEmoji").value = pp.emoji||"🎉";
+    document.getElementById("persoProjectEmojiPreview").textContent = pp.emoji||"🎉";
+  } else {
+    document.getElementById("persoProjectName").value = "";
+    document.getElementById("persoProjectDate").value = "";
+    document.getElementById("persoProjectBudget").value = "";
+    document.getElementById("persoProjectDesc").value = "";
+    document.getElementById("persoProjectEmoji").value = "🎉";
+    document.getElementById("persoProjectEmojiPreview").textContent = "🎉";
+  }
+  _initPersoEmojiPicker();
+  document.getElementById("persoProjectModal").classList.add("open");
+}
+function closePersoProjectModal() { document.getElementById("persoProjectModal").classList.remove("open"); }
+function savePersoProject() {
+  const id = document.getElementById("persoProjectModalId").value;
+  const name = document.getElementById("persoProjectName").value.trim();
+  if (!name) return;
+  const emoji  = document.getElementById("persoProjectEmoji").value || "🎉";
+  const date   = document.getElementById("persoProjectDate").value || "";
+  const budget = parseFloat(document.getElementById("persoProjectBudget").value)||0;
+  const desc   = document.getElementById("persoProjectDesc").value.trim();
+  if (!state.domestique.persoProjects) state.domestique.persoProjects = [];
+  if (id) {
+    const pp = state.domestique.persoProjects.find(p=>p.id===id);
+    if (pp) Object.assign(pp, {name,emoji,date,budget,desc});
+  } else {
+    const {color,bg} = _persoAutoColor();
+    state.domestique.persoProjects.push({id:"pp"+Date.now(),name,emoji,date,budget,desc,color,bg,status:"planning",notes:"",lists:[],expenses:[]});
+  }
+  saveState(); closePersoProjectModal(); renderPersoProjects();
+}
+function _deletePersoProject() {
+  const id = document.getElementById("persoProjectModalId").value;
+  if (!id) return;
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===id);
+  if (!pp) return;
+  _showConfirm(`Supprimer le projet « ${escapeHtml(pp.name)} » ?<br><small>Toutes les données seront perdues.</small>`, ()=>{
+    state.domestique.persoProjects = state.domestique.persoProjects.filter(p=>p.id!==id);
+    saveState(); closePersoProjectModal(); renderPersoProjects();
+    // Revenir à l'onglet notes
+    const domesticSection = document.querySelector('section.view[data-view="domestic"]');
+    domesticSection?.querySelector('.sub-tab[data-sub="notes"]')?.click();
+  });
+}
+
+function renderPersoProjects() {
+  const tabsEl  = document.getElementById("persoProjectTabs");
+  const viewsEl = document.getElementById("persoProjectViews");
+  if (!tabsEl || !viewsEl) return;
+  const projects = state.domestique?.persoProjects || [];
+  const domesticSection = document.querySelector('section.view[data-view="domestic"]');
+  if (!domesticSection) return;
+
+  // Nettoyer les anciennes vues
+  viewsEl.innerHTML = "";
+
+  tabsEl.innerHTML = projects.map(pp => {
+    const sub = "pp-" + pp.id;
+    return `<button class="sub-tab" data-sub="${sub}" onclick="_persoProjTabClick(this,'${sub}')">${pp.emoji||"🎉"} ${escapeHtml(pp.name)}</button>`;
+  }).join("");
+
+  projects.forEach(pp => {
+    const sub = "pp-" + pp.id;
+    const {color="#c9a0dc", bg="#f5ecff"} = pp;
+    const spent = (pp.expenses||[]).reduce((s,e)=>s+(e.amount||0),0);
+    const budgetPct = pp.budget > 0 ? Math.min(100, Math.round(spent/pp.budget*100)) : null;
+    const allItems = (pp.lists||[]).flatMap(l=>l.items||[]);
+    const donePct  = allItems.length ? Math.round(allItems.filter(i=>i.done).length/allItems.length*100) : null;
+    const daysLeft = pp.date ? Math.round((new Date(pp.date)-new Date())/86400000) : null;
+
+    const viewDiv = document.createElement("div");
+    viewDiv.className = "sub-view";
+    viewDiv.dataset.sub = sub;
+    viewDiv.innerHTML = `
+      <!-- Header projet -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
+        <span style="font-size:30px;">${pp.emoji||"🎉"}</span>
+        <div style="flex:1;min-width:0;">
+          <h2 style="margin:0;font-size:18px;">${escapeHtml(pp.name)}</h2>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;font-size:12px;color:var(--ink-soft);">
+            ${pp.date?`<span>📅 ${new Date(pp.date+'T00:00:00').toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}${daysLeft!=null?" · "+(daysLeft>0?`J−${daysLeft}`:"Passé"):""}</span>`:""}
+            ${pp.budget?`<span>💰 Budget : ${pp.budget.toLocaleString("fr-FR")} €${budgetPct!=null?" · "+spent.toFixed(0)+" € dépensé ("+budgetPct+"%)" :""}</span>`:""}
+            ${donePct!=null?`<span>✅ ${donePct}% des tâches</span>`:""}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <select onchange="_persoSetStatus('${pp.id}',this.value)" style="font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--bg-1);">
+            <option value="planning"${pp.status==="planning"?" selected":""}>📋 Planification</option>
+            <option value="ongoing"${pp.status==="ongoing"?" selected":""}>⚡ En cours</option>
+            <option value="done"${pp.status==="done"?" selected":""}>✅ Terminé</option>
+          </select>
+          <button onclick="openPersoProjectModal('${pp.id}')" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;">✏️ Modifier</button>
+        </div>
+      </div>
+
+      ${pp.desc?`<div style="background:${bg};border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--ink);">${escapeHtml(pp.desc)}</div>`:""}
+
+      <!-- Barre progression tâches -->
+      ${donePct!=null?`<div style="margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--ink-softer);margin-bottom:4px;">${allItems.filter(i=>i.done).length}/${allItems.length} tâches accomplies</div>
+        <div style="height:6px;background:var(--line);border-radius:3px;"><div style="width:${donePct}%;height:100%;background:${color};border-radius:3px;transition:width 0.3s;"></div></div>
+      </div>`:""}
+
+      <!-- Notes libres -->
+      <div class="card" style="margin-bottom:14px;">
+        <h3 style="margin:0 0 10px;font-size:14px;">📝 Notes</h3>
+        <textarea id="persoNotes-${pp.id}" placeholder="Notes libres, idées, liens, contacts…" style="width:100%;min-height:90px;border:1.5px solid var(--line);border-radius:10px;padding:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;" oninput="_persoSaveNotes('${pp.id}',this.value)">${escapeHtml(pp.notes||"")}</textarea>
+      </div>
+
+      <!-- Listes à cocher -->
+      <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <h3 style="margin:0;font-size:14px;">✅ Listes</h3>
+          <button onclick="_persoAddList('${pp.id}')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px dashed ${color};background:${bg};color:${color.replace(/f/g,'9')};cursor:pointer;font-family:inherit;">+ Nouvelle liste</button>
+        </div>
+        <div id="persoLists-${pp.id}">${_renderPersoLists(pp)}</div>
+      </div>
+
+      <!-- Budget détaillé -->
+      ${pp.budget?`<div class="card" style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <h3 style="margin:0;font-size:14px;">💰 Budget — <span style="color:${color};">${spent.toFixed(0)} €</span> / ${pp.budget.toLocaleString("fr-FR")} €</h3>
+          <button onclick="_persoAddExpense('${pp.id}')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px dashed ${color};background:${bg};color:${color.replace(/f/g,'9')};cursor:pointer;font-family:inherit;">+ Dépense</button>
+        </div>
+        <div style="height:6px;background:var(--line);border-radius:3px;margin-bottom:10px;"><div style="width:${Math.min(100,Math.round(spent/pp.budget*100))}%;height:100%;background:${spent>pp.budget?"#dc2626":color};border-radius:3px;"></div></div>
+        <div id="persoExpenses-${pp.id}">${_renderPersoExpenses(pp)}</div>
+      </div>`:""}
+    `;
+    viewsEl.appendChild(viewDiv);
+  });
+}
+
+function _persoProjTabClick(btn, sub) {
+  const domesticSection = document.querySelector('section.view[data-view="domestic"]');
+  if (!domesticSection) return;
+  domesticSection.querySelectorAll(".sub-tab").forEach(x => x.classList.remove("active"));
+  btn.classList.add("active");
+  domesticSection.querySelectorAll(".sub-view").forEach(x => x.classList.remove("active"));
+  const v = domesticSection.querySelector(`.sub-view[data-sub="${sub}"]`);
+  if (v) v.classList.add("active");
+}
+
+function _renderPersoLists(pp) {
+  if (!(pp.lists||[]).length) return `<p style="color:var(--ink-softer);font-size:12px;font-style:italic;">Aucune liste — clique sur + Nouvelle liste.</p>`;
+  return pp.lists.map(lst => {
+    const done = (lst.items||[]).filter(i=>i.done).length;
+    const total = (lst.items||[]).length;
+    return `<div style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:14px;">${lst.emoji||"📋"}</span>
+        <strong style="font-size:13px;flex:1;">${escapeHtml(lst.name)}</strong>
+        <span style="font-size:11px;color:var(--ink-softer);">${done}/${total}</span>
+        <button onclick="_persoDeleteList('${pp.id}','${lst.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-softer);padding:0 4px;">✕</button>
+      </div>
+      ${(lst.items||[]).map(item=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:${item.done?"var(--bg-1)":"transparent"};">
+        <input type="checkbox" ${item.done?"checked":""} onchange="_persoToggleItem('${pp.id}','${lst.id}','${item.id}',this.checked)" style="accent-color:${pp.color||"#c9a0dc"};" />
+        <span style="flex:1;font-size:13px;${item.done?"text-decoration:line-through;color:var(--ink-softer);"}">${escapeHtml(item.text)}</span>
+        <button onclick="_persoDeleteItem('${pp.id}','${lst.id}','${item.id}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.5;">✕</button>
+      </div>`).join("")}
+      <div style="display:flex;gap:6px;margin-top:4px;">
+        <input type="text" placeholder="Ajouter un élément…" id="persoItem-${pp.id}-${lst.id}" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;" onkeydown="if(event.key==='Enter')_persoAddItem('${pp.id}','${lst.id}')" />
+        <button onclick="_persoAddItem('${pp.id}','${lst.id}')" style="padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg-1);cursor:pointer;font-family:inherit;font-size:12px;">+</button>
+      </div>
+    </div>`;
+  }).join('<hr style="border:none;border-top:1px solid var(--line);margin:10px 0;">');
+}
+
+function _renderPersoExpenses(pp) {
+  const exps = pp.expenses||[];
+  if (!exps.length) return `<p style="color:var(--ink-softer);font-size:12px;font-style:italic;">Aucune dépense enregistrée.</p>`;
+  return exps.map(e=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;">
+    <span style="flex:1;">${escapeHtml(e.label||"")}</span>
+    <span style="font-weight:700;">${(e.amount||0).toFixed(2)} €</span>
+    <button onclick="_persoDeleteExpense('${pp.id}','${e.id}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);">✕</button>
+  </div>`).join("");
+}
+
+function _persoSaveNotes(ppId, val) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  if (pp) { pp.notes = val; saveState(); }
+}
+function _persoSetStatus(ppId, val) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  if (pp) { pp.status = val; saveState(); }
+}
+function _persoAddList(ppId) {
+  const name = prompt("Nom de la liste (ex: Invités, Déco, Traiteur…) :");
+  if (!name?.trim()) return;
+  const emojis = ["📋","👥","🎀","🍽️","🏡","🎵","📸","💌","🌸","✈️"];
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  if (!pp) return;
+  if (!pp.lists) pp.lists = [];
+  pp.lists.push({id:"lst"+Date.now(),name:name.trim(),emoji:emojis[pp.lists.length%emojis.length],items:[]});
+  saveState(); renderPersoProjects();
+  // Rester sur ce projet
+  setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50);
+}
+function _persoDeleteList(ppId, lstId) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  if (!pp) return;
+  _showConfirm("Supprimer cette liste ?", ()=>{
+    pp.lists = (pp.lists||[]).filter(l=>l.id!==lstId);
+    saveState(); renderPersoProjects();
+    setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50);
+  });
+}
+function _persoAddItem(ppId, lstId) {
+  const inp = document.getElementById(`persoItem-${ppId}-${lstId}`);
+  const text = inp?.value?.trim();
+  if (!text) return;
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
+  if (!lst) return;
+  if (!lst.items) lst.items=[];
+  lst.items.push({id:"itm"+Date.now(),text,done:false});
+  saveState(); renderPersoProjects();
+  setTimeout(()=>{ document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(); document.getElementById(`persoItem-${ppId}-${lstId}`)?.focus(); },50);
+}
+function _persoToggleItem(ppId, lstId, itemId, done) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
+  const item = (lst?.items||[]).find(i=>i.id===itemId);
+  if (item) { item.done = done; saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50); }
+}
+function _persoDeleteItem(ppId, lstId, itemId) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
+  if (lst) { lst.items=(lst.items||[]).filter(i=>i.id!==itemId); saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50); }
+}
+function _persoAddExpense(ppId) {
+  const label = prompt("Description de la dépense :");
+  if (!label?.trim()) return;
+  const amount = parseFloat(prompt("Montant (€) :"));
+  if (isNaN(amount)||amount<0) return;
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  if (!pp) return;
+  if (!pp.expenses) pp.expenses=[];
+  pp.expenses.push({id:"exp"+Date.now(),label:label.trim(),amount});
+  saveState(); renderPersoProjects();
+  setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50);
+}
+function _persoDeleteExpense(ppId, expId) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  if (pp) { pp.expenses=(pp.expenses||[]).filter(e=>e.id!==expId); saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50); }
 
 /* ========= NOTES LIBRES ========= */
 function renderFreeNotes() {
