@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v973</title>
+<title>Mon Tableau de Vie 🌿 · v974</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1351,7 +1351,7 @@
     overscroll-behavior: contain;
   }
   .modal h2 { margin: 0 0 18px; }
-  .modal-hint { font-size:12px;color:var(--ink-soft);margin:-10px 0 14px;line-height:1.5; }
+  .modal-hint { font-size:12px;color:var(--ink-soft);margin:-10px 0 14px;line-height:1.5;text-align:left; }
   .modal label { font-size: 13px; color: var(--ink-soft); display: block; margin-bottom: 6px; margin-top: 12px; }
   .modal input[type="text"], .modal input[type="number"], .modal input[type="date"], .modal input[type="url"],
   .modal textarea, .modal select {
@@ -4218,7 +4218,7 @@
       <h3 id="habitModalTitle" style="margin:0;font-size:18px;">✨ Nouvelle habitude</h3>
       <button onclick="_closeHabitModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
     </div>
-    <p class="modal-hint">Crée une habitude à cocher chaque jour. Choisis un type <strong>booléen</strong> (oui/non) ou <strong>numérique</strong> (avec objectif chiffré). Pour modifier ou supprimer une habitude existante, clique dessus depuis Aujourd'hui en mode édition.</p>
+    <p class="modal-hint" style="text-align:left;">Crée une habitude à cocher chaque jour. Choisis un type <strong>booléen</strong> (oui/non) ou <strong>numérique</strong> (avec objectif chiffré). Pour modifier ou supprimer une habitude existante, clique dessus depuis Aujourd'hui en mode édition. Le suivi sur le temps long (streak, taux de réussite, graphique) est disponible dans l'onglet <strong>Santé → Mes habitudes</strong>.</p>
     <!-- Suggestions rapides -->
     <div id="habitSuggestionsWrap" style="margin-bottom:18px;">
       <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:8px;">SUGGESTIONS RAPIDES <span style="font-weight:400;font-size:10px;">(cliquer pour pré-remplir)</span></div>
