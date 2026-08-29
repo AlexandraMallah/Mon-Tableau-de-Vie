@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v955</title>
+<title>Mon Tableau de Vie 🌿 · v956</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12687,12 +12687,15 @@ function openAccountEdit(type) {
     const breakdown = state.accounts?.savingsBreakdown || {};
     body.innerHTML = `
       <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px;">Clique sur un compte pour modifier son solde de départ. Renomme-le en éditant son nom directement.</p>
-      ${cats.map(c => `
+      ${cats.map(c => {
+        const curEmoji = (state.accounts?.savingsEmojis?.[c]) || "";
+        return `
         <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);">
-          <span style="font-size:16px;">${_accountEmoji(c)}</span>
+          <input data-saving-emoji="${escapeHtml(c)}" class="acc-saving-emoji" value="${escapeHtml(curEmoji)}" maxlength="4" placeholder="🏦" title="Emoji du compte" style="width:42px;text-align:center;padding:6px;border:1px solid var(--line);border-radius:8px;font-size:18px;font-family:inherit;" />
           <input data-saving-name="${escapeHtml(c)}" class="acc-saving-name" value="${escapeHtml(c)}" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
           <input data-saving-start="${escapeHtml(c)}" class="acc-saving-start" type="number" value="${(breakdown[c] || 0).toFixed(2)}" step="0.01" placeholder="Solde départ" style="width:110px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
-        </div>`).join("")}
+        </div>`;
+      }).join("")}
       <div style="display:flex;gap:8px;margin-top:8px;">
         <input type="text" id="newSavAccName" placeholder="Nouveau compte épargne…" style="flex:1;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);" />
         <button onclick="_addSavAccFromEdit()" style="padding:8px 14px;border-radius:10px;border:none;background:var(--lavender-soft);color:#6b4d99;font-weight:700;cursor:pointer;font-family:inherit;">Ajouter</button>
@@ -12740,25 +12743,30 @@ function saveAccountEdit() {
     if (lbl) state.accounts.cashLabel = lbl;
     state.accounts.cashEmoji = emoji;
   } else if (type === "epargne") {
-    // Renommage + soldes de départ des comptes épargne
     const nameInputs = document.querySelectorAll(".acc-saving-name");
     const startInputs = document.querySelectorAll(".acc-saving-start");
+    const emojiInputs = document.querySelectorAll(".acc-saving-emoji");
     const newBreakdown = {};
     const newCats = [];
+    const newEmojis = state.accounts.savingsEmojis ? { ...state.accounts.savingsEmojis } : {};
     nameInputs.forEach((inp, i) => {
       const oldName = inp.dataset.savingName;
       const newName = inp.value.trim() || oldName;
       const startVal = parseFloat(startInputs[i]?.value) || 0;
-      // Renommer dans transactions
+      const emojiVal = emojiInputs[i]?.value.trim().slice(0, 4) || "";
       if (newName !== oldName) {
         state.transactions.forEach(t => { if (t.category === oldName && (t.type === "savings" || t.type === "savings-out")) t.category = newName; });
         const idx = state.savingsCategories.indexOf(oldName);
         if (idx >= 0) state.savingsCategories[idx] = newName;
+        if (newEmojis[oldName] !== undefined) { newEmojis[newName] = newEmojis[oldName]; delete newEmojis[oldName]; }
       }
+      if (emojiVal) newEmojis[newName] = emojiVal;
+      else delete newEmojis[newName];
       newBreakdown[newName] = startVal;
       newCats.push(newName);
     });
     state.accounts.savingsBreakdown = newBreakdown;
+    state.accounts.savingsEmojis = newEmojis;
     state.savingsCategories = newCats;
   }
   saveState();
@@ -21852,7 +21860,7 @@ function loadInitialData() {
   // ===== JOURNAL =====
   const today = getToday();
   if (!today.journal || !today.journal.trim()) {
-    today.journal = "Premier jour sur mon tableau de vie ✨\n\nValorisation de thèse + postdoc franco-belge en parallèle. Beaucoup à faire, mais une carte de tout ça maintenant sous les yeux.";
+    today.journal = "Premier jour sur mon tableau de vie ✨";
   }
 
   state.seeded = true;
@@ -22225,14 +22233,25 @@ function toggleEditMode() {
   renderSkincare();
   renderPill();
   renderPillars();
+  _initWorkTabLabels();
 }
 
 const WORK_TAB_DEFAULTS = { postdoc: "Postdoc", candidatures: "Candidatures", valorisation: "Valorisation", teaching: "Enseignement" };
 function _initWorkTabLabels() {
   const names = state.work.subTabNames || {};
+  const projects = state.work.postdocProjects || [];
+  const tasks = state.work.postdocTasks || [];
+  const isEditing = document.body.classList.contains("edit-mode");
+  const hasPostdoc = true; // onglet principal — toujours visible
+  const hasCand = isEditing || (state.work.candidatures || []).length > 0;
+  const hasValo = isEditing || (state.work.articles || []).length > 0 || (state.work.communications || []).length > 0;
+  const hasTeaching = isEditing || tasks.some(t => t.projectId === "p-seed-enseignement") || projects.some(p => p.id === "p-seed-enseignement");
+  const visibility = { postdoc: hasPostdoc, candidatures: hasCand, valorisation: hasValo, teaching: hasTeaching };
   for (const [key, def] of Object.entries(WORK_TAB_DEFAULTS)) {
     const el = document.getElementById("workTabLabel-" + key);
     if (el) el.textContent = names[key] || def;
+    const tab = document.getElementById("workTab-" + key);
+    if (tab) tab.style.display = visibility[key] ? "" : "none";
   }
 }
 function renameWorkTab(key, btn) {
