@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v951</title>
+<title>Mon Tableau de Vie 🌿 · v952</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6332,7 +6332,8 @@ function renderHabits() {
     if (h.type === "numeric") {
       const num = Number(value) || 0;
       const pct = Math.min(100, Math.round((num / (h.target || 1)) * 100));
-      const barColor = isDone ? "var(--mint)" : (num >= 7000 && /pas/i.test(h.name)) ? "var(--peach)" : "var(--rose)";
+      const _hbS = document.body.classList.contains("t-serieux"), _hbM = document.body.classList.contains("t-minimal");
+      const barColor = isDone ? (_hbS?"#88a890":_hbM?"#555":"var(--mint)") : (num >= 7000 && /pas/i.test(h.name)) ? (_hbS?"#d4aa84":_hbM?"#888":"var(--peach)") : (_hbS?"#c0986e":_hbM?"#aaa":"var(--rose)");
       const isSmall = (h.target || 1) <= 30;
       const inputStep = isSmall ? 1 : 100;
       const inputMax = isSmall ? (h.target * 5) : "";
@@ -8675,8 +8676,8 @@ function renderActivityStats() {
 }
 let activityChart;
 const PASTEL_PALETTE = ["#c9b6f0", "#f5b6c9", "#b4d4f1", "#f7c9a3", "#aee0c8", "#efb8c8", "#f5e6a8", "#d4b6f0"];
-const _PAL_SERIEUX   = ["#2e5fa3", "#3d8b78", "#c4922a", "#4a6e8a", "#4a7c5c", "#8a5030", "#5060a0", "#2a7a6a"];
-const _PAL_MINIMAL   = ["#222222", "#555555", "#888888", "#333333", "#666666", "#999999", "#444444", "#777777"];
+const _PAL_SERIEUX   = ["#6b9ec4","#d4aa84","#88a890","#c0986e","#8ab8cc","#b89a80","#a4c8d8","#9ab4c8"];
+const _PAL_MINIMAL   = ["#555555","#777777","#999999","#444444","#666666","#888888","#333333","#aaaaaa"];
 function _getPal() {
   const b = document.body.classList;
   if (b.contains("t-serieux")) return _PAL_SERIEUX;
@@ -8686,11 +8687,17 @@ function _getPal() {
 
 /* ── Hormones ──────────────────────────────────────────────────────── */
 const HORMONES = [
-  { id: "endorphines", label: "Endorphines", emoji: "🏃", color: "#a8e6cf", desc: "Effort physique, sport",        target: 4, unit: "j" },
-  { id: "dopamine",    label: "Dopamine",    emoji: "🎯", color: "#ffd3a8", desc: "Accomplissement, plaisir",     target: 5, unit: "j" },
-  { id: "serotonine",  label: "Sérotonine",  emoji: "☀️", color: "#ffe89a", desc: "Calme, créativité, nature",    target: 5, unit: "j" },
-  { id: "ocytocine",   label: "Ocytocine",   emoji: "🤗", color: "#ffc8dd", desc: "Lien social, affection",       target: 3, unit: "j" },
+  { id: "endorphines", label: "Endorphines", emoji: "🏃", color: "#a8e6cf", colorS: "#88a890", colorM: "#555", desc: "Effort physique, sport",        target: 4, unit: "j" },
+  { id: "dopamine",    label: "Dopamine",    emoji: "🎯", color: "#ffd3a8", colorS: "#d4aa84", colorM: "#777", desc: "Accomplissement, plaisir",     target: 5, unit: "j" },
+  { id: "serotonine",  label: "Sérotonine",  emoji: "☀️", color: "#ffe89a", colorS: "#8ab8cc", colorM: "#999", desc: "Calme, créativité, nature",    target: 5, unit: "j" },
+  { id: "ocytocine",   label: "Ocytocine",   emoji: "🤗", color: "#ffc8dd", colorS: "#c0986e", colorM: "#666", desc: "Lien social, affection",       target: 3, unit: "j" },
 ];
+function _hormoneColor(h) {
+  const b = document.body.classList;
+  if (b.contains("t-serieux")) return h.colorS;
+  if (b.contains("t-minimal")) return h.colorM;
+  return h.color;
+}
 
 // Déduit les hormones probables d'une activité d'après son nom
 function autoHormones(name) {
@@ -8831,14 +8838,15 @@ function renderHormones() {
 
   // Pétales fantômes (max, très transparent) + pétales réels
   const ghosts = HORMONES.map((h,i) =>
-    `<path d="${petalPath(DIRS[i], MAX_R)}" fill="${h.color}" opacity="0.10"/>`
+    `<path d="${petalPath(DIRS[i], MAX_R)}" fill="${_hormoneColor(h)}" opacity="0.10"/>`
   ).join("");
 
   const petals = HORMONES.map((h,i) => {
     const pct = Math.min(1, data[h.id].score / h.target);
     const r   = Math.max(4, MAX_R * pct);
-    return `<path d="${petalPath(DIRS[i], r)}" fill="${h.color}" opacity="0.88"
-      style="filter:drop-shadow(0 2px 6px ${h.color}99);transition:d .5s;"/>`;
+    const hc  = _hormoneColor(h);
+    return `<path d="${petalPath(DIRS[i], r)}" fill="${hc}" opacity="0.88"
+      style="filter:drop-shadow(0 2px 6px ${hc}99);transition:d .5s;"/>`;
   }).join("");
 
   // Emojis aux extrémités (position fixe = MAX_R + 18)
@@ -8863,7 +8871,7 @@ function renderHormones() {
     const src = d.sources.slice(0,2).join(" · ") || "aucune source cette semaine";
     const inEdit = document.body.classList.contains('edit-mode');
     return `<div class="hormone-legend-row" onclick="${inEdit?`_openHormoneConfig('${h.id}')`:`showHormoneDetail('${h.id}')`}">
-      <div class="hormone-legend-dot" style="background:${h.color};"></div>
+      <div class="hormone-legend-dot" style="background:${_hormoneColor(h)};"></div>
       <div class="hormone-legend-body">
         <div class="hormone-legend-top">
           <span class="hormone-legend-name">${h.emoji} ${h.label}</span>
@@ -9523,9 +9531,17 @@ function renderStepsStats() {
   `;
 }
 /* ========= ROUTINES MATIN / SOIR ========= */
+function _routineColor(key) {
+  const b = document.body.classList;
+  const meta = ROUTINES_META[key];
+  if (!meta) return "#c9b6f0";
+  if (b.contains("t-serieux")) return meta.colorS;
+  if (b.contains("t-minimal")) return meta.colorM;
+  return meta.color;
+}
 const ROUTINES_META = {
-  matin: { label: "Routine matin", emoji: "☀️", color: "#f7c9a3" },
-  soir:  { label: "Routine soir",  emoji: "🌙", color: "#c9b6f0" },
+  matin: { label: "Routine matin", emoji: "☀️", color: "#f7c9a3", colorS: "#d4aa84", colorM: "#777" },
+  soir:  { label: "Routine soir",  emoji: "🌙", color: "#c9b6f0", colorS: "#8ab8cc", colorM: "#555" },
 };
 function getRoutines() {
   if (!state.routines) state.routines = {
@@ -10663,10 +10679,12 @@ function renderPillSante() {
     tipParts.push(taken ? "💊 prise" : "💊 oubliée");
     if (flow) tipParts.push("🩸 " + flowLabel);
     const title = tipParts.join(" · ");
+    const _isS = document.body.classList.contains("t-serieux");
+    const _isM = document.body.classList.contains("t-minimal");
     let bg;
-    if (isToday) bg = taken ? "#7c5cbf" : "#b4d4f1";
-    else if (taken) bg = "#c9b6f0";
-    else bg = "#ece6f5";
+    if (isToday) bg = taken ? (_isS?"#4a7a9e":_isM?"#333":"#7c5cbf") : (_isS?"#8ab8cc":_isM?"#888":"#b4d4f1");
+    else if (taken) bg = _isS?"#6b9ec4":_isM?"#777":"#c9b6f0";
+    else bg = _isS?"#ccdde8":_isM?"#ccc":"#ece6f5";
     const opacity = taken || isToday || flow ? "1" : "0.5";
     const dot = flow ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;border-radius:50%;background:${CYCLE_DOT[flow]};"></div></div>` : "";
     return `<div data-tip="${title}" onmouseenter="showHoverTip(event,this.dataset.tip)" onmousemove="moveHoverTip(event)" onmouseleave="hideHoverTip()" style="position:relative;width:18px;height:18px;border-radius:4px;background:${bg};opacity:${opacity};cursor:default;">${dot}</div>`;
@@ -10688,8 +10706,8 @@ function renderPillSante() {
 let _habitNb = 90;
 const _HABIT_SKIP = new Set(["h-eau","h-pas","h-pilule","h-skincare-matin","h-skincare-soir","h-calories"]);
 const _HABIT_PALETTE         = ["#c9b6f0","#aee0c8","#f9c7c7","#b6d6f0","#f9e0b6","#d4f0b6","#f0b6d4","#b6f0e4","#f0d4b6","#b6b6f0"];
-const _HABIT_PAL_SERIEUX     = ["#2e5fa3","#3d8b78","#c4922a","#4a6e8a","#4a7c5c","#8a5030","#5060a0","#2a7a6a","#6a4080","#305080"];
-const _HABIT_PAL_MINIMAL     = ["#333","#555","#777","#444","#666","#888","#222","#999","#aaa","#bbb"];
+const _HABIT_PAL_SERIEUX     = ["#6b9ec4","#d4aa84","#88a890","#c0986e","#8ab8cc","#b89a80","#a4c8d8","#9ab4c8","#c8b4a0","#7aa8bc"];
+const _HABIT_PAL_MINIMAL     = ["#555","#777","#666","#888","#999","#444","#aaa","#333","#bbb","#666"];
 function _getHabitPal() {
   const b = document.body.classList;
   if (b.contains("t-serieux")) return _HABIT_PAL_SERIEUX;
@@ -10929,6 +10947,7 @@ function renderSkincare() {
   const inEdit = document.body.classList.contains('edit-mode');
   const routineSection = (key) => {
     const meta = ROUTINES_META[key];
+    const rc = _routineColor(key);
     const steps = getRoutines()[key] || [];
     const done = steps.map(s => !!habits[s.id]);
     const nb   = done.filter(Boolean).length;
@@ -10940,12 +10959,12 @@ function renderSkincare() {
           flex:1;display:flex;align-items:center;gap:12px;
           padding:9px 12px;border-radius:12px;cursor:pointer;
           transition:background 0.15s;
-          background:${isDone ? `${meta.color}18` : "transparent"};
+          background:${isDone ? `${rc}22` : "transparent"};
         ">
           <div style="
             width:22px;height:22px;border-radius:6px;flex-shrink:0;
-            background:${isDone ? meta.color : "white"};
-            border:2px solid ${isDone ? meta.color : "var(--line)"};
+            background:${isDone ? rc : "white"};
+            border:2px solid ${isDone ? rc : "var(--line)"};
             display:flex;align-items:center;justify-content:center;
             transition:all 0.15s;
           ">${isDone ? `<span style="color:white;font-weight:700;font-size:12px;">✓</span>` : ""}</div>
@@ -10961,7 +10980,7 @@ function renderSkincare() {
           <span style="font-size:15px;">${meta.emoji}</span>
           <span style="font-size:13px;font-weight:700;color:var(--ink);">${meta.label}</span>
           <span style="margin-left:auto;font-size:12px;font-weight:600;
-            color:${full ? meta.color : "var(--ink-softer)"};">
+            color:${full ? rc : "var(--ink-softer)"};">
             ${full ? "✓ Complète" : `${nb}/${steps.length}`}
           </span>
           ${inEdit ? `<button onclick="_addRoutineItem('${key}')" style="font-size:11px;padding:2px 8px;border-radius:999px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;font-family:inherit;">+ Ajouter</button>` : ""}
@@ -11010,11 +11029,11 @@ function renderSkincare() {
     <div style="display:flex;flex-direction:column;gap:6px;">
       <div style="display:flex;align-items:center;gap:6px;">
         <span style="font-size:12px;width:14px;flex-shrink:0;">☀️</span>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;">${dotsRow("matin", "#f7c9a3")}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;">${dotsRow("matin", _routineColor("matin"))}</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
         <span style="font-size:12px;width:14px;flex-shrink:0;">🌙</span>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;">${dotsRow("soir", "#c9b6f0")}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;">${dotsRow("soir", _routineColor("soir"))}</div>
       </div>
     </div>`;
 }
@@ -13541,11 +13560,11 @@ function renderMoneyFlowChart() {
   const _isFlowS = document.body.classList.contains("t-serieux");
   const _isFlowM = document.body.classList.contains("t-minimal");
   const flowDatasets = [
-    { label: "Revenus",         data: months.map(m => monthSum(m, "income")),       backgroundColor: _isFlowS?"#3a7c6a":_isFlowM?"#333":"#aee0c8", borderRadius: 8 },
-    { label: "Dépenses",        data: months.map(m => monthSum(m, "expense")),      backgroundColor: _isFlowS?"#8a3030":_isFlowM?"#777":"#efb8c8", borderRadius: 8 },
-    { label: "Épargne",         data: months.map(m => monthSum(m, "savings")),      backgroundColor: _isFlowS?"#1e3a5f":_isFlowM?"#444":"#c9b6f0", borderRadius: 8 },
-    { label: "Retrait épargne", data: months.map(m => monthSum(m, "savings-out")),  backgroundColor: _isFlowS?"#2e6090":_isFlowM?"#888":"#89d4cf", borderRadius: 8 },
-    { label: "Hors compte",     data: months.map(m => monthSum(m, "external")),     backgroundColor: _isFlowS?"#b8903c":_isFlowM?"#aaa":"#f5e6a8", borderRadius: 8 },
+    { label: "Revenus",         data: months.map(m => monthSum(m, "income")),       backgroundColor: _isFlowS?"#88a890":_isFlowM?"#555":"#aee0c8", borderRadius: 8 },
+    { label: "Dépenses",        data: months.map(m => monthSum(m, "expense")),      backgroundColor: _isFlowS?"#c0986e":_isFlowM?"#888":"#efb8c8", borderRadius: 8 },
+    { label: "Épargne",         data: months.map(m => monthSum(m, "savings")),      backgroundColor: _isFlowS?"#6b9ec4":_isFlowM?"#666":"#c9b6f0", borderRadius: 8 },
+    { label: "Retrait épargne", data: months.map(m => monthSum(m, "savings-out")),  backgroundColor: _isFlowS?"#8ab8cc":_isFlowM?"#999":"#89d4cf", borderRadius: 8 },
+    { label: "Hors compte",     data: months.map(m => monthSum(m, "external")),     backgroundColor: _isFlowS?"#d4aa84":_isFlowM?"#aaa":"#f5e6a8", borderRadius: 8 },
   ];
   // Légende HTML custom — pleine largeur, espacement uniforme
   const legendEl = document.getElementById("flowLegend");
@@ -13744,9 +13763,9 @@ function renderSavings() {
   const _isSvS = document.body.classList.contains("t-serieux");
   const _isSvM = document.body.classList.contains("t-minimal");
   const COLORS = _isSvS
-    ? ["#1e3a5f","#3a7c6a","#b8903c","#2e6090","#7a4f35","#4a8a6e"]
+    ? ["#6b9ec4","#88a890","#d4aa84","#8ab8cc","#c0986e","#a4c8d8"]
     : _isSvM
-    ? ["#222","#444","#666","#555","#888","#333"]
+    ? ["#555","#777","#666","#888","#999","#444"]
     : ["#9b72d4","#5bbcb8","#f5a623","#4a90d9","#e07bbd","#7cba6d"];
   const lockedMap = state.savingsLocked || {};
   el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:4px;">` +
@@ -13960,7 +13979,7 @@ function renderSavingsChart() {
   const _isSavM = document.body.classList.contains("t-minimal");
   savingsChart = new Chart(document.getElementById("savingsChart"), {
     type: "bar",
-    data: { labels, datasets: [{ label: "Mis de côté", data, backgroundColor: _isSavS?"#1e3a5f":_isSavM?"#444":"#c9b6f0", borderRadius: 8 }] },
+    data: { labels, datasets: [{ label: "Mis de côté", data, backgroundColor: _isSavS?"#6b9ec4":_isSavM?"#666":"#c9b6f0", borderRadius: 8 }] },
     options: {
       ...baseChartOpts(),
       onClick: (_, els) => {
@@ -15044,6 +15063,16 @@ function setupJournal() {
 }
 
 /* ========= PILIERS DE VIE (auto-calculés) ========= */
+// Couleurs piliers selon thème (index = ordre dans PILLAR_DEFS)
+function _pillarColor(idx) {
+  const b = document.body.classList;
+  const S = ["#88a890","#6b9ec4","#8ab8cc","#d4aa84","#c0986e","#b89a80"];
+  const M = ["#666","#555","#777","#888","#999","#444"];
+  if (b.contains("t-serieux")) return S[idx] || S[0];
+  if (b.contains("t-minimal")) return M[idx] || M[0];
+  return null; // null = utiliser p.color (smooth)
+}
+
 const PILLAR_DEFS = [
   {
     id: "sante", name: "Santé physique", emoji: "💪", color: "#aee0c8", bg: "var(--mint-soft)",
@@ -15504,7 +15533,7 @@ function renderPillars() {
   if (!cardsEl || !globalEl || !radarCanvas) return;
 
   const onVacation = _isOnVacationThisWeek();
-  const computed = PILLAR_DEFS.map(p => ({ ...p, ...computePillarScore(p) }));
+  const computed = PILLAR_DEFS.map((p, idx) => ({ ...p, ...computePillarScore(p), _tc: _pillarColor(idx) || p.color }));
   const activeComputed = computed.filter(p => !(p.id === "travail" && onVacation));
   const globalScore = Math.round(activeComputed.reduce((s, p) => s + p.score, 0) / (activeComputed.length || 1));
   globalEl.textContent = globalScore + " / 100";
@@ -15535,10 +15564,10 @@ function renderPillars() {
         <div class="pillar-emoji" style="background:${p.bg};">${p.emoji}</div>
         <div class="pillar-info">
           <div class="pillar-name">${p.name}</div>
-          <div class="pillar-bar-wrap"><div class="pillar-bar" style="width:${p.score}%;background:${p.color};"></div></div>
+          <div class="pillar-bar-wrap"><div class="pillar-bar" style="width:${p.score}%;background:${p._tc};"></div></div>
           <div class="pillar-metrics">${metricsHtml}</div>
         </div>
-        <div class="pillar-score" style="color:${p.color};">${p.score}%</div>
+        <div class="pillar-score" style="color:${p._tc};">${p.score}%</div>
       </div>`;
   }).join("");
 
@@ -15551,7 +15580,7 @@ function renderPillars() {
         <div class="pillar-rank-row">
           <span class="pillar-rank-emoji">${p.emoji}</span>
           <span class="pillar-rank-name">${escapeHtml(p.name)}</span>
-          <span class="pillar-rank-score" style="color:${p.color};">${p.score}%</span>
+          <span class="pillar-rank-score" style="color:${p._tc};">${p.score}%</span>
         </div>`).join("")}
     `;
   }
@@ -15565,10 +15594,10 @@ function renderPillars() {
       datasets: [{
         label: "Score (%)",
         data: computed.map(p => p.score),
-        backgroundColor: "rgba(174, 224, 200, 0.25)",
-        borderColor: "#aee0c8",
+        backgroundColor: document.body.classList.contains("t-serieux") ? "rgba(107,158,196,0.20)" : document.body.classList.contains("t-minimal") ? "rgba(100,100,100,0.15)" : "rgba(174,224,200,0.25)",
+        borderColor: document.body.classList.contains("t-serieux") ? "#6b9ec4" : document.body.classList.contains("t-minimal") ? "#666" : "#aee0c8",
         borderWidth: 2,
-        pointBackgroundColor: computed.map(p => p.color),
+        pointBackgroundColor: computed.map(p => p._tc),
         pointBorderColor: "white",
         pointBorderWidth: 1.5,
         pointRadius: 5,
