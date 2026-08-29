@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v982</title>
+<title>Mon Tableau de Vie 🌿 · v983</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6467,11 +6467,15 @@ function renderHabits() {
             ${_nameSpan}${editBtns}
             <div class="habit-streak ${streakClass}" style="margin-left:auto;flex-shrink:0;">${streakText}</div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <input type="number" value="${num || ''}" onchange="setHabitValue('${h.id}', this.value)" placeholder="0" min="0" step="${inputStep}" ${inputMax ? `max="${inputMax}"` : ""}
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <input type="number" id="habInput-${h.id}" value="${num || ''}" onchange="setHabitValue('${h.id}', this.value)${h.id==='h-pas'?';_syncPasKm(this.value,false)':''}" placeholder="0" min="0" step="${inputStep}" ${inputMax ? `max="${inputMax}"` : ""}
               style="width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:right;background:white;" />
             <span style="font-size:11px;color:var(--ink-soft);">/ ${h.target}${h.unit ? " " + h.unit : ""}</span>
-            <div style="flex:1;background:white;height:5px;border-radius:999px;overflow:hidden;margin-left:4px;">
+            ${h.id==='h-pas'?`<span style="font-size:11px;color:var(--ink-softer);">ou</span>
+            <input type="number" id="habKmInput" value="${num?+(num*0.00075).toFixed(2):''}" onchange="_syncPasKm(this.value,true)" placeholder="0.00" min="0" step="0.01"
+              style="width:70px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:right;background:white;" />
+            <span style="font-size:11px;color:var(--ink-softer);">km</span>`:''}
+            <div style="flex:1;min-width:60px;background:white;height:5px;border-radius:999px;overflow:hidden;margin-left:4px;">
               <div style="width:${Math.min(100, pct)}%;height:100%;background:${barColor};transition:width 0.4s;"></div>
             </div>
           </div>
@@ -10056,6 +10060,20 @@ function colorForSteps(steps) {
   if (steps >= 7000)  return { fg: _s?"#b08a5a":"#c08a4d", bar: _s?"#d0ac84":"#f7c9a3", bg: "var(--peach-soft)" };
   return                     { fg: _s?"#a06050":"#c75b4d", bar: _s?"#c0986e":"#efb8c8", bg: "var(--rose-soft)" };
 }
+function _syncPasKm(val, fromKm) {
+  const PAS_PER_KM = 1333; // 1 km ≈ 1333 pas (0.75m/pas)
+  if (fromKm) {
+    const km = parseFloat(val) || 0;
+    const pas = Math.round(km * PAS_PER_KM);
+    const inp = document.getElementById("habInput-h-pas");
+    if (inp) { inp.value = pas || ""; setHabitValue("h-pas", pas); }
+  } else {
+    const pas = parseFloat(val) || 0;
+    const km = pas ? +(pas / PAS_PER_KM).toFixed(2) : "";
+    const inp = document.getElementById("habKmInput");
+    if (inp) inp.value = km;
+  }
+}
 function renderStepsStats() {
   const h = getStepsHabit();
   if (!h || !document.getElementById("stepsTodayTile")) return;
@@ -11264,7 +11282,7 @@ function renderPillSante() {
 
 // ── Suivi habitudes dans Santé ──────────────────────────────────────
 let _habitNb = 90;
-const _HABIT_SKIP = new Set(["h-eau","h-pas","h-pilule","h-skincare-matin","h-skincare-soir","h-calories"]);
+const _HABIT_SKIP = new Set(["h-eau","h-pas","h-pilule","h-skincare-matin","h-skincare-soir","h-calories","h-cal-dep"]);
 const _HABIT_PALETTE         = ["#c9b6f0","#aee0c8","#f9c7c7","#b6d6f0","#f9e0b6","#d4f0b6","#f0b6d4","#b6f0e4","#f0d4b6","#b6b6f0"];
 const _HABIT_PAL_SERIEUX     = ["#8ab4d4","#e0c4a0","#a0c0a8","#d0ac84","#a4cce0","#cca88c","#b4d4e4","#acc4d8","#d8c8b0","#8cc0d4"];
 const _HABIT_PAL_MINIMAL     = ["#555","#777","#666","#888","#999","#444","#aaa","#333","#bbb","#666"];
@@ -11286,8 +11304,13 @@ function setHabitNb(n) {
 function renderHabitsTracking() {
   const el = document.getElementById("habitsTrackingGrid");
   if (!el) return;
-  const habits = (state.habits || []).filter(h => !_HABIT_SKIP.has(h.id));
-  if (!habits.length) { el.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;font-style:italic;">Aucune habitude personnalisée. Crée-en depuis l'onglet Aujourd'hui !</p>`; return; }
+  // Exclure les habitudes spéciales + les items des routines matin/soir
+  const _routineIds = new Set([
+    ...((state.routines?.matin||[]).map(x=>x.id)),
+    ...((state.routines?.soir||[]).map(x=>x.id))
+  ]);
+  const habits = (state.habits || []).filter(h => !_HABIT_SKIP.has(h.id) && !_routineIds.has(h.id));
+  if (!habits.length) { el.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;font-style:italic;">Aucune habitude personnalisée. Ajoute-en depuis l'onglet <strong>Aujourd'hui → Mes habitudes</strong> (hors routines matin/soir).</p>`; return; }
 
   const today = new Date(); today.setHours(0,0,0,0);
   const days = [];
