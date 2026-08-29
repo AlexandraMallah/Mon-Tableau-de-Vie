@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v952</title>
+<title>Mon Tableau de Vie 🌿 · v954</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2946,25 +2946,31 @@
       </div>
       <div class="money-accounts-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
         <div class="money-stat" id="accountCourantCard" style="background:linear-gradient(135deg,white 0%,var(--sky-soft) 100%);position:relative;">
-          <button class="edit-only" onclick="openAccountEdit('courant')" title="Modifier ce compte" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);opacity:0.85;">✏️</button>
+          <button onclick="openAccountEdit('courant')" title="Modifier ce compte" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">✏️</button>
           <div class="label" id="accountCourantLabel">💳 Compte courant</div>
           <div class="value" id="accountCourant">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="accountCourantDetail"></div>
         </div>
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,#fff8e1 100%);cursor:pointer;position:relative;" onclick="_toggleCashDetail()">
-          <button class="edit-only" onclick="event.stopPropagation();openAccountEdit('cash')" title="Modifier" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);opacity:0.85;">✏️</button>
+          <button onclick="event.stopPropagation();openAccountEdit('cash')" title="Modifier" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">✏️</button>
           <div class="label" id="cashAccountLabel">💵 Espèces en poche</div>
           <div class="value" id="cashBalanceDisplay" style="color:#b8860b;">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">Cliquer pour gérer</div>
         </div>
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,var(--lavender-soft) 100%);position:relative;">
-          <button class="edit-only" onclick="openAccountEdit('epargne')" title="Gérer les comptes épargne" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);opacity:0.85;">✏️</button>
-          <div class="label">🏦 Compte épargne</div>
+          <button onclick="openAccountEdit('epargne')" title="Gérer les comptes épargne" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">✏️ Gérer</button>
+          <div class="label">🏦 Épargne totale</div>
           <div class="value" id="accountEpargne" style="color:#6b4d99;">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="accountEpargneDetail"></div>
         </div>
       </div>
-      <p style="color:var(--ink-soft);font-size:12px;margin:10px 0 0;">💡 Quand tu ajoutes une transaction <strong>💰 Épargne</strong>, le montant est <strong>retiré du compte courant</strong> et <strong>ajouté au compte épargne</strong> automatiquement. Pour ajuster les soldes de départ : ⚙ Personnaliser.</p>
+      <!-- Bouton toujours visible pour ajouter un compte épargne -->
+      <div style="margin-top:12px;">
+        <button onclick="openAccountEdit('epargne')" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;border:1.5px dashed var(--lavender);background:var(--lavender-soft);color:#6b4d99;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+          ➕ Ajouter / gérer mes comptes épargne
+        </button>
+      </div>
+      <p style="color:var(--ink-soft);font-size:12px;margin:10px 0 0;">💡 Quand tu ajoutes une transaction <strong>💰 Épargne</strong>, le montant est <strong>retiré du compte courant</strong> et <strong>ajouté au compte épargne</strong>. Pour ajuster les soldes de départ : clique sur ✏️.</p>
 
       <!-- Espèces — panneau déroulant -->
       <div id="cashDetailPanel" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
@@ -5541,42 +5547,14 @@ function migrate(s) {
       }
     }
   }
-  // Admin : init avec donnees pre-remplies si absent
+  // Admin : init vide — les données perso (missions, congés) viennent du Firestore uniquement
   if (!s.admin || !s.admin._seeded) {
     s.admin = {
       _seeded: true,
-      missions: [
-        { id:"m01", date:"2026-02-09", lieu:"Estampuis",        train:33,   repas:null, taxi:null, km:null, essence:null, remb:50,    dateRemb:"2026-03-05", statut:"Rembourse" },
-        { id:"m02", date:"2026-02-10", lieu:"Estampuis",        train:null, repas:20.5, taxi:null, km:104,  essence:null, remb:null,  dateRemb:null,         statut:null },
-        { id:"m03", date:"2026-02-11", lieu:"Estampuis",        train:26.5, repas:null, taxi:null, km:null, essence:null, remb:null,  dateRemb:null,         statut:null },
-        { id:"m04", date:"2026-04-08", lieu:"Estampuis",        train:30,   repas:null, taxi:null, km:null, essence:null, remb:70.95, dateRemb:"2026-05-12", statut:"Rembourse" },
-        { id:"m05", date:"2026-04-09", lieu:"Estampuis",        train:31,   repas:11.9, taxi:null, km:83,   essence:null, remb:66.5,  dateRemb:"2026-05-12", statut:"Rembourse" },
-        { id:"m06", date:"2026-04-20", lieu:"Villeneuve-d-Ascq",train:24.5, repas:null, taxi:null, km:null, essence:null, remb:59.79, dateRemb:"2026-05-12", statut:"Rembourse" },
-        { id:"m07", date:"2026-04-21", lieu:"Estampuis",        train:null, repas:20.8, taxi:null, km:107,  essence:71.07,remb:66.5,  dateRemb:"2026-05-12", statut:"Rembourse" },
-        { id:"m08", date:"2026-04-22", lieu:"Mouscron",         train:null, repas:16.7, taxi:null, km:111,  essence:null, remb:48.7,  dateRemb:"2026-05-12", statut:"Rembourse" },
-        { id:"m09", date:"2026-04-23", lieu:"Estampuis",        train:19.5, repas:6.9,  taxi:null, km:100,  essence:null, remb:66.5,  dateRemb:"2026-05-12", statut:"Rembourse" },
-        { id:"m10", date:"2026-04-26", lieu:"Comines",          train:28.5, repas:null, taxi:40,   km:null, essence:null, remb:66.5,  dateRemb:"2026-05-12", statut:"Rembourse" },
-        { id:"m11", date:"2026-04-27", lieu:"Comines",          train:21.5, repas:7,    taxi:null, km:127,  essence:42.84,remb:null,  dateRemb:null,         statut:null },
-        { id:"m12", date:"2026-05-12", lieu:"Roncq",            train:null, repas:null, taxi:null, km:null, essence:null, remb:null,  dateRemb:null,         statut:"En attente" },
-        { id:"m13", date:"2026-05-18", lieu:"Roncq",            train:null, repas:null, taxi:null, km:null, essence:null, remb:null,  dateRemb:null,         statut:"En attente" },
-        { id:"m14", date:"2026-05-21", lieu:"Rambouillet",      train:null, repas:null, taxi:null, km:null, essence:null, remb:null,  dateRemb:null,         statut:"En attente" },
-        { id:"m15", date:"2026-06-12", lieu:"Estampuis",        train:null, repas:null, taxi:null, km:null, essence:null, remb:null,  dateRemb:null,         statut:"En attente" },
-        { id:"m16", date:"2026-06-13", lieu:"Estampuis",        train:null, repas:null, taxi:null, km:null, essence:null, remb:null,  dateRemb:null,         statut:"En attente" }
-      ],
-      abonnement: [
-        { id:"a01", date:"2026-03-31", montant:22,  statut:"Rembourse" },
-        { id:"a02", date:"2026-04-12", montant:108, statut:"Rembourse" },
-        { id:"a03", date:"2026-04-30", montant:22,  statut:"Rembourse" }
-      ],
-      congesConfig: { droitsCA:27, droitsRTT:20 },
-      congesPeriodes: [
-        { id:"c01", debut:"2026-03-09", fin:"2026-03-13", jours:5, type:"CA",  statut:"Pris" },
-        { id:"c02", debut:"2026-08-03", fin:"2026-08-07", jours:5, type:"CA",  statut:"Planifie" },
-        { id:"c03", debut:"2026-08-10", fin:"2026-08-14", jours:5, type:"CA",  statut:"Planifie" },
-        { id:"c04", debut:"2026-08-17", fin:"2026-08-21", jours:5, type:"CA",  statut:"Planifie" },
-        { id:"c05", debut:"2026-08-24", fin:"2026-08-28", jours:5, type:"CA",  statut:"Planifie" },
-        { id:"c06", debut:"2026-08-31", fin:"2026-09-02", jours:3, type:"RTT", statut:"Planifie" }
-      ]
+      missions: [],
+      abonnement: [],
+      congesConfig: { droitsCA:25, droitsRTT:0 },
+      congesPeriodes: []
     };
   } else {
     s.admin.missions      = s.admin.missions      || [];
@@ -13268,15 +13246,15 @@ const CAT_PALETTE = [
   "#b8d8f5","#f5ebb0","#c8e5a8","#f5c49a","#c8c0ec","#b0ecda","#ecd0a0","#e8b0d4",
 ];
 const _CAT_PAL_SERIEUX = [
-  "#1e3a5f","#2e6090","#3a7ca5","#4a8a6e","#7a4f35","#a06a3a",
-  "#b8903c","#5a7890","#1a5048","#8a5030","#284878","#6a3828",
-  "#3a5a7a","#4a3860","#304838","#7a4828","#203858","#905028",
-  "#4a6848","#5a3020","#385880","#c47830","#2a4860","#7a5030",
+  "#6b9ec4","#d4aa84","#88a890","#c0986e","#8ab8cc","#b89a80",
+  "#a4c8d8","#9ab4c8","#c8b4a0","#7aa8bc","#d4bca8","#80b0a0",
+  "#aac4d4","#c0a890","#90b8c8","#b8a080","#70a8b8","#d0b498",
+  "#98c0b0","#c4a898","#84b4c4","#bca888","#9abcc8","#c8b098",
 ];
 const _CAT_PAL_MINIMAL = [
-  "#333","#555","#777","#444","#666","#888","#222","#999",
-  "#4a4a4a","#3a3a3a","#5a5a5a","#6a6a6a","#2a2a2a","#7a7a7a","#1a1a1a","#8a8a8a",
-  "#404040","#606060","#383838","#585858","#484848","#686868","#282828","#787878",
+  "#555","#777","#666","#888","#999","#444","#aaa","#333",
+  "#5a5a5a","#3a3a3a","#6a6a6a","#4a4a4a","#7a7a7a","#2a2a2a","#8a8a8a","#606060",
+  "#484848","#686868","#383838","#585858","#787878","#282828","#404040","#707070",
 ];
 function _getCatPal() {
   const b = document.body.classList;
@@ -21989,19 +21967,28 @@ function toggleShortcut(id, on) {
   renderShortcutsBar();
 }
 
+function _renameCatDirect(list, catName) {
+  openRenameCatModal(list);
+  const idx = list.indexOf(catName);
+  if (idx >= 0) setTimeout(() => selectRenameCat(idx), 80);
+}
 function _renderFinanceCatLists() {
   const el = document.getElementById("financeCatList");
   const el2 = document.getElementById("financeIncomeCatList");
-  if (el) el.innerHTML = (state.categories || []).map(c =>
-    `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--rose-soft);border-radius:20px;padding:3px 10px;font-size:12px;">
+  if (el) el.innerHTML = (state.categories || []).map(c => {
+    const ce = escapeHtml(c).replace(/'/g,"&#39;");
+    return `<span title="Double-clic pour renommer" ondblclick="_renameCatDirect(state.categories,'${ce}')" style="display:inline-flex;align-items:center;gap:4px;background:var(--rose-soft);border-radius:20px;padding:3px 10px;font-size:12px;cursor:default;">
       ${escapeHtml(c)}
-      <span onclick="_removeFinanceCat('${escapeHtml(c).replace(/'/g,"&#39;")}')" style="cursor:pointer;color:var(--ink-softer);font-size:10px;">✕</span>
-    </span>`).join("");
-  if (el2) el2.innerHTML = (state.incomeCategories || []).map(c =>
-    `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--mint-soft);border-radius:20px;padding:3px 10px;font-size:12px;">
+      <span onclick="_removeFinanceCat('${ce}')" style="cursor:pointer;color:var(--ink-softer);font-size:10px;">✕</span>
+    </span>`;
+  }).join("");
+  if (el2) el2.innerHTML = (state.incomeCategories || []).map(c => {
+    const ce = escapeHtml(c).replace(/'/g,"&#39;");
+    return `<span title="Double-clic pour renommer" ondblclick="_renameCatDirect(state.incomeCategories,'${ce}')" style="display:inline-flex;align-items:center;gap:4px;background:var(--mint-soft);border-radius:20px;padding:3px 10px;font-size:12px;cursor:default;">
       ${escapeHtml(c)}
-      <span onclick="_removeFinanceIncomeCat('${escapeHtml(c).replace(/'/g,"&#39;")}')" style="cursor:pointer;color:var(--ink-softer);font-size:10px;">✕</span>
-    </span>`).join("");
+      <span onclick="_removeFinanceIncomeCat('${ce}')" style="cursor:pointer;color:var(--ink-softer);font-size:10px;">✕</span>
+    </span>`;
+  }).join("");
 }
 function _addFinanceCat() {
   const inp = document.getElementById("newFinanceCatInput");
