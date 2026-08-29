@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v972</title>
+<title>Mon Tableau de Vie 🌿 · v973</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1351,6 +1351,7 @@
     overscroll-behavior: contain;
   }
   .modal h2 { margin: 0 0 18px; }
+  .modal-hint { font-size:12px;color:var(--ink-soft);margin:-10px 0 14px;line-height:1.5; }
   .modal label { font-size: 13px; color: var(--ink-soft); display: block; margin-bottom: 6px; margin-top: 12px; }
   .modal input[type="text"], .modal input[type="number"], .modal input[type="date"], .modal input[type="url"],
   .modal textarea, .modal select {
@@ -2153,7 +2154,8 @@
   <!-- Modal : nouvelle sous-liste -->
   <div class="modal-bg" id="newSectionModal" onclick="if(event.target===this)closeNewSectionModal()">
     <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
-      <h2 id="newSectionModalTitle" style="margin:0 0 14px;">📂 Nouvelle sous-liste</h2>
+      <h2 id="newSectionModalTitle" style="margin:0 0 6px;">📂 Nouvelle sous-liste</h2>
+      <p class="modal-hint">Crée une sous-catégorie à l'intérieur d'une liste existante (ex : "Trousse de toilette" dans la liste "Valise"). Pour supprimer, glisse vers la gauche ou clique sur la sous-liste en mode édition.</p>
       <input type="hidden" id="newSectionListIdx" value="" />
       <input type="hidden" id="newSectionIdx" value="" />
       <label>Nom</label>
@@ -2174,7 +2176,8 @@
   <!-- Modal : nouvelle liste -->
   <div class="modal-bg" id="newListModal" onclick="if(event.target===this)closeNewListModal()">
     <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
-      <h2 id="newListModalTitle" style="margin:0 0 14px;">🗂️ Nouvelle liste</h2>
+      <h2 id="newListModalTitle" style="margin:0 0 6px;">🗂️ Nouvelle liste</h2>
+      <p class="modal-hint">Crée une liste à cocher personnalisée (valise, courses spéciales, checklist déménagement…). Chaque liste peut contenir des sous-listes. Pour renommer ou supprimer une liste, utilise l'icône ✏️ en mode édition.</p>
       <input type="hidden" id="editListIdx" value="" />
       <label>Nom de la liste</label>
       <input type="text" id="newListName" placeholder="ex : Valise, Courses, Checklist départ…" maxlength="60"
@@ -3718,6 +3721,7 @@
 
     <!-- Onglet Profil -->
     <div id="settingsPanelProfil">
+      <p class="modal-hint" style="margin:0 0 14px;">Personnalise ton prénom affiché, tes habitudes, activités et types de candidatures. Les éléments peuvent être réordonnés ou supprimés individuellement.</p>
       <label>Ton prénom</label>
       <input type="text" id="nameInput" placeholder="Alexandra" />
 
@@ -3846,7 +3850,8 @@
 <div class="modal-bg" id="refModal" onclick="if(event.target===this)closeRefModal()">
   <div class="modal" style="max-width:680px;max-height:90vh;overflow-y:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-      <h2 id="refModalTitle" style="margin:0;">Nouvelle référence</h2>
+      <h2 id="refModalTitle" style="margin:0 0 2px;">Nouvelle référence</h2>
+      <p class="modal-hint" style="margin-bottom:14px;">Ajoute un ouvrage, article, rapport ou source en ligne à ta bibliographie. Relie-lui ensuite des extraits et des codes thématiques depuis les onglets dédiés.</p>
       <div style="display:flex;gap:6px;">
         <button class="biblio-tab active" id="refTabInfos" onclick="switchRefTab('infos')">📋 Infos</button>
         <button class="biblio-tab" id="refTabFiche" onclick="switchRefTab('fiche')">📝 Fiche de lecture</button>
@@ -3970,7 +3975,8 @@
 <!-- Modal édition compte bancaire -->
 <div class="modal-bg" id="accountEditModal" onmousedown="_accEditBd=event.target===this" onclick="event.target===this&&_accEditBd&&closeAccountEdit()">
   <div class="modal" style="max-width:440px;" onclick="event.stopPropagation()">
-    <h2 id="accountEditTitle" style="margin:0 0 18px;font-size:18px;">✏️ Modifier le compte</h2>
+    <h2 id="accountEditTitle" style="margin:0 0 6px;font-size:18px;">✏️ Modifier le compte</h2>
+    <p class="modal-hint">Modifie le nom, l'emoji et le solde de départ de ce compte. Le solde de départ est la somme initiale à partir de laquelle les transactions sont calculées.</p>
     <div id="accountEditBody" style="display:flex;flex-direction:column;gap:14px;"></div>
     <div style="margin-top:20px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
       <button onclick="closeAccountEdit()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;font-family:inherit;font-size:14px;cursor:pointer;">Annuler</button>
@@ -3982,7 +3988,8 @@
 <!-- Modal ajout / édition plante -->
 <div class="modal-bg" id="plantFormModal" onmousedown="_plantFormBd=event.target===this" onclick="event.target===this&&_plantFormBd&&closePlantForm()">
   <div class="modal" style="max-width:480px;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-    <h2 id="plantFormTitle" style="margin:0 0 18px;">🌱 Nouvelle plante</h2>
+    <h2 id="plantFormTitle" style="margin:0 0 6px;">🌱 Nouvelle plante</h2>
+    <p class="modal-hint">Ajoute une plante à ta collection avec son nom, espèce, fréquences d'arrosage et rempotage. Pour modifier ou supprimer une plante, clique dessus dans la liste.</p>
     <!-- Sélecteur emoji -->
     <div style="margin-bottom:14px;">
       <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;font-weight:600;">Emoji</div>
@@ -4044,7 +4051,8 @@
 <!-- Modal extrait -->
 <div class="modal-bg" id="extractModal" onmousedown="_exBdDown=event.target===this" onclick="if(event.target===this&&_exBdDown)closeExtractModal()">
   <div class="modal" style="max-width:600px;width:min(95vw,600px);resize:horizontal;overflow:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-    <h2 id="extractModalTitle">Nouvel extrait</h2>
+    <h2 id="extractModalTitle" style="margin:0 0 6px;">Nouvel extrait</h2>
+    <p class="modal-hint">Sauvegarde un passage, une citation ou une idée tirée d'une référence. Relie-le à une référence bibliographique et ajoute tes propres mots-clés pour le retrouver facilement.</p>
     <input type="hidden" id="extractModalId" />
     <label>Référence *</label>
     <input type="hidden" id="extractModalRef" />
@@ -4098,7 +4106,8 @@
 <!-- Modal code -->
 <div class="modal-bg" id="codeModal" onclick="if(event.target===this)closeCodeModal()">
   <div class="modal" style="max-width:440px;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-    <h2 id="codeModalTitle">Nouveau code</h2>
+    <h2 id="codeModalTitle" style="margin:0 0 6px;">Nouveau code</h2>
+    <p class="modal-hint">Crée un code thématique pour classifier tes extraits et références. Tu peux organiser les codes en arbre (parent/enfant) pour structurer ta grille d'analyse.</p>
     <input type="hidden" id="codeModalId" />
     <label>Intitulé du code *</label>
     <input type="text" id="codeModalLabel" placeholder="ex : Méthode, Théorie, Exemple empirique…" />
@@ -4209,6 +4218,7 @@
       <h3 id="habitModalTitle" style="margin:0;font-size:18px;">✨ Nouvelle habitude</h3>
       <button onclick="_closeHabitModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
     </div>
+    <p class="modal-hint">Crée une habitude à cocher chaque jour. Choisis un type <strong>booléen</strong> (oui/non) ou <strong>numérique</strong> (avec objectif chiffré). Pour modifier ou supprimer une habitude existante, clique dessus depuis Aujourd'hui en mode édition.</p>
     <!-- Suggestions rapides -->
     <div id="habitSuggestionsWrap" style="margin-bottom:18px;">
       <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:8px;">SUGGESTIONS RAPIDES <span style="font-weight:400;font-size:10px;">(cliquer pour pré-remplir)</span></div>
@@ -4283,6 +4293,7 @@
       <h3 id="actModalTitle" style="margin:0;font-size:18px;">✨ Nouvelle activité</h3>
       <button onclick="_closeActivityModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
     </div>
+    <p class="modal-hint">Ajoute une activité à ta bibliothèque (sport, loisir, routine…). Définis un objectif hebdomadaire ou mensuel si tu veux suivre ta régularité. Pour modifier ou supprimer, clique sur l'activité depuis la vue Activités en mode édition.</p>
     <!-- Emoji preview + nom -->
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
       <div id="actModalEmojiPreview" style="font-size:36px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border:2px solid var(--mint);border-radius:14px;background:var(--mint-soft);flex-shrink:0;cursor:default;">🏃</div>
@@ -4458,9 +4469,10 @@
 <div class="modal-bg" id="recipeModal" onmousedown="_recBdDown=event.target===this" onclick="if(event.target===this&&_recBdDown)closeRecipeModal()">
   <div class="modal" style="max-width:600px;max-height:90vh;overflow-y:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-      <h2 id="recipeModalTitle" style="margin:0;">Nouvelle recette</h2>
+      <h2 id="recipeModalTitle" style="margin:0 0 2px;">Nouvelle recette</h2>
       <button onclick="closeRecipeModal()" title="Fermer" style="background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:var(--ink-soft);padding:4px 6px;">✕</button>
     </div>
+    <p class="modal-hint">Crée une recette avec ses ingrédients et valeurs nutritionnelles. Elle sera disponible dans le planificateur de repas et dans la liste de courses automatique.</p>
     <input type="hidden" id="recipeModalId" />
     <div style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;margin-bottom:0;">
       <div><label>Emoji</label>
@@ -4497,7 +4509,8 @@
 <!-- Project modal -->
 <div class="modal-bg" id="projectModal">
   <div class="modal">
-    <h2 id="projectModalTitle">Nouveau projet</h2>
+    <h2 id="projectModalTitle" style="margin:0 0 6px;">Nouveau projet</h2>
+    <p class="modal-hint">Crée un projet de travail avec ses tâches et jalons associés. Tu peux suivre la progression globale et ajouter des notes. Pour supprimer un projet, ouvre-le et clique sur <strong>Supprimer</strong>.</p>
     <input type="hidden" id="projectModalId" />
     <label>Nom du projet</label>
     <input type="text" id="projectModalName" placeholder="Ex : Géotracking — manuscrit" />
@@ -4521,7 +4534,8 @@
 <!-- Candidature modal -->
 <div class="modal-bg" id="candModal">
   <div class="modal">
-    <h2 id="candModalTitle">Nouvelle candidature</h2>
+    <h2 id="candModalTitle" style="margin:0 0 6px;">Nouvelle candidature</h2>
+    <p class="modal-hint">Suis tes candidatures (postes, bourses, appels à projets…). Indique le statut, la deadline et tes notes. Pour modifier ou supprimer, clique sur la candidature dans la liste.</p>
     <input type="hidden" id="candModalId" />
     <div class="grid-2">
       <div>
@@ -4551,7 +4565,8 @@
 <!-- Article modal -->
 <div class="modal-bg" id="articleModal">
   <div class="modal">
-    <h2 id="articleModalTitle">Nouvel article</h2>
+    <h2 id="articleModalTitle" style="margin:0 0 6px;">Nouvel article</h2>
+    <p class="modal-hint">Suit la rédaction et soumission de tes articles scientifiques. Renseigne le journal cible, les co-auteurs, la date de soumission et le statut (en cours, soumis, accepté…).</p>
     <input type="hidden" id="articleModalId" />
     <label>Titre</label>
     <input type="text" id="articleModalTitleInput" />
@@ -4583,7 +4598,8 @@
 <!-- Communication modal -->
 <div class="modal-bg" id="commModal">
   <div class="modal">
-    <h2 id="commModalTitle">Nouvelle communication</h2>
+    <h2 id="commModalTitle" style="margin:0 0 6px;">Nouvelle communication</h2>
+    <p class="modal-hint">Enregistre tes présentations, posters et interventions (congrès, séminaires, colloques). Indique le type, le statut et le lien de l'événement.</p>
     <input type="hidden" id="commModalId" />
     <label>Événement</label>
     <input type="text" id="commModalEvent" placeholder="Nom du colloque, séminaire…" />
@@ -4671,7 +4687,8 @@
 <!-- Transaction edit modal -->
 <div class="modal-bg" id="txModal" onmousedown="_txBdDown=event.target===this" onclick="if(event.target===this&&_txBdDown)closeTxModal()">
   <div class="modal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-    <h2>Modifier la transaction</h2>
+    <h2 style="margin:0 0 6px;">Modifier la transaction</h2>
+    <p class="modal-hint">Corrige le montant, la date, la catégorie ou les options d'une transaction existante. Coche <strong>Charge fixe</strong> pour les loyers/abonnements (exclus du budget), <strong>Frais pro</strong> pour les remboursements professionnels.</p>
     <input type="hidden" id="txModalId" />
     <label>Type</label>
     <div class="type-toggle" style="display:flex;gap:6px;margin-bottom:6px;">
@@ -4752,7 +4769,8 @@
 <!-- Task edit modal -->
 <div class="modal-bg" id="taskEditModal">
   <div class="modal" style="max-width:480px;">
-    <h2>Modifier la tâche</h2>
+    <h2 style="margin:0 0 6px;">Modifier la tâche</h2>
+    <p class="modal-hint">Modifie le nom, la priorité, la deadline et le projet associé. Ajoute des <strong>jalons</strong> pour découper la tâche en étapes — la progression sera calculée automatiquement. Pour supprimer, clique sur le bouton rouge en bas.</p>
     <input type="hidden" id="taskEditId" />
     <div style="display:flex;gap:8px;margin-bottom:14px;">
       <button type="button" id="kindToggleTask" class="kind-toggle active is-task" onclick="setModalKind('task')">📌 À faire</button>
@@ -4805,7 +4823,8 @@
 <!-- Manual Event Modal -->
 <div class="modal-bg" id="manualEventModal">
   <div class="modal" style="max-width:460px;">
-    <h2 id="manualEventModalTitle">✚ Nouvel événement</h2>
+    <h2 id="manualEventModalTitle" style="margin:0 0 6px;">✚ Nouvel événement</h2>
+    <p class="modal-hint">Ajoute un événement manuellement au calendrier (rendez-vous, anniversaire, rappel…). Les événements créés ici sont modifiables et supprimables depuis le calendrier, contrairement aux événements importés depuis Google Calendar.</p>
     <input type="hidden" id="manualEventId" />
     <label>Titre</label>
     <input type="text" id="manualEventName" placeholder="Réunion, anniversaire, rendez-vous…" />
@@ -4865,7 +4884,8 @@
 <!-- Subscription modal -->
 <div class="modal-bg" id="subModal">
   <div class="modal">
-    <h2 id="subModalTitle">Nouvel abonnement</h2>
+    <h2 id="subModalTitle" style="margin:0 0 6px;">Nouvel abonnement</h2>
+    <p class="modal-hint">Enregistre un abonnement récurrent (streaming, transport, assurance…). Son montant est automatiquement exclu de ton budget mensuel en tant que charge fixe. Pour modifier ou supprimer, clique sur l'abonnement dans la liste.</p>
     <input type="hidden" id="subModalId" />
     <label>Nom</label>
     <input type="text" id="subModalName" placeholder="Ex : Netflix, Carte Navigo, Assurance habitation" />
@@ -4924,7 +4944,8 @@
 <!-- Modal mission / abonnement -->
 <div class="modal-bg" id="admMissionModal">
   <div class="modal" style="max-width:500px;">
-    <h2 id="admMissionTitle">+ Nouvelle mission</h2>
+    <h2 id="admMissionTitle" style="margin:0 0 6px;">+ Nouvelle mission</h2>
+    <p class="modal-hint">Enregistre une mission professionnelle avec ses frais (transport, repas, hébergement, km). Les totaux sont calculés automatiquement. Pour modifier ou supprimer, clique sur la mission dans le tableau.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
       <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Date *</label>
         <input type="date" id="admMDate" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" /></div>
@@ -4999,6 +5020,7 @@
       <h2 id="savingsAccountModalTitle" style="margin:0;font-size:17px;"></h2>
       <button onclick="closeSavingsAccountModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);line-height:1;">✕</button>
     </div>
+    <p class="modal-hint" style="margin:-4px 0 12px;">Consulte l'historique des mouvements sur ce compte épargne. Clique sur 📊 <strong>Mettre à jour</strong> pour corriger le solde si la valeur réelle diverge. Pour supprimer un mouvement, clique sur ✕ à côté de la transaction.</p>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line);">
       <div>
         <div style="font-size:13px;color:var(--ink-soft);">Solde actuel</div>
@@ -5017,6 +5039,7 @@
       <h2 style="margin:0;font-size:16px;">⚙️ Catégories de temps</h2>
       <button onclick="closeTimeCatsModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);line-height:1;">✕</button>
     </div>
+    <p class="modal-hint" style="margin-top:-4px;">Crée tes propres catégories de temps de travail (recherche, enseignement, admin…) avec un emoji, un nom et une couleur. Réorganise-les avec ▲▼, modifie avec ✏️, supprime avec ✕.</p>
     <div id="timeCatsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:320px;overflow-y:auto;"></div>
     <div style="border-top:1px solid var(--line);padding-top:14px;">
       <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;font-weight:600;">Nouvelle catégorie</div>
@@ -5037,6 +5060,7 @@
       <h2 style="margin:0;font-size:16px;">⚙️ Paramètres congés</h2>
       <button onclick="closeCongesConfigModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);line-height:1;">✕</button>
     </div>
+    <p class="modal-hint" style="margin-top:-4px;">Configure tes types de congés (CA, RTT, maladie…) et le nombre de jours acquis. Les jours fériés français sont calculés automatiquement — tu peux en ajouter ou en supprimer selon ta situation.</p>
     <div style="overflow-y:auto;flex:1;">
       <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:10px;">Catégories de congés</div>
       <div id="congesCatsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
@@ -5063,7 +5087,8 @@
 
 <div class="modal-bg" id="admCongeModal">
   <div class="modal" style="max-width:400px;">
-    <h2 id="admCongeTitle">+ Nouvelle periode</h2>
+    <h2 id="admCongeTitle" style="margin:0 0 6px;">+ Nouvelle periode</h2>
+    <p class="modal-hint">Saisis une période de congé avec sa date de début et de fin. Le type détermine sur quel compteur de jours la période est décomptée.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
       <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Date debut *</label>
         <input type="date" id="admCDebut" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" /></div>
@@ -22674,8 +22699,14 @@ function _fbUpdateUI(user) {
       ? `<img src="${user.photoURL}" style="width:16px;height:16px;border-radius:50%;object-fit:cover;">`
       : `<div style="width:16px;height:16px;border-radius:50%;background:var(--lavender);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--ink);">${(user.displayName||user.email||"?")[0].toUpperCase()}</div>`;
     const firstName = (user.displayName || "").split(" ")[0] || user.email.split("@")[0];
-    // Auto-remplir state.name depuis Google si pas encore défini par l'utilisateur
-    if (!state.name && firstName) { state.name = firstName; saveState(); if (typeof renderAll === "function") { document.getElementById("greeting").textContent = getGreeting(); } }
+    // Auto-remplir state.name depuis Google : écrase si l'UID change (nouvelle connexion d'un autre compte)
+    const _lastUid = localStorage.getItem("_lastLoginUid");
+    if (_lastUid !== user.uid) {
+      localStorage.setItem("_lastLoginUid", user.uid);
+      if (firstName) { state.name = firstName; saveState(); if (typeof renderAll === "function") { document.getElementById("greeting").textContent = getGreeting(); } }
+    } else if (!state.name && firstName) {
+      state.name = firstName; saveState(); if (typeof renderAll === "function") { document.getElementById("greeting").textContent = getGreeting(); }
+    }
     av.innerHTML = imgHtml + `<span style="font-size:13px;color:var(--ink);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${firstName}</span>`;
   } else {
     btn.style.display = "";
