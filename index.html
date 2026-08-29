@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v976</title>
+<title>Mon Tableau de Vie 🌿 · v978</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2250,9 +2250,7 @@
     <div class="sub-tabs">
       <button class="sub-tab active" data-sub="tasks">✅ Tâches</button>
       <button class="sub-tab" data-sub="time">⏱️ Temps</button>
-      <button class="sub-tab" data-sub="candidatures" id="workTab-candidatures">📋 <span id="workTabLabel-candidatures"></span><span class="edit-only" onclick="event.stopPropagation();renameWorkTab('candidatures',this)" style="margin-left:4px;font-size:10px;cursor:pointer;opacity:0.6;" title="Renommer">✏️</span></button>
-      <button class="sub-tab" data-sub="valorisation" id="workTab-valorisation">📝 <span id="workTabLabel-valorisation"></span><span class="edit-only" onclick="event.stopPropagation();renameWorkTab('valorisation',this)" style="margin-left:4px;font-size:10px;cursor:pointer;opacity:0.6;" title="Renommer">✏️</span></button>
-      <button class="sub-tab" data-sub="teaching" id="workTab-teaching">📚 <span id="workTabLabel-teaching"></span><span class="edit-only" onclick="event.stopPropagation();renameWorkTab('teaching',this)" style="margin-left:4px;font-size:10px;cursor:pointer;opacity:0.6;" title="Renommer">✏️</span></button>
+      <div id="workDynamicTabs" style="display:contents;"></div>
       <button class="sub-tab" data-sub="notes">📓 Notes</button>
       <button class="sub-tab" data-sub="administratif">🗂️ Administratif</button>
     </div>
@@ -2561,6 +2559,9 @@
         </div>
       </div>
     </div>
+
+  <!-- Vues dynamiques : projets custom créés par l'utilisatrice -->
+    <div id="workDynamicViews"></div>
 
   <!-- Sub: Bibliographie (onglet masqué, fonctions conservées) -->
     <div class="sub-view" data-sub="biblio" style="display:none!important;">
@@ -4510,18 +4511,25 @@
 <div class="modal-bg" id="projectModal">
   <div class="modal">
     <h2 id="projectModalTitle" style="margin:0 0 6px;">Nouveau projet</h2>
-    <p class="modal-hint">Crée un projet de travail avec ses tâches et jalons associés. Tu peux suivre la progression globale et ajouter des notes. Pour supprimer un projet, ouvre-le et clique sur <strong>Supprimer</strong>.</p>
+    <p class="modal-hint">Crée un projet de travail : il apparaîtra comme sous-onglet dans Travail, comme section dans tes tâches, et comme catégorie dans le suivi du temps. Pour supprimer, ouvre-le et clique sur <strong>Supprimer</strong>.</p>
     <input type="hidden" id="projectModalId" />
-    <label>Nom du projet</label>
-    <input type="text" id="projectModalName" placeholder="Ex : Géotracking — manuscrit" />
-    <div class="grid-2">
-      <div>
-        <label>Progression (%)</label>
-        <input type="number" id="projectModalProgress" min="0" max="100" step="5" value="0" />
-      </div>
+    <label>Emoji</label>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <div id="projectModalEmojiPreview" style="font-size:26px;cursor:pointer;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--bg-1);border:1px solid var(--line);">📁</div>
+      <div id="projectModalEmojiPicker" style="display:flex;flex-wrap:wrap;gap:5px;flex:1;max-height:100px;overflow-y:auto;padding:6px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);"></div>
     </div>
-    <label>Notes</label>
-    <textarea id="projectModalNotes" placeholder="Prochaines étapes, liens, idées…"></textarea>
+    <input type="hidden" id="projectModalEmoji" value="📁" />
+    <label>Nom du projet</label>
+    <input type="text" id="projectModalName" placeholder="Ex : Article de recherche, Candidatures, Cours…" />
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px;">
+      <span onclick="_projectNameSuggest(this)" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">Article de recherche</span>
+      <span onclick="_projectNameSuggest(this)" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">Candidatures</span>
+      <span onclick="_projectNameSuggest(this)" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">Cours présentiel</span>
+      <span onclick="_projectNameSuggest(this)" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">Valorisation</span>
+      <span onclick="_projectNameSuggest(this)" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">Communication</span>
+    </div>
+    <label>Notes <span style="font-size:11px;font-weight:400;color:var(--ink-softer);">(optionnel)</span></label>
+    <textarea id="projectModalNotes" placeholder="Prochaines étapes, liens, idées…" style="min-height:80px;"></textarea>
     <div class="actions">
       <button class="danger" id="projectModalDelete" onclick="deleteProject()">Supprimer</button>
       <div class="spacer"></div>
@@ -4946,11 +4954,14 @@
   <div class="modal" style="max-width:500px;">
     <h2 id="admMissionTitle" style="margin:0 0 6px;">+ Nouvelle mission</h2>
     <p class="modal-hint">Enregistre une mission professionnelle avec ses frais (transport, repas, hébergement, km). Les totaux sont calculés automatiquement. Pour modifier ou supprimer, clique sur la mission dans le tableau.</p>
+    <div style="margin-bottom:12px;"><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Groupe</label>
+      <select id="admMGroupId" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;background:var(--bg-1);"></select>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
       <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Date *</label>
         <input type="date" id="admMDate" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" /></div>
-      <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Lieu *</label>
-        <input type="text" id="admMLieu" placeholder="ex : Estampuis" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" /></div>
+      <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Lieu / description *</label>
+        <input type="text" id="admMLieu" placeholder="ex : Colloque Montpellier" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" /></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;">
       <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Train (€)</label>
@@ -5620,10 +5631,11 @@ function migrate(s) {
       congesPeriodes: []
     };
   } else {
-    s.admin.missions      = s.admin.missions      || [];
-    s.admin.abonnement    = s.admin.abonnement    || [];
-    s.admin.congesConfig  = s.admin.congesConfig  || { droitsCA:27, droitsRTT:20 };
-    s.admin.congesPeriodes= s.admin.congesPeriodes|| [];
+    s.admin.missions       = s.admin.missions       || [];
+    s.admin.abonnement     = s.admin.abonnement     || [];
+    s.admin.missionGroups  = s.admin.missionGroups  || [{ id: "mg-default", name: "Missions", emoji: "🧾" }];
+    s.admin.congesConfig   = s.admin.congesConfig   || { droitsCA:27, droitsRTT:20 };
+    s.admin.congesPeriodes = s.admin.congesPeriodes || [];
   }
   if (!s.work) s.work = {};
   if (!s.work.workNotes) s.work.workNotes = [];
@@ -6688,6 +6700,104 @@ function isAutreProject(p) { return p.id === "p-seed-autre" || /^autre$/i.test(p
 function isPrixTheseProject(p) { return p.id === "p-seed-prixthese" || /^prix\s*de\s*th[eè]se$/i.test(p.name); }
 function isMajorProject(p) { return isPostdocProject(p) || isValoProject(p) || isTeachingProject(p) || isAutreProject(p) || isPrixTheseProject(p); }
 
+// Mapping seed project ID → existing specialized sub-view data-sub
+const _SEED_SUB_MAP = {
+  "p-seed-candidatures": { sub: "candidatures", emoji: "📋", label: "Candidatures" },
+  "p-seed-valo":         { sub: "valorisation",  emoji: "📝", label: "Valorisation" },
+  "p-seed-enseignement": { sub: "teaching",       emoji: "📚", label: "Enseignement" },
+};
+
+function renderWorkProjectTabs() {
+  const tabsEl   = document.getElementById("workDynamicTabs");
+  const viewsEl  = document.getElementById("workDynamicViews");
+  if (!tabsEl || !viewsEl) return;
+
+  const workSection = document.querySelector('section.view[data-view="work"]');
+  if (!workSection) return;
+
+  const projects = state.work.postdocProjects || [];
+
+  // Nettoyer les vues dynamiques custom précédentes
+  viewsEl.innerHTML = "";
+
+  // Construire les boutons + vues
+  const tabBtns = projects.map(p => {
+    const seedInfo = _SEED_SUB_MAP[p.id];
+    const sub = seedInfo ? seedInfo.sub : "proj-" + p.id;
+    const emoji = p.emoji || (seedInfo ? seedInfo.emoji : "📁");
+    const label = p.name;
+    const col = p.color || "#b8a5e8";
+
+    // Créer la vue si custom (non-seed)
+    if (!seedInfo) {
+      // Supprimer l'ancienne si elle existe
+      const old = workSection.querySelector(`.sub-view[data-sub="${sub}"]`);
+      if (old) old.remove();
+      // Tâches filtrées par ce projet
+      const tasks = (state.work.postdocTasks || []).filter(t => t.projectId === p.id);
+      const taskRows = tasks.length
+        ? tasks.sort((a,b)=> { const ord={urgent:0,high:1,medium:2,low:3}; return (ord[a.priority]??2)-(ord[b.priority]??2); })
+            .map(t => `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:${t.done?"var(--bg-1)":"white"};border:1px solid var(--line);margin-bottom:6px;opacity:${t.done?0.6:1};">
+              <input type="checkbox" ${t.done?"checked":""} onchange="_toggleTaskFromProjTab('${t.id}',this.checked)" style="accent-color:${col};" />
+              <span style="flex:1;font-size:14px;${t.done?"text-decoration:line-through;color:var(--ink-soft);":"color:var(--ink);"}">${escapeHtml(t.name||"")}</span>
+              ${t.deadline?`<span style="font-size:11px;color:var(--ink-softer);">${t.deadline.slice(5).replace("-","/")} </span>`:""}
+            </div>`).join("")
+        : `<p style="color:var(--ink-soft);font-size:13px;font-style:italic;">Aucune tâche pour ce projet.</p>`;
+
+      const viewDiv = document.createElement("div");
+      viewDiv.className = "sub-view";
+      viewDiv.dataset.sub = sub;
+      viewDiv.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <span style="font-size:22px;">${emoji}</span>
+          <h2 style="margin:0;flex:1;">${escapeHtml(label)}</h2>
+          <button onclick="openProjectModal('${p.id}')" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;">✏️ Modifier</button>
+        </div>
+        <div id="projTabTasks-${p.id}">${taskRows}</div>
+        <button onclick="_addTaskFromProjTab('${p.id}')" style="margin-top:10px;width:100%;padding:9px;border-radius:10px;border:1.5px dashed var(--line);background:var(--bg-1);font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">+ Ajouter une tâche</button>`;
+      viewsEl.appendChild(viewDiv);
+    }
+
+    return `<button class="sub-tab" data-sub="${sub}" onclick="_workProjTabClick(this,'${sub}')">${emoji} ${escapeHtml(label)}</button>`;
+  }).join("");
+
+  tabsEl.innerHTML = tabBtns;
+
+  // Ré-attacher les listeners statiques si besoin
+  workSection.querySelectorAll(".sub-tab:not([data-proj-listener])").forEach(t => {
+    if (t.closest("#workDynamicTabs")) return; // handled by onclick
+    t.dataset.projListener = "1";
+    t.addEventListener("click", () => {
+      workSection.querySelectorAll(".sub-tab").forEach(x => x.classList.remove("active"));
+      t.classList.add("active");
+      workSection.querySelectorAll(".sub-view").forEach(x => x.classList.remove("active"));
+      const v = workSection.querySelector(`.sub-view[data-sub="${t.dataset.sub}"]`);
+      if (v) v.classList.add("active");
+    });
+  });
+}
+
+function _workProjTabClick(btn, sub) {
+  const workSection = document.querySelector('section.view[data-view="work"]');
+  if (!workSection) return;
+  workSection.querySelectorAll(".sub-tab").forEach(x => x.classList.remove("active"));
+  btn.classList.add("active");
+  workSection.querySelectorAll(".sub-view").forEach(x => x.classList.remove("active"));
+  const v = workSection.querySelector(`.sub-view[data-sub="${sub}"]`);
+  if (v) v.classList.add("active");
+}
+
+function _toggleTaskFromProjTab(taskId, done) {
+  const t = state.work.postdocTasks.find(x => x.id === taskId);
+  if (t) { t.done = done; saveState(); renderTasks(); renderWorkProjectTabs(); }
+}
+function _addTaskFromProjTab(projectId) {
+  const name = prompt("Nom de la tâche :");
+  if (!name || !name.trim()) return;
+  state.work.postdocTasks.unshift({ id: "t" + Date.now(), name: name.trim(), projectId, priority: "medium", done: false, createdAt: new Date().toISOString() });
+  saveState(); renderTasks(); renderWorkProjectTabs();
+}
+
 function renderProjects() {
   // Le grid "Autres projets" affiche les projets qui n'ont pas leur propre sous-onglet
   const otherProjects = state.work.postdocProjects.filter(p => !isMajorProject(p));
@@ -6835,6 +6945,7 @@ var _admTab = "budget";
 var _admMissionId = null;
 var _admCongeId = null;
 var _congesYear = new Date().getFullYear();
+var _congesYearTo = new Date().getFullYear();
 var _congesMonthFrom = 1;
 var _congesMonthTo = 12;
 
@@ -6941,34 +7052,60 @@ function admRenderBudget() {
   var totalGen  = totalDep + totalAbo;
   var reste     = totalGen - totalRemb;
 
-  var mRows = "";
-  var sorted = missions.slice().sort(function(a,b){ return a.date.localeCompare(b.date); });
-  for (var i = 0; i < sorted.length; i++) {
-    var m = sorted[i];
-    var tot = admMissionTotal(m);
-    mRows += "<tr>"
-      + "<td>" + admFormatDate(m.date) + "</td>"
-      + '<td style="font-weight:500;">' + escapeHtml(m.lieu || "") + "</td>"
-      + '<td class="r">' + (m.train   ? admFormatEur(m.train)   : "-") + "</td>"
-      + '<td class="r">' + (m.repas   ? admFormatEur(m.repas)   : "-") + "</td>"
-      + '<td class="r">' + (m.taxi    ? admFormatEur(m.taxi)    : "-") + "</td>"
-      + '<td class="r" style="color:var(--ink-soft);font-size:11px;">' + (m.km ? m.km + " km" : "-") + "</td>"
-      + '<td class="r">' + (m.essence ? admFormatEur(m.essence) : "-") + "</td>"
-      + '<td class="r">' + (m.peage   ? admFormatEur(m.peage)   : "-") + "</td>"
-      + '<td class="r" style="font-weight:700;">' + (tot > 0 ? admFormatEur(tot) : "-") + "</td>"
-      + '<td class="r" style="color:#16a34a;">' + (m.remb ? admFormatEur(m.remb) : "-") + "</td>"
-      + '<td style="font-size:11px;">' + admFormatDate(m.dateRemb) + "</td>"
-      + "<td>" + admStatutPill(m.statut) + "</td>"
-      + '<td><button onclick="admOpenMission(\'' + m.id + '\')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 6px;">&#9998;</button></td>'
-      + "</tr>";
-  }
+  // Groupes de missions
+  var groups = (state.admin && state.admin.missionGroups) || [{ id: "mg-default", name: "Missions", emoji: "🧾" }];
+
+  var resteStyle = reste > 0 ? "background:#fee2e2;border:1.5px solid #dc2626;" : "background:#dcfce7;";
+  var resteColor = reste > 0 ? "color:#dc2626;font-weight:700;" : "color:#16a34a;";
+
+  var kpis = '<div class="adm-kpis">'
+    + '<div class="adm-kpi"><div class="kpi-label">Total missions</div><div class="kpi-val" style="font-size:16px;">' + admFormatEur(totalDep + totalAbo) + "</div></div>"
+    + '<div class="adm-kpi"><div class="kpi-label">Remboursé</div><div class="kpi-val" style="font-size:16px;color:#16a34a;">' + admFormatEur(totalRemb) + "</div></div>"
+    + '<div class="adm-kpi" style="' + resteStyle + '"><div class="kpi-label">Reste à rembourser</div><div class="kpi-val" style="font-size:16px;' + resteColor + '">' + admFormatEur(reste) + "</div></div>"
+    + "</div>";
+
+  // Construire une section par groupe
+  var groupsSections = groups.map(function(g) {
+    var gMissions = missions.filter(function(m){ return (m.groupId || "mg-default") === g.id; });
+    var sorted = gMissions.slice().sort(function(a,b){ return (a.date||"").localeCompare(b.date||""); });
+    var mRows = sorted.map(function(m) {
+      var tot = admMissionTotal(m);
+      return "<tr>"
+        + "<td>" + admFormatDate(m.date) + "</td>"
+        + '<td style="font-weight:500;">' + escapeHtml(m.lieu || "") + "</td>"
+        + '<td class="r">' + (m.train   ? admFormatEur(m.train)   : "-") + "</td>"
+        + '<td class="r">' + (m.repas   ? admFormatEur(m.repas)   : "-") + "</td>"
+        + '<td class="r">' + (m.taxi    ? admFormatEur(m.taxi)    : "-") + "</td>"
+        + '<td class="r" style="color:var(--ink-soft);font-size:11px;">' + (m.km ? m.km + " km" : "-") + "</td>"
+        + '<td class="r">' + (m.essence ? admFormatEur(m.essence) : "-") + "</td>"
+        + '<td class="r">' + (m.peage   ? admFormatEur(m.peage)   : "-") + "</td>"
+        + '<td class="r" style="font-weight:700;">' + (tot > 0 ? admFormatEur(tot) : "-") + "</td>"
+        + '<td class="r" style="color:#16a34a;">' + (m.remb ? admFormatEur(m.remb) : "-") + "</td>"
+        + '<td style="font-size:11px;">' + admFormatDate(m.dateRemb) + "</td>"
+        + "<td>" + admStatutPill(m.statut) + "</td>"
+        + '<td><button onclick="admOpenMission(\'' + m.id + '\')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 6px;">&#9998;</button></td>'
+        + "</tr>";
+    }).join("");
+    var canDelete = g.id !== "mg-default";
+    return '<div style="margin-bottom:18px;">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
+      + '<span style="font-size:16px;">' + (g.emoji || "🧾") + "</span>"
+      + '<div style="font-size:13px;font-weight:700;flex:1;">' + escapeHtml(g.name) + ' (' + gMissions.length + ")</div>"
+      + '<button class="btn-primary" onclick="admOpenMission(null,\'' + g.id + '\')" style="font-size:12px;padding:4px 12px;">+ Ajouter</button>'
+      + (canDelete ? '<button onclick="admDeleteMissionGroup(\'' + g.id + '\')" style="margin-left:6px;font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;">Supprimer</button>' : "")
+      + "</div>"
+      + '<div class="adm-table-wrap"><table class="adm-table"><thead><tr>'
+      + "<th>Date</th><th>Lieu</th><th>Train</th><th>Repas</th><th>Taxi</th><th>Km</th><th>Essence</th><th>Péage</th><th>Total</th><th>Remb.</th><th>Date remb.</th><th>Statut</th><th></th>"
+      + "</tr></thead><tbody>" + (mRows || "<tr><td colspan='13' style='color:var(--ink-softer);font-style:italic;text-align:center;padding:10px;'>Aucune entrée — clique sur + Ajouter</td></tr>") + "</tbody></table></div>"
+      + "</div>";
+  }).join("");
 
   var aRows = "";
   for (var i = 0; i < abonnement.length; i++) {
     var a = abonnement[i];
     aRows += "<tr>"
       + "<td>" + admFormatDate(a.date) + "</td>"
-      + '<td colspan="7">Abonnement Claude (IA)</td>'
+      + '<td colspan="7">' + escapeHtml(a.description || "Abonnement") + "</td>"
       + '<td class="r" style="font-weight:700;">' + admFormatEur(a.montant) + "</td>"
       + '<td colspan="2"></td>'
       + "<td>" + admStatutPill(a.statut) + "</td>"
@@ -6976,27 +7113,39 @@ function admRenderBudget() {
       + "</tr>";
   }
 
-  var resteStyle = reste > 0 ? "background:#fee2e2;border:1.5px solid #dc2626;" : "background:#dcfce7;";
-  var resteColor = reste > 0 ? "color:#dc2626;font-weight:700;" : "color:#16a34a;";
-
-  el.innerHTML = '<div class="adm-kpis">'
-    + '<div class="adm-kpi"><div class="kpi-label">Dépenses missions</div><div class="kpi-val" style="font-size:16px;">' + admFormatEur(totalDep) + "</div></div>"
-    + '<div class="adm-kpi"><div class="kpi-label">Abonnement Claude</div><div class="kpi-val" style="font-size:16px;">' + admFormatEur(totalAbo) + "</div></div>"
-    + '<div class="adm-kpi"><div class="kpi-label">Remboursé</div><div class="kpi-val" style="font-size:16px;color:#16a34a;">' + admFormatEur(totalRemb) + "</div></div>"
-    + '<div class="adm-kpi" style="' + resteStyle + '"><div class="kpi-label">Reste à rembourser</div><div class="kpi-val" style="font-size:16px;' + resteColor + '">' + admFormatEur(reste) + "</div></div>"
+  el.innerHTML = kpis
+    + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">'
+    + '<span style="font-size:13px;font-weight:700;flex:1;">Groupes de dépenses</span>'
+    + '<button onclick="admAddMissionGroup()" style="font-size:12px;padding:5px 12px;border-radius:10px;border:1.5px dashed var(--lavender);background:white;color:var(--lavender);cursor:pointer;font-family:inherit;">+ Nouveau groupe</button>'
     + "</div>"
-    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
-    + '<div style="font-size:13px;font-weight:700;">Missions (' + missions.length + ")</div>"
-    + '<button class="btn-primary" onclick="admOpenMission()" style="font-size:12px;padding:5px 14px;">+ Ajouter</button></div>'
-    + '<div class="adm-table-wrap"><table class="adm-table"><thead><tr>'
-    + "<th>Date</th><th>Lieu</th><th>Train</th><th>Repas</th><th>Taxi</th><th>Km</th><th>Essence</th><th>Péage</th><th>Total</th><th>Remb.</th><th>Date remb.</th><th>Statut</th><th></th>"
-    + "</tr></thead><tbody>" + mRows + "</tbody></table></div>"
-    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:4px;">'
-    + '<div style="font-size:13px;font-weight:700;">Abonnement Claude (' + abonnement.length + ")</div>"
+    + groupsSections
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:8px;">'
+    + '<div style="font-size:13px;font-weight:700;">💳 Abonnements & frais fixes (' + abonnement.length + ")</div>"
     + '<button class="btn-primary" onclick="admOpenAbo()" style="font-size:12px;padding:5px 14px;">+ Ajouter</button></div>'
+    + '<p style="font-size:11px;color:var(--ink-softer);margin:-4px 0 8px;">Abonnements mensuels/annuels liés à ton travail (Claude, outils, logiciels…)</p>'
     + '<div class="adm-table-wrap"><table class="adm-table"><thead><tr>'
     + '<th>Date</th><th colspan="7">Description</th><th>Montant</th><th colspan="2"></th><th>Statut</th><th></th>'
-    + "</tr></thead><tbody>" + aRows + "</tbody></table></div>";
+    + "</tr></thead><tbody>" + (aRows || "<tr><td colspan='13' style='color:var(--ink-softer);font-style:italic;text-align:center;padding:10px;'>Aucun abonnement — clique sur + Ajouter</td></tr>") + "</tbody></table></div>";
+}
+
+function admAddMissionGroup() {
+  var name = prompt("Nom du groupe (ex: Missions CNRS, Colloques, Frais logiciels…) :");
+  if (!name || !name.trim()) return;
+  if (!state.admin.missionGroups) state.admin.missionGroups = [{ id: "mg-default", name: "Missions", emoji: "🧾" }];
+  const emojis = ["🧾","🚆","🏨","✈️","🎓","📋","💼","🌍","🏛️","🖥️"];
+  const emoji = emojis[state.admin.missionGroups.length % emojis.length];
+  state.admin.missionGroups.push({ id: "mg" + Date.now(), name: name.trim(), emoji });
+  saveState(); admRenderBudget();
+}
+
+function admDeleteMissionGroup(id) {
+  const g = (state.admin.missionGroups || []).find(x => x.id === id);
+  if (!g) return;
+  _showConfirm("Supprimer le groupe « " + escapeHtml(g.name) + " » ?<br><small>Les entrées seront déplacées vers Missions.</small>", function() {
+    state.admin.missions.forEach(function(m) { if (m.groupId === id) m.groupId = "mg-default"; });
+    state.admin.missionGroups = state.admin.missionGroups.filter(function(x) { return x.id !== id; });
+    saveState(); admRenderBudget();
+  });
 }
 
 function admRenderConges() {
@@ -7005,7 +7154,13 @@ function admRenderConges() {
   var periodes = (state.admin && state.admin.congesPeriodes) || [];
   var cfg = _getCongesConfig();
   var cats = cfg.categories || [];
-  var FERIES = _congesHolidays(_congesYear);
+  // FERIES multi-année
+  var _feriesSet = _congesHolidays(_congesYear);
+  if (_congesYearTo !== _congesYear) {
+    var _feriesTo = _congesHolidays(_congesYearTo);
+    _feriesTo.forEach(function(d){ _feriesSet.add(d); });
+  }
+  var FERIES = _feriesSet;
 
   /* --- hex → rgb light bg --- */
   function _hexAlpha(hex, a) {
@@ -7075,23 +7230,25 @@ function admRenderConges() {
 
   /* --- contrôles année / plage mois --- */
   var mNames2 = ["","Jan","Fév","Mar","Avr","Mai","Juin","Juil","Aoû","Sep","Oct","Nov","Déc"];
-  var yearOpts = "";
   var curY = new Date().getFullYear();
-  for (var y = curY - 2; y <= Math.min(curY + 5, 2100); y++) {
-    yearOpts += '<option value="'+y+'"' + (y === _congesYear ? ' selected' : '') + '>'+y+'</option>';
+  function _yearSel(varName, curVal) {
+    var opts = "";
+    for (var y = curY - 3; y <= curY + 6; y++) opts += '<option value="'+y+'"'+(y===curVal?' selected':'')+'>'+y+'</option>';
+    return '<select onchange="'+varName+'=Number(this.value);admRenderConges()" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;">'+opts+'</select>';
   }
-  var fromOpts = "", toOpts = "";
-  for (var m = 1; m <= 12; m++) {
-    fromOpts += '<option value="'+m+'"' + (m === _congesMonthFrom ? ' selected' : '') + '>'+mNames2[m]+'</option>';
-    toOpts   += '<option value="'+m+'"' + (m === _congesMonthTo   ? ' selected' : '') + '>'+mNames2[m]+'</option>';
+  function _monthSel(varName, curVal) {
+    var opts = "";
+    for (var m = 1; m <= 12; m++) opts += '<option value="'+m+'"'+(m===curVal?' selected':'')+'>'+mNames2[m]+'</option>';
+    return '<select onchange="'+varName+'=Number(this.value);admRenderConges()" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;">'+opts+'</select>';
   }
-  var controls = '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;background:var(--bg-1);border-radius:10px;">'
+  var controls = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;background:var(--bg-1);border-radius:10px;">'
     + '<span style="font-size:13px;font-weight:700;color:var(--ink);">📅 Calendrier</span>'
-    + '<select onchange="_congesYear=Number(this.value);admRenderConges()" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;">' + yearOpts + '</select>'
     + '<span style="font-size:12px;color:var(--ink-soft);">de</span>'
-    + '<select onchange="_congesMonthFrom=Number(this.value);admRenderConges()" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;">' + fromOpts + '</select>'
+    + _monthSel("_congesMonthFrom", _congesMonthFrom)
+    + _yearSel("_congesYear", _congesYear)
     + '<span style="font-size:12px;color:var(--ink-soft);">à</span>'
-    + '<select onchange="_congesMonthTo=Number(this.value);admRenderConges()" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;">' + toOpts + '</select>'
+    + _monthSel("_congesMonthTo", _congesMonthTo)
+    + _yearSel("_congesYearTo", _congesYearTo)
     + '<button onclick="openCongesConfigModal()" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">⚙️ Paramètres</button>'
     + '</div>';
 
@@ -7123,10 +7280,16 @@ function admRenderConges() {
   legend += '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#f0f0f0;vertical-align:middle;margin-right:3px;"></span>Week-end</span>';
   legend += '</div>';
 
-  /* --- calendriers --- */
+  /* --- calendriers (multi-année) --- */
   var calHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">';
-  for (var mi = _congesMonthFrom; mi <= _congesMonthTo; mi++) {
-    calHTML += admRenderMonth(_congesYear, mi);
+  var yCur = _congesYear, mCur = _congesMonthFrom;
+  var yEnd = _congesYearTo, mEnd = _congesMonthTo;
+  // Sécurité : max 24 mois
+  var _maxIter = 24;
+  while ((_maxIter-- > 0) && (yCur < yEnd || (yCur === yEnd && mCur <= mEnd))) {
+    calHTML += admRenderMonth(yCur, mCur);
+    mCur++;
+    if (mCur > 12) { mCur = 1; yCur++; }
   }
   calHTML += '</div>';
 
@@ -7160,10 +7323,16 @@ function admRenderConges() {
 }
 
 /* -- Mission CRUD -- */
-function admOpenMission(id) {
+var _admMissionGroupId = "mg-default";
+function admOpenMission(id, groupId) {
   _admMissionId = id || null;
   var m = id ? (state.admin.missions.filter(function(x){ return x.id === id; })[0] || {}) : {};
+  _admMissionGroupId = m.groupId || groupId || "mg-default";
   document.getElementById("admMissionTitle").textContent = id ? "Modifier la mission" : "+ Nouvelle mission";
+  // Sélecteur de groupe dynamique
+  var groups = (state.admin.missionGroups) || [{ id:"mg-default", name:"Missions" }];
+  var gsel = document.getElementById("admMGroupId");
+  if (gsel) { gsel.innerHTML = groups.map(function(g){ return '<option value="'+g.id+'"'+(g.id===_admMissionGroupId?' selected':'')+'>'+escapeHtml(g.name)+'</option>'; }).join(""); }
   document.getElementById("admMDate").value    = m.date     || "";
   document.getElementById("admMLieu").value    = m.lieu     || "";
   document.getElementById("admMTrain").value   = m.train    || "";
@@ -7184,8 +7353,11 @@ function admSaveMission() {
   var lieu = document.getElementById("admMLieu").value.trim();
   if (!date || !lieu) { alert("Date et lieu obligatoires."); return; }
   function n(v) { var x = parseFloat(v); return isNaN(x) ? null : x; }
+  var gsel = document.getElementById("admMGroupId");
+  var groupId = gsel ? gsel.value : _admMissionGroupId;
   var obj = {
     id:      _admMissionId || ("m" + Date.now()),
+    groupId: groupId || "mg-default",
     date:    date,
     lieu:    lieu,
     train:   n(document.getElementById("admMTrain").value),
@@ -7781,35 +7953,69 @@ function updateProjectSelect() {
   sel.innerHTML = html;
   sel.value = cur;
 }
+const _PROJECT_EMOJIS = ["📁","📂","📌","🎯","✍️","📝","📖","📚","🔬","🧪","🎓","📊","📈","🗂️","💡","🏛️","🌍","🔭","🖊️","📐","🧑‍🏫","💬","📣","🏆","🤝","🌱","⚡","🔗","🧭","🗺️","📋","🎤","🖥️","📡","🏗️","🔑"];
+const _PROJECT_COLORS = [
+  { color: "#b8a5e8", bg: "#f0ebff" },
+  { color: "#7fc2b0", bg: "#e8f7f3" },
+  { color: "#e8a87c", bg: "#fff3eb" },
+  { color: "#85b4de", bg: "#e8f2fb" },
+  { color: "#d48fb0", bg: "#fce8f2" },
+  { color: "#a8c882", bg: "#eef7e6" },
+];
+function _projectAutoColor() {
+  const idx = state.work.postdocProjects.length % _PROJECT_COLORS.length;
+  return _PROJECT_COLORS[idx];
+}
+function _projectNameSuggest(el) {
+  document.getElementById("projectModalName").value = el.textContent;
+  document.getElementById("projectModalName").focus();
+}
+function _initProjectEmojiPicker() {
+  const picker = document.getElementById("projectModalEmojiPicker");
+  if (!picker || picker.children.length) return;
+  picker.innerHTML = _PROJECT_EMOJIS.map(e =>
+    `<span onclick="_pickProjectEmoji('${e}')" style="cursor:pointer;font-size:18px;padding:3px;border-radius:6px;transition:background 0.1s;" onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background=''">${e}</span>`
+  ).join("");
+}
+function _pickProjectEmoji(e) {
+  document.getElementById("projectModalEmoji").value = e;
+  document.getElementById("projectModalEmojiPreview").textContent = e;
+}
 function openProjectModal(id) {
   const isEdit = !!id;
   document.getElementById("projectModalTitle").textContent = isEdit ? "Modifier projet" : "Nouveau projet";
   document.getElementById("projectModalId").value = id || "";
   document.getElementById("projectModalDelete").style.display = isEdit ? "" : "none";
+  const defaultEmoji = "📁";
   if (isEdit) {
     const p = state.work.postdocProjects.find(x => x.id === id);
     document.getElementById("projectModalName").value = p.name;
-    document.getElementById("projectModalProgress").value = p.progress || 0;
     document.getElementById("projectModalNotes").value = p.notes || "";
+    const em = p.emoji || defaultEmoji;
+    document.getElementById("projectModalEmoji").value = em;
+    document.getElementById("projectModalEmojiPreview").textContent = em;
   } else {
     document.getElementById("projectModalName").value = "";
-    document.getElementById("projectModalProgress").value = 0;
     document.getElementById("projectModalNotes").value = "";
+    document.getElementById("projectModalEmoji").value = defaultEmoji;
+    document.getElementById("projectModalEmojiPreview").textContent = defaultEmoji;
   }
+  _initProjectEmojiPicker();
   document.getElementById("projectModal").classList.add("open");
 }
 function closeProjectModal() { document.getElementById("projectModal").classList.remove("open"); }
 function saveProject() {
   const id = document.getElementById("projectModalId").value;
   const name = document.getElementById("projectModalName").value.trim();
-  const progress = Number(document.getElementById("projectModalProgress").value) || 0;
   const notes = document.getElementById("projectModalNotes").value.trim();
+  const emoji = document.getElementById("projectModalEmoji").value || "📁";
   if (!name) return;
   if (id) {
     const p = state.work.postdocProjects.find(x => x.id === id);
-    Object.assign(p, { name, progress, notes });
+    Object.assign(p, { name, notes, emoji });
   } else {
-    state.work.postdocProjects.push({ id: "p" + Date.now(), name, progress, notes });
+    const { color, bg } = _projectAutoColor();
+    state.work.postdocProjects.push({ id: "p" + Date.now(), name, notes, emoji, color, bg, progress: 0 });
   }
   saveState();
   closeProjectModal();
@@ -7817,6 +8023,7 @@ function saveProject() {
   renderTasks();
   updateProjectSelect();
   renderCustomSectionChips();
+  renderWorkProjectTabs();
 }
 function _recordDeletedSeed(id) {
   if (!id.startsWith("p-seed-")) return;
@@ -7830,7 +8037,7 @@ function deleteProject() {
     _recordDeletedSeed(id);
     state.work.postdocProjects = state.work.postdocProjects.filter(p => p.id !== id);
     state.work.postdocTasks.forEach(t => { if (t.projectId === id) t.projectId = ""; });
-    saveState(); closeProjectModal(); renderProjects(); renderTasks(); updateProjectSelect(); renderCustomSectionChips();
+    saveState(); closeProjectModal(); renderProjects(); renderTasks(); updateProjectSelect(); renderCustomSectionChips(); renderWorkProjectTabs();
   });
 }
 function deleteCustomSection(id) {
@@ -16770,7 +16977,16 @@ document.getElementById("icsFile")?.addEventListener("change", e => {
 /* ========= TEMPS DE TRAVAIL ========= */
 const TIME_CATS_DEFAULT = []; // pas de catégories imposées — chaque utilisateur crée les siennes
 function getTimeCats() {
-  return (state.work && state.work.timeCats) ? state.work.timeCats : [];
+  // Les catégories de temps = projets actifs + catégories manuelles sans doublon
+  const projects = (state.work?.postdocProjects || []).map(p => ({
+    key: p.id,
+    label: p.name,
+    emoji: p.emoji || "📁",
+    color: p.color || "#b8a5e8",
+    bg: p.bg || "#f0ebff"
+  }));
+  const manual = (state.work?.timeCats || []).filter(c => !projects.some(p => p.key === c.key));
+  return [...projects, ...manual];
 }
 // alias backward-compat
 Object.defineProperty(window, 'TIME_CATS', { get: getTimeCats, configurable: true });
@@ -22594,6 +22810,7 @@ function renderAll() {
   renderTodayView();
   renderPill();
   renderProjects();
+  renderWorkProjectTabs();
   renderTasks();
   renderTaskBilan();
   renderTimeView();
