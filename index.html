@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1000</title>
+<title>Mon Tableau de Vie 🌿 · v1002</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5684,6 +5684,14 @@ function migrate(s) {
       if (!p.checklist) p.checklist = [];
       if (!p.links) p.links = [];
       if (p.ficheNotes === undefined) p.ficheNotes = "";
+      if (!p.ficheNotesList) {
+        p.ficheNotesList = [];
+        if (p.ficheNotes && p.ficheNotes.trim()) {
+          const tmp = document.createElement("div"); tmp.innerHTML = p.ficheNotes;
+          p.ficheNotesList.push({id:"fn"+Date.now(), title:"Note", content: tmp.textContent||"", subnotes:[]});
+          p.ficheNotes = "";
+        }
+      }
     });
   }
   // Migration : lier automatiquement les tâches MSCA/candidature au projet "Candidatures"
@@ -6934,21 +6942,83 @@ function _renderProjFicheNotes(projId) {
   if (!container) return;
   const p = (state.work.postdocProjects || []).find(pp => pp.id === projId);
   if (!p) return;
-  if (p.ficheNotes === undefined) p.ficheNotes = "";
-  container.innerHTML = `<div id="projNotes-${projId}" contenteditable="true"
-    data-placeholder="Tes notes pour ce projet : objectifs, comptes-rendus, idées…"
-    style="min-height:300px;outline:none;font-family:inherit;font-size:14px;color:var(--ink);line-height:1.8;padding:4px;cursor:text;"
-    oninput="_saveProjFicheNotes('${projId}',this)"></div>`;
-  const el = document.getElementById(`projNotes-${projId}`);
-  if (el) el.innerHTML = p.ficheNotes || "";
+  if (!p.ficheNotesList) p.ficheNotesList = [];
+  const noteStyle = "border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;background:white;";
+  const titleStyle = "width:100%;border:none;outline:none;font-family:inherit;font-size:14px;font-weight:600;color:var(--ink);background:transparent;padding:0 0 6px;border-bottom:1px solid var(--line);margin-bottom:8px;";
+  const taStyle = "width:100%;border:none;outline:none;font-family:inherit;font-size:13px;color:var(--ink);line-height:1.7;background:transparent;resize:vertical;min-height:60px;box-sizing:border-box;";
+  const subStyle = "margin-left:16px;padding-left:12px;border-left:3px solid var(--lavender-soft);margin-top:8px;";
+  const subTaStyle = "width:100%;border:none;outline:none;font-family:inherit;font-size:13px;color:var(--ink-soft);background:transparent;resize:vertical;min-height:40px;box-sizing:border-box;";
+
+  let html = `<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+    <button onclick="_addProjNote('${projId}')" style="font-size:12px;padding:5px 12px;border-radius:8px;border:1.5px dashed var(--lavender);background:var(--lavender-soft);color:var(--ink);cursor:pointer;font-family:inherit;">+ Nouvelle note</button>
+  </div>`;
+
+  if (!p.ficheNotesList.length) {
+    html += `<div style="text-align:center;color:var(--ink-softer);font-size:13px;padding:30px;">Aucune note — clique sur <em>+ Nouvelle note</em>.</div>`;
+  } else {
+    p.ficheNotesList.forEach((note, ni) => {
+      const subnoteHtml = (note.subnotes || []).map((sn, si) => `
+        <div style="${subStyle}">
+          <input value="${escapeHtml(sn.title||"")}" placeholder="Titre de la sous-note…" style="${titleStyle}font-size:13px;font-weight:500;"
+            onchange="_saveProjNoteField('${projId}',${ni},'title',this.value,${si})" onblur="_saveProjNoteField('${projId}',${ni},'title',this.value,${si})">
+          <textarea placeholder="Contenu…" style="${subTaStyle}"
+            onchange="_saveProjNoteField('${projId}',${ni},'content',this.value,${si})" onblur="_saveProjNoteField('${projId}',${ni},'content',this.value,${si})">${escapeHtml(sn.content||"")}</textarea>
+          <button onclick="_deleteProjSubNote('${projId}',${ni},${si})" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;padding:0;">✕ Supprimer</button>
+        </div>`).join("");
+      html += `<div style="${noteStyle}">
+        <div style="display:flex;align-items:flex-start;gap:8px;">
+          <div style="flex:1;">
+            <input value="${escapeHtml(note.title||"")}" placeholder="Titre de la note…" style="${titleStyle}"
+              onchange="_saveProjNoteField('${projId}',${ni},'title',this.value)" onblur="_saveProjNoteField('${projId}',${ni},'title',this.value)">
+            <textarea placeholder="Contenu de la note…" style="${taStyle}"
+              onchange="_saveProjNoteField('${projId}',${ni},'content',this.value)" onblur="_saveProjNoteField('${projId}',${ni},'content',this.value)">${escapeHtml(note.content||"")}</textarea>
+          </div>
+          <button onclick="_deleteProjNote('${projId}',${ni})" title="Supprimer" style="flex-shrink:0;background:none;border:none;cursor:pointer;font-size:14px;color:var(--ink-softer);padding:0 2px;">🗑</button>
+        </div>
+        ${subnoteHtml}
+        <button onclick="_addProjSubNote('${projId}',${ni})" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:none;color:var(--ink-soft);cursor:pointer;font-family:inherit;margin-top:8px;">+ Sous-note</button>
+      </div>`;
+    });
+  }
+  container.innerHTML = html;
+}
+
+function _addProjNote(projId) {
+  const p = (state.work.postdocProjects||[]).find(pp=>pp.id===projId);
+  if (!p) return;
+  if (!p.ficheNotesList) p.ficheNotesList = [];
+  p.ficheNotesList.push({id:"fn"+Date.now(), title:"", content:"", subnotes:[]});
+  saveState(); _renderProjFicheNotes(projId);
+}
+function _deleteProjNote(projId, ni) {
+  const p = (state.work.postdocProjects||[]).find(pp=>pp.id===projId);
+  if (!p || !p.ficheNotesList) return;
+  p.ficheNotesList.splice(ni, 1);
+  saveState(); _renderProjFicheNotes(projId);
+}
+function _addProjSubNote(projId, ni) {
+  const p = (state.work.postdocProjects||[]).find(pp=>pp.id===projId);
+  if (!p || !p.ficheNotesList[ni]) return;
+  if (!p.ficheNotesList[ni].subnotes) p.ficheNotesList[ni].subnotes = [];
+  p.ficheNotesList[ni].subnotes.push({id:"fsn"+Date.now(), title:"", content:""});
+  saveState(); _renderProjFicheNotes(projId);
+}
+function _deleteProjSubNote(projId, ni, si) {
+  const p = (state.work.postdocProjects||[]).find(pp=>pp.id===projId);
+  if (!p || !p.ficheNotesList[ni]) return;
+  p.ficheNotesList[ni].subnotes.splice(si, 1);
+  saveState(); _renderProjFicheNotes(projId);
 }
 var _projNotesTimer = {};
-function _saveProjFicheNotes(projId, el) {
+function _saveProjNoteField(projId, ni, field, val, si) {
   clearTimeout(_projNotesTimer[projId]);
   _projNotesTimer[projId] = setTimeout(() => {
-    const p = (state.work.postdocProjects || []).find(pp => pp.id === projId);
-    if (p) { p.ficheNotes = el.innerHTML; saveState(); }
-  }, 800);
+    const p = (state.work.postdocProjects||[]).find(pp=>pp.id===projId);
+    if (!p || !p.ficheNotesList[ni]) return;
+    if (si !== undefined) { if (p.ficheNotesList[ni].subnotes[si]) p.ficheNotesList[ni].subnotes[si][field] = val; }
+    else { p.ficheNotesList[ni][field] = val; }
+    saveState();
+  }, 600);
 }
 
 function _renderProjFicheLinks(projId) {
@@ -18228,8 +18298,9 @@ function renderPersoProjects() {
       + '</div></div>'
       + (pp.desc ? '<div style="background:' + bg + ';border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--ink);">' + escapeHtml(pp.desc) + '</div>' : '')
       + (donePct != null ? '<div style="margin-bottom:14px;"><div style="font-size:11px;color:var(--ink-softer);margin-bottom:4px;">' + allItems.filter(i=>i.done).length + '/' + allItems.length + ' tâches accomplies</div><div style="height:6px;background:var(--line);border-radius:3px;"><div style="width:' + donePct + '%;height:100%;background:' + color + ';border-radius:3px;transition:width 0.3s;"></div></div></div>' : '')
-      + '<div class="card" style="margin-bottom:14px;"><h3 style="margin:0 0 10px;font-size:14px;">📝 Notes</h3>'
-      + '<textarea id="persoNotes-' + pp.id + '" placeholder="Notes libres, idées, liens, contacts…" style="width:100%;min-height:90px;border:1.5px solid var(--line);border-radius:10px;padding:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;" oninput="_persoSaveNotes(\'' + pp.id + '\',this.value)">' + escapeHtml(pp.notes||"") + '</textarea></div>'
+      + '<div class="card" style="margin-bottom:14px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><h3 style="margin:0;font-size:14px;">📝 Notes</h3>'
+      + '<button onclick="_addPersoNote(\'' + pp.id + '\')" style="font-size:11px;padding:3px 10px;border-radius:8px;border:1.5px dashed ' + color + ';background:' + bg + ';color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Note</button>'
+      + '</div><div id="persoNotesList-' + pp.id + '">' + _renderPersoNotesList(pp) + '</div></div>'
       + '<div class="card" style="margin-bottom:14px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"><h3 style="margin:0;font-size:14px;">✅ Listes</h3>'
       + '<button onclick="_persoAddList(\'' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px dashed ' + color + ';background:' + bg + ';color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Nouvelle liste</button>'
       + '</div><div id="persoLists-' + pp.id + '">' + _renderPersoLists(pp) + '</div></div>'
@@ -18254,6 +18325,80 @@ function _persoProjTabClick(btn, sub) {
   domesticSection.querySelectorAll(".sub-view").forEach(x => x.classList.remove("active"));
   const v = domesticSection.querySelector(`.sub-view[data-sub="${sub}"]`);
   if (v) v.classList.add("active");
+}
+
+function _renderPersoNotesList(pp) {
+  if (!pp.notesList) {
+    pp.notesList = [];
+    if (pp.notes && pp.notes.trim()) { pp.notesList.push({id:"pn"+Date.now(), title:"Note", content: pp.notes, subnotes:[]}); pp.notes=""; }
+  }
+  if (!pp.notesList.length) return '<p style="color:var(--ink-softer);font-size:12px;font-style:italic;">Aucune note — clique sur + Note.</p>';
+  const {color="#c9a0dc", bg="#f5ecff", id: ppId} = pp;
+  const noteStyle = "border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--bg-1);";
+  const tStyle = "width:100%;border:none;outline:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);background:transparent;padding:0 0 4px;border-bottom:1px dashed var(--line);margin-bottom:6px;";
+  const taStyle = "width:100%;border:none;outline:none;font-family:inherit;font-size:12px;color:var(--ink);background:transparent;resize:vertical;min-height:40px;box-sizing:border-box;line-height:1.6;";
+  const subStyle = "margin:8px 0 0 12px;padding-left:10px;border-left:3px solid "+color+";";
+  return pp.notesList.map((note, ni) => {
+    const subs = (note.subnotes||[]).map((sn,si) => `<div style="${subStyle}">
+      <input value="${escapeHtml(sn.title||"")}" placeholder="Titre…" style="${tStyle}font-size:12px;font-weight:500;" onchange="_savePersoNoteField('${ppId}',${ni},'title',this.value,${si})" onblur="_savePersoNoteField('${ppId}',${ni},'title',this.value,${si})">
+      <textarea placeholder="Contenu…" style="${taStyle}" onchange="_savePersoNoteField('${ppId}',${ni},'content',this.value,${si})" onblur="_savePersoNoteField('${ppId}',${ni},'content',this.value,${si})">${escapeHtml(sn.content||"")}</textarea>
+      <button onclick="_deletePersoSubNote('${ppId}',${ni},${si})" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;padding:0;">✕ supprimer</button>
+    </div>`).join("");
+    return `<div style="${noteStyle}">
+      <div style="display:flex;align-items:flex-start;gap:6px;">
+        <div style="flex:1;">
+          <input value="${escapeHtml(note.title||"")}" placeholder="Titre de la note…" style="${tStyle}" onchange="_savePersoNoteField('${ppId}',${ni},'title',this.value)" onblur="_savePersoNoteField('${ppId}',${ni},'title',this.value)">
+          <textarea placeholder="Contenu…" style="${taStyle}" onchange="_savePersoNoteField('${ppId}',${ni},'content',this.value)" onblur="_savePersoNoteField('${ppId}',${ni},'content',this.value)">${escapeHtml(note.content||"")}</textarea>
+        </div>
+        <button onclick="_deletePersoNote('${ppId}',${ni})" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--ink-softer);padding:0 2px;" title="Supprimer">🗑</button>
+      </div>
+      ${subs}
+      <button onclick="_addPersoSubNote('${ppId}',${ni})" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--line);background:none;color:var(--ink-soft);cursor:pointer;font-family:inherit;margin-top:6px;">+ sous-note</button>
+    </div>`;
+  }).join("");
+}
+function _addPersoNote(ppId) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  if (!pp) return;
+  if (!pp.notesList) pp.notesList = [];
+  pp.notesList.push({id:"pn"+Date.now(), title:"", content:"", subnotes:[]});
+  saveState();
+  const el = document.getElementById("persoNotesList-"+ppId);
+  if (el) el.innerHTML = _renderPersoNotesList(pp);
+}
+function _deletePersoNote(ppId, ni) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  if (!pp || !pp.notesList) return;
+  pp.notesList.splice(ni, 1); saveState();
+  const el = document.getElementById("persoNotesList-"+ppId);
+  if (el) el.innerHTML = _renderPersoNotesList(pp);
+}
+function _addPersoSubNote(ppId, ni) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  if (!pp || !pp.notesList[ni]) return;
+  if (!pp.notesList[ni].subnotes) pp.notesList[ni].subnotes = [];
+  pp.notesList[ni].subnotes.push({id:"psn"+Date.now(), title:"", content:""});
+  saveState();
+  const el = document.getElementById("persoNotesList-"+ppId);
+  if (el) el.innerHTML = _renderPersoNotesList(pp);
+}
+function _deletePersoSubNote(ppId, ni, si) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  if (!pp || !pp.notesList[ni]) return;
+  pp.notesList[ni].subnotes.splice(si, 1); saveState();
+  const el = document.getElementById("persoNotesList-"+ppId);
+  if (el) el.innerHTML = _renderPersoNotesList(pp);
+}
+var _persoNotesTimer = {};
+function _savePersoNoteField(ppId, ni, field, val, si) {
+  clearTimeout(_persoNotesTimer[ppId]);
+  _persoNotesTimer[ppId] = setTimeout(() => {
+    const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+    if (!pp || !pp.notesList[ni]) return;
+    if (si !== undefined) { if (pp.notesList[ni].subnotes[si]) pp.notesList[ni].subnotes[si][field] = val; }
+    else { pp.notesList[ni][field] = val; }
+    saveState();
+  }, 600);
 }
 
 function _renderPersoLists(pp) {
@@ -23550,6 +23695,7 @@ const HELP_TEXTS = {
         <li><strong>🔗 Google Agenda</strong> — Connecte ton Google Agenda via l'URL iCal privée. Pour l'obtenir : Google Agenda → ⚙️ Paramètres → clique sur ton agenda → "Adresse secrète au format iCal" → bouton Copier. La sync se fait automatiquement toutes les 30 min.</li>
         <li><strong>📁 Importer ICS</strong> — Importe un fichier .ics manuellement (si la sync auto ne fonctionne pas).</li>
         <li><strong>Couleurs</strong> — Chaque source de calendrier a sa propre couleur. Les événements individuels héritent de la couleur Google Agenda.</li>
+        <li><strong>⚠️ Sync sens unique</strong> — Tout ce que tu mets dans Google Agenda apparaît ici automatiquement. En revanche, les événements que tu crées directement dans l'app <em>ne remontent pas</em> vers Google Agenda. La connexion fonctionne dans un seul sens : Google Agenda → App.</li>
       </ul>
       <div style="background:var(--lavender-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
         💡 Si la sync automatique échoue (proxies CORS bloqués), clique "📁 Importer ICS" : télécharge le fichier .ics depuis Google Agenda → exporte → importe ici.
@@ -23704,8 +23850,8 @@ const HELP_TEXTS = {
       <ul style="padding-left:18px;margin:10px 0;">
         <li><strong>📖 Recettes</strong> — Crée tes recettes avec ingrédients (quantités, calories) et instructions. Tu peux les classer par catégorie (Plat en sauce, Salade, Dessert…). C'est la <em>base de tout le reste</em>.</li>
         <li><strong>🍽 Planning repas</strong> — Planifie chaque repas de la semaine (matin, midi, soir). Quand tu cliques sur un créneau, tu peux y associer une de tes recettes existantes — ou saisir un repas libre. Le planning se remplit depuis ta bibliothèque de recettes.</li>
-        <li><strong>🛒 Liste de courses</strong> — Depuis le planning repas, clique sur <em>Générer la liste de courses</em> : l'application calcule automatiquement tous les ingrédients nécessaires pour la semaine et les ajoute à ta liste de courses. Plus besoin de tout noter à la main.</li>
-        <li><strong>🔥 Suivi calorique</strong> — Dans l'onglet <strong>Aujourd'hui</strong>, l'habitude "Apport calorique" te permet d'enregistrer ce que tu manges en piochant dans tes recettes (les calories sont déjà calculées). Le total du jour apparaît dans Aujourd'hui et le graphique cumulatif dans Alimentation.</li>
+        <li><strong>🛒 Liste de courses</strong> — Tes courses sont organisées <strong>par événement</strong> (ex : "Courses semaine", "Dîner copines", "Repas de Noël"…). Tu peux créer autant d'événements que tu veux et ajouter des articles manuellement. Depuis le planning repas, tu peux aussi cliquer sur <em>Générer la liste de courses</em> : tous les ingrédients des recettes planifiées s'ajoutent automatiquement à l'événement de ton choix. Les deux modes coexistent.</li>
+        <li><strong>🔥 Suivi calorique</strong> — Dans l'onglet <strong>Aujourd'hui</strong>, l'habitude "Apport calorique" te permet d'enregistrer ce que tu manges. Tu peux piocher dans tes recettes (les calories sont déjà calculées) <em>ou</em> ajouter n'importe quel aliment sans recette — dans ce cas, tu saisit les calories à la main. Le total du jour apparaît dans Aujourd'hui et le graphique cumulatif dans Alimentation.</li>
         <li><strong>🥦 Kcal aliments</strong> — Une base d'aliments bruts (100g) pour estimer les calories de plats faits maison sans recette complète.</li>
       </ul>
       <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
