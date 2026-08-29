@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v962</title>
+<title>Mon Tableau de Vie 🌿 · v964</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22556,6 +22556,25 @@ async function _fbLoad() {
     } else {
       await _fbSaveNow();
       showToast("☁️ Données envoyées vers le cloud ✅");
+    }
+    // Restauration one-shot belly/endo pour le compte propriétaire si effacés par ancienne migration
+    if (_fbUser && _fbUser.email === "alexandra.mallah@parisgeo.cnrs.fr") {
+      let symFixed = false;
+      if (!state.customSymptoms) state.customSymptoms = [];
+      if (!state.customSymptoms.some(s => s.id === "belly")) {
+        state.customSymptoms.push({ id: "belly", name: "Mal de ventre", emoji: "🤰", type: "scale", scale: 3 });
+        symFixed = true;
+      }
+      if (!state.customSymptoms.some(s => s.id === "endo")) {
+        state.customSymptoms.push({ id: "endo", name: "Endométriose", emoji: "🩸", type: "scale", scale: 5 });
+        symFixed = true;
+      }
+      if (symFixed) {
+        saveState();
+        renderHealth();
+        renderTodayView();
+        showToast("💊 Symptômes restaurés dans ton compte ✅");
+      }
     }
     _fbSetStatus("ok");
     _fbLoadTime = Date.now();
