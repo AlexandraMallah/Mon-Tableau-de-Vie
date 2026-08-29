@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v958</title>
+<title>Mon Tableau de Vie 🌿 · v959</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -9473,9 +9473,10 @@ function getStepsForDate(d) {
 }
 function colorForSteps(steps) {
   const target = getStepsHabit()?.target || 9000;
-  if (steps >= target) return { fg: "#4d9c7e", bg: "var(--mint-soft)" };
-  if (steps >= 7000) return { fg: "#c08a4d", bg: "var(--peach-soft)" };
-  return { fg: "#c75b4d", bg: "var(--rose-soft)" };
+  const _s = document.body.classList.contains("t-serieux");
+  if (steps >= target) return { fg: _s?"#6a9e78":"#4d9c7e", bg: "var(--mint-soft)" };
+  if (steps >= 7000)  return { fg: _s?"#b08a5a":"#c08a4d", bg: "var(--peach-soft)" };
+  return                     { fg: _s?"#a06050":"#c75b4d", bg: "var(--rose-soft)" };
 }
 function renderStepsStats() {
   const h = getStepsHabit();
@@ -9505,7 +9506,7 @@ function renderStepsStats() {
   document.getElementById("stepsMonthlyTile").style.background = cm.bg;
   document.getElementById("stepsBestTile").innerHTML = `
     <div class="stat-label">🏆 Meilleur jour</div>
-    <div class="stat-val" style="color:#6b4d99;">${best.toLocaleString("fr-FR")}</div>
+    <div class="stat-val" style="color:var(--lavender);">${best.toLocaleString("fr-FR")}</div>
     <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">${daysGoal} jour${daysGoal > 1 ? "s" : ""} objectif atteint</div>
   `;
 }
