@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v966</title>
+<title>Mon Tableau de Vie 🌿 · v968</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5919,7 +5919,7 @@ function onViewChange(view) {
   if (view === "today") maybeLoadWeather();
   if (view === "work") updateWorkTabBadges();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
-  if (view === "health") { _healthMonthOffset = 0; _renderHealthMonthLabel(); renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); renderCustomSymptomsSante(); renderEnergyBalance(); }
+  if (view === "health") { _healthMonthOffset = 0; _renderHealthMonthLabel(); renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); renderCustomSymptomsSante(); renderEnergyBalance(); renderHabitsTracking(); }
   if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
@@ -6430,6 +6430,8 @@ function _saveHabitModal() {
     state.habits.push({ id: "h-custom-" + Date.now(), name, type, target, unit });
   }
   saveState(); renderHabits(); _closeHabitModal();
+  // Mise à jour immédiate du suivi dans Santé si l'onglet est visible
+  if (document.querySelector('.view[data-view="health"]')?.classList.contains('active')) renderHabitsTracking();
 }
 function _addHabit() { _openHabitModal(null); }
 function _editHabit(id) { _openHabitModal(id); }
@@ -6439,6 +6441,7 @@ function _deleteHabit(id) {
   _showConfirm(`Supprimer l'habitude « ${h.name} » ?`, () => {
     state.habits = state.habits.filter(x => x.id !== id);
     saveState(); renderHabits();
+    if (document.querySelector('.view[data-view="health"]')?.classList.contains('active')) renderHabitsTracking();
   });
 }
 function toggleHabit(id) {
@@ -9689,6 +9692,7 @@ function renderHealth() {
     }
   }
   renderTrendPrediction();
+  renderHabitsTracking();
 }
 function getWaterHabit() {
   return state.habits.find(h => h.id === "h-eau") || state.habits.find(h => /eau/i.test(h.name));
