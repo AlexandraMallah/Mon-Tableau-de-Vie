@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v990</title>
+<title>Mon Tableau de Vie 🌿 · v991</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5650,12 +5650,12 @@ function migrate(s) {
   // Migration : aligner les noms de projets sur les sous-onglets Travail + assigner couleurs distinctes
   if (Array.isArray(s.work?.postdocProjects)) {
     const seedMeta = {
-      "p-seed-postdoc":      { name: "Postdoc",       emoji: "📗", color: "#90b8f8", bg: "#eef5ff" },
-      "p-seed-valo":         { name: "Valorisation",  emoji: "📝", color: "#aee0c8", bg: "#e8f8f2" },
-      "p-seed-enseignement": { name: "Enseignement",  emoji: "📚", color: "#f7c59f", bg: "#fff4ec" },
-      "p-seed-candidatures": { name: "Candidatures",  emoji: "📋", color: "#f4a8cb", bg: "#fef0f7" },
-      "p-seed-autre":        { name: "Autre",         emoji: "🗂️", color: "#c9b6f0", bg: "#f4f0ff" },
-      "p-seed-prixthese":    { name: "Prix de thèse", emoji: "🏆", color: "#f0d98a", bg: "#fdf8e5" },
+      "p-seed-postdoc":      { name: "Postdoc",       emoji: "📗", color: "#b4d4f1", bg: "#dceaf7" },
+      "p-seed-valo":         { name: "Valorisation",  emoji: "📝", color: "#aee0c8", bg: "#d8f0e5" },
+      "p-seed-enseignement": { name: "Enseignement",  emoji: "📚", color: "#f7c9a3", bg: "#fce5d1" },
+      "p-seed-candidatures": { name: "Candidatures",  emoji: "📋", color: "#efb8c8", bg: "#fae3eb" },
+      "p-seed-autre":        { name: "Autre",         emoji: "🗂️", color: "#c9b6f0", bg: "#e6dcfa" },
+      "p-seed-prixthese":    { name: "Prix de thèse", emoji: "🏆", color: "#f5e6a8", bg: "#fbf3d1" },
     };
     s.work.postdocProjects.forEach(p => {
       const meta = seedMeta[p.id];
@@ -17102,14 +17102,26 @@ document.getElementById("icsFile")?.addEventListener("change", e => {
 /* ========= TEMPS DE TRAVAIL ========= */
 const TIME_CATS_DEFAULT = []; // pas de catégories imposées — chaque utilisateur crée les siennes
 function getTimeCats() {
-  // Les catégories de temps = projets actifs + catégories manuelles sans doublon
-  const projects = (state.work?.postdocProjects || []).map(p => ({
-    key: p.id,
-    label: p.name,
-    emoji: p.emoji || "📁",
-    color: p.color || "#b8a5e8",
-    bg: p.bg || "#f0ebff"
-  }));
+  // Couleurs sérieux pour les seeds (palette sable/sauge/bleu désaturé)
+  const _seriousColors = {
+    "p-seed-postdoc":      { color: "#7a9cbf", bg: "#d8e6f0" },
+    "p-seed-valo":         { color: "#88a890", bg: "#ccddd0" },
+    "p-seed-enseignement": { color: "#c4a882", bg: "#ede0cc" },
+    "p-seed-candidatures": { color: "#b08898", bg: "#e8d4dc" },
+    "p-seed-autre":        { color: "#9090a8", bg: "#dddde8" },
+    "p-seed-prixthese":    { color: "#c4b074", bg: "#ece0bc" },
+  };
+  const isSerieux = document.body.classList.contains("t-serieux");
+  const projects = (state.work?.postdocProjects || []).map(p => {
+    const s = isSerieux && _seriousColors[p.id];
+    return {
+      key: p.id,
+      label: p.name,
+      emoji: p.emoji || "📁",
+      color: s ? s.color : (p.color || "#b8a5e8"),
+      bg:    s ? s.bg    : (p.bg    || "#f0ebff")
+    };
+  });
   const manual = (state.work?.timeCats || []).filter(c => !projects.some(p => p.key === c.key));
   return [...projects, ...manual];
 }
