@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v993</title>
+<title>Mon Tableau de Vie 🌿 · v994</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2205,6 +2205,31 @@
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
         <button onclick="_closeWorkProjTaskModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
         <button onclick="_saveWorkProjTask()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal : Édition catégorie de temps -->
+  <div class="modal-bg" id="editTimeCatModal" onclick="if(event.target===this)_closeEditTimeCatModal()">
+    <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <h3 style="margin:0 0 18px;font-size:17px;">✏️ Modifier la catégorie</h3>
+      <input type="hidden" id="editTimeCatIdx" />
+      <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;">
+        <div>
+          <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Emoji</div>
+          <input type="text" id="editTimeCatEmoji" maxlength="4"
+            style="width:52px;height:44px;text-align:center;font-size:22px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg-1);font-family:inherit;cursor:pointer;" />
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom</div>
+          <input type="text" id="editTimeCatName" maxlength="40" placeholder="Nom de la catégorie…"
+            style="width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;"
+            onkeydown="if(event.key==='Enter')_saveEditTimeCat()" />
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
+        <button onclick="_closeEditTimeCatModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+        <button onclick="_saveEditTimeCat()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
       </div>
     </div>
   </div>
@@ -7757,16 +7782,33 @@ function _moveTimeCat(idx, dir) {
   _renderTimeCatsList();
 }
 function _editTimeCatModal(idx) {
-  var cat = getTimeCats()[idx];
+  const cat = getTimeCats()[idx];
   if (!cat) return;
-  var newEmoji = prompt("Emoji :", cat.emoji || "📌");
-  if (newEmoji === null) return;
-  var newLabel = prompt("Nom :", cat.label);
-  if (!newLabel?.trim()) return;
-  if (!state.work.timeCats) state.work.timeCats = [];
-  state.work.timeCats[idx].emoji = newEmoji.trim() || "📌";
-  state.work.timeCats[idx].label = newLabel.trim();
-  _renderTimeCatsList();
+  document.getElementById("editTimeCatIdx").value = idx;
+  document.getElementById("editTimeCatEmoji").value = cat.emoji || "📌";
+  document.getElementById("editTimeCatName").value = cat.label || "";
+  document.getElementById("editTimeCatModal").classList.add("open");
+  setTimeout(() => document.getElementById("editTimeCatName").focus(), 80);
+}
+function _closeEditTimeCatModal() { document.getElementById("editTimeCatModal").classList.remove("open"); }
+function _saveEditTimeCat() {
+  const idx = parseInt(document.getElementById("editTimeCatIdx").value);
+  const emoji = document.getElementById("editTimeCatEmoji").value.trim() || "📌";
+  const label = document.getElementById("editTimeCatName").value.trim();
+  if (!label) return;
+  const allCats = getTimeCats();
+  const cat = allCats[idx];
+  if (!cat) return;
+  // Trouver si c'est un projet ou une timeCat manuelle
+  const proj = (state.work.postdocProjects || []).find(p => p.id === cat.key);
+  if (proj) {
+    proj.emoji = emoji;
+    proj.name  = label;
+  } else {
+    const tcIdx = (state.work.timeCats || []).findIndex(c => c.key === cat.key);
+    if (tcIdx >= 0) { state.work.timeCats[tcIdx].emoji = emoji; state.work.timeCats[tcIdx].label = label; }
+  }
+  saveState(); _closeEditTimeCatModal(); _renderTimeCatsList(); renderTimeCatsGrid();
 }
 function _deleteTimeCatByIdx(idx) {
   var cat = getTimeCats()[idx];
