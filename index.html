@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v986</title>
+<title>Mon Tableau de Vie 🌿 · v987</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18027,6 +18027,7 @@ function _persoAddExpense(ppId) {
 function _persoDeleteExpense(ppId, expId) {
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   if (pp) { pp.expenses=(pp.expenses||[]).filter(e=>e.id!==expId); saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50); }
+}
 
 /* ========= NOTES LIBRES ========= */
 function renderFreeNotes() {
