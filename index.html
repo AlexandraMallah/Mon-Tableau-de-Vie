@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v983</title>
+<title>Mon Tableau de Vie 🌿 · v984</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6468,13 +6468,10 @@ function renderHabits() {
             <div class="habit-streak ${streakClass}" style="margin-left:auto;flex-shrink:0;">${streakText}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <input type="number" id="habInput-${h.id}" value="${num || ''}" onchange="setHabitValue('${h.id}', this.value)${h.id==='h-pas'?';_syncPasKm(this.value,false)':''}" placeholder="0" min="0" step="${inputStep}" ${inputMax ? `max="${inputMax}"` : ""}
+            <input type="number" id="habInput-${h.id}" value="${num || ''}" onchange="setHabitValue('${h.id}', this.value); if('${h.id}'==='h-pas') _syncPasKm(this.value,false);" placeholder="0" min="0" step="${inputStep}" ${inputMax ? `max="${inputMax}"` : ""}
               style="width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:right;background:white;" />
             <span style="font-size:11px;color:var(--ink-soft);">/ ${h.target}${h.unit ? " " + h.unit : ""}</span>
-            ${h.id==='h-pas'?`<span style="font-size:11px;color:var(--ink-softer);">ou</span>
-            <input type="number" id="habKmInput" value="${num?+(num*0.00075).toFixed(2):''}" onchange="_syncPasKm(this.value,true)" placeholder="0.00" min="0" step="0.01"
-              style="width:70px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:right;background:white;" />
-            <span style="font-size:11px;color:var(--ink-softer);">km</span>`:''}
+            ${_renderKmField(h, num)}
             <div style="flex:1;min-width:60px;background:white;height:5px;border-radius:999px;overflow:hidden;margin-left:4px;">
               <div style="width:${Math.min(100, pct)}%;height:100%;background:${barColor};transition:width 0.4s;"></div>
             </div>
@@ -10059,6 +10056,14 @@ function colorForSteps(steps) {
   if (steps >= target) return { fg: _s?"#6a9e78":"#4d9c7e", bar: _s?"#88a890":"#aee0c8", bg: "var(--mint-soft)" };
   if (steps >= 7000)  return { fg: _s?"#b08a5a":"#c08a4d", bar: _s?"#d0ac84":"#f7c9a3", bg: "var(--peach-soft)" };
   return                     { fg: _s?"#a06050":"#c75b4d", bar: _s?"#c0986e":"#efb8c8", bg: "var(--rose-soft)" };
+}
+function _renderKmField(h, num) {
+  if (h.id !== 'h-pas') return '';
+  const km = num ? (+(num * 0.00075).toFixed(2)) : '';
+  return '<span style="font-size:11px;color:var(--ink-softer);">ou</span>'
+    + '<input type="number" id="habKmInput" value="' + km + '" onchange="_syncPasKm(this.value,true)" placeholder="0.00" min="0" step="0.01"'
+    + ' style="width:70px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:right;background:white;" />'
+    + '<span style="font-size:11px;color:var(--ink-softer);">km</span>';
 }
 function _syncPasKm(val, fromKm) {
   const PAS_PER_KM = 1333; // 1 km ≈ 1333 pas (0.75m/pas)
