@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v978</title>
+<title>Mon Tableau de Vie 🌿 · v980</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -8048,7 +8048,7 @@ function deleteCustomSection(id) {
     _recordDeletedSeed(id);
     state.work.postdocProjects = state.work.postdocProjects.filter(x => x.id !== id);
     state.work.postdocTasks.forEach(t => { if (t.projectId === id) t.projectId = ""; });
-    saveState(); renderProjects(); renderTasks(); updateProjectSelect(); renderCustomSectionChips();
+    saveState(); renderProjects(); renderTasks(); updateProjectSelect(); renderCustomSectionChips(); renderWorkProjectTabs();
   });
 }
 function renderCustomSectionChips() {
