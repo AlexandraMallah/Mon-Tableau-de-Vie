@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v991</title>
+<title>Mon Tableau de Vie 🌿 · v992</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17104,12 +17104,12 @@ const TIME_CATS_DEFAULT = []; // pas de catégories imposées — chaque utilisa
 function getTimeCats() {
   // Couleurs sérieux pour les seeds (palette sable/sauge/bleu désaturé)
   const _seriousColors = {
-    "p-seed-postdoc":      { color: "#7a9cbf", bg: "#d8e6f0" },
-    "p-seed-valo":         { color: "#88a890", bg: "#ccddd0" },
-    "p-seed-enseignement": { color: "#c4a882", bg: "#ede0cc" },
-    "p-seed-candidatures": { color: "#b08898", bg: "#e8d4dc" },
-    "p-seed-autre":        { color: "#9090a8", bg: "#dddde8" },
-    "p-seed-prixthese":    { color: "#c4b074", bg: "#ece0bc" },
+    "p-seed-postdoc":      { color: "#8ab4d4", bg: "#d4e8f0" },
+    "p-seed-valo":         { color: "#a0c0a8", bg: "#d0e4d8" },
+    "p-seed-enseignement": { color: "#e0c4a0", bg: "#f0e4d0" },
+    "p-seed-candidatures": { color: "#d0ac84", bg: "#e8d8c0" },
+    "p-seed-autre":        { color: "#a4cce0", bg: "#d0e8f4" },
+    "p-seed-prixthese":    { color: "#cca88c", bg: "#e8d8c8" },
   };
   const isSerieux = document.body.classList.contains("t-serieux");
   const projects = (state.work?.postdocProjects || []).map(p => {
