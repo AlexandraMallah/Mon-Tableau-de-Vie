@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v999</title>
+<title>Mon Tableau de Vie 🌿 · v1000</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4995,6 +4995,85 @@
       <div class="spacer"></div>
       <button class="secondary" onclick="admCloseMission()">Annuler</button>
       <button class="primary" onclick="admSaveMission()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ajout dépense projet perso -->
+<div class="modal-bg" id="persoExpenseModal" onclick="if(event.target===this)_closePersoExpenseModal()">
+  <div class="modal" style="max-width:400px;" onclick="event.stopPropagation()">
+    <h3 style="margin:0 0 16px;font-size:17px;">💰 Ajouter une dépense</h3>
+    <input type="hidden" id="persoExpenseProjId" />
+    <input type="hidden" id="persoExpenseSectionId" />
+    <div style="margin-bottom:10px;">
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Description</div>
+      <input type="text" id="persoExpenseName" maxlength="80" placeholder="ex: Traiteur, Fleurs, Location salle…"
+        style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;" />
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Montant (€)</div>
+      <input type="number" id="persoExpenseAmount" min="0" step="0.01" placeholder="0.00"
+        onkeydown="if(event.key==='Enter')_savePersoExpense()"
+        style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;" />
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="_closePersoExpenseModal()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button onclick="_savePersoExpense()" style="padding:9px 20px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ajout section budget projet perso -->
+<div class="modal-bg" id="persoBudgetSectionModal" onclick="if(event.target===this)_closePersoBudgetSectionModal()">
+  <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
+    <h3 style="margin:0 0 16px;font-size:17px;">📂 Nouvelle section</h3>
+    <input type="hidden" id="persoBudgetSectionProjId" />
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom de la section</div>
+      <input type="text" id="persoBudgetSectionName" maxlength="60" placeholder="ex: Repas, Décoration, Transport…"
+        onkeydown="if(event.key==='Enter')_savePersoBudgetSection()"
+        style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;" />
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="_closePersoBudgetSectionModal()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button onclick="_savePersoBudgetSection()" style="padding:9px 20px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ajout liste projet perso -->
+<div class="modal-bg" id="persoListModal" onclick="if(event.target===this)_closePersoListModal()">
+  <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
+    <h3 style="margin:0 0 16px;font-size:17px;">📋 Nouvelle liste</h3>
+    <input type="hidden" id="persoListProjId" />
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom de la liste</div>
+      <input type="text" id="persoListName" maxlength="60" placeholder="ex: Invités, Valise, Shopping…"
+        onkeydown="if(event.key==='Enter')_savePersoList()"
+        style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;" />
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="_closePersoListModal()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button onclick="_savePersoList()" style="padding:9px 20px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ajout sous-liste projet perso -->
+<div class="modal-bg" id="persoSubListModal" onclick="if(event.target===this)_closePersoSubListModal()">
+  <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
+    <h3 style="margin:0 0 16px;font-size:17px;">📑 Nouvelle sous-liste</h3>
+    <input type="hidden" id="persoSubListProjId" />
+    <input type="hidden" id="persoSubListLstId" />
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom de la sous-liste</div>
+      <input type="text" id="persoSubListName" maxlength="60" placeholder="ex: Vêtements, Électronique, Documents…"
+        onkeydown="if(event.key==='Enter')_savePersoSubList()"
+        style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;" />
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="_closePersoSubListModal()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button onclick="_savePersoSubList()" style="padding:9px 20px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Créer</button>
     </div>
   </div>
 </div>
@@ -18108,7 +18187,13 @@ function renderPersoProjects() {
   projects.forEach(pp => {
     const sub = "pp-" + pp.id;
     const {color="#c9a0dc", bg="#f5ecff"} = pp;
-    const spent = (pp.expenses||[]).reduce((s,e)=>s+(e.amount||0),0);
+    // Migration expenses → budgetSections
+    if ((pp.expenses||[]).length && !(pp.budgetSections||[]).length) {
+      pp.budgetSections = [{id:"sec0",name:"Général",items:pp.expenses.map(e=>({id:e.id,name:e.label||"",amount:e.amount||0}))}];
+      pp.expenses = [];
+    }
+    if (!pp.budgetSections) pp.budgetSections = [];
+    const spent = (pp.budgetSections||[]).reduce((s,sec)=>(sec.items||[]).reduce((t,e)=>t+(e.amount||0),s),0);
     const budgetPct = pp.budget > 0 ? Math.min(100, Math.round(spent/pp.budget*100)) : null;
     const allItems = (pp.lists||[]).flatMap(l=>l.items||[]);
     const donePct  = allItems.length ? Math.round(allItems.filter(i=>i.done).length/allItems.length*100) : null;
@@ -18149,11 +18234,13 @@ function renderPersoProjects() {
       + '<button onclick="_persoAddList(\'' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px dashed ' + color + ';background:' + bg + ';color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Nouvelle liste</button>'
       + '</div><div id="persoLists-' + pp.id + '">' + _renderPersoLists(pp) + '</div></div>'
       + (pp.budget ?
-          '<div class="card" style="margin-bottom:14px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+          '<div class="card" style="margin-bottom:14px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">'
           + '<h3 style="margin:0;font-size:14px;">💰 Budget — <span style="color:' + color + ';">' + spent.toFixed(0) + ' €</span> / ' + pp.budget.toLocaleString("fr-FR") + ' €</h3>'
-          + '<button onclick="_persoAddExpense(\'' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px dashed ' + color + ';background:' + bg + ';color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Dépense</button>'
-          + '</div><div style="height:6px;background:var(--line);border-radius:3px;margin-bottom:10px;"><div style="width:' + budgetBarW + '%;height:100%;background:' + (spent > pp.budget ? "#dc2626" : color) + ';border-radius:3px;"></div></div>'
-          + '<div id="persoExpenses-' + pp.id + '">' + _renderPersoExpenses(pp) + '</div></div>'
+          + '<div style="display:flex;gap:6px;">'
+          + '<button onclick="_addPersoBudgetSection(\'' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px solid ' + color + ';background:' + bg + ';color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Section</button>'
+          + '<button onclick="_persoAddExpense(\'' + pp.id + '\',\'\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px dashed ' + color + ';background:white;color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Dépense</button>'
+          + '</div></div>'
+          + '<div id="persoBudget-' + pp.id + '">' + _renderPersoBudget(pp) + '</div></div>'
         : '');
     viewsEl.appendChild(viewDiv);
   });
@@ -18171,41 +18258,97 @@ function _persoProjTabClick(btn, sub) {
 
 function _renderPersoLists(pp) {
   if (!(pp.lists||[]).length) return '<p style="color:var(--ink-softer);font-size:12px;font-style:italic;">Aucune liste — clique sur + Nouvelle liste.</p>';
+  const col = pp.color||"#c9a0dc";
   return pp.lists.map(function(lst) {
-    const done = (lst.items||[]).filter(function(i){return i.done;}).length;
-    const total = (lst.items||[]).length;
-    const itemsHtml = (lst.items||[]).map(function(item) {
-      return '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:' + (item.done?"var(--bg-1)":"transparent") + ';">'
-        + '<input type="checkbox" ' + (item.done?"checked":"") + ' onchange="_persoToggleItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + item.id + '\',this.checked)" style="accent-color:' + (pp.color||"#c9a0dc") + ';" />'
+    const allRootItems = lst.items||[];
+    const allSubItems = (lst.sublists||[]).flatMap(s=>s.items||[]);
+    const allItems = allRootItems.concat(allSubItems);
+    const done = allItems.filter(i=>i.done).length;
+    const total = allItems.length;
+
+    // Items racine (non sous-liste)
+    const rootItemsHtml = allRootItems.map(function(item) {
+      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:8px;background:' + (item.done?"var(--bg-1)":"transparent") + ';">'
+        + '<input type="checkbox" ' + (item.done?"checked":"") + ' onchange="_persoToggleItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + item.id + '\',this.checked)" style="accent-color:' + col + ';" />'
         + '<span style="flex:1;font-size:13px;' + (item.done?"text-decoration:line-through;color:var(--ink-softer);":"") + '">' + escapeHtml(item.text) + '</span>'
-        + '<button onclick="_persoDeleteItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + item.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.5;">✕</button>'
+        + '<button onclick="_persoDeleteItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + item.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.4;">✕</button>'
         + '</div>';
     }).join("");
-    return '<div style="margin-bottom:12px;">'
-      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
-      + '<span style="font-size:14px;">' + (lst.emoji||"📋") + '</span>'
-      + '<strong style="font-size:13px;flex:1;">' + escapeHtml(lst.name) + '</strong>'
+
+    // Sous-listes
+    const sublistsHtml = (lst.sublists||[]).map(function(sub) {
+      const subDone = (sub.items||[]).filter(i=>i.done).length;
+      const subTotal = (sub.items||[]).length;
+      const subItemsHtml = (sub.items||[]).map(function(item) {
+        return '<div style="display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:8px;background:' + (item.done?"var(--bg-1)":"transparent") + ';">'
+          + '<input type="checkbox" ' + (item.done?"checked":"") + ' onchange="_persoToggleSubItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + sub.id + '\',\'' + item.id + '\',this.checked)" style="accent-color:' + col + ';" />'
+          + '<span style="flex:1;font-size:13px;' + (item.done?"text-decoration:line-through;color:var(--ink-softer);":"") + '">' + escapeHtml(item.text) + '</span>'
+          + '<button onclick="_persoDeleteSubItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + sub.id + '\',\'' + item.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.4;">✕</button>'
+          + '</div>';
+      }).join("");
+      return '<div style="margin:8px 0;border-left:3px solid ' + col + ';padding-left:10px;">'
+        + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'
+        + '<span style="font-size:12px;font-weight:700;color:var(--ink-soft);">📑 ' + escapeHtml(sub.name) + '</span>'
+        + '<span style="font-size:11px;color:var(--ink-softer);margin-left:auto;">' + subDone + '/' + subTotal + '</span>'
+        + '<button onclick="_persoDeleteSubList(\'' + pp.id + '\',\'' + lst.id + '\',\'' + sub.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.4;padding:0 2px;">✕</button>'
+        + '</div>'
+        + subItemsHtml
+        + '<div style="display:flex;gap:5px;margin-top:4px;">'
+        + '<input type="text" placeholder="Ajouter…" id="persoSubItem-' + pp.id + '-' + lst.id + '-' + sub.id + '" style="flex:1;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;" onkeydown="if(event.key===\'Enter\')_persoAddSubItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + sub.id + '\')" />'
+        + '<button onclick="_persoAddSubItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + sub.id + '\')" style="padding:5px 9px;border-radius:8px;border:1px solid var(--line);background:var(--bg-1);cursor:pointer;font-size:12px;">+</button>'
+        + '</div></div>';
+    }).join("");
+
+    return '<div style="margin-bottom:14px;background:var(--bg-1);border-radius:12px;padding:12px;">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
+      + '<span style="font-size:15px;">' + (lst.emoji||"📋") + '</span>'
+      + '<strong style="font-size:14px;flex:1;">' + escapeHtml(lst.name) + '</strong>'
       + '<span style="font-size:11px;color:var(--ink-softer);">' + done + '/' + total + '</span>'
-      + '<button onclick="_persoDeleteList(\'' + pp.id + '\',\'' + lst.id + '\')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-softer);padding:0 4px;">✕</button>'
+      + '<button onclick="_persoAddSubList(\'' + pp.id + '\',\'' + lst.id + '\')" title="Ajouter une sous-liste" style="background:none;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:11px;color:var(--ink-soft);padding:2px 6px;">+ sous-liste</button>'
+      + '<button onclick="_persoDeleteList(\'' + pp.id + '\',\'' + lst.id + '\')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-softer);padding:0 4px;opacity:0.5;">✕</button>'
       + '</div>'
-      + itemsHtml
-      + '<div style="display:flex;gap:6px;margin-top:4px;">'
-      + '<input type="text" placeholder="Ajouter un élément…" id="persoItem-' + pp.id + '-' + lst.id + '" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;" onkeydown="if(event.key===\'Enter\')_persoAddItem(\'' + pp.id + '\',\'' + lst.id + '\')" />'
-      + '<button onclick="_persoAddItem(\'' + pp.id + '\',\'' + lst.id + '\')" style="padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg-1);cursor:pointer;font-family:inherit;font-size:12px;">+</button>'
+      + rootItemsHtml + sublistsHtml
+      + '<div style="display:flex;gap:6px;margin-top:6px;">'
+      + '<input type="text" placeholder="Ajouter un élément…" id="persoItem-' + pp.id + '-' + lst.id + '" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;background:white;" onkeydown="if(event.key===\'Enter\')_persoAddItem(\'' + pp.id + '\',\'' + lst.id + '\')" />'
+      + '<button onclick="_persoAddItem(\'' + pp.id + '\',\'' + lst.id + '\')" style="padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:12px;">+</button>'
       + '</div></div>';
-  }).join('<hr style="border:none;border-top:1px solid var(--line);margin:10px 0;">');
+  }).join("");
 }
 
-function _renderPersoExpenses(pp) {
-  const exps = pp.expenses||[];
-  if (!exps.length) return '<p style="color:var(--ink-softer);font-size:12px;font-style:italic;">Aucune dépense enregistrée.</p>';
-  return exps.map(function(e) {
-    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;">'
-      + '<span style="flex:1;">' + escapeHtml(e.label||"") + '</span>'
-      + '<span style="font-weight:700;">' + (e.amount||0).toFixed(2) + ' €</span>'
-      + '<button onclick="_persoDeleteExpense(\'' + pp.id + '\',\'' + e.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);">✕</button>'
+function _renderPersoBudget(pp) {
+  const col = pp.color||"#c9a0dc";
+  const bg = pp.bg||"#f5ecff";
+  // Sections
+  const sections = pp.budgetSections||[];
+  const totalSpent = sections.reduce((s,sec)=>(sec.items||[]).reduce((t,e)=>t+(e.amount||0),s),0);
+  const budgetBarW = pp.budget ? Math.min(100, Math.round(totalSpent/pp.budget*100)) : 0;
+  const overBudget = pp.budget && totalSpent > pp.budget;
+
+  let html = '<div style="height:6px;background:var(--line);border-radius:3px;margin-bottom:12px;"><div style="width:' + budgetBarW + '%;height:100%;background:' + (overBudget?"#dc2626":col) + ';border-radius:3px;transition:width 0.3s;"></div></div>';
+
+  if (!sections.length) {
+    html += '<p style="color:var(--ink-softer);font-size:12px;font-style:italic;margin-bottom:10px;">Aucune section — commence par créer une section (ex: Repas, Déco, Transport…)</p>';
+  }
+  sections.forEach(function(sec) {
+    const secTotal = (sec.items||[]).reduce((t,e)=>t+(e.amount||0),0);
+    const itemsHtml = (sec.items||[]).map(function(e) {
+      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:8px;">'
+        + '<span style="flex:1;font-size:13px;">' + escapeHtml(e.name||"") + '</span>'
+        + '<span style="font-weight:600;font-size:13px;">' + (e.amount||0).toFixed(2) + ' €</span>'
+        + '<button onclick="_persoDeleteExpense(\'' + pp.id + '\',\'' + e.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.4;">✕</button>'
+        + '</div>';
+    }).join("");
+    html += '<div style="margin-bottom:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden;">'
+      + '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:' + bg + ';">'
+      + '<span style="font-size:13px;font-weight:700;flex:1;color:var(--ink);">📂 ' + escapeHtml(sec.name) + '</span>'
+      + '<span style="font-size:12px;font-weight:600;color:' + col + ';">' + secTotal.toFixed(0) + ' €</span>'
+      + '<button onclick="_persoAddExpense(\'' + pp.id + '\',\'' + sec.id + '\')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid ' + col + ';background:white;color:' + col + ';cursor:pointer;font-family:inherit;">+ dépense</button>'
+      + '<button onclick="_persoDeleteBudgetSection(\'' + pp.id + '\',\'' + sec.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.4;padding:0 2px;">✕</button>'
+      + '</div>'
+      + (itemsHtml ? '<div style="padding:4px 4px;">' + itemsHtml + '</div>' : '<p style="color:var(--ink-softer);font-size:12px;padding:8px 12px;font-style:italic;margin:0;">Aucune dépense dans cette section.</p>')
       + '</div>';
-  }).join("");
+  });
+  return html;
 }
 
 function _persoSaveNotes(ppId, val) {
@@ -18217,16 +18360,23 @@ function _persoSetStatus(ppId, val) {
   if (pp) { pp.status = val; saveState(); }
 }
 function _persoAddList(ppId) {
-  const name = prompt("Nom de la liste (ex: Invités, Déco, Traiteur…) :");
-  if (!name?.trim()) return;
+  document.getElementById("persoListProjId").value = ppId;
+  document.getElementById("persoListName").value = "";
+  document.getElementById("persoListModal").classList.add("open");
+  setTimeout(()=>document.getElementById("persoListName").focus(), 80);
+}
+function _closePersoListModal() { document.getElementById("persoListModal").classList.remove("open"); }
+function _savePersoList() {
+  const ppId = document.getElementById("persoListProjId").value;
+  const name = document.getElementById("persoListName").value.trim();
+  if (!name) return;
   const emojis = ["📋","👥","🎀","🍽️","🏡","🎵","📸","💌","🌸","✈️"];
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   if (!pp) return;
   if (!pp.lists) pp.lists = [];
-  pp.lists.push({id:"lst"+Date.now(),name:name.trim(),emoji:emojis[pp.lists.length%emojis.length],items:[]});
-  saveState(); renderPersoProjects();
-  // Rester sur ce projet
-  setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50);
+  pp.lists.push({id:"lst"+Date.now(), name, emoji:emojis[pp.lists.length%emojis.length], items:[], sublists:[]});
+  saveState(); _closePersoListModal(); renderPersoProjects();
+  setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(), 50);
 }
 function _persoDeleteList(ppId, lstId) {
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
@@ -18260,21 +18410,122 @@ function _persoDeleteItem(ppId, lstId, itemId) {
   const lst = (pp?.lists||[]).find(l=>l.id===lstId);
   if (lst) { lst.items=(lst.items||[]).filter(i=>i.id!==itemId); saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50); }
 }
-function _persoAddExpense(ppId) {
-  const label = prompt("Description de la dépense :");
-  if (!label?.trim()) return;
-  const amount = parseFloat(prompt("Montant (€) :"));
-  if (isNaN(amount)||amount<0) return;
+function _persoAddExpense(ppId, sectionId) {
+  document.getElementById("persoExpenseProjId").value = ppId;
+  document.getElementById("persoExpenseSectionId").value = sectionId || "";
+  document.getElementById("persoExpenseName").value = "";
+  document.getElementById("persoExpenseAmount").value = "";
+  document.getElementById("persoExpenseModal").classList.add("open");
+  setTimeout(()=>document.getElementById("persoExpenseName").focus(), 80);
+}
+function _closePersoExpenseModal() { document.getElementById("persoExpenseModal").classList.remove("open"); }
+function _savePersoExpense() {
+  const ppId = document.getElementById("persoExpenseProjId").value;
+  const sectionId = document.getElementById("persoExpenseSectionId").value;
+  const name = document.getElementById("persoExpenseName").value.trim();
+  const amount = parseFloat(document.getElementById("persoExpenseAmount").value);
+  if (!name || isNaN(amount) || amount < 0) return;
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   if (!pp) return;
-  if (!pp.expenses) pp.expenses=[];
-  pp.expenses.push({id:"exp"+Date.now(),label:label.trim(),amount});
-  saveState(); renderPersoProjects();
-  setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50);
+  if (!pp.budgetSections) pp.budgetSections = [];
+  let section = pp.budgetSections.find(s=>s.id===sectionId);
+  if (!section) {
+    // Ajouter dans la section "Général" ou la première section disponible
+    section = pp.budgetSections[0];
+    if (!section) { section = {id:"sec"+Date.now(),name:"Général",items:[]}; pp.budgetSections.push(section); }
+  }
+  if (!section.items) section.items = [];
+  section.items.push({id:"exp"+Date.now(), name, amount});
+  saveState(); _closePersoExpenseModal(); renderPersoProjects();
+  setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(), 50);
 }
 function _persoDeleteExpense(ppId, expId) {
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  if (pp) { pp.expenses=(pp.expenses||[]).filter(e=>e.id!==expId); saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50); }
+  if (!pp) return;
+  // Chercher dans budgetSections
+  (pp.budgetSections||[]).forEach(s=>{ s.items=(s.items||[]).filter(e=>e.id!==expId); });
+  // Rétrocompat: aussi dans expenses
+  if (pp.expenses) pp.expenses=pp.expenses.filter(e=>e.id!==expId);
+  saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50);
+}
+function _addPersoBudgetSection(ppId) {
+  document.getElementById("persoBudgetSectionProjId").value = ppId;
+  document.getElementById("persoBudgetSectionName").value = "";
+  document.getElementById("persoBudgetSectionModal").classList.add("open");
+  setTimeout(()=>document.getElementById("persoBudgetSectionName").focus(), 80);
+}
+function _closePersoBudgetSectionModal() { document.getElementById("persoBudgetSectionModal").classList.remove("open"); }
+function _savePersoBudgetSection() {
+  const ppId = document.getElementById("persoBudgetSectionProjId").value;
+  const name = document.getElementById("persoBudgetSectionName").value.trim();
+  if (!name) return;
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  if (!pp) return;
+  if (!pp.budgetSections) pp.budgetSections = [];
+  pp.budgetSections.push({id:"sec"+Date.now(), name, items:[]});
+  saveState(); _closePersoBudgetSectionModal(); renderPersoProjects();
+  setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(), 50);
+}
+function _persoDeleteBudgetSection(ppId, secId) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  if (!pp) return;
+  pp.budgetSections = (pp.budgetSections||[]).filter(s=>s.id!==secId);
+  saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50);
+}
+// Sous-listes
+function _persoAddSubList(ppId, lstId) {
+  document.getElementById("persoSubListProjId").value = ppId;
+  document.getElementById("persoSubListLstId").value = lstId;
+  document.getElementById("persoSubListName").value = "";
+  document.getElementById("persoSubListModal").classList.add("open");
+  setTimeout(()=>document.getElementById("persoSubListName").focus(), 80);
+}
+function _closePersoSubListModal() { document.getElementById("persoSubListModal").classList.remove("open"); }
+function _savePersoSubList() {
+  const ppId = document.getElementById("persoSubListProjId").value;
+  const lstId = document.getElementById("persoSubListLstId").value;
+  const name = document.getElementById("persoSubListName").value.trim();
+  if (!name) return;
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
+  if (!lst) return;
+  if (!lst.sublists) lst.sublists = [];
+  lst.sublists.push({id:"sub"+Date.now(), name, items:[]});
+  saveState(); _closePersoSubListModal(); renderPersoProjects();
+  setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(), 50);
+}
+function _persoDeleteSubList(ppId, lstId, subId) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
+  if (!lst) return;
+  lst.sublists = (lst.sublists||[]).filter(s=>s.id!==subId);
+  saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50);
+}
+function _persoAddSubItem(ppId, lstId, subId) {
+  const inp = document.getElementById(`persoSubItem-${ppId}-${lstId}-${subId}`);
+  const text = inp?.value?.trim();
+  if (!text) return;
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
+  const sub = (lst?.sublists||[]).find(s=>s.id===subId);
+  if (!sub) return;
+  if (!sub.items) sub.items=[];
+  sub.items.push({id:"itm"+Date.now(), text, done:false});
+  saveState(); renderPersoProjects();
+  setTimeout(()=>{ document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(); document.getElementById(`persoSubItem-${ppId}-${lstId}-${subId}`)?.focus(); }, 50);
+}
+function _persoToggleSubItem(ppId, lstId, subId, itemId, done) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
+  const sub = (lst?.sublists||[]).find(s=>s.id===subId);
+  const item = (sub?.items||[]).find(i=>i.id===itemId);
+  if (item) { item.done=done; saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50); }
+}
+function _persoDeleteSubItem(ppId, lstId, subId, itemId) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
+  const sub = (lst?.sublists||[]).find(s=>s.id===subId);
+  if (sub) { sub.items=(sub.items||[]).filter(i=>i.id!==itemId); saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50); }
 }
 
 /* ========= NOTES LIBRES ========= */
@@ -23432,17 +23683,17 @@ const HELP_TEXTS = {
   // --- Sous-sections Domestique ---
   "domestic-notes": {
     icon: "📝", title: "Notes & To-do",
-    subtitle: "Notes libres et liste de tâches domestiques",
+    subtitle: "To-do du jour, listes, notes et tâches domestiques",
     body: `
-      <p>Deux outils complémentaires pour organiser ta maison :</p>
+      <p>Quatre outils distincts pour ne rien oublier :</p>
       <ul style="padding-left:18px;margin:10px 0;">
-        <li><strong>🗒️ To-do domestique</strong> — Tâches à faire à la maison (ménage, administratif, bricolage…) avec priorité et deadline. Coche pour marquer comme fait.</li>
-        <li><strong>📝 Notes libres</strong> — Notes rapides avec titre et contenu libre. Idéal pour des infos à retenir : codes, références, instructions, listes de contacts.</li>
-        <li><strong>🛒 Courses</strong> — Liste de courses à cocher. Une fois tout coché, la liste se réinitialise pour la prochaine fois.</li>
-        <li><strong>Checklists</strong> — Listes réutilisables (valise, produits ménagers récurrents…). Recoche les items sans repartir de zéro.</li>
+        <li><strong>☑️ To-do du jour</strong> — Ce sont les choses à faire <em>aujourd'hui</em> : passer un appel, faire des courses, envoyer un mail… C'est la même liste que celle visible dans l'onglet Aujourd'hui. Elle se vide chaque jour pour repartir à zéro.</li>
+        <li><strong>📋 Mes listes</strong> — Des listes libres que tu gardes dans le temps : liste valise, liste cadeaux à faire, liste des films à voir… Tu crées autant de listes que tu veux, avec des items à cocher et décocher.</li>
+        <li><strong>📝 Notes libres</strong> — Des notes avec un titre et un contenu libre, idéales pour des infos à retenir : code wifi, contact plombier, numéro d'assurance, instructions d'entretien…</li>
+        <li><strong>🗒️ Tâches domestiques</strong> — Différent du To-do du jour : ce sont des tâches qui restent en tête et que tu n'as pas forcément le temps de traiter aujourd'hui (mettre à jour les finances, acheter un nouvel appareil, planifier des travaux…). Chaque tâche peut avoir une priorité et une deadline.</li>
       </ul>
       <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
-        💡 <strong>Astuce :</strong> Utilise les Notes libres pour les infos ponctuelles (ex : "code de la salle de sport : 4892") et les Checklists pour les procédures récurrentes.
+        💡 <strong>Règle simple :</strong> To-do du jour = "je le fais aujourd'hui". Tâches domestiques = "je dois y penser mais pas forcément maintenant". Listes = "j'y reviens quand j'en ai besoin". Notes = "je veux retrouver cette info plus tard".
       </div>`
   },
   "domestic-alimentation": {
