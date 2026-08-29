@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v981</title>
+<title>Mon Tableau de Vie 🌿 · v982</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2951,7 +2951,7 @@
         </div>
         <div id="pillCalendar" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
         <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;color:var(--ink-softer);flex-wrap:wrap;">
-          <span id="pillLabelLeft" style="font-size:11px;color:var(--ink-softer);">← aujourd'hui</span><span style="flex:1;"></span><span style="font-size:11px;color:var(--ink-softer);">il y a 90 jours →</span>
+          <span id="pillLabelLeft" style="font-size:11px;color:var(--ink-softer);">← il y a 90 jours</span><span style="flex:1;"></span><span style="font-size:11px;color:var(--ink-softer);">aujourd'hui →</span>
         </div>
         <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--ink-softer);">
           <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#c9b6f0;display:inline-block;"></span>Prise</span>
@@ -11200,7 +11200,7 @@ function setPillNb(n) {
   const label = n === 'all' ? 'tout' : n;
   document.getElementById('pillNbLabel').textContent = label;
   document.getElementById('pillPctLabel').textContent = n === 'all' ? 'Depuis le début' : (n <= 31 ? 'Ce mois' : 'Sur la période');
-  document.getElementById('pillLabelLeft').textContent = n === 'all' ? '← depuis le début' : `← il y a ${n} jours`;
+  document.getElementById('pillLabelLeft').textContent = n === 'all' ? '← depuis le début' : `← il y a ${n} jours`; document.querySelector('#pillLabelLeft + span + span') && (document.querySelector('#pillLabelLeft').nextElementSibling.nextElementSibling.textContent = "aujourd'hui →");
   ['30','60','90','All'].forEach(v => {
     const btn = document.getElementById('pillBtn'+v);
     if (btn) btn.style.fontWeight = (String(n) === (v === 'All' ? 'all' : v)) ? '700' : '400';
@@ -11219,7 +11219,7 @@ function renderPillSante() {
 
   // Calendrier variable
   const days = [];
-  for (let i = 0; i < _pillNb; i++) {
+  for (let i = _pillNb - 1; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
     days.push(todayKey(d));
   }
@@ -11291,7 +11291,7 @@ function renderHabitsTracking() {
 
   const today = new Date(); today.setHours(0,0,0,0);
   const days = [];
-  for (let i = 0; i < _habitNb; i++) {
+  for (let i = _habitNb - 1; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
     days.push(todayKey(d));
   }
@@ -11389,7 +11389,7 @@ function renderHabitsTracking() {
       </div>
       ${gridHtml}
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--ink-softer);">
-        <span>← aujourd'hui</span><span>il y a ${_habitNb} jours →</span>
+        <span>← il y a ${_habitNb} jours</span><span>aujourd'hui →</span>
       </div>
     </div>` + _wrapEnd;
   }).join("");
