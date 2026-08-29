@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v997</title>
+<title>Mon Tableau de Vie 🌿 · v998</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2210,7 +2210,7 @@
   </div>
 
   <!-- Modal : Édition catégorie de temps -->
-  <div class="modal-bg" id="editTimeCatModal" onclick="if(event.target===this)_closeEditTimeCatModal()">
+  <div class="modal-bg" id="editTimeCatModal" style="z-index:200;" onclick="if(event.target===this)_closeEditTimeCatModal()">
     <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
       <h3 style="margin:0 0 18px;font-size:17px;">✏️ Modifier la catégorie</h3>
       <input type="hidden" id="editTimeCatIdx" />
