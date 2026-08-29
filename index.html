@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v968</title>
+<title>Mon Tableau de Vie 🌿 · v969</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1753,6 +1753,7 @@
   }
   .notes-back-btn { display: none; }
   @media (max-width: 640px) {
+    #habitsTrackingGrid { grid-template-columns: 1fr !important; }
     .notes-layout { grid-template-columns: 1fr; min-height: unset; gap: 10px; }
     /* Par défaut sur mobile : sidebar visible, éditeur caché */
     #notesEditorPanel { display: none !important; }
@@ -2909,7 +2910,7 @@
           <button onclick="setHabitNb(90)" id="habitBtn90" class="btn-soft" style="font-size:11px;padding:4px 8px;font-weight:700;">90j</button>
         </div>
       </div>
-      <div id="habitsTrackingGrid" style="display:flex;flex-direction:column;gap:18px;"></div>
+      <div id="habitsTrackingGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:18px;"></div>
     </div>
 
     <!-- 🩺 Suivi symptômes perso -->
@@ -10989,7 +10990,14 @@ function renderHabitsTracking() {
     days.push(todayKey(d));
   }
 
-  el.innerHTML = habits.map(h => {
+  const isOdd = habits.length % 2 === 1;
+  el.innerHTML = habits.map((h, hIdx) => {
+    const spanFull = isOdd && hIdx === habits.length - 1;
+    const gridSpan = spanFull ? 'grid-column:1/-1;' : '';
+    // wrap chaque habitude dans un conteneur qui gère le span
+    const _wrapStart = `<div style="${gridSpan}">`;
+    const _wrapEnd = `</div>`;
+    h = h; // reassign suppressed warning
     const isNumeric = h.type === "numeric";
     const target = h.target || 1;
     const col = _habitColor(h.id);
@@ -11053,7 +11061,7 @@ function renderHabitsTracking() {
         }).join("") + `</div>`;
     }
 
-    return `<div>
+    return _wrapStart + `<div style="padding:14px;background:white;border-radius:14px;border:1px solid var(--line);height:100%;box-sizing:border-box;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
         <span style="font-size:18px;">${h.emoji||"✨"}</span>
         <span style="font-size:14px;font-weight:700;color:var(--ink);flex:1;">${escapeHtml(h.name)}</span>
@@ -11077,8 +11085,8 @@ function renderHabitsTracking() {
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--ink-softer);">
         <span>← il y a ${_habitNb} jours</span><span>aujourd'hui →</span>
       </div>
-    </div>`;
-  }).join(`<hr style="border:none;border-top:1px solid var(--line);margin:0;">`);
+    </div>` + _wrapEnd;
+  }).join("");
 }
 
 let _skincareNb = 60;
