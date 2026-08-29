@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v965</title>
+<title>Mon Tableau de Vie 🌿 · v966</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1885,11 +1885,11 @@
         </div>
         <div id="routineTodayBlock"></div>
         <!-- Toggles opt-in cycle/pilule (mode édition) -->
-        <div class="edit-only" style="margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bg-1);border:1px dashed var(--line);">
-          <div style="font-size:11px;font-weight:600;color:var(--ink-softer);letter-spacing:.05em;margin-bottom:8px;">🌸 CYCLE MENSTRUEL — activer le suivi :</div>
+        <div class="edit-only" style="margin-top:10px;padding:12px 16px;border-radius:12px;background:var(--bg-1);border:1.5px dashed var(--lavender);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-sizing:border-box;width:100%;">
+          <div style="font-size:11px;font-weight:600;color:var(--ink-softer);letter-spacing:.05em;white-space:nowrap;">🌸 Cycle menstruel — activer le suivi :</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button onclick="_toggleFeature('pill')" id="featurePillBtn" style="padding:5px 12px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">💊 Suivi pilule</button>
-            <button onclick="_toggleFeature('cycle')" id="featureCycleBtn" style="padding:5px 12px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🩸 Suivi règles</button>
+            <button onclick="_toggleFeature('pill')" id="featurePillBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">💊 Suivi pilule</button>
+            <button onclick="_toggleFeature('cycle')" id="featureCycleBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🩸 Suivi règles</button>
           </div>
         </div>
         <!-- 💊 Pilule (opt-in) -->
@@ -2246,12 +2246,11 @@
     <div class="sub-tabs">
       <button class="sub-tab active" data-sub="tasks">✅ Tâches</button>
       <button class="sub-tab" data-sub="time">⏱️ Temps</button>
-      <button class="sub-tab" data-sub="postdoc" id="workTab-postdoc">📘 <span id="workTabLabel-postdoc"></span><span class="edit-only" onclick="event.stopPropagation();renameWorkTab('postdoc',this)" style="margin-left:4px;font-size:10px;cursor:pointer;opacity:0.6;" title="Renommer">✏️</span></button>
       <button class="sub-tab" data-sub="candidatures" id="workTab-candidatures">📋 <span id="workTabLabel-candidatures"></span><span class="edit-only" onclick="event.stopPropagation();renameWorkTab('candidatures',this)" style="margin-left:4px;font-size:10px;cursor:pointer;opacity:0.6;" title="Renommer">✏️</span></button>
       <button class="sub-tab" data-sub="valorisation" id="workTab-valorisation">📝 <span id="workTabLabel-valorisation"></span><span class="edit-only" onclick="event.stopPropagation();renameWorkTab('valorisation',this)" style="margin-left:4px;font-size:10px;cursor:pointer;opacity:0.6;" title="Renommer">✏️</span></button>
       <button class="sub-tab" data-sub="teaching" id="workTab-teaching">📚 <span id="workTabLabel-teaching"></span><span class="edit-only" onclick="event.stopPropagation();renameWorkTab('teaching',this)" style="margin-left:4px;font-size:10px;cursor:pointer;opacity:0.6;" title="Renommer">✏️</span></button>
       <button class="sub-tab" data-sub="notes">📓 Notes</button>
-      <button class="sub-tab" data-sub="biblio">📖 Biblio</button>
+      <button class="sub-tab" data-sub="administratif">🗂️ Administratif</button>
     </div>
 
     <!-- Sub: Tâches -->
@@ -2324,13 +2323,16 @@
           <input type="date" id="timeWorkDate" style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:white;color:var(--ink);" />
           <button class="btn-soft" onclick="resetTimeDateToToday()" style="font-size:12px;padding:7px 12px;">Aujourd'hui</button>
         </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:12px;color:var(--ink-softer);">Catégories de temps</span>
+          <button class="edit-only" onclick="openTimeCatsModal()" style="padding:4px 11px;border-radius:8px;border:1px solid var(--line);background:var(--lavender-soft);color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;">⚙️ Gérer les catégories</button>
+        </div>
         <div id="timeCatsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:8px;"></div>
         <div style="display:flex;align-items:center;gap:8px;background:#fdf6d8;padding:7px 10px;border-radius:10px;margin-bottom:8px;">
           <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">🔧 Autre</span>
           <input type="number" id="timeAutre" step="0.25" min="0" placeholder="0" style="width:64px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#b8900a;background:white;text-align:center;" onchange="saveTimeWork()" />
           <span style="font-size:12px;color:var(--ink-soft);">h</span>
           <input type="text" id="timeAutreNote" placeholder="Préciser…" maxlength="120" style="flex:1;padding:4px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" oninput="saveTimeNote()" />
-          <button class="edit-only" onclick="_addTimeCat()" style="padding:4px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;" title="Ajouter une catégorie de temps">+ Catégorie</button>
         </div>
         <div style="padding:8px 12px;background:linear-gradient(135deg,var(--butter-soft),white);border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:13px;color:var(--ink-soft);">Total du jour</span>
@@ -2386,20 +2388,13 @@
     </div>
 
     <!-- Sub: Postdoc -->
-    <div class="sub-view" data-sub="postdoc">
-      <div class="card" style="margin-bottom:18px;">
-        <div class="card-row">
-          <h2>📘 Postdoc <span class="count" id="postdocCount"></span></h2>
-          <button class="btn-primary" onclick="openProjectModal()">+ Nouveau projet</button>
-        </div>
-        <div id="postdocProjectCard"></div>
-      </div>
-      <div class="card" style="margin-top:18px;">
+    <div class="sub-view" data-sub="administratif">
+      <div class="card">
         <div class="card-row" style="margin-bottom:14px;">
-          <h2 style="margin:0;">🗂️ Gestion administrative</h2>
+          <h2 style="margin:0;">🗂️ Administratif</h2>
         </div>
         <div class="adm-tabs">
-          <button class="adm-tab active" data-admtab="budget" onclick="admSwitchTab('budget')">💰 Budget missions</button>
+          <button class="adm-tab active" data-admtab="budget" onclick="admSwitchTab('budget')">💰 Missions &amp; notes de frais</button>
           <button class="adm-tab" data-admtab="conges" onclick="admSwitchTab('conges')">🌴 Congés</button>
         </div>
         <div id="admBudgetPanel"><div id="admBudgetContent"></div></div>
@@ -2563,8 +2558,8 @@
       </div>
     </div>
 
-  <!-- Sub: Bibliographie -->
-    <div class="sub-view" data-sub="biblio">
+  <!-- Sub: Bibliographie (onglet masqué, fonctions conservées) -->
+    <div class="sub-view" data-sub="biblio" style="display:none!important;">
       <!-- Sélecteur de projet -->
       <div id="biblioProjectRow" style="display:none;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
         <select id="biblioProjectSelect" onchange="switchBiblioProject(this.value)"
@@ -5014,6 +5009,57 @@
   </div>
 </div>
 
+<!-- Modal catégories de temps -->
+<div class="modal-bg" id="timeCatsModal" onclick="if(event.target===this)closeTimeCatsModal()">
+  <div class="modal" style="max-width:480px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h2 style="margin:0;font-size:16px;">⚙️ Catégories de temps</h2>
+      <button onclick="closeTimeCatsModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);line-height:1;">✕</button>
+    </div>
+    <div id="timeCatsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:320px;overflow-y:auto;"></div>
+    <div style="border-top:1px solid var(--line);padding-top:14px;">
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;font-weight:600;">Nouvelle catégorie</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="text" id="newTimeCatEmoji" placeholder="📌" maxlength="4" style="width:44px;padding:8px;border:1px solid var(--line);border-radius:10px;font-size:16px;text-align:center;font-family:inherit;" />
+        <input type="text" id="newTimeCatLabel" placeholder="Nom de la catégorie" style="flex:1;min-width:120px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" />
+        <input type="color" id="newTimeCatColor" value="#6aaed6" style="width:38px;height:38px;padding:2px;border:1px solid var(--line);border-radius:10px;cursor:pointer;" title="Couleur" />
+        <button onclick="_createTimeCat()" style="padding:8px 16px;border-radius:10px;border:none;background:var(--lavender);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Ajouter</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal congés config -->
+<div class="modal-bg" id="congesConfigModal" onclick="if(event.target===this)closeCongesConfigModal()">
+  <div class="modal" style="max-width:540px;max-height:85vh;display:flex;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h2 style="margin:0;font-size:16px;">⚙️ Paramètres congés</h2>
+      <button onclick="closeCongesConfigModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);line-height:1;">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;">
+      <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:10px;">Catégories de congés</div>
+      <div id="congesCatsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:20px;padding:10px 12px;background:var(--bg-1);border-radius:10px;">
+        <input type="text" id="newCongesCatLabel" placeholder="Nom (ex: Congé maladie)" style="flex:1;min-width:120px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;" />
+        <input type="color" id="newCongesCatColor" value="#6b9ec4" style="width:34px;height:34px;padding:2px;border:1px solid var(--line);border-radius:8px;cursor:pointer;" />
+        <input type="number" id="newCongesCatDroits" placeholder="Jours" min="0" max="365" step="0.5" style="width:70px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;text-align:center;" />
+        <button onclick="_createCongesCat()" style="padding:8px 14px;border-radius:10px;border:none;background:var(--mint-soft);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Ajouter</button>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:10px;">Jours fériés personnalisés</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;">Les jours fériés officiels sont calculés automatiquement. Tu peux en supprimer ou en ajouter ci-dessous.</div>
+      <div id="congesHolidaysList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;max-height:160px;overflow-y:auto;"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:var(--bg-1);border-radius:10px;">
+        <input type="date" id="newHolidayDate" style="flex:1;min-width:130px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;" />
+        <input type="text" id="newHolidayName" placeholder="Nom (ex: Pont entreprise)" style="flex:2;min-width:140px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;" />
+        <button onclick="_addCustomHoliday()" style="padding:8px 14px;border-radius:10px;border:none;background:var(--butter-soft);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Ajouter</button>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;padding-top:14px;border-top:1px solid var(--line);margin-top:12px;">
+      <button onclick="saveCongesConfig()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="admCongeModal">
   <div class="modal" style="max-width:400px;">
     <h2 id="admCongeTitle">+ Nouvelle periode</h2>
@@ -5027,10 +5073,7 @@
       <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Jours ouvres</label>
         <input type="number" id="admCJours" min="0" max="30" step="0.5" placeholder="5" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
       <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Type</label>
-        <select id="admCType" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;background:white;">
-          <option value="CA">CA</option>
-          <option value="RTT">RTT</option>
-        </select></div>
+        <select id="admCType" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;background:white;"></select></div>
       <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Statut</label>
         <select id="admCStatut" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;background:white;">
           <option value="Planifie">Planifie</option>
@@ -5868,7 +5911,7 @@ function setupTabs() {
       t.classList.add("active");
       parent.querySelector(`.sub-view[data-sub="${t.dataset.sub}"]`).classList.add("active");
       if (t.dataset.sub === "notes") renderWorkNotes();
-      if (t.dataset.sub === "biblio") { switchBiblioPanel('refs'); }
+      if (t.dataset.sub === "administratif") { admRender(); }
     });
   });
 }
@@ -6707,10 +6750,7 @@ function _renderProjectCardFeatured(targetId, projectFilter, gradientCss, defaul
 }
 
 function renderPostdocView() {
-  _renderProjectCardFeatured("postdocProjectCard", isPostdocProject,
-    "linear-gradient(135deg,var(--sky-soft) 0%, var(--mint-soft) 100%)",
-    "linear-gradient(90deg,var(--sky),var(--mint))");
-  admRender();
+  // postdocProjectCard supprimé (onglet Postdoc retiré) — admRender géré par l'onglet Administratif
 }
 function isCandProject(p) { return p.id === "p-seed-candidatures" || /^candidatures?$/i.test(p.name); }
 
@@ -6765,6 +6805,46 @@ function renderCandidaturesProjectCard() {
 var _admTab = "budget";
 var _admMissionId = null;
 var _admCongeId = null;
+var _congesYear = new Date().getFullYear();
+var _congesMonthFrom = 1;
+var _congesMonthTo = 12;
+
+/* --- Config congés par défaut --- */
+function _defaultCongesConfig() {
+  return {
+    categories: [
+      { id: "CA",  label: "Congés Annuels", color: "#1d4ed8", colorBg: "#eff6ff", droits: 25 },
+      { id: "RTT", label: "RTT",             color: "#0369a1", colorBg: "#f0f9ff", droits: 0  }
+    ],
+    customHolidays: [] // [{date, name, deleted}]
+  };
+}
+function _getCongesConfig() {
+  if (!state.admin) state.admin = { missions:[], abonnement:[], congesConfig: _defaultCongesConfig(), congesPeriodes:[] };
+  const cfg = state.admin.congesConfig;
+  if (!cfg.categories) {
+    // migration ancienne structure droitsCA/droitsRTT
+    cfg.categories = [
+      { id: "CA",  label: "Congés Annuels", color: "#1d4ed8", colorBg: "#eff6ff", droits: cfg.droitsCA  || 25 },
+      { id: "RTT", label: "RTT",             color: "#0369a1", colorBg: "#f0f9ff", droits: cfg.droitsRTT || 0  }
+    ];
+    cfg.customHolidays = cfg.customHolidays || [];
+  }
+  return cfg;
+}
+
+/* --- Jours fériés pour une année (algo Butcher/Meeus, 1900-2100) --- */
+function _congesHolidays(year) {
+  const base = getFrenchHolidays(year); // retourne des "YYYY-MM-DD"
+  const cfg = _getCongesConfig();
+  const customs = cfg.customHolidays || [];
+  // supprimer les jours fériés marqués deleted
+  const deleted = new Set(customs.filter(h => h.deleted).map(h => h.date));
+  // ajouter les jours fériés custom
+  const added = customs.filter(h => !h.deleted).map(h => h.date);
+  const set = new Set([...base.filter(d => !deleted.has(d)), ...added]);
+  return set; // Set de "YYYY-MM-DD"
+}
 
 function admSwitchTab(tab) {
   _admTab = tab;
@@ -6894,147 +6974,159 @@ function admRenderConges() {
   var el = document.getElementById("admCongesContent");
   if (!el) return;
   var periodes = (state.admin && state.admin.congesPeriodes) || [];
-  var cfg      = (state.admin && state.admin.congesConfig)   || { droitsCA:27, droitsRTT:20 };
+  var cfg = _getCongesConfig();
+  var cats = cfg.categories || [];
+  var FERIES = _congesHolidays(_congesYear);
 
-  /* --- calcul des totaux --- */
-  var prisCA = 0, planCA = 0, prisRTT = 0, planRTT = 0;
+  /* --- hex → rgb light bg --- */
+  function _hexAlpha(hex, a) {
+    var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    return 'rgba('+r+','+g+','+b+','+a+')';
+  }
+
+  /* --- calcul des totaux par catégorie --- */
+  var totals = {};
+  cats.forEach(function(c) { totals[c.id] = { pris:0, plan:0 }; });
   for (var i = 0; i < periodes.length; i++) {
     var p = periodes[i];
-    var j = p.jours || 0;
-    if (p.type === "CA"  && p.statut === "Pris")      prisCA  += j;
-    if (p.type === "CA"  && p.statut === "Planifie")  planCA  += j;
-    if (p.type === "RTT" && p.statut === "Pris")      prisRTT += j;
-    if (p.type === "RTT" && p.statut === "Planifie")  planRTT += j;
+    if (!totals[p.type]) totals[p.type] = { pris:0, plan:0 };
+    if (p.statut === "Pris")     totals[p.type].pris += (p.jours || 0);
+    if (p.statut === "Planifie") totals[p.type].plan += (p.jours || 0);
   }
-  var restCA  = cfg.droitsCA  - prisCA  - planCA;
-  var restRTT = cfg.droitsRTT - prisRTT - planRTT;
 
-  /* --- jours feries dans le contrat (janv 2026 - fev 2027) --- */
-  var FERIES = {
-    "2026-04-06":1,"2026-05-01":1,"2026-05-08":1,"2026-05-14":1,"2026-05-25":1,
-    "2026-07-14":1,"2026-08-15":1,"2026-11-01":1,"2026-11-11":1,"2026-12-25":1,
-    "2027-01-01":1
-  };
-
-  /* --- couleur d'un jour donne --- */
+  /* --- type d'un jour --- */
   function admDayType(ds) {
     var d = new Date(ds + "T00:00:00");
     var dow = d.getDay();
-    if (dow === 0 || dow === 6) return "we";
-    if (FERIES[ds]) return "fe";
+    if (dow === 0 || dow === 6) return { type:"we" };
+    if (FERIES.has(ds)) return { type:"fe" };
     for (var k = 0; k < periodes.length; k++) {
       var pp = periodes[k];
       if (ds >= pp.debut && ds <= pp.fin) {
-        if (pp.type === "CA"  && pp.statut === "Pris")     return "ca-pris";
-        if (pp.type === "CA"  && pp.statut === "Planifie") return "ca-plan";
-        if (pp.type === "RTT" && pp.statut === "Pris")     return "rtt-pris";
-        if (pp.type === "RTT" && pp.statut === "Planifie") return "rtt-plan";
+        return { type:"cg", catId: pp.type, statut: pp.statut };
       }
     }
-    return "ok";
-  }
-  function admDayStyle(t) {
-    if (t === "we")      return "background:#f0f0f0;color:#bbb;";
-    if (t === "fe")      return "background:#fef3c7;color:#b45309;font-weight:700;";
-    if (t === "ca-pris") return "background:#bfdbfe;color:#1d4ed8;font-weight:700;";
-    if (t === "ca-plan") return "background:#ede9fe;color:#6d28d9;font-weight:700;";
-    if (t === "rtt-pris")return "background:#bae6fd;color:#0369a1;font-weight:700;";
-    if (t === "rtt-plan")return "background:#e0e7ff;color:#4338ca;font-weight:700;";
-    return "color:var(--ink);";
+    return { type:"ok" };
   }
 
   /* --- rendu d'un mois --- */
   function admRenderMonth(yr, mo) {
-    var mNames = ["","Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
-    var firstDow  = new Date(yr, mo - 1, 1).getDay();
-    var offset    = (firstDow + 6) % 7;
-    var daysInMo  = new Date(yr, mo, 0).getDate();
-    var h = '<div style="border:1px solid var(--line);border-radius:10px;padding:8px;background:white;width:178px;flex-shrink:0;">';
+    var mNames = ["","Jan","Fév","Mar","Avr","Mai","Juin","Juil","Aoû","Sep","Oct","Nov","Déc"];
+    var firstDow = new Date(yr, mo - 1, 1).getDay();
+    var offset   = (firstDow + 6) % 7;
+    var daysInMo = new Date(yr, mo, 0).getDate();
+    var h = '<div style="border:1px solid var(--line);border-radius:10px;padding:8px;background:white;width:176px;flex-shrink:0;">';
     h += '<div style="text-align:center;font-size:11px;font-weight:700;color:var(--ink);margin-bottom:6px;">' + mNames[mo] + ' ' + yr + '</div>';
     h += '<div style="display:grid;grid-template-columns:repeat(7,22px);gap:2px;">';
-    var dh = ['L','M','M','J','V','S','D'];
-    for (var x = 0; x < 7; x++) {
-      h += '<div style="text-align:center;font-size:9px;color:var(--ink-soft);padding:2px 0;">' + dh[x] + '</div>';
-    }
+    ['L','M','M','J','V','S','D'].forEach(function(d){ h += '<div style="text-align:center;font-size:9px;color:var(--ink-soft);padding:2px 0;">'+d+'</div>'; });
     for (var e = 0; e < offset; e++) h += '<div></div>';
     for (var dd = 1; dd <= daysInMo; dd++) {
       var ds = yr + '-' + String(mo).padStart(2,'0') + '-' + String(dd).padStart(2,'0');
-      var t  = admDayType(ds);
-      var st = admDayStyle(t);
-      var clickable = (t !== 'weekend' && t !== 'ferie');
-      var cursor = clickable ? 'cursor:pointer;' : '';
-      var title  = clickable ? ' title="Cliquer pour poser un congé"' : '';
-      var onclick = clickable ? ' onclick="admDayClick(\'' + ds + '\')"' : '';
-      h += '<div' + onclick + title + ' style="text-align:center;font-size:9px;padding:2px 1px;border-radius:3px;' + cursor + st + '">' + dd + '</div>';
+      var info = admDayType(ds);
+      var st = 'text-align:center;font-size:9px;padding:2px 1px;border-radius:3px;';
+      var onclick = '', title = '';
+      if (info.type === "we")   st += 'background:#f0f0f0;color:#bbb;';
+      else if (info.type === "fe") st += 'background:#fef3c7;color:#b45309;font-weight:700;';
+      else if (info.type === "cg") {
+        var cat = cats.find(function(c){ return c.id === info.catId; }) || { color:'#555', colorBg:'#eee' };
+        var alpha = info.statut === "Pris" ? '0.35' : '0.15';
+        st += 'background:' + _hexAlpha(cat.color, alpha) + ';color:' + cat.color + ';font-weight:700;cursor:pointer;';
+        onclick = ' onclick="admDayClick(\'' + ds + '\')"';
+        title = ' title="' + escapeHtml(cat.label + (info.statut === "Planifie" ? " (planifié)" : "")) + '"';
+      } else {
+        st += 'color:var(--ink);cursor:pointer;';
+        onclick = ' onclick="admDayClick(\'' + ds + '\')"';
+        title = ' title="Poser un congé"';
+      }
+      h += '<div' + onclick + title + ' style="' + st + '">' + dd + '</div>';
     }
     h += '</div></div>';
     return h;
   }
 
-  /* --- tableau de synthese CA / RTT --- */
-  var restCAcol  = restCA  < 0 ? "color:#dc2626;" : "color:#16a34a;";
-  var restRTTcol = restRTT < 0 ? "color:#dc2626;" : "color:#16a34a;";
-  var summary = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">'
-    + '<div style="background:#eff6ff;border-radius:10px;padding:14px;">'
-    + '<div style="font-weight:700;color:#1d4ed8;font-size:13px;margin-bottom:10px;">Conges Annuels (CA)</div>'
-    + '<table style="width:100%;font-size:13px;border-collapse:collapse;"><tbody>'
-    + '<tr><td style="padding:3px 0;">Droits</td><td style="text-align:right;font-weight:700;">' + cfg.droitsCA + ' j</td></tr>'
-    + '<tr><td style="padding:3px 0;color:#1d4ed8;">Pris</td><td style="text-align:right;color:#1d4ed8;">&minus; ' + prisCA + ' j</td></tr>'
-    + '<tr><td style="padding:3px 0;color:#6d28d9;">Planifies</td><td style="text-align:right;color:#6d28d9;">&minus; ' + planCA + ' j</td></tr>'
-    + '<tr style="border-top:1px solid #bfdbfe;"><td style="font-weight:700;padding-top:6px;">Restants</td><td style="text-align:right;font-weight:700;padding-top:6px;' + restCAcol + '">' + restCA + ' j</td></tr>'
-    + '</tbody></table></div>'
-    + '<div style="background:#f0f9ff;border-radius:10px;padding:14px;">'
-    + '<div style="font-weight:700;color:#0369a1;font-size:13px;margin-bottom:10px;">RTT</div>'
-    + '<table style="width:100%;font-size:13px;border-collapse:collapse;"><tbody>'
-    + '<tr><td style="padding:3px 0;">Droits</td><td style="text-align:right;font-weight:700;">' + cfg.droitsRTT + ' j</td></tr>'
-    + '<tr><td style="padding:3px 0;color:#0369a1;">Pris</td><td style="text-align:right;color:#0369a1;">&minus; ' + prisRTT + ' j</td></tr>'
-    + '<tr><td style="padding:3px 0;color:#4338ca;">Planifies</td><td style="text-align:right;color:#4338ca;">&minus; ' + planRTT + ' j</td></tr>'
-    + '<tr style="border-top:1px solid #bae6fd;"><td style="font-weight:700;padding-top:6px;">Restants</td><td style="text-align:right;font-weight:700;padding-top:6px;' + restRTTcol + '">' + restRTT + ' j</td></tr>'
-    + '</tbody></table></div>'
+  /* --- contrôles année / plage mois --- */
+  var mNames2 = ["","Jan","Fév","Mar","Avr","Mai","Juin","Juil","Aoû","Sep","Oct","Nov","Déc"];
+  var yearOpts = "";
+  var curY = new Date().getFullYear();
+  for (var y = curY - 2; y <= Math.min(curY + 5, 2100); y++) {
+    yearOpts += '<option value="'+y+'"' + (y === _congesYear ? ' selected' : '') + '>'+y+'</option>';
+  }
+  var fromOpts = "", toOpts = "";
+  for (var m = 1; m <= 12; m++) {
+    fromOpts += '<option value="'+m+'"' + (m === _congesMonthFrom ? ' selected' : '') + '>'+mNames2[m]+'</option>';
+    toOpts   += '<option value="'+m+'"' + (m === _congesMonthTo   ? ' selected' : '') + '>'+mNames2[m]+'</option>';
+  }
+  var controls = '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;background:var(--bg-1);border-radius:10px;">'
+    + '<span style="font-size:13px;font-weight:700;color:var(--ink);">📅 Calendrier</span>'
+    + '<select onchange="_congesYear=Number(this.value);admRenderConges()" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;">' + yearOpts + '</select>'
+    + '<span style="font-size:12px;color:var(--ink-soft);">de</span>'
+    + '<select onchange="_congesMonthFrom=Number(this.value);admRenderConges()" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;">' + fromOpts + '</select>'
+    + '<span style="font-size:12px;color:var(--ink-soft);">à</span>'
+    + '<select onchange="_congesMonthTo=Number(this.value);admRenderConges()" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;">' + toOpts + '</select>'
+    + '<button onclick="openCongesConfigModal()" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">⚙️ Paramètres</button>'
     + '</div>';
 
-  /* --- legende --- */
-  var legend = '<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--ink-soft);margin-bottom:12px;">'
-    + '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#bfdbfe;vertical-align:middle;margin-right:3px;"></span>CA pris</span>'
-    + '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#bae6fd;vertical-align:middle;margin-right:3px;"></span>RTT pris</span>'
-    + '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#ede9fe;vertical-align:middle;margin-right:3px;"></span>CA planifie</span>'
-    + '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#e0e7ff;vertical-align:middle;margin-right:3px;"></span>RTT planifie</span>'
-    + '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#fef3c7;vertical-align:middle;margin-right:3px;"></span>Jour ferie</span>'
-    + '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#f0f0f0;vertical-align:middle;margin-right:3px;"></span>Week-end</span>'
-    + '</div>';
+  /* --- tableau de synthèse par catégorie --- */
+  var cols = Math.min(cats.length, 4);
+  var summary = '<div style="display:grid;grid-template-columns:repeat('+cols+',1fr);gap:10px;margin-bottom:16px;">';
+  cats.forEach(function(cat) {
+    var t = totals[cat.id] || { pris:0, plan:0 };
+    var rest = cat.droits - t.pris - t.plan;
+    var restColor = rest < 0 ? "color:#dc2626;" : "color:#16a34a;";
+    summary += '<div style="background:' + _hexAlpha(cat.color, 0.1) + ';border-radius:10px;padding:12px 14px;">'
+      + '<div style="font-weight:700;color:' + cat.color + ';font-size:13px;margin-bottom:8px;">' + escapeHtml(cat.label) + '</div>'
+      + '<table style="width:100%;font-size:12px;border-collapse:collapse;"><tbody>'
+      + '<tr><td style="padding:2px 0;">Droits</td><td style="text-align:right;font-weight:700;">' + cat.droits + ' j</td></tr>'
+      + '<tr><td style="padding:2px 0;opacity:0.8;">Pris</td><td style="text-align:right;opacity:0.8;">&minus; ' + t.pris + ' j</td></tr>'
+      + '<tr><td style="padding:2px 0;opacity:0.6;">Planifiés</td><td style="text-align:right;opacity:0.6;">&minus; ' + t.plan + ' j</td></tr>'
+      + '<tr style="border-top:1px solid ' + _hexAlpha(cat.color, 0.2) + '"><td style="font-weight:700;padding-top:5px;">Restants</td><td style="text-align:right;font-weight:700;padding-top:5px;' + restColor + '">' + rest + ' j</td></tr>'
+      + '</tbody></table></div>';
+  });
+  summary += '</div>';
 
-  /* --- calendriers mensusels (janv 2026 - fev 2027) --- */
-  var calMonths = [[2026,1],[2026,2],[2026,3],[2026,4],[2026,5],[2026,6],[2026,7],[2026,8],[2026,9],[2026,10],[2026,11],[2026,12],[2027,1],[2027,2]];
+  /* --- légende --- */
+  var legend = '<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--ink-soft);margin-bottom:12px;">';
+  cats.forEach(function(c) {
+    legend += '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:' + _hexAlpha(c.color, 0.35) + ';vertical-align:middle;margin-right:3px;border:1px solid ' + _hexAlpha(c.color, 0.5) + ';"></span>' + escapeHtml(c.label) + ' pris</span>';
+    legend += '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:' + _hexAlpha(c.color, 0.13) + ';vertical-align:middle;margin-right:3px;border:1px dashed ' + _hexAlpha(c.color, 0.4) + ';"></span>' + escapeHtml(c.label) + ' planifié</span>';
+  });
+  legend += '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#fef3c7;vertical-align:middle;margin-right:3px;"></span>Jour férié</span>';
+  legend += '<span><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#f0f0f0;vertical-align:middle;margin-right:3px;"></span>Week-end</span>';
+  legend += '</div>';
+
+  /* --- calendriers --- */
   var calHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">';
-  for (var mi = 0; mi < calMonths.length; mi++) {
-    calHTML += admRenderMonth(calMonths[mi][0], calMonths[mi][1]);
+  for (var mi = _congesMonthFrom; mi <= _congesMonthTo; mi++) {
+    calHTML += admRenderMonth(_congesYear, mi);
   }
   calHTML += '</div>';
 
-  /* --- tableau des periodes --- */
+  /* --- tableau des périodes --- */
   var sorted = periodes.slice().sort(function(a,b){ return a.debut.localeCompare(b.debut); });
   var pRows = "";
   for (var i = 0; i < sorted.length; i++) {
     var p = sorted[i];
-    var typeCls     = p.type === "CA" ? "adm-pill adm-pill-took" : "adm-pill adm-pill-plan";
-    var statutLabel = p.statut === "Planifie" ? "Planifie" : p.statut;
-    var statutCls   = p.statut === "Pris" ? "adm-pill adm-pill-ok" : "adm-pill adm-pill-plan";
+    var cat2 = cats.find(function(c){ return c.id === p.type; });
+    var typeLabel = cat2 ? cat2.label : p.type;
+    var typeStyle = cat2 ? 'background:' + _hexAlpha(cat2.color, 0.15) + ';color:' + cat2.color + ';padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;' : '';
+    var statutCls = p.statut === "Pris" ? "adm-pill adm-pill-ok" : "adm-pill adm-pill-plan";
+    var statutLabel = p.statut === "Planifie" ? "Planifié" : p.statut;
     pRows += "<tr>"
       + "<td>" + admFormatDate(p.debut) + "</td>"
       + "<td>" + admFormatDate(p.fin) + "</td>"
       + '<td class="r" style="font-weight:700;">' + (p.jours || "-") + " j</td>"
-      + '<td><span class="' + typeCls + '">' + p.type + "</span></td>"
+      + '<td><span style="' + typeStyle + '">' + escapeHtml(typeLabel) + "</span></td>"
       + '<td><span class="' + statutCls + '">' + statutLabel + "</span></td>"
       + '<td><button onclick="admOpenConge(\'' + p.id + '\')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 6px;">&#9998;</button></td>'
       + "</tr>";
   }
 
-  el.innerHTML = summary + legend + calHTML
+  el.innerHTML = controls + summary + legend + calHTML
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
-    + '<div style="font-size:13px;font-weight:700;">Periodes (' + periodes.length + ")</div>"
+    + '<div style="font-size:13px;font-weight:700;">Périodes (' + periodes.length + ")</div>"
     + '<button class="btn-primary" onclick="admOpenConge()" style="font-size:12px;padding:5px 14px;">+ Ajouter</button></div>'
     + '<div class="adm-table-wrap"><table class="adm-table"><thead><tr>'
-    + "<th>Debut</th><th>Fin</th><th>Jours</th><th>Type</th><th>Statut</th><th></th>"
+    + "<th>Début</th><th>Fin</th><th>Jours</th><th>Type</th><th>Statut</th><th></th>"
     + "</tr></thead><tbody>" + pRows + "</tbody></table></div>";
 }
 
@@ -7155,38 +7247,33 @@ admDeleteMission = function() {
 function admOpenConge(id) {
   _admCongeId = id || null;
   var p = id ? (state.admin.congesPeriodes.filter(function(x){ return x.id === id; })[0] || {}) : {};
-  document.getElementById("admCongeTitle").textContent = id ? "Modifier la periode" : "+ Nouvelle periode";
+  document.getElementById("admCongeTitle").textContent = id ? "Modifier la période" : "+ Nouvelle période";
   document.getElementById("admCDebut").value  = p.debut  || "";
   document.getElementById("admCFin").value    = p.fin    || "";
   document.getElementById("admCJours").value  = p.jours  || "";
   document.getElementById("admCStatut").value = p.statut || "Planifie";
   document.getElementById("admCDeleteBtn").style.display = id ? "inline-flex" : "none";
-  // Désactiver CA si solde épuisé (sauf si on édite une période CA existante)
-  var cfg = (state.admin && state.admin.congesConfig) || { droitsCA: 27, droitsRTT: 20 };
+  // Peupler le select Type dynamiquement depuis les catégories
+  var cfg = _getCongesConfig();
+  var cats = cfg.categories || [];
   var periodes = state.admin.congesPeriodes || [];
-  var prisCA = 0, planCA = 0, prisRTT = 0, planRTT = 0;
+  // Calculer le solde restant par catégorie
+  var used = {};
   for (var i = 0; i < periodes.length; i++) {
     var pi = periodes[i];
-    if (pi.id === id) continue; // exclure la période en cours d'édition
-    if (pi.type === "CA"  && pi.statut === "Pris")     prisCA  += pi.jours || 0;
-    if (pi.type === "CA"  && pi.statut === "Planifie") planCA  += pi.jours || 0;
-    if (pi.type === "RTT" && pi.statut === "Pris")     prisRTT += pi.jours || 0;
-    if (pi.type === "RTT" && pi.statut === "Planifie") planRTT += pi.jours || 0;
+    if (pi.id === id) continue;
+    if (!used[pi.type]) used[pi.type] = 0;
+    used[pi.type] += (pi.jours || 0);
   }
-  var restCA  = cfg.droitsCA  - prisCA  - planCA;
-  var restRTT = cfg.droitsRTT - prisRTT - planRTT;
   var sel = document.getElementById("admCType");
-  var caOpt  = sel.querySelector('option[value="CA"]');
-  var rttOpt = sel.querySelector('option[value="RTT"]');
-  caOpt.disabled  = restCA  <= 0 && p.type !== "CA";
-  rttOpt.disabled = restRTT <= 0 && p.type !== "RTT";
-  caOpt.textContent  = restCA  <= 0 ? "CA (épuisé)"  : "CA";
-  rttOpt.textContent = restRTT <= 0 ? "RTT (épuisé)" : "RTT";
-  // Sélectionner le type courant ou un type disponible
-  var preferredType = p.type || "CA";
-  if (preferredType === "CA"  && restCA  <= 0 && !id) preferredType = "RTT";
-  if (preferredType === "RTT" && restRTT <= 0 && !id) preferredType = "CA";
-  sel.value = preferredType;
+  sel.innerHTML = cats.map(function(c) {
+    var rest = c.droits - (used[c.id] || 0);
+    var disabled = c.droits > 0 && rest <= 0 && p.type !== c.id;
+    var label = escapeHtml(c.label) + (c.droits > 0 ? " (" + rest + " j restants)" : "");
+    if (disabled) label += " — épuisé";
+    return '<option value="' + escapeHtml(c.id) + '"' + (disabled ? ' disabled' : '') + '>' + label + '</option>';
+  }).join("");
+  sel.value = p.type || (cats[0] && cats[0].id) || "";
   document.getElementById("admCongeModal").classList.add("open");
 }
 function admCloseConge() { document.getElementById("admCongeModal").classList.remove("open"); }
@@ -7225,6 +7312,186 @@ function admDeleteConge() {
     saveState(); admCloseConge(); admRenderConges();
   });
 }
+/* -- Catégories congés config -- */
+function openCongesConfigModal() {
+  var cfg = _getCongesConfig();
+  // Render catégories
+  var listEl = document.getElementById("congesCatsList");
+  if (listEl) listEl.innerHTML = (cfg.categories || []).map(function(c, idx) {
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:white;border-radius:8px;border:1px solid var(--line);">'
+      + '<span style="width:18px;height:18px;border-radius:4px;background:' + c.color + ';flex-shrink:0;display:inline-block;"></span>'
+      + '<span style="flex:1;font-size:13px;font-weight:600;">' + escapeHtml(c.label) + '</span>'
+      + '<input type="number" min="0" max="365" step="0.5" value="' + (c.droits||0) + '" onchange="_updateCongesCatDroits(' + idx + ',this.value)" style="width:64px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:center;" placeholder="Jours" />'
+      + '<span style="font-size:11px;color:var(--ink-soft);">j</span>'
+      + '<button onclick="_deleteCongesCat(' + idx + ')" style="background:none;border:none;cursor:pointer;color:#c75b4d;font-size:14px;padding:2px 6px;" title="Supprimer">✕</button>'
+      + '</div>';
+  }).join("");
+  // Render holidays
+  _renderCongesHolidaysList();
+  document.getElementById("newCongesCatLabel").value = "";
+  document.getElementById("newCongesCatDroits").value = "";
+  document.getElementById("newHolidayDate").value = "";
+  document.getElementById("newHolidayName").value = "";
+  document.getElementById("congesConfigModal").classList.add("open");
+}
+function closeCongesConfigModal() { document.getElementById("congesConfigModal").classList.remove("open"); }
+function _renderCongesHolidaysList() {
+  var el = document.getElementById("congesHolidaysList");
+  if (!el) return;
+  var cfg = _getCongesConfig();
+  var customs = cfg.customHolidays || [];
+  // Afficher les officiels pour l'année courante avec possibilité de supprimer
+  var autoHols = getFrenchHolidays(_congesYear);
+  var deleted = new Set(customs.filter(function(h){ return h.deleted; }).map(function(h){ return h.date; }));
+  var added   = customs.filter(function(h){ return !h.deleted; });
+  var rows = [];
+  autoHols.forEach(function(d) {
+    var isDel = deleted.has(d);
+    rows.push('<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:' + (isDel ? '#fee2e2' : '#fef9e7') + ';border-radius:8px;border:1px solid ' + (isDel ? '#fca5a5' : '#fde68a') + ';">'
+      + '<span style="font-size:12px;flex:1;' + (isDel ? 'text-decoration:line-through;color:#9ca3af;' : '') + '">' + admFormatDate(d) + ' — <em style="font-size:11px;color:var(--ink-soft);">officiel</em></span>'
+      + (isDel
+        ? '<button onclick="_restoreHoliday(\'' + d + '\')" style="background:none;border:1px solid #16a34a;border-radius:6px;cursor:pointer;color:#16a34a;font-size:11px;padding:2px 7px;">Restaurer</button>'
+        : '<button onclick="_deleteHoliday(\'' + d + '\')" style="background:none;border:none;cursor:pointer;color:#c75b4d;font-size:14px;padding:2px 6px;" title="Supprimer">✕</button>')
+      + '</div>');
+  });
+  added.forEach(function(h, idx) {
+    rows.push('<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f0fdf4;border-radius:8px;border:1px solid #86efac;">'
+      + '<span style="font-size:12px;flex:1;">' + admFormatDate(h.date) + ' — ' + escapeHtml(h.name || "Personnalisé") + ' <em style="font-size:11px;color:var(--ink-soft);">+ ajouté</em></span>'
+      + '<button onclick="_removeCustomHoliday(\'' + h.date + '\')" style="background:none;border:none;cursor:pointer;color:#c75b4d;font-size:14px;padding:2px 6px;" title="Supprimer">✕</button>'
+      + '</div>');
+  });
+  el.innerHTML = rows.length ? rows.join("") : '<div style="color:var(--ink-soft);font-size:13px;font-style:italic;">Aucune modification — jours fériés officiels actifs.</div>';
+}
+function _updateCongesCatDroits(idx, val) {
+  var cfg = _getCongesConfig();
+  if (cfg.categories[idx]) cfg.categories[idx].droits = parseFloat(val) || 0;
+}
+function _deleteCongesCat(idx) {
+  var cfg = _getCongesConfig();
+  cfg.categories.splice(idx, 1);
+  openCongesConfigModal();
+}
+function _createCongesCat() {
+  var label = document.getElementById("newCongesCatLabel").value.trim();
+  var color = document.getElementById("newCongesCatColor").value || "#6b9ec4";
+  var droits = parseFloat(document.getElementById("newCongesCatDroits").value) || 0;
+  if (!label) { alert("Nom obligatoire."); return; }
+  var cfg = _getCongesConfig();
+  var id = "cg_" + label.toLowerCase().replace(/[^a-z0-9]/g,"_").slice(0,16) + "_" + Date.now();
+  var bg = color; // colorBg not strictly needed for new code
+  cfg.categories.push({ id, label, color, colorBg: bg, droits });
+  document.getElementById("newCongesCatLabel").value = "";
+  document.getElementById("newCongesCatDroits").value = "";
+  openCongesConfigModal(); // re-render
+}
+function _deleteHoliday(date) {
+  var cfg = _getCongesConfig();
+  var existing = cfg.customHolidays.find(function(h){ return h.date === date; });
+  if (existing) existing.deleted = true;
+  else cfg.customHolidays.push({ date, name: "", deleted: true });
+  _renderCongesHolidaysList();
+}
+function _restoreHoliday(date) {
+  var cfg = _getCongesConfig();
+  cfg.customHolidays = cfg.customHolidays.filter(function(h){ return h.date !== date; });
+  _renderCongesHolidaysList();
+}
+function _addCustomHoliday() {
+  var date = document.getElementById("newHolidayDate").value;
+  var name = document.getElementById("newHolidayName").value.trim();
+  if (!date) { alert("Date obligatoire."); return; }
+  var cfg = _getCongesConfig();
+  if (!cfg.customHolidays.find(function(h){ return h.date === date && !h.deleted; })) {
+    cfg.customHolidays = cfg.customHolidays.filter(function(h){ return h.date !== date; });
+    cfg.customHolidays.push({ date, name: name || "Personnalisé", deleted: false });
+  }
+  document.getElementById("newHolidayDate").value = "";
+  document.getElementById("newHolidayName").value = "";
+  _renderCongesHolidaysList();
+}
+function _removeCustomHoliday(date) {
+  var cfg = _getCongesConfig();
+  cfg.customHolidays = cfg.customHolidays.filter(function(h){ return h.date !== date || h.deleted; });
+  _renderCongesHolidaysList();
+}
+function saveCongesConfig() {
+  saveState();
+  closeCongesConfigModal();
+  admRenderConges();
+  showToast("✅ Paramètres congés enregistrés");
+}
+
+/* -- Time cats modal -- */
+function openTimeCatsModal() {
+  _renderTimeCatsList();
+  document.getElementById("newTimeCatEmoji").value = "";
+  document.getElementById("newTimeCatLabel").value = "";
+  document.getElementById("newTimeCatColor").value = "#6aaed6";
+  document.getElementById("timeCatsModal").classList.add("open");
+}
+function closeTimeCatsModal() { document.getElementById("timeCatsModal").classList.remove("open"); }
+function _renderTimeCatsList() {
+  var el = document.getElementById("timeCatsList");
+  if (!el) return;
+  var cats = getTimeCats();
+  if (!cats.length) {
+    el.innerHTML = '<div style="color:var(--ink-soft);font-size:13px;font-style:italic;text-align:center;padding:12px 0;">Aucune catégorie — ajoutes-en ci-dessous.</div>';
+    return;
+  }
+  el.innerHTML = cats.map(function(c, idx) {
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:' + c.bg + ';border-radius:10px;">'
+      + '<span style="font-size:18px;">' + c.emoji + '</span>'
+      + '<span style="flex:1;font-size:13px;font-weight:600;color:' + c.color + ';">' + escapeHtml(c.label) + '</span>'
+      + '<button onclick="_moveTimeCat(' + idx + ',-1)" style="background:none;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:12px;padding:2px 7px;color:var(--ink-soft);">▲</button>'
+      + '<button onclick="_moveTimeCat(' + idx + ',1)" style="background:none;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:12px;padding:2px 7px;color:var(--ink-soft);">▼</button>'
+      + '<button onclick="_editTimeCatModal(' + idx + ')" style="background:none;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:12px;padding:2px 8px;color:var(--ink-soft);">✏️</button>'
+      + '<button onclick="_deleteTimeCatByIdx(' + idx + ')" style="background:none;border:none;cursor:pointer;color:#c75b4d;font-size:14px;padding:2px 6px;" title="Supprimer">✕</button>'
+      + '</div>';
+  }).join("");
+}
+function _moveTimeCat(idx, dir) {
+  if (!state.work.timeCats) state.work.timeCats = [];
+  var arr = state.work.timeCats;
+  var newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  var tmp = arr[idx]; arr[idx] = arr[newIdx]; arr[newIdx] = tmp;
+  _renderTimeCatsList();
+}
+function _editTimeCatModal(idx) {
+  var cat = getTimeCats()[idx];
+  if (!cat) return;
+  var newEmoji = prompt("Emoji :", cat.emoji || "📌");
+  if (newEmoji === null) return;
+  var newLabel = prompt("Nom :", cat.label);
+  if (!newLabel?.trim()) return;
+  if (!state.work.timeCats) state.work.timeCats = [];
+  state.work.timeCats[idx].emoji = newEmoji.trim() || "📌";
+  state.work.timeCats[idx].label = newLabel.trim();
+  _renderTimeCatsList();
+}
+function _deleteTimeCatByIdx(idx) {
+  var cat = getTimeCats()[idx];
+  if (!cat) return;
+  _showConfirm("Supprimer la catégorie « " + cat.label + " » ?", function() {
+    if (!state.work.timeCats) state.work.timeCats = [];
+    state.work.timeCats.splice(idx, 1);
+    saveState(); _renderTimeCatsList(); renderTimeCatsGrid();
+  });
+}
+function _createTimeCat() {
+  var emoji = (document.getElementById("newTimeCatEmoji").value.trim() || "📌");
+  var label = document.getElementById("newTimeCatLabel").value.trim();
+  var color = document.getElementById("newTimeCatColor").value || "#6aaed6";
+  if (!label) { alert("Nom obligatoire."); return; }
+  if (!state.work.timeCats) state.work.timeCats = [];
+  var bg = color + "22"; // transparent version
+  var key = "tc_" + label.toLowerCase().replace(/[^a-z0-9]/g,"_").slice(0,20) + "_" + Date.now();
+  state.work.timeCats.push({ key, label, emoji, color, bg });
+  document.getElementById("newTimeCatEmoji").value = "";
+  document.getElementById("newTimeCatLabel").value = "";
+  saveState(); _renderTimeCatsList(); renderTimeCatsGrid();
+}
+
 /* ========= FIN GESTION ADMINISTRATIVE ========= */
 
 function renderValorisationView() {
@@ -16455,14 +16722,9 @@ document.getElementById("icsFile")?.addEventListener("change", e => {
 });
 
 /* ========= TEMPS DE TRAVAIL ========= */
-const TIME_CATS_DEFAULT = [
-  { key: "postdoc",      label: "Postdoc",      emoji: "📘", color: "#6aaed6", bg: "var(--sky-soft)" },
-  { key: "valorisation", label: "Valorisation", emoji: "📝", color: "#e890a4", bg: "var(--pink-soft)" },
-  { key: "enseignement", label: "Enseignement", emoji: "📚", color: "#9d82d6", bg: "var(--lavender-soft)" },
-  { key: "candidatures", label: "Candidatures", emoji: "📋", color: "#72c4a2", bg: "#e6f7f1" },
-];
+const TIME_CATS_DEFAULT = []; // pas de catégories imposées — chaque utilisateur crée les siennes
 function getTimeCats() {
-  return (state.work && state.work.timeCats && state.work.timeCats.length) ? state.work.timeCats : TIME_CATS_DEFAULT;
+  return (state.work && state.work.timeCats) ? state.work.timeCats : [];
 }
 // alias backward-compat
 Object.defineProperty(window, 'TIME_CATS', { get: getTimeCats, configurable: true });
@@ -16516,17 +16778,17 @@ function renderTimeCatsGrid() {
   if (!grid) return;
   const cats = getTimeCats();
   const wt = getWorkTime(getTimeDateKey());
+  if (!cats.length) {
+    grid.innerHTML = `<div style="color:var(--ink-soft);font-size:13px;font-style:italic;padding:8px 0;">Aucune catégorie — utilise <strong>Éditer → ⚙️ Catégories de temps</strong> pour en créer.</div>`;
+    return;
+  }
   grid.innerHTML = cats.map(c => `
     <div style="display:flex;align-items:center;gap:6px;background:${c.bg};padding:7px 10px;border-radius:10px;position:relative;">
-      <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">${c.emoji} ${c.label.length > 8 ? c.label.slice(0,7)+'…' : c.label}</span>
+      <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">${c.emoji} ${c.label.length > 9 ? c.label.slice(0,8)+'…' : c.label}</span>
       <input type="number" id="timeCat-${c.key}" step="0.25" min="0" placeholder="0" value="${wt[c.key] || ''}"
         style="width:52px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:${c.color};background:white;text-align:center;"
         onchange="saveTimeWork()" />
       <span style="font-size:12px;color:var(--ink-soft);">h</span>
-      <span class="edit-only" style="position:absolute;top:2px;right:4px;display:flex;gap:4px;">
-        <span onclick="_editTimeCat('${c.key}')" style="font-size:9px;color:var(--ink-softer);cursor:pointer;opacity:0.5;" title="Renommer">✏️</span>
-        <span onclick="_deleteTimeCat('${c.key}')" style="font-size:9px;color:var(--ink-softer);cursor:pointer;opacity:0.5;" title="Supprimer">✕</span>
-      </span>
     </div>`).join("");
 }
 function fillTimeForm(dateKey) {
@@ -16543,7 +16805,7 @@ function _addTimeCat() {
     const colors = ["#7bc4e2","#e890a4","#9d82d6","#72c4a2","#f5c842","#f0a070","#a0d8a0"];
     const bgs = ["var(--sky-soft)","var(--pink-soft)","var(--lavender-soft)","#e6f7f1","#fdf6d8","#fff0e8","#e8f4e8"];
     const idx = getTimeCats().length % colors.length;
-    if (!state.work.timeCats || !state.work.timeCats.length) state.work.timeCats = [...TIME_CATS_DEFAULT];
+    if (!state.work.timeCats) state.work.timeCats = [];
     state.work.timeCats.push({ key, label: label.trim(), emoji: "📌", color: colors[idx], bg: bgs[idx] });
     saveState(); renderTimeView();
   });
@@ -16554,7 +16816,7 @@ function _editTimeCat(key) {
   if (!cat) return;
   _showPrompt("Nouveau nom de la catégorie", cat.label, newLabel => {
     if (!newLabel?.trim()) return;
-    if (!state.work.timeCats || !state.work.timeCats.length) state.work.timeCats = [...TIME_CATS_DEFAULT];
+    if (!state.work.timeCats) state.work.timeCats = [];
     const c = state.work.timeCats.find(c => c.key === key);
     if (c) c.label = newLabel.trim();
     saveState(); renderTimeView();
@@ -16564,7 +16826,7 @@ function _deleteTimeCat(key) {
   const cat = getTimeCats().find(c => c.key === key);
   if (!cat) return;
   _showConfirm(`Supprimer la catégorie « ${cat.label} » ?`, () => {
-    if (!state.work.timeCats || !state.work.timeCats.length) state.work.timeCats = [...TIME_CATS_DEFAULT];
+    if (!state.work.timeCats) state.work.timeCats = [];
     state.work.timeCats = state.work.timeCats.filter(c => c.key !== key);
     saveState(); renderTimeView();
   });
