@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v961</title>
+<title>Mon Tableau de Vie 🌿 · v962</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -537,7 +537,7 @@
     cursor: pointer; font-size: 12px; padding: 1px 4px; border-radius: 4px;
   }
   .budget-del:hover { background: var(--rose-soft); color: var(--red); }
-  .budget-bar-wrap { background: #f3eef9; height: 5px; border-radius: 999px; overflow: hidden; margin-top: 4px; }
+  .budget-bar-wrap { background: var(--line); height: 5px; border-radius: 999px; overflow: hidden; margin-top: 4px; }
   .budget-bar { height: 100%; border-radius: 999px; transition: width 0.4s; }
   .budget-pct-label { font-size: 10px; color: var(--ink-softer); margin-top: 2px; text-align: right; line-height: 1; }
 
@@ -5890,10 +5890,10 @@ const RING_COLORS = [
   { fg: "#f7c9a3", bg: "#fce5d1" },
 ];
 const RING_COLORS_SERIEUX = [
-  { fg: "#1e3a5f", bg: "#c4d4e8" },
-  { fg: "#a06a3a", bg: "#ecd8c0" },
-  { fg: "#2e6090", bg: "#c0d4e4" },
-  { fg: "#b8903c", bg: "#ecddb8" },
+  { fg: "#6b9ec4", bg: "#d4e8f4" },
+  { fg: "#d4aa84", bg: "#f0e0cc" },
+  { fg: "#88a890", bg: "#ccddd0" },
+  { fg: "#a4c8d8", bg: "#d8eef5" },
 ];
 const RING_COLORS_MINIMAL = [
   { fg: "#111", bg: "#d4d4d4" },
@@ -9320,6 +9320,14 @@ function switchBodyMetric(metric) {
   document.getElementById("bodyMetricMuscle").classList.toggle("active", metric === "muscleMass");
   renderBodyChart(metric);
 }
+function _metricConfig() {
+  const _s = document.body.classList.contains("t-serieux");
+  return {
+    weight:     { label: "Poids",        unit: "kg", color: _s?"#8ab4d4":"#b4d4f1", bg: _s?"rgba(138,180,212,0.18)":"rgba(180,212,241,0.18)", min: 50, max: 60 },
+    bodyFat:    { label: "Masse grasse", unit: "kg", color: _s?"#d0ac84":"#f5b6c9", bg: _s?"rgba(208,172,132,0.18)":"rgba(245,182,201,0.18)", min: 8,  max: 16 },
+    muscleMass: { label: "Masse maigre", unit: "kg", color: _s?"#88a890":"#aee0c8", bg: _s?"rgba(136,168,144,0.18)":"rgba(174,224,200,0.18)", min: 40, max: 48 },
+  };
+}
 const METRIC_CONFIG = {
   weight: { label: "Poids", unit: "kg", color: "#b4d4f1", bg: "rgba(180,212,241,0.18)", min: 50, max: 60 },
   bodyFat: { label: "Masse grasse", unit: "kg", color: "#f5b6c9", bg: "rgba(245,182,201,0.18)", min: 8, max: 16 },
@@ -9468,9 +9476,9 @@ function getStepsForDate(d) {
 function colorForSteps(steps) {
   const target = getStepsHabit()?.target || 9000;
   const _s = document.body.classList.contains("t-serieux");
-  if (steps >= target) return { fg: _s?"#6a9e78":"#4d9c7e", bg: "var(--mint-soft)" };
-  if (steps >= 7000)  return { fg: _s?"#b08a5a":"#c08a4d", bg: "var(--peach-soft)" };
-  return                     { fg: _s?"#a06050":"#c75b4d", bg: "var(--rose-soft)" };
+  if (steps >= target) return { fg: _s?"#6a9e78":"#4d9c7e", bar: _s?"#88a890":"#aee0c8", bg: "var(--mint-soft)" };
+  if (steps >= 7000)  return { fg: _s?"#b08a5a":"#c08a4d", bar: _s?"#d0ac84":"#f7c9a3", bg: "var(--peach-soft)" };
+  return                     { fg: _s?"#a06050":"#c75b4d", bar: _s?"#c0986e":"#efb8c8", bg: "var(--rose-soft)" };
 }
 function renderStepsStats() {
   const h = getStepsHabit();
@@ -11028,9 +11036,10 @@ function renderStepsChart() {
   const dates = _healthMonthDates();
   const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
   const values = dates.map(d => getStepsForDate(d));
+  const _isStepsS = document.body.classList.contains("t-serieux");
   const colors = values.map(v => {
-    if (v === 0) return "#efeaf5";
-    return colorForSteps(v).fg + "cc";
+    if (v === 0) return _isStepsS ? "#d4e8f4" : "#efeaf5";
+    return colorForSteps(v).bar;
   });
   if (stepsChart) stepsChart.destroy();
   stepsChart = new Chart(document.getElementById("stepsChart"), {
@@ -11039,7 +11048,7 @@ function renderStepsChart() {
       labels,
       datasets: [
         { type: "bar", label: "Pas", data: values, backgroundColor: colors, borderRadius: 6, borderSkipped: false, order: 2 },
-        { type: "line", label: "Objectif 9000", data: values.map(() => target), borderColor: "#4d9c7e", borderWidth: 2, borderDash: [6, 4], pointRadius: 0, fill: false, order: 1 },
+        { type: "line", label: "Objectif 9000", data: values.map(() => target), borderColor: document.body.classList.contains("t-serieux")?"#6a9e78":"#4d9c7e", borderWidth: 2, borderDash: [6, 4], pointRadius: 0, fill: false, order: 1 },
       ],
     },
     options: {
@@ -11093,7 +11102,7 @@ function healthNavMonth(delta) {
 
 function renderBodyChart(metric) {
   metric = metric || currentBodyMetric || "weight";
-  const cfg = METRIC_CONFIG[metric];
+  const cfg = _metricConfig()[metric] || METRIC_CONFIG[metric];
   // Toutes les données du début à la fin
   const allDks = Object.keys(state.history || {}).sort();
   const withData = allDks.filter(dk => state.history[dk]?.[metric] != null);
@@ -11163,6 +11172,10 @@ function renderBodyComboChart() {
   const weightKg  = dates.map(d => hist[todayKey(d)]?.weight     ?? null);
   const fatKg     = dates.map(d => hist[todayKey(d)]?.bodyFat    ?? null);
   const muscleKg  = dates.map(d => hist[todayKey(d)]?.muscleMass ?? null);
+  const _isComboS = document.body.classList.contains("t-serieux");
+  const _comboFat = _isComboS ? "#d0ac84" : "#e890a4";
+  const _comboMus = _isComboS ? "#88a890" : "#4db89a";
+  const _comboW   = _isComboS ? "#6b9ec4" : "#9d82d6";
   if (bodyComboChart) bodyComboChart.destroy();
   bodyComboChart = new Chart(canvas, {
     type: "line",
@@ -11172,12 +11185,12 @@ function renderBodyComboChart() {
         {
           label: "🟠 Masse grasse (kg)",
           data: fatKg,
-          borderColor: "#e890a4",
-          backgroundColor: "rgba(245,182,201,0.7)",
+          borderColor: _comboFat,
+          backgroundColor: _isComboS ? "rgba(208,172,132,0.55)" : "rgba(245,182,201,0.7)",
           fill: "origin",
           borderWidth: 2,
           pointRadius: 5,
-          pointBackgroundColor: "#e890a4",
+          pointBackgroundColor: _comboFat,
           spanGaps: true,
           tension: 0.3,
           order: 1,
@@ -11185,12 +11198,12 @@ function renderBodyComboChart() {
         {
           label: "🟢 Masse maigre (kg)",
           data: muscleKg,
-          borderColor: "#4db89a",
-          backgroundColor: "rgba(174,224,200,0.55)",
+          borderColor: _comboMus,
+          backgroundColor: _isComboS ? "rgba(136,168,144,0.45)" : "rgba(174,224,200,0.55)",
           fill: "-1",
           borderWidth: 2,
           pointRadius: 5,
-          pointBackgroundColor: "#4db89a",
+          pointBackgroundColor: _comboMus,
           spanGaps: true,
           tension: 0.3,
           order: 2,
@@ -11198,12 +11211,12 @@ function renderBodyComboChart() {
         {
           label: "⚖️ Poids total (kg)",
           data: weightKg,
-          borderColor: "#9d82d6",
+          borderColor: _comboW,
           backgroundColor: "transparent",
           fill: false,
           borderWidth: 2.5,
           pointRadius: 4,
-          pointBackgroundColor: "#9d82d6",
+          pointBackgroundColor: _comboW,
           borderDash: [5, 3],
           spanGaps: true,
           tension: 0.3,
@@ -11419,7 +11432,8 @@ function renderCalorieChart() {
   });
   // Barres grises pour les jours passés sans données (pas les futurs)
   const emptyData = dates.map((d, i) => (data[i] == null && d <= now) ? 300 : null);
-  const colors = data.map(v => v == null ? "rgba(0,0,0,0)" : (v > limit ? "#f3a6a6" : "#aee0c8"));
+  const _isCalS = document.body.classList.contains("t-serieux");
+  const colors = data.map(v => v == null ? "rgba(0,0,0,0)" : (v > limit ? "#f3a6a6" : (_isCalS?"#a0c0a8":"#aee0c8")));
   const burnedData = dates.map(d => {
     const v = Number(state.history[todayKey(d)]?.habits?.['h-cal-dep']) || 0;
     return v > 0 ? v : null;
@@ -11432,17 +11446,17 @@ function renderCalorieChart() {
       datasets: [
         { label: "Ingérées", data, backgroundColor: colors, borderRadius: 6, barPercentage: 0.7, categoryPercentage: 0.85 },
         { label: "_vide", data: emptyData, backgroundColor: "rgba(200,195,210,0.25)", borderRadius: 6, barPercentage: 0.7, categoryPercentage: 0.85 },
-        { label: `Objectif (${limit})`, type: "line", data: dates.map(() => limit), borderColor: "#c9b6f0", borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, fill: false },
+        { label: `Objectif (${limit})`, type: "line", data: dates.map(() => limit), borderColor: _isCalS?"#8ab4d4":"#c9b6f0", borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, fill: false },
         {
           label: "🏃 Dépensées",
           type: "line",
           data: burnedData,
-          borderColor: "#5b8fd4",
+          borderColor: _isCalS?"#6b9ec4":"#5b8fd4",
           borderWidth: 2.5,
           backgroundColor: "transparent",
           tension: 0.35,
           pointRadius: burnedData.map(v => v != null ? 4 : 0),
-          pointBackgroundColor: "#5b8fd4",
+          pointBackgroundColor: _isCalS?"#6b9ec4":"#5b8fd4",
           pointBorderColor: "#fff",
           pointBorderWidth: 2,
           pointHoverRadius: 7,
@@ -13411,15 +13425,19 @@ function renderDailyExpenseChart() {
 
   // Légende HTML
   const legendEl = document.getElementById("dailyExpenseLegend");
+  const _isDES = document.body.classList.contains("t-serieux");
+  const _deIn  = _isDES ? "#a0c0a8" : "#aee0c8";
+  const _deOut = _isDES ? "#d0ac84" : "#efb8c8";
+  const _deCum = _isDES ? "#8ab4d4" : "#c9b6f0";
   if (legendEl) legendEl.innerHTML = `
     <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);margin-right:12px;">
-      <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#aee0c8;"></span>Rentre
+      <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${_deIn};"></span>Rentre
     </span>
     <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);margin-right:12px;">
-      <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#efb8c8;"></span>Sort
+      <span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${_deOut};"></span>Sort
     </span>
     <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);">
-      <span style="display:inline-block;width:20px;height:2px;border-radius:2px;background:#c9b6f0;"></span>Cumul sorties
+      <span style="display:inline-block;width:20px;height:2px;border-radius:2px;background:${_deCum};"></span>Cumul sorties
     </span>`;
 
   if (dailyExpenseChart) dailyExpenseChart.destroy();
@@ -13431,14 +13449,14 @@ function renderDailyExpenseChart() {
         {
           label: "Rentre",
           data: inData,
-          backgroundColor: days.map(d => isToday(d) ? "#7dd4a8" : "#aee0c8"),
+          backgroundColor: days.map(d => isToday(d) ? (_isDES?"#6a9e78":"#7dd4a8") : _deIn),
           borderRadius: 3,
           order: 2,
         },
         {
           label: "Sort",
           data: outData,
-          backgroundColor: days.map(d => isToday(d) ? "#d97fa0" : "#efb8c8"),
+          backgroundColor: days.map(d => isToday(d) ? (_isDES?"#b8906a":"#d97fa0") : _deOut),
           borderRadius: 3,
           order: 3,
         },
@@ -13446,7 +13464,7 @@ function renderDailyExpenseChart() {
           type: "line",
           label: "Cumul sorties",
           data: cumulData,
-          borderColor: "#c9b6f0",
+          borderColor: _deCum,
           borderWidth: 2,
           pointRadius: 0,
           pointHoverRadius: 4,
@@ -13632,7 +13650,8 @@ function renderBalanceEvolutionChart() {
   if (!ctx) return;
   // Couleur de la courbe selon solde final
   const lastBal = balances[balances.length - 1];
-  const lineColor = lastBal >= 0 ? "#4d9c7e" : "#c75b4d";
+  const _isBalS = document.body.classList.contains("t-serieux");
+  const lineColor = lastBal >= 0 ? (_isBalS?"#6b9ec4":"#4d9c7e") : (_isBalS?"#b05050":"#c75b4d");
   balanceEvolutionChart = new Chart(ctx, {
     type: "line",
     data: {
@@ -13689,18 +13708,20 @@ function renderMonthComparison() {
   const nowLabel  = _periodLabel(curP);
   const prevLabel = _periodLabel(prevP);
   if (lbl) lbl.textContent = `${prevLabel} → ${nowLabel}`;
+  const _isMCS = document.body.classList.contains("t-serieux");
   const rows = [
-    { label: "Dépenses",  icon: "−", colorN: "#c75b4d", n: sum(mThis, mThis2, "expense"),  p: sum(mPrev, mPrev2, "expense") },
-    { label: "Revenus",   icon: "+", colorN: "#4d9c7e", n: sum(mThis, mThis2, "income"),   p: sum(mPrev, mPrev2, "income") },
-    { label: "Épargne",   icon: "💰", colorN: "#7c5cbf", n: sum(mThis, mThis2, "savings"),  p: sum(mPrev, mPrev2, "savings") },
-    { label: "Hors cpt.", icon: "🧾", colorN: "#c08a4d", n: sum(mThis, mThis2, "external"), p: sum(mPrev, mPrev2, "external") },
+    { label: "Dépenses",  icon: "−", colorN: _isMCS?"#b05050":"#c75b4d", n: sum(mThis, mThis2, "expense"),  p: sum(mPrev, mPrev2, "expense") },
+    { label: "Revenus",   icon: "+", colorN: _isMCS?"#6a9e78":"#4d9c7e", n: sum(mThis, mThis2, "income"),   p: sum(mPrev, mPrev2, "income") },
+    { label: "Épargne",   icon: "💰", colorN: _isMCS?"#6b9ec4":"#7c5cbf", n: sum(mThis, mThis2, "savings"),  p: sum(mPrev, mPrev2, "savings") },
+    { label: "Hors cpt.", icon: "🧾", colorN: _isMCS?"#c0986e":"#c08a4d", n: sum(mThis, mThis2, "external"), p: sum(mPrev, mPrev2, "external") },
   ];
   el.innerHTML = rows.map(r => {
     const diff = r.n - r.p;
     const pct  = r.p > 0 ? ((diff / r.p) * 100).toFixed(0) : "—";
     // Pour les dépenses, hausse = mauvais (rouge) ; pour le reste, hausse = bon (vert)
     const isExpense = r.label === "Dépenses" || r.label === "Hors cpt.";
-    const diffColor = diff === 0 ? "var(--ink-soft)" : (diff > 0 ? (isExpense ? "#c75b4d" : "#4d9c7e") : (isExpense ? "#4d9c7e" : "#c75b4d"));
+    const _mRed = _isMCS?"#b05050":"#c75b4d", _mGrn = _isMCS?"#6a9e78":"#4d9c7e";
+    const diffColor = diff === 0 ? "var(--ink-soft)" : (diff > 0 ? (isExpense ? _mRed : _mGrn) : (isExpense ? _mGrn : _mRed));
     const arrow = diff === 0 ? "→" : (diff > 0 ? "↑" : "↓");
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);gap:8px;">
       <span style="font-size:13px;color:var(--ink);font-weight:500;min-width:70px;">${r.icon} ${r.label}</span>
