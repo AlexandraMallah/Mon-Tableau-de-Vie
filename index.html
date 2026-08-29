@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v974</title>
+<title>Mon Tableau de Vie 🌿 · v976</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2893,7 +2893,7 @@
         </div>
         <div id="pillCalendar" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
         <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;color:var(--ink-softer);flex-wrap:wrap;">
-          <span id="pillLabelLeft" style="font-size:11px;color:var(--ink-softer);">← il y a 90 jours</span><span style="flex:1;"></span><span style="font-size:11px;color:var(--ink-softer);">aujourd'hui →</span>
+          <span id="pillLabelLeft" style="font-size:11px;color:var(--ink-softer);">← aujourd'hui</span><span style="flex:1;"></span><span style="font-size:11px;color:var(--ink-softer);">il y a 90 jours →</span>
         </div>
         <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--ink-softer);">
           <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#c9b6f0;display:inline-block;"></span>Prise</span>
@@ -10638,9 +10638,11 @@ function _syncFeatureSections() {
   if (cycleSec) cycleSec.style.display = f.cycle ? "" : "none";
   if (pillBtn2)  { pillBtn2.style.background  = f.pill  ? "var(--lavender-soft)" : "white"; pillBtn2.style.borderColor  = f.pill  ? "var(--lavender)" : "var(--line)"; pillBtn2.style.color = f.pill  ? "var(--ink)" : "var(--ink-soft)"; }
   if (cycleBtn2) { cycleBtn2.style.background = f.cycle ? "var(--lavender-soft)" : "white"; cycleBtn2.style.borderColor = f.cycle ? "var(--lavender)" : "var(--line)"; cycleBtn2.style.color = f.cycle ? "var(--ink)" : "var(--ink-soft)"; }
-  // Santé : pilule card
+  // Santé : pilule card + routines (span full si pas de pilule)
   const pillCard = document.getElementById("healthPillCard");
+  const skincareCard = document.getElementById("healthSkincareCard");
   if (pillCard) pillCard.style.display = f.pill ? "" : "none";
+  if (skincareCard) skincareCard.style.gridColumn = f.pill ? "" : "1 / -1";
 }
 function renderPill() {
   _syncFeatureSections();
@@ -10938,7 +10940,7 @@ function renderPillSante() {
 
   // Calendrier variable
   const days = [];
-  for (let i = _pillNb - 1; i >= 0; i--) {
+  for (let i = 0; i < _pillNb; i++) {
     const d = new Date(today); d.setDate(d.getDate() - i);
     days.push(todayKey(d));
   }
@@ -11010,7 +11012,7 @@ function renderHabitsTracking() {
 
   const today = new Date(); today.setHours(0,0,0,0);
   const days = [];
-  for (let i = _habitNb - 1; i >= 0; i--) {
+  for (let i = 0; i < _habitNb; i++) {
     const d = new Date(today); d.setDate(d.getDate() - i);
     days.push(todayKey(d));
   }
@@ -11108,7 +11110,7 @@ function renderHabitsTracking() {
       </div>
       ${gridHtml}
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--ink-softer);">
-        <span>← il y a ${_habitNb} jours</span><span>aujourd'hui →</span>
+        <span>← aujourd'hui</span><span>il y a ${_habitNb} jours →</span>
       </div>
     </div>` + _wrapEnd;
   }).join("");
