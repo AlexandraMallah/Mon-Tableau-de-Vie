@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v969</title>
+<title>Mon Tableau de Vie 🌿 · v970</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11393,6 +11393,14 @@ function renderBodyChart(metric) {
   const dates = Array.from({length: nbDays}, (_, i) => { const d = new Date(first); d.setDate(first.getDate() + i); return d; });
   const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
   const data = dates.map(d => state.history[todayKey(d)]?.[metric] ?? null);
+  // Bornes Y dynamiques selon les données réelles (pas hardcodées)
+  const vals = data.filter(v => v != null);
+  let yMin, yMax;
+  if (vals.length) {
+    const margin = Math.max((Math.max(...vals) - Math.min(...vals)) * 0.15, 1);
+    yMin = Math.floor(Math.min(...vals) - margin);
+    yMax = Math.ceil(Math.max(...vals) + margin);
+  }
   if (bodyChart) bodyChart.destroy();
   bodyChart = new Chart(document.getElementById("bodyChart"), {
     type: "line",
@@ -11401,7 +11409,7 @@ function renderBodyChart(metric) {
       ...baseChartOpts(),
       scales: {
         x: { grid: { display: false }, ticks: { color: "#8a8499", maxTicksLimit: 6 } },
-        y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " " + cfg.unit }, min: cfg.min, max: cfg.max },
+        y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " " + cfg.unit }, ...(yMin != null ? { min: yMin, max: yMax } : {}) },
       },
       plugins: {
         ...baseChartOpts().plugins,
