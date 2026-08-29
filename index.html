@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v996</title>
+<title>Mon Tableau de Vie 🌿 · v997</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2337,6 +2337,7 @@
         <button class="sub-tab" data-sub="notes">📓 Notes</button>
         <button class="sub-tab" data-sub="administratif">🗂️ Administratif</button>
       </div>
+      <button onclick="openTimeCatsModal()" title="Gérer mes projets" style="flex-shrink:0;background:var(--lavender-soft);border:1.5px solid var(--lavender);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink);cursor:pointer;font-family:inherit;white-space:nowrap;font-weight:600;">⚙️ Projets</button>
       <button onclick="openHelpForCurrentSubView('work')" title="Aide sur cet onglet" style="flex-shrink:0;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;">ℹ️ Aide</button>
     </div>
 
@@ -2412,7 +2413,6 @@
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
           <span style="font-size:12px;color:var(--ink-softer);">Catégories de temps</span>
-          <button onclick="openTimeCatsModal()" style="padding:4px 11px;border-radius:8px;border:1px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;font-weight:600;">⚙️ Gérer mes projets</button>
         </div>
         <div id="timeCatsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:8px;"></div>
         <div style="display:flex;align-items:center;gap:8px;background:#fdf6d8;padding:7px 10px;border-radius:10px;margin-bottom:8px;">
@@ -4242,7 +4242,7 @@
       </div>
       <button onclick="closeHelp()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);padding:4px 8px;">✕</button>
     </div>
-    <div id="helpBody" style="font-size:14px;color:var(--ink);line-height:1.7;"></div>
+    <div id="helpBody" style="font-size:14px;color:var(--ink);line-height:1.7;text-align:justify;"></div>
     <div id="helpFooter" style="margin-top:18px;text-align:right;">
       <button onclick="closeHelp()" style="padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Compris ✓</button>
     </div>
@@ -7413,8 +7413,8 @@ function admRenderConges() {
   var calHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">';
   var yCur = _congesYear, mCur = _congesMonthFrom;
   var yEnd = _congesYearTo, mEnd = _congesMonthTo;
-  // Sécurité : max 24 mois
-  var _maxIter = 24;
+  // Sécurité : max 120 mois (10 ans)
+  var _maxIter = 120;
   while ((_maxIter-- > 0) && (yCur < yEnd || (yCur === yEnd && mCur <= mEnd))) {
     calHTML += admRenderMonth(yCur, mCur);
     mCur++;
