@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v988</title>
+<title>Mon Tableau de Vie 🌿 · v989</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5647,11 +5647,25 @@ function migrate(s) {
       }
     }
   }
-  // Migration : aligner les noms de projets sur les sous-onglets Travail
+  // Migration : aligner les noms de projets sur les sous-onglets Travail + assigner couleurs distinctes
   if (Array.isArray(s.work?.postdocProjects)) {
-    const renames = { "p-seed-postdoc": "Postdoc", "p-seed-valo": "Valorisation", "p-seed-enseignement": "Enseignement", "p-seed-candidatures": "Candidatures", "p-seed-autre": "Autre", "p-seed-prixthese": "Prix de thèse" };
-    s.work.postdocProjects.forEach(p => { if (renames[p.id]) p.name = renames[p.id]; });
-    // Anciens seeds supprimés — chaque utilisateur crée ses propres projets
+    const seedMeta = {
+      "p-seed-postdoc":      { name: "Postdoc",       emoji: "📗", color: "#5b8dee", bg: "#eaf1ff" },
+      "p-seed-valo":         { name: "Valorisation",  emoji: "📝", color: "#43c89e", bg: "#e6f9f4" },
+      "p-seed-enseignement": { name: "Enseignement",  emoji: "📚", color: "#f4a261", bg: "#fff4ec" },
+      "p-seed-candidatures": { name: "Candidatures",  emoji: "📋", color: "#e07ab1", bg: "#fdf0f7" },
+      "p-seed-autre":        { name: "Autre",         emoji: "🗂️", color: "#9b8ea8", bg: "#f3f0f7" },
+      "p-seed-prixthese":    { name: "Prix de thèse", emoji: "🏆", color: "#e9c46a", bg: "#fdf8e8" },
+    };
+    s.work.postdocProjects.forEach(p => {
+      const meta = seedMeta[p.id];
+      if (meta) {
+        p.name = meta.name;
+        if (!p.color) p.color = meta.color;
+        if (!p.bg)    p.bg    = meta.bg;
+        if (!p.emoji) p.emoji = meta.emoji;
+      }
+    });
   }
   // Migration : lier automatiquement les tâches MSCA/candidature au projet "Candidatures"
   if (Array.isArray(s.work?.postdocTasks) && Array.isArray(s.work?.postdocProjects)) {
