@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v995</title>
+<title>Mon Tableau de Vie 🌿 · v996</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2329,12 +2329,15 @@
 
   <!-- VIEW: WORK -->
   <section class="view" data-view="work">
-    <div class="sub-tabs">
-      <button class="sub-tab active" data-sub="tasks">✅ Tâches</button>
-      <button class="sub-tab" data-sub="time">⏱️ Temps</button>
-      <div id="workDynamicTabs" style="display:contents;"></div>
-      <button class="sub-tab" data-sub="notes">📓 Notes</button>
-      <button class="sub-tab" data-sub="administratif">🗂️ Administratif</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="sub-tabs" style="flex:1;min-width:0;">
+        <button class="sub-tab active" data-sub="tasks">✅ Tâches</button>
+        <button class="sub-tab" data-sub="time">⏱️ Temps</button>
+        <div id="workDynamicTabs" style="display:contents;"></div>
+        <button class="sub-tab" data-sub="notes">📓 Notes</button>
+        <button class="sub-tab" data-sub="administratif">🗂️ Administratif</button>
+      </div>
+      <button onclick="openHelpForCurrentSubView('work')" title="Aide sur cet onglet" style="flex-shrink:0;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;">ℹ️ Aide</button>
     </div>
 
     <!-- Sub: Tâches -->
@@ -3350,12 +3353,15 @@
 
   <!-- VIEW: DOMESTIC -->
   <section class="view" data-view="domestic">
-    <div class="sub-tabs" id="domesticSubTabs">
-      <button class="sub-tab active" data-sub="notes">📝 Notes & To-do</button>
-      <button class="sub-tab" data-sub="alimentation">🥗 Alimentation</button>
-      <button class="sub-tab" data-sub="plants">🌱 Plantes</button>
-      <div id="persoProjectTabs" style="display:contents;"></div>
-      <button onclick="openPersoProjectModal()" style="padding:5px 12px;border-radius:20px;border:1.5px dashed var(--line);background:white;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">+ Projet</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="sub-tabs" id="domesticSubTabs" style="flex:1;min-width:0;">
+        <button class="sub-tab active" data-sub="notes">📝 Notes & To-do</button>
+        <button class="sub-tab" data-sub="alimentation">🥗 Alimentation</button>
+        <button class="sub-tab" data-sub="plants">🌱 Plantes</button>
+        <div id="persoProjectTabs" style="display:contents;"></div>
+        <button onclick="openPersoProjectModal()" style="padding:5px 12px;border-radius:20px;border:1.5px dashed var(--line);background:white;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">+ Projet</button>
+      </div>
+      <button onclick="openHelpForCurrentSubView('domestic')" title="Aide sur cet onglet" style="flex-shrink:0;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;">ℹ️ Aide</button>
     </div>
     <div id="persoProjectViews"></div>
 
@@ -23148,6 +23154,157 @@ const HELP_TEXTS = {
         💡 Les scores sont calculés sur la semaine en cours. Un pilier à 0% ne veut pas dire échec — ça veut dire qu'il n'y a pas encore eu de données cette semaine.
       </div>`
   },
+  // --- Sous-sections Travail ---
+  "work-tasks": {
+    icon: "✅", title: "Tâches",
+    subtitle: "Gérer et prioriser tes tâches professionnelles",
+    body: `
+      <p>L'onglet Tâches centralise tout ce que tu dois faire dans ton travail :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Créer une tâche</strong> — Clique sur "+ Nouvelle tâche" (en haut). Donne-lui un nom, une priorité (🚨 Urgent → ⚪ Faible) et une deadline facultative.</li>
+        <li><strong>Priorités et tri</strong> — Les tâches sont automatiquement triées par urgence puis deadline. La barre de couleur va du rouge (0%) au vert (100%).</li>
+        <li><strong>Jalons</strong> — Décompose une tâche complexe en étapes. Le pourcentage d'avancement se calcule automatiquement selon les jalons cochés.</li>
+        <li><strong>Mini-calendrier</strong> — À droite de la liste, un calendrier 30 jours montre les deadlines avec des points colorés. Clique sur un jour pour filtrer les tâches dues ce jour.</li>
+        <li><strong>Projets</strong> — Les onglets Postdoc, Candidatures, etc. filtrent les tâches par projet. Assigne un projet à une tâche lors de sa création.</li>
+      </ul>
+      <div style="background:var(--lavender-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 <strong>Astuce :</strong> Cocher une tâche enregistre la date de complétion, qui alimente le pilier Travail (objectif tâches/semaine).
+      </div>`
+  },
+  "work-time": {
+    icon: "⏱️", title: "Suivi du temps",
+    subtitle: "Enregistrer et analyser tes heures de travail",
+    body: `
+      <p>Le suivi du temps te permet de mesurer concrètement où va ton énergie professionnelle :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Saisir des heures</strong> — Choisis une date (ou aujourd'hui), entre le nombre d'heures par catégorie (Postdoc, Candidatures, Valorisation…). Le total du jour se calcule automatiquement.</li>
+        <li><strong>Cette semaine / Ce mois</strong> — Totaux et répartition par projet. La moyenne journalière exclut les week-ends et jours fériés.</li>
+        <li><strong>Graphique 14 jours</strong> — Visualise ton rythme de travail sur les deux dernières semaines, avec les barres colorées par projet.</li>
+        <li><strong>Donuts</strong> — Répartition sur 30 jours et depuis le début, pour voir où tu passes le plus de temps.</li>
+        <li><strong>⚙️ Gérer mes projets</strong> — Ajoute, renomme ou supprime des catégories de temps. Chaque projet créé ici apparaît aussi comme onglet et section dans Tâches.</li>
+        <li><strong>🌴 Congés</strong> — Déclare tes périodes de congés. Ces jours sont exclus du calcul d'heures pour ne pas biaiser ta moyenne.</li>
+      </ul>
+      <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 <strong>Astuce :</strong> Saisir 0,5 = 30 min. Exemple : 1,75 = 1h45. Les données alimentent le pilier Travail (objectif heures/semaine).
+      </div>`
+  },
+  "work-postdoc": {
+    icon: "🔬", title: "Postdoc",
+    subtitle: "Suivi de tes projets et missions de recherche",
+    body: `
+      <p>L'onglet Postdoc suit les éléments spécifiques à ta recherche :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Projets de recherche</strong> — Liste tes projets en cours avec leur statut, financement et progression.</li>
+        <li><strong>Budget missions</strong> — Enregistre tes frais de déplacement et missions (conférences, terrains). Comparé au budget alloué.</li>
+        <li><strong>Tâches Postdoc</strong> — Toutes les tâches assignées au projet Postdoc apparaissent ici (créées dans l'onglet Tâches).</li>
+      </ul>`
+  },
+  "work-valorisation": {
+    icon: "📝", title: "Valorisation",
+    subtitle: "Articles, communications et publications",
+    body: `
+      <p>Suit l'avancement de tes productions scientifiques :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Articles</strong> — Ajoute tes articles avec leur statut (en rédaction, soumis, accepté, publié) et la revue cible.</li>
+        <li><strong>Communications</strong> — Conférences, posters, présentations orales. Date, lieu, statut (soumis, accepté, présenté).</li>
+        <li><strong>Chapitres</strong> — Contributions à des ouvrages collectifs.</li>
+        <li><strong>Tâches Valorisation</strong> — Les tâches liées à la valorisation apparaissent aussi ici.</li>
+      </ul>
+      <div style="background:var(--lavender-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 Ces données alimentent ton CV académique et te donnent une vue claire de ta production scientifique sur la durée.
+      </div>`
+  },
+  "work-candidatures": {
+    icon: "📋", title: "Candidatures",
+    subtitle: "Suivi de tes candidatures de postes",
+    body: `
+      <p>Un suivi complet de ta recherche de poste :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Ajouter une candidature</strong> — Établissement, poste, type (MCF, CR, postdoc…), date de soumission.</li>
+        <li><strong>Statuts</strong> — Chaque candidature passe par : 📤 Envoyée → 📞 Entretien → ✅ Acceptée / ❌ Refusée.</li>
+        <li><strong>Dossier</strong> — Note les documents envoyés, les contacts et les retours obtenus.</li>
+        <li><strong>Tâches Candidatures</strong> — Les tâches liées (préparer lettre, relance, etc.) apparaissent ici.</li>
+      </ul>`
+  },
+  "work-enseignement": {
+    icon: "📚", title: "Enseignement",
+    subtitle: "Cours, heures et notes par matière",
+    body: `
+      <p>Suit toute ton activité d'enseignement :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Cours</strong> — Ajoute chaque cours avec le nombre d'heures, le niveau et le type (CM, TD, TP).</li>
+        <li><strong>Total heures</strong> — Calcul automatique du total d'heures d'enseignement sur l'année.</li>
+        <li><strong>Notes et ressources</strong> — Attache des notes à chaque cours (plan de cours, références).</li>
+      </ul>`
+  },
+  "work-notes": {
+    icon: "📓", title: "Notes de travail",
+    subtitle: "Éditeur de notes par carnet",
+    body: `
+      <p>Un espace de notes structuré pour ton travail :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Carnets</strong> — Organise tes notes en carnets thématiques (Réunions, Idées, Compte-rendus…). Crée un carnet avec le bouton "+".</li>
+        <li><strong>Éditeur riche</strong> — Mise en forme : <strong>gras</strong>, <em>italique</em>, souligné, titres, listes. Utilise la barre d'outils en haut.</li>
+        <li><strong>Sauvegarde automatique</strong> — Chaque frappe est sauvegardée instantanément. Aucun risque de perte.</li>
+        <li><strong>Navigation</strong> — Sur mobile, passe de la liste des notes à l'éditeur avec les flèches. Sur desktop, les deux s'affichent côte à côte.</li>
+      </ul>
+      <div style="background:var(--butter-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 <strong>Astuce :</strong> Crée un carnet "Journal de bord" pour noter au fil de l'eau tes avancées quotidiennes de recherche.
+      </div>`
+  },
+  "work-administratif": {
+    icon: "🗂️", title: "Administratif",
+    subtitle: "Documents et infos administratives",
+    body: `
+      <p>Centralise toutes tes informations administratives professionnelles :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Contrats et documents</strong> — Références de contrat, dates, employeur, numéro de sécurité sociale pro.</li>
+        <li><strong>Frais professionnels</strong> — Suivi des frais en attente de remboursement (missions, matériel).</li>
+        <li><strong>Congés déclarés</strong> — Vue récapitulative de tes périodes de congés (aussi accessible depuis Temps → 🌴).</li>
+      </ul>`
+  },
+  // --- Sous-sections Domestique ---
+  "domestic-notes": {
+    icon: "📝", title: "Notes & To-do",
+    subtitle: "Notes libres et liste de tâches domestiques",
+    body: `
+      <p>Deux outils complémentaires pour organiser ta maison :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>🗒️ To-do domestique</strong> — Tâches à faire à la maison (ménage, administratif, bricolage…) avec priorité et deadline. Coche pour marquer comme fait.</li>
+        <li><strong>📝 Notes libres</strong> — Notes rapides avec titre et contenu libre. Idéal pour des infos à retenir : codes, références, instructions, listes de contacts.</li>
+        <li><strong>🛒 Courses</strong> — Liste de courses à cocher. Une fois tout coché, la liste se réinitialise pour la prochaine fois.</li>
+        <li><strong>Checklists</strong> — Listes réutilisables (valise, produits ménagers récurrents…). Recoche les items sans repartir de zéro.</li>
+      </ul>
+      <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 <strong>Astuce :</strong> Utilise les Notes libres pour les infos ponctuelles (ex : "code de la salle de sport : 4892") et les Checklists pour les procédures récurrentes.
+      </div>`
+  },
+  "domestic-alimentation": {
+    icon: "🥗", title: "Alimentation",
+    subtitle: "Repas, recettes et suivi calorique",
+    body: `
+      <p>Planifie et suis ton alimentation :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>🍽 Planning repas</strong> — Planifie tes repas de la semaine (matin, midi, soir). Clique sur un créneau pour noter ce que tu mangeras.</li>
+        <li><strong>📖 Recettes</strong> — Sauvegarde tes recettes favorites avec ingrédients et instructions. Retrouve-les facilement.</li>
+        <li><strong>🔥 Suivi calorique</strong> — Si tu as activé l'habitude "Apport calorique" dans Aujourd'hui, les calories se cumulent ici avec un graphique.</li>
+      </ul>`
+  },
+  "domestic-plants": {
+    icon: "🌱", title: "Plantes",
+    subtitle: "Suivi de l'arrosage et de l'entretien",
+    body: `
+      <p>Ne plus jamais oublier d'arroser tes plantes :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Ajouter une plante</strong> — Nom, emoji, fréquence d'arrosage en jours (ex : tous les 7 jours).</li>
+        <li><strong>Arroser</strong> — Clique sur 💧 pour enregistrer l'arrosage. La date du prochain arrosage se calcule automatiquement.</li>
+        <li><strong>Indicateur visuel</strong> — Vert = arrosée récemment, orange = bientôt, rouge = en retard.</li>
+        <li><strong>Notes d'entretien</strong> — Ajoute des infos sur chaque plante (exposition, type de sol, particularités).</li>
+      </ul>
+      <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 <strong>Astuce :</strong> Pour une plante qui s'arrose "1-2 fois par semaine", mets 5 jours. Pour "une fois par mois", mets 28 jours.
+      </div>`
+  },
   journal: {
     icon: "📓", title: "Journal",
     subtitle: "Entrées libres et analyse émotionnelle",
@@ -23178,9 +23335,19 @@ function closeHelp() { document.getElementById("helpModal").classList.remove("op
 function openHelpForCurrentView() {
   const active = document.querySelector(".tab.active");
   const view = active?.dataset?.view || "today";
-  // map view key → help key
   const keyMap = { today: "today", work: "work", activities: "activities", health: "health", money: "money", domestic: "domestic", calendar: "calendar", journal: "journal", pillars: "pillars" };
   openHelp(keyMap[view] || view);
+}
+function openHelpForCurrentSubView(section) {
+  const subMaps = {
+    work: { tasks: "work-tasks", time: "work-time", postdoc: "work-postdoc", valorisation: "work-valorisation", candidatures: "work-candidatures", enseignement: "work-enseignement", notes: "work-notes", administratif: "work-administratif" },
+    domestic: { notes: "domestic-notes", alimentation: "domestic-alimentation", plants: "domestic-plants" }
+  };
+  const map = subMaps[section] || {};
+  const activeSub = document.querySelector('[data-view="' + section + '"] .sub-tab.active');
+  const subKey = activeSub?.dataset?.sub || "";
+  const helpKey = map[subKey] || section;
+  openHelp(helpKey);
 }
 
 function _showConfirm(msg, onYes, opts = {}) {
