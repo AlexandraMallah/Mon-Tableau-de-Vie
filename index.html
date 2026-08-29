@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v970</title>
+<title>Mon Tableau de Vie 🌿 · v972</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11397,9 +11397,8 @@ function renderBodyChart(metric) {
   const vals = data.filter(v => v != null);
   let yMin, yMax;
   if (vals.length) {
-    const margin = Math.max((Math.max(...vals) - Math.min(...vals)) * 0.15, 1);
-    yMin = Math.floor(Math.min(...vals) - margin);
-    yMax = Math.ceil(Math.max(...vals) + margin);
+    yMin = Math.floor(Math.min(...vals)) - 10;
+    yMax = Math.ceil(Math.max(...vals)) + 15;
   }
   if (bodyChart) bodyChart.destroy();
   bodyChart = new Chart(document.getElementById("bodyChart"), {
