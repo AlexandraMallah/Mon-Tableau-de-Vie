@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v987</title>
+<title>Mon Tableau de Vie 🌿 · v988</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5636,6 +5636,17 @@ function migrate(s) {
   ];
   if (!s.budgets) s.budgets = {};
   s.contacts = s.contacts || [];
+  // Migration : convertir les anciennes clés workTime courtes vers les IDs de projet p-seed-*
+  if (s.history) {
+    const _wtKeyMap = { postdoc: "p-seed-postdoc", valorisation: "p-seed-valo", enseignement: "p-seed-enseignement", candidatures: "p-seed-candidatures", autre: "p-seed-autre", prixthese: "p-seed-prixthese" };
+    for (const dk of Object.keys(s.history)) {
+      const wt = s.history[dk].workTime;
+      if (!wt) continue;
+      for (const [oldKey, newKey] of Object.entries(_wtKeyMap)) {
+        if (oldKey in wt && !(newKey in wt)) { wt[newKey] = wt[oldKey]; delete wt[oldKey]; }
+      }
+    }
+  }
   // Migration : aligner les noms de projets sur les sous-onglets Travail
   if (Array.isArray(s.work?.postdocProjects)) {
     const renames = { "p-seed-postdoc": "Postdoc", "p-seed-valo": "Valorisation", "p-seed-enseignement": "Enseignement", "p-seed-candidatures": "Candidatures", "p-seed-autre": "Autre", "p-seed-prixthese": "Prix de thèse" };
