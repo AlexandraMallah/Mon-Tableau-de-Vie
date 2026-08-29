@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v959</title>
+<title>Mon Tableau de Vie 🌿 · v961</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5289,12 +5289,6 @@ function migrate(s) {
   s.calEvents = s.calEvents || [];
   s.calSources = s.calSources || [];
   if (!s.customSymptoms) s.customSymptoms = [];
-  // Nettoyage : retire les symptômes qui avaient été injectés par l'ancienne migration automatique
-  // Ils doivent venir uniquement du Firestore (compte Google) — pas du localStorage partagé
-  if (s._symptomsMigrated) {
-    s.customSymptoms = s.customSymptoms.filter(sym => sym.id !== "belly" && sym.id !== "endo");
-    delete s._symptomsMigrated;
-  }
   // Migration : comptes externes nommés (Hors compte)
   if (!Array.isArray(s.externalAccounts)) s.externalAccounts = [{ id: "ext-default", name: "Hors compte", emoji: "🧾" }];
   // Migration : transactions external sans externalAccountId → compte par défaut
@@ -7401,9 +7395,9 @@ function renderTaskProgress() {
   const _isS = document.body.classList.contains("t-serieux");
   const _isM = document.body.classList.contains("t-minimal");
   const CUSTOM_COLORS = _isS ? [
-    { fg: "#2e5fa3", bg: "#dde6f4" }, { fg: "#3d8b78", bg: "#d0ece6" },
-    { fg: "#c4922a", bg: "#f5e9c4" }, { fg: "#4a6e8a", bg: "#d4e2ee" },
-    { fg: "#4a7c5c", bg: "#d0e8d8" }, { fg: "#8a5030", bg: "#f0ddd0" },
+    { fg: "#6b9ec4", bg: "#d4e8f4" }, { fg: "#88a890", bg: "#ccddd0" },
+    { fg: "#d4aa84", bg: "#f0e0cc" }, { fg: "#8ab8cc", bg: "#d0eaf4" },
+    { fg: "#a0c0a8", bg: "#d8ead8" }, { fg: "#c0986e", bg: "#e8d4c0" },
   ] : _isM ? [
     { fg: "#333", bg: "#ebebeb" }, { fg: "#555", bg: "#e4e4e4" },
     { fg: "#777", bg: "#dedede" }, { fg: "#444", bg: "#e8e8e8" },
@@ -7417,12 +7411,12 @@ function renderTaskProgress() {
   const customList = state.work.postdocProjects.filter(pr => !sectionIds_prog.includes(pr.id));
   const colorFor = (p) => {
     if (_isS) {
-      if (isPostdocProject(p)) return { fg: "#2e5fa3", bg: "#dde6f4" };
-      if (isValoProject(p))    return { fg: "#c4922a", bg: "#f5e9c4" };
-      if (isTeachingProject(p))return { fg: "#5060a0", bg: "#dde0f0" };
-      if (isAutreProject(p))   return { fg: "#4a6e8a", bg: "#d4e2ee" };
-      if (isCandProject(p))    return { fg: "#3d8b78", bg: "#d0ece6" };
-      if (isPrixTheseProject(p))return { fg: "#8a5030", bg: "#f0ddd0" };
+      if (isPostdocProject(p)) return { fg: "#6b9ec4", bg: "#d4e8f4" };
+      if (isValoProject(p))    return { fg: "#d4aa84", bg: "#f0e0cc" };
+      if (isTeachingProject(p))return { fg: "#8ab8cc", bg: "#d0eaf4" };
+      if (isAutreProject(p))   return { fg: "#a4cce0", bg: "#d8eef5" };
+      if (isCandProject(p))    return { fg: "#88a890", bg: "#ccddd0" };
+      if (isPrixTheseProject(p))return { fg: "#c0986e", bg: "#e8d4c0" };
     } else if (_isM) {
       if (isPostdocProject(p)) return { fg: "#333", bg: "#ebebeb" };
       if (isValoProject(p))    return { fg: "#555", bg: "#e4e4e4" };
@@ -11936,7 +11930,7 @@ function saveMoneyNote() {
 function renderMoney() {
   const noteEl = document.getElementById("moneyNote");
   if (noteEl && noteEl.value !== (state.moneyNote || "")) noteEl.value = state.moneyNote || "";
-  populateTxCategories(); populateMissionList(); renderMoneySummary(); renderBudgetGauge(); renderExternalSummary(); renderTxList(); renderReimbursable(); renderSavings(); renderAccounts(); renderForecast(); renderDailyExpenseChart();
+  populateTxCategories(); populateMissionList(); renderMoneySummary(); renderBudgetGauge(); renderExternalSummary(); renderTxList(); renderReimbursable(); renderSavings(); renderAccounts(); renderForecast(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback();
 }
 let _externalMonthOffset = 0;
 let _externalAccountFilter = null; // null = "Tous"
