@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1083</title>
+<title>Mon Tableau de Vie 🌿 · v1084</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -9961,38 +9961,65 @@ function _setActType(type) {
   document.getElementById("actModalLoisirFields").style.display = isSport ? "none" : "block";
 }
 const _SPORTS_LIST = [
-  // Douces
+  // ── Très douces ─────────────────────────────────────────────
+  {met:2.3, emoji:"🎯", name:"Pétanque"},
   {met:2.5, emoji:"🧘", name:"Stretching"},
+  {met:2.5, emoji:"⛵", name:"Voile (loisir)"},
   {met:2.8, emoji:"🚶", name:"Marche lente"},
   {met:3.0, emoji:"🧘", name:"Yoga"},
+  {met:3.0, emoji:"🥋", name:"Tai chi"},
+  {met:3.0, emoji:"💃", name:"Danses de salon"},
+  // ── Douces ──────────────────────────────────────────────────
   {met:3.5, emoji:"🧘", name:"Pilates"},
   {met:3.5, emoji:"🎳", name:"Bowling"},
   {met:3.5, emoji:"🏌️", name:"Golf"},
+  {met:3.5, emoji:"🎯", name:"Tir à l'arc"},
+  {met:3.5, emoji:"🎣", name:"Pêche"},
   {met:3.8, emoji:"🚶", name:"Marche rapide"},
   {met:4.0, emoji:"🐴", name:"Équitation"},
   {met:4.0, emoji:"🏊", name:"Aquagym"},
+  {met:4.0, emoji:"🏒", name:"Curling"},
+  {met:4.0, emoji:"🏓", name:"Tennis de table"},
   {met:4.3, emoji:"🛹", name:"Skateboard"},
   {met:4.5, emoji:"🤸", name:"Gym douce"},
-  {met:4.5, emoji:"🎣", name:"Pêche"},
-  // Modérées
-  {met:4.8, emoji:"💃", name:"Danse"},
+  {met:4.5, emoji:"💃", name:"Bachata / Salsa"},
+  {met:4.5, emoji:"🤸", name:"Trampoline"},
+  // ── Modérées ─────────────────────────────────────────────────
+  {met:4.8, emoji:"💃", name:"Danse contemporaine"},
   {met:5.0, emoji:"🏋️", name:"Musculation"},
   {met:5.0, emoji:"🏄", name:"Surf"},
   {met:5.0, emoji:"🎿", name:"Ski de fond (lent)"},
+  {met:5.0, emoji:"💃", name:"Ballet / Danse classique"},
+  {met:5.0, emoji:"🤸", name:"Cheerleading"},
+  {met:5.0, emoji:"💃", name:"Pole dance"},
+  {met:5.0, emoji:"🥏", name:"Frisbee ultimate"},
+  {met:5.0, emoji:"⚾", name:"Baseball / Softball"},
   {met:5.3, emoji:"🏂", name:"Snowboard"},
   {met:5.3, emoji:"🥾", name:"Randonnée"},
-  {met:5.5, emoji:"⛸️", name:"Patinage"},
+  {met:5.5, emoji:"⛸️", name:"Patinage sur glace"},
   {met:5.5, emoji:"🚣", name:"Canoë / Kayak"},
+  {met:5.5, emoji:"💃", name:"Hip-hop / Afro"},
+  {met:5.7, emoji:"🏄", name:"Planche à voile"},
   {met:6.0, emoji:"🏐", name:"Volleyball"},
   {met:6.0, emoji:"🤸", name:"Gym artistique"},
+  {met:6.0, emoji:"🏊", name:"Natation synchronisée"},
+  {met:6.0, emoji:"🏄", name:"Stand-up paddle"},
+  {met:6.0, emoji:"🤿", name:"Plongée"},
+  {met:6.0, emoji:"🛼", name:"Roller / Roller derby"},
+  {met:6.0, emoji:"🥊", name:"Escrime"},
+  {met:6.0, emoji:"🤸", name:"Acrobatie / Parkour"},
   {met:6.5, emoji:"💃", name:"Zumba"},
-  {met:6.5, emoji:"🤿", name:"Plongée"},
+  {met:6.5, emoji:"💃", name:"Breakdance"},
+  {met:6.5, emoji:"🏄", name:"Kitesurf"},
+  {met:6.5, emoji:"🏄", name:"Wakeboard"},
   {met:6.8, emoji:"⛷️", name:"Ski alpin"},
-  // Intenses
+  // ── Intenses ─────────────────────────────────────────────────
   {met:7.0, emoji:"🏸", name:"Badminton"},
   {met:7.0, emoji:"🏒", name:"Hockey sur glace"},
+  {met:7.0, emoji:"🎾", name:"Padel"},
   {met:7.3, emoji:"🎾", name:"Tennis"},
   {met:7.5, emoji:"🚴", name:"Vélo"},
+  {met:7.5, emoji:"🏑", name:"Hockey sur gazon"},
   {met:7.5, emoji:"🏊", name:"Natation (modérée)"},
   {met:8.0, emoji:"🏊", name:"Natation"},
   {met:8.0, emoji:"🧗", name:"Escalade"},
@@ -10001,14 +10028,21 @@ const _SPORTS_LIST = [
   {met:8.0, emoji:"🏉", name:"Rugby"},
   {met:8.0, emoji:"🤾", name:"Handball"},
   {met:8.0, emoji:"🏋️", name:"CrossFit"},
+  {met:8.0, emoji:"🏐", name:"Volleyball de plage"},
+  {met:8.0, emoji:"🤼", name:"Lutte / Grappling"},
   {met:8.3, emoji:"🚣", name:"Aviron"},
   {met:8.5, emoji:"🥊", name:"Kickboxing"},
+  {met:8.5, emoji:"🚴", name:"VTT / Mountain bike"},
+  {met:8.5, emoji:"🚴", name:"Spinning / Vélo indoor"},
   {met:9.0, emoji:"🏸", name:"Squash (modéré)"},
-  // Très intenses
+  {met:9.0, emoji:"🏃", name:"Triathlon"},
+  {met:9.0, emoji:"🎿", name:"Ski de fond (rapide)"},
+  // ── Très intenses ────────────────────────────────────────────
   {met:9.8, emoji:"🏃", name:"Course à pied"},
   {met:9.8, emoji:"🥊", name:"Boxe"},
   {met:10.0, emoji:"🥋", name:"Karaté"},
   {met:10.0, emoji:"🥋", name:"Taekwondo"},
+  {met:10.0, emoji:"🥊", name:"Muay Thai"},
   {met:10.0, emoji:"🚴", name:"Cyclisme (intense)"},
   {met:10.3, emoji:"🥋", name:"Judo"},
   {met:11.0, emoji:"🏃", name:"Corde à sauter"},
