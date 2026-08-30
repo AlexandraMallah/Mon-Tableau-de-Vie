@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1026</title>
+<title>Mon Tableau de Vie 🌿 · v1027</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3087,6 +3087,7 @@
       <div class="card-row" style="margin-bottom:14px;">
         <h2 style="margin:0;">🎯 Budget de vie</h2>
         <div style="display:flex;align-items:center;gap:8px;">
+          <button onclick="openHelp('money')" title="Aide sur les finances" style="background:none;border:1.5px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11px;color:var(--ink-soft);cursor:pointer;font-family:inherit;">ℹ️ Aide</button>
           <span id="budgetMonthLabel" style="font-size:12px;color:var(--ink-soft);">Ce mois</span>
           <button onclick="_budgetNavMonth(-1)" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 2px;">◀</button>
           <button onclick="_budgetNavMonth(1)" id="budgetNavNext" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 2px;">▶</button>
@@ -24038,10 +24039,21 @@ const HELP_TEXTS = {
         <li><strong>🌡 Jauge budget</strong> — Compare ton rythme de dépenses à l'idéal (vert = ok, orange = un peu vite, rouge = dépassé). Le budget est défini dans Personnaliser → Finances.</li>
         <li><strong>💰 Épargne</strong> — Chaque compte épargne est suivi séparément (Livret A, PEL, etc.) avec son solde et ses mouvements.</li>
         <li><strong>💵 Espèces</strong> — Suivi de ton cash. Le retrait espèces déduit du compte source et ajoute au porte-monnaie.</li>
-        <li><strong>🧾 Autres comptes</strong> — Dépenses qui ne passent pas par ton compte courant (compte joint, Revolut, PayPal…). N'affecte pas la jauge budget principale.</li>
+        <li><strong>🧾 Suivi de mes autres comptes</strong> — Dépenses qui ne passent pas par ton compte courant (compte joint, Revolut, PayPal…). N'affecte pas la jauge budget principale.</li>
       </ul>
-      <div style="background:var(--peach-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
-        💡 <strong>Charges fixes</strong> — Coche "Charge fixe" sur les transactions récurrentes (loyer, assurance…) : elles sont exclues de la jauge pour ne pas fausser le suivi des dépenses variables.
+      <div style="background:var(--bg-2);border-radius:12px;padding:14px 16px;margin-top:14px;">
+        <div style="font-weight:700;font-size:14px;margin-bottom:8px;">🎯 C'est quoi le "Budget de vie" ?</div>
+        <p style="margin:0 0 8px;font-size:13px;">Le <strong>Budget de vie</strong> est ta jauge mensuelle de dépenses courantes. Il compare ce que tu dépenses au quotidien à un rythme idéal (budget total ÷ jours du mois).</p>
+        <ul style="padding-left:16px;margin:0;font-size:13px;">
+          <li>🟢 Vert — tu dépenses moins vite que prévu</li>
+          <li>🟠 Orange — tu dépenses un peu plus vite que l'idéal</li>
+          <li>🔴 Rouge — tu as dépassé le budget du mois</li>
+        </ul>
+        <p style="margin:8px 0 0;font-size:12px;color:var(--ink-soft);">Le budget se configure dans <strong>Personnaliser → Finances</strong>. Les charges fixes (loyer, abonnements) et les frais pro remboursables sont automatiquement exclus du calcul.</p>
+      </div>
+      <div style="background:var(--peach-soft);border-radius:12px;padding:14px 16px;margin-top:10px;">
+        <div style="font-weight:700;font-size:14px;margin-bottom:8px;">🧾 C'est quoi "Suivi de mes autres comptes" ?</div>
+        <p style="margin:0;font-size:13px;">Cette section regroupe les dépenses qui <strong>ne passent pas par ton compte courant principal</strong> : compte joint, Revolut, PayPal, cash d'un autre compte… Elles sont tracées mais n'impactent pas ta jauge budget. Tu peux créer plusieurs comptes via le bouton ⚙️ Gérer (ex : "Compte joint", "Revolut", "PayPal").</p>
       </div>`
   },
   domestic: {
