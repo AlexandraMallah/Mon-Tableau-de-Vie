@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1086</title>
+<title>Mon Tableau de Vie 🌿 · v1088</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4366,7 +4366,7 @@
         oninput="_renderSportGrid(_selectedSportKey)"
         style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;margin-bottom:10px;" />
       <!-- Grille de sports -->
-      <div id="actSportGrid" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"></div>
+      <div id="actSportGrid" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;"></div>
       <!-- Aperçu du sport sélectionné -->
       <div id="actModalSportPreview" style="display:none;padding:11px 14px;background:var(--mint-soft);border-radius:12px;align-items:center;gap:12px;">
         <span id="actModalSportPreviewEmoji" style="font-size:26px;"></span>
@@ -9962,10 +9962,8 @@ function _setActType(type) {
 }
 const _SPORTS_LIST = [
   // ── Très douces ─────────────────────────────────────────────
-  {met:2.3, emoji:"🎯", name:"Pétanque"},
   {met:2.5, emoji:"🧘", name:"Stretching"},
   {met:2.5, emoji:"⛵", name:"Voile (loisir)"},
-  {met:2.8, emoji:"🚶", name:"Marche lente"},
   {met:3.0, emoji:"🧘", name:"Yoga"},
   {met:3.0, emoji:"🥋", name:"Tai chi"},
   {met:3.0, emoji:"💃", name:"Danse — Salon (Valse, Tango)"},
@@ -9975,25 +9973,26 @@ const _SPORTS_LIST = [
   {met:3.5, emoji:"🏌️", name:"Golf"},
   {met:3.5, emoji:"🎯", name:"Tir à l'arc"},
   {met:3.5, emoji:"🎣", name:"Pêche"},
-  {met:3.8, emoji:"🚶", name:"Marche rapide"},
+  {met:3.8, emoji:"🚶", name:"Marche"},
   {met:4.0, emoji:"🐴", name:"Équitation"},
   {met:4.0, emoji:"🏊", name:"Aquagym"},
   {met:4.0, emoji:"🏒", name:"Curling"},
   {met:4.0, emoji:"🏓", name:"Tennis de table"},
   {met:4.3, emoji:"🛹", name:"Skateboard"},
   {met:4.5, emoji:"🤸", name:"Gym douce"},
+  {met:4.0, emoji:"💃", name:"Danse — Ouest-Ouest (West Coast Swing)"},
   {met:4.5, emoji:"💃", name:"Danse — Bachata / Salsa"},
   {met:4.5, emoji:"🤸", name:"Trampoline"},
   // ── Modérées ─────────────────────────────────────────────────
   {met:4.8, emoji:"💃", name:"Danse — Contemporaine"},
   {met:5.0, emoji:"🏋️", name:"Musculation"},
   {met:5.0, emoji:"🏄", name:"Surf"},
-  {met:5.0, emoji:"🎿", name:"Ski de fond — lent"},
+  {met:7.0, emoji:"🎿", name:"Ski de fond"},
   {met:5.0, emoji:"💃", name:"Danse — Ballet / Classique"},
   {met:5.0, emoji:"🤸", name:"Cheerleading"},
   {met:5.0, emoji:"💃", name:"Danse — Pole dance"},
   {met:5.0, emoji:"🥏", name:"Frisbee ultimate"},
-  {met:5.0, emoji:"⚾", name:"Baseball / Softball"},
+  {met:5.0, emoji:"⚾", name:"Baseball"},
   {met:5.3, emoji:"🏂", name:"Snowboard"},
   {met:5.3, emoji:"🥾", name:"Randonnée"},
   {met:5.5, emoji:"⛸️", name:"Patinage sur glace"},
@@ -10005,9 +10004,9 @@ const _SPORTS_LIST = [
   {met:6.0, emoji:"🏊", name:"Natation synchronisée"},
   {met:6.0, emoji:"🏄", name:"Stand-up paddle"},
   {met:6.0, emoji:"🤿", name:"Plongée"},
-  {met:6.0, emoji:"🛼", name:"Roller / Roller derby"},
+  {met:6.0, emoji:"🛼", name:"Roller"},
   {met:6.0, emoji:"🥊", name:"Escrime"},
-  {met:6.0, emoji:"🤸", name:"Acrobatie / Parkour"},
+  {met:6.0, emoji:"🤸", name:"Parkour"},
   {met:6.5, emoji:"💃", name:"Danse — Zumba"},
   {met:6.5, emoji:"💃", name:"Danse — Breakdance"},
   {met:6.5, emoji:"🏄", name:"Kitesurf"},
@@ -10018,10 +10017,9 @@ const _SPORTS_LIST = [
   {met:7.0, emoji:"🏒", name:"Hockey sur glace"},
   {met:7.0, emoji:"🎾", name:"Padel"},
   {met:7.3, emoji:"🎾", name:"Tennis"},
-  {met:7.5, emoji:"🚴", name:"Vélo"},
+  {met:7.0, emoji:"🚴", name:"Vélo"},
   {met:7.5, emoji:"🏑", name:"Hockey sur gazon"},
-  {met:7.5, emoji:"🏊", name:"Natation (modérée)"},
-  {met:8.0, emoji:"🏊", name:"Natation"},
+  {met:7.5, emoji:"🏊", name:"Natation"},
   {met:8.0, emoji:"🧗", name:"Escalade"},
   {met:8.0, emoji:"⛹️", name:"Basket"},
   {met:8.0, emoji:"⚽", name:"Football"},
@@ -10032,13 +10030,12 @@ const _SPORTS_LIST = [
   {met:8.0, emoji:"🤼", name:"Lutte / Grappling"},
   {met:8.3, emoji:"🚣", name:"Aviron"},
   {met:8.5, emoji:"🥊", name:"Kickboxing"},
-  {met:8.5, emoji:"🚴", name:"VTT / Mountain bike"},
-  {met:8.5, emoji:"🚴", name:"Spinning / Vélo indoor"},
+  {met:8.5, emoji:"🚵", name:"VTT"},
+  {met:8.5, emoji:"🚴", name:"Spinning"},
   {met:9.0, emoji:"🏸", name:"Squash — modéré"},
   {met:9.0, emoji:"🏃", name:"Triathlon"},
-  {met:9.0, emoji:"🎿", name:"Ski de fond — rapide"},
   // ── Très intenses ────────────────────────────────────────────
-  {met:9.8, emoji:"🏃", name:"Course à pied"},
+  {met:9.8, emoji:"🏃", name:"Course (jogging)"},
   {met:9.8, emoji:"🥊", name:"Boxe"},
   {met:10.0, emoji:"🥋", name:"Karaté"},
   {met:10.0, emoji:"🥋", name:"Taekwondo"},
@@ -10046,7 +10043,7 @@ const _SPORTS_LIST = [
   {met:10.0, emoji:"🚴", name:"Cyclisme (intense)"},
   {met:10.3, emoji:"🥋", name:"Judo"},
   {met:11.0, emoji:"🏃", name:"Corde à sauter"},
-  {met:11.0, emoji:"🏃", name:"Course rapide"},
+  {met:11.0, emoji:"🏃", name:"Course (rapide)"},
   {met:12.0, emoji:"🏸", name:"Squash — intense"},
   {met:12.0, emoji:"🏃", name:"Sprint / Athlétisme"},
 ];
@@ -10064,9 +10061,9 @@ function _renderSportGrid(selectedKey) {
     const key = `${s.met}|${s.emoji}|${s.name}`;
     const sel = key === selectedKey;
     return `<button onclick="_selectSport('${s.met}','${s.emoji}','${s.name.replace(/'/g,"&#39;")}')"
-      style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 6px;border-radius:12px;border:2px solid ${sel?'var(--mint)':'var(--line)'};background:${sel?'var(--mint-soft)':'white'};cursor:pointer;font-family:inherit;min-width:58px;transition:all .12s;">
-      <span style="font-size:22px;line-height:1;">${s.emoji}</span>
-      <span style="font-size:10px;color:${sel?'var(--ink)':'var(--ink-soft)'};font-weight:${sel?700:500};white-space:nowrap;">${s.name}</span>
+      style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 4px;border-radius:10px;border:2px solid ${sel?'var(--mint)':'var(--line)'};background:${sel?'var(--mint-soft)':'white'};cursor:pointer;font-family:inherit;min-width:48px;max-width:80px;transition:all .12s;">
+      <span style="font-size:18px;line-height:1;">${s.emoji}</span>
+      <span style="font-size:9px;color:${sel?'var(--ink)':'var(--ink-soft)'};font-weight:${sel?700:500};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:76px;text-align:center;">${s.name}</span>
     </button>`;
   }).join("") +
   (!q ? `<button onclick="_selectSport('custom','','')"
