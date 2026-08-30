@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1034</title>
+<title>Mon Tableau de Vie 🌿 · v1035</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1468,12 +1468,13 @@
     .sync-row { flex-basis: 100%; }
 
     /* === NAV PRINCIPALE : grille 3×3 au lieu de scroll horizontal === */
+    #helpNavBtn { display: none; }
     nav.tabs {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       overflow-x: unset;
       gap: 6px;
-      margin-bottom: 18px;
+      margin-bottom: 10px;
       /* Pas de sticky sur mobile : trop haute pour rester collée */
       position: relative;
       background: transparent;
@@ -1482,6 +1483,18 @@
       box-shadow: none;
       padding: 0;
     }
+    /* Bouton aide contextuel sous la nav, discret */
+    #mobileHelpBtn {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-bottom: 14px;
+    }
+    /* Boutons sous-vues Travail / Domestique : icône seule */
+    .sub-help-btn .help-label { display: none; }
+    .sub-help-btn { padding: 6px 8px !important; font-size: 14px !important; }
+    .sub-proj-btn .proj-label { display: none; }
+    .sub-proj-btn { padding: 6px 8px !important; font-size: 14px !important; }
     .tab {
       text-align: center;
       padding: 9px 4px;
@@ -1849,6 +1862,10 @@
     <button class="tab" data-view="pillars">Piliers</button>
     <button id="helpNavBtn" onclick="openHelpForCurrentView()" title="Aide sur cette section" style="margin-left:auto;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">ℹ️ Aide</button>
   </nav>
+  <!-- Bouton aide mobile (sous la nav, caché sur desktop) -->
+  <div id="mobileHelpBtn" style="display:none;">
+    <button onclick="openHelpForCurrentView()" style="background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;">ℹ️ Aide</button>
+  </div>
 
   <!-- VIEW: TODAY -->
   <section class="view active" data-view="today">
@@ -2351,8 +2368,8 @@
         <button class="sub-tab" data-sub="notes">📓 Notes</button>
         <button class="sub-tab" data-sub="administratif">🗂️ Administratif</button>
       </div>
-      <button onclick="openTimeCatsModal()" title="Gérer mes projets" style="flex-shrink:0;background:var(--lavender-soft);border:1.5px solid var(--lavender);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink);cursor:pointer;font-family:inherit;white-space:nowrap;font-weight:600;">⚙️ Projets</button>
-      <button onclick="openHelpForCurrentSubView('work')" title="Aide sur cet onglet" style="flex-shrink:0;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;">ℹ️ Aide</button>
+      <button onclick="openTimeCatsModal()" title="Gérer mes projets" class="sub-proj-btn" style="flex-shrink:0;background:var(--lavender-soft);border:1.5px solid var(--lavender);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink);cursor:pointer;font-family:inherit;white-space:nowrap;font-weight:600;">⚙️<span class="proj-label"> Projets</span></button>
+      <button onclick="openHelpForCurrentSubView('work')" title="Aide sur cet onglet" class="sub-help-btn" style="flex-shrink:0;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;">ℹ️<span class="help-label"> Aide</span></button>
     </div>
 
     <!-- Sub: Tâches -->
@@ -3090,7 +3107,7 @@
       <div class="card-row" style="margin-bottom:14px;">
         <h2 style="margin:0;">🎯 Budget de vie</h2>
         <div style="display:flex;align-items:center;gap:8px;">
-          <button onclick="openHelp('money')" title="Aide sur les finances" style="background:none;border:1.5px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11px;color:var(--ink-soft);cursor:pointer;font-family:inherit;">ℹ️ Aide</button>
+          <button onclick="openHelp('money')" title="Aide sur les finances" class="sub-help-btn" style="background:none;border:1.5px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11px;color:var(--ink-soft);cursor:pointer;font-family:inherit;">ℹ️<span class="help-label"> Aide</span></button>
           <span id="budgetMonthLabel" style="font-size:12px;color:var(--ink-soft);">Ce mois</span>
           <button onclick="_budgetNavMonth(-1)" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 2px;">◀</button>
           <button onclick="_budgetNavMonth(1)" id="budgetNavNext" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 2px;">▶</button>
@@ -3273,7 +3290,7 @@
         <div id="persoProjectTabs" style="display:contents;"></div>
         <button onclick="openPersoProjectModal()" style="padding:5px 12px;border-radius:20px;border:1.5px dashed var(--line);background:white;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">+ Projet</button>
       </div>
-      <button onclick="openHelpForCurrentSubView('domestic')" title="Aide sur cet onglet" style="flex-shrink:0;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;">ℹ️ Aide</button>
+      <button onclick="openHelpForCurrentSubView('domestic')" title="Aide sur cet onglet" class="sub-help-btn" style="flex-shrink:0;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;">ℹ️<span class="help-label"> Aide</span></button>
     </div>
     <div id="persoProjectViews"></div>
 
