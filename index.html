@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1025</title>
+<title>Mon Tableau de Vie 🌿 · v1026</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3009,7 +3009,7 @@
       <div class="tx-form">
         <div class="type-toggle">
           <button id="txTypeExpense" class="active expense" onclick="setTxType('expense')">− Dépense</button>
-          <button id="txTypeExternal" class="external" onclick="setTxType('external')">🧾 Hors compte</button>
+          <button id="txTypeExternal" class="external" onclick="setTxType('external')">🧾 Autres comptes</button>
           <button id="txTypeIncome" class="income" onclick="setTxType('income')">+ Revenu</button>
           <button id="txTypeSavings" class="savings" onclick="setTxType('savings')">💰 Épargne</button>
           <button id="txTypeSavingsOut" class="savings-out" onclick="setTxType('savings-out')">🏦→💳 Retrait épargne</button>
@@ -3096,7 +3096,7 @@
     </div>
     <div class="card" id="externalCard" style="margin-bottom:18px;display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
-        <h2 style="margin:0;white-space:nowrap;font-size:15px;">🧾 Hors compte</h2>
+        <h2 style="margin:0;white-space:nowrap;font-size:15px;">🧾 Suivi de mes autres comptes</h2>
         <div style="display:flex;gap:6px;align-items:center;">
           <span id="externalTotal" style="font-size:14px;font-weight:700;color:var(--ink-soft);white-space:nowrap;"></span>
           <button id="externalEditAccountsBtn" class="edit-only" onclick="openExternalAccountsManager()" style="display:none;padding:3px 9px;border-radius:8px;border:1px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">⚙️ Gérer</button>
@@ -4697,7 +4697,7 @@
     <label>Type</label>
     <div class="type-toggle" style="display:flex;gap:6px;margin-bottom:6px;">
       <button type="button" id="txModalTypeExpense" onclick="setTxModalType('expense')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">− Dépense</button>
-      <button type="button" id="txModalTypeExternal" onclick="setTxModalType('external')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">🧾 Hors compte</button>
+      <button type="button" id="txModalTypeExternal" onclick="setTxModalType('external')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">🧾 Autres comptes</button>
       <button type="button" id="txModalTypeIncome" onclick="setTxModalType('income')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">+ Revenu</button>
       <button type="button" id="txModalTypeSavings" onclick="setTxModalType('savings')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">💰 Épargne</button>
       <button type="button" id="txModalTypeSavingsOut" onclick="setTxModalType('savings-out')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">🏦→💳 Retrait</button>
@@ -5457,7 +5457,7 @@ function migrate(s) {
   s.calSources = s.calSources || [];
   if (!s.customSymptoms) s.customSymptoms = [];
   // Migration : comptes externes nommés (Hors compte)
-  if (!Array.isArray(s.externalAccounts)) s.externalAccounts = [{ id: "ext-default", name: "Hors compte", emoji: "🧾" }];
+  if (!Array.isArray(s.externalAccounts)) s.externalAccounts = [{ id: "ext-default", name: "Autres comptes", emoji: "🧾" }];
   // Migration : transactions external sans externalAccountId → compte par défaut
   s.transactions.forEach(t => { if (t.type === "external" && !t.externalAccountId) t.externalAccountId = "ext-default"; });
   s.googleCal = s.googleCal || { url: "", lastSync: null };
@@ -13098,7 +13098,7 @@ function renderExternalSummary() {
   const totalEl = document.getElementById("externalTotal");
   const tabsEl = document.getElementById("externalAccountTabs");
   if (!card || !listEl) return;
-  const accounts = state.externalAccounts || [{ id: "ext-default", name: "Hors compte", emoji: "🧾" }];
+  const accounts = state.externalAccounts || [{ id: "ext-default", name: "Autres comptes", emoji: "🧾" }];
   card.style.display = "";
   // Onglets des comptes
   if (tabsEl) {
@@ -13135,7 +13135,7 @@ function renderExternalSummary() {
   const total = txs.reduce((s, tx) => s + tx.amount, 0);
   if (totalEl) totalEl.textContent = total.toFixed(2) + " €";
   if (!txs.length) {
-    listEl.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);margin:0;">Aucune dépense hors compte ce mois.</p>`;
+    listEl.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);margin:0;">Aucune dépense ce mois.</p>`;
     return;
   }
   const byCat = {};
@@ -13175,7 +13175,7 @@ function openExternalAccountsManager() {
     </div>`).join("");
   // Utilise la modale générique d'aide (réutilisée pour ce formulaire)
   document.getElementById("helpIcon").textContent = "🧾";
-  document.getElementById("helpTitle").textContent = "Gérer les comptes Hors compte";
+  document.getElementById("helpTitle").textContent = "Gérer mes autres comptes";
   document.getElementById("helpSubtitle").textContent = "Compte joint, Revolut, PayPal… chacun a son onglet";
   document.getElementById("helpBody").innerHTML = `
     <p style="font-size:13px;color:var(--ink-soft);margin:0 0 12px;">Modifie le nom et l'emoji de chaque compte. Les transactions existantes restent rattachées à leur compte.</p>
@@ -14708,7 +14708,7 @@ function renderMoneyFlowChart() {
     { label: "Dépenses",        data: months.map(m => monthSum(m, "expense")),      backgroundColor: _isFlowS?"#d0ac84":_isFlowM?"#888":"#efb8c8", borderRadius: 8 },
     { label: "Épargne",         data: months.map(m => monthSum(m, "savings")),      backgroundColor: _isFlowS?"#8ab4d4":_isFlowM?"#666":"#c9b6f0", borderRadius: 8 },
     { label: "Retrait épargne", data: months.map(m => monthSum(m, "savings-out")),  backgroundColor: _isFlowS?"#a4cce0":_isFlowM?"#999":"#89d4cf", borderRadius: 8 },
-    { label: "Hors compte",     data: months.map(m => monthSum(m, "external")),     backgroundColor: _isFlowS?"#e0c4a0":_isFlowM?"#aaa":"#f5e6a8", borderRadius: 8 },
+    { label: "Autres comptes",     data: months.map(m => monthSum(m, "external")),     backgroundColor: _isFlowS?"#e0c4a0":_isFlowM?"#aaa":"#f5e6a8", borderRadius: 8 },
   ];
   // Légende HTML custom — pleine largeur, espacement uniforme
   const legendEl = document.getElementById("flowLegend");
@@ -24038,7 +24038,7 @@ const HELP_TEXTS = {
         <li><strong>🌡 Jauge budget</strong> — Compare ton rythme de dépenses à l'idéal (vert = ok, orange = un peu vite, rouge = dépassé). Le budget est défini dans Personnaliser → Finances.</li>
         <li><strong>💰 Épargne</strong> — Chaque compte épargne est suivi séparément (Livret A, PEL, etc.) avec son solde et ses mouvements.</li>
         <li><strong>💵 Espèces</strong> — Suivi de ton cash. Le retrait espèces déduit du compte source et ajoute au porte-monnaie.</li>
-        <li><strong>🧾 Hors compte</strong> — Dépenses qui ne passent pas par ton compte courant (compte joint, Revolut, PayPal…). N'affecte pas la jauge budget principale.</li>
+        <li><strong>🧾 Autres comptes</strong> — Dépenses qui ne passent pas par ton compte courant (compte joint, Revolut, PayPal…). N'affecte pas la jauge budget principale.</li>
       </ul>
       <div style="background:var(--peach-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
         💡 <strong>Charges fixes</strong> — Coche "Charge fixe" sur les transactions récurrentes (loyer, assurance…) : elles sont exclues de la jauge pour ne pas fausser le suivi des dépenses variables.
