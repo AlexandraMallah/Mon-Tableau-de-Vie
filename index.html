@@ -14,7 +14,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1057</title>
+<title>Mon Tableau de Vie 🌿 · v1059</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2395,7 +2395,7 @@
         <button class="sub-tab" data-sub="notes">📓 Notes</button>
         <button class="sub-tab" data-sub="administratif">🗂️ Administratif</button>
       </div>
-      <button onclick="openTimeCatsModal()" title="Gérer mes projets" class="sub-proj-btn" style="flex-shrink:0;background:var(--lavender-soft);border:1.5px solid var(--lavender);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink);cursor:pointer;font-family:inherit;white-space:nowrap;font-weight:600;">⚙️<span class="proj-label"> Projets</span></button>
+      <button onclick="openTimeCatsModal()" title="Gérer mes projets" class="help-btn sub-proj-btn">✦<span class="proj-label"> Projets</span></button>
       <button onclick="openHelpForCurrentSubView('work')" title="Aide sur cet onglet" class="help-btn sub-help-btn">✦<span class="help-label"> Aide</span></button>
     </div>
 
@@ -3019,7 +3019,7 @@
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">Cliquer pour gérer</div>
         </div>
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,var(--lavender-soft) 100%);position:relative;">
-          <button onclick="openAccountEdit('epargne')" title="Gérer les comptes épargne" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">✏️ Gérer</button>
+          <button onclick="openAccountEdit('epargne')" title="Gérer les comptes épargne" class="help-btn" style="position:absolute;top:8px;right:8px;">✦ Gérer</button>
           <div class="label">🏦 Épargne totale</div>
           <div class="value" id="accountEpargne" style="color:#6b4d99;">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="accountEpargneDetail"></div>
@@ -3171,7 +3171,7 @@
         <h2 style="margin:0;white-space:nowrap;font-size:15px;" id="externalCardTitle">🧾 Suivi de mes autres comptes</h2>
         <div style="display:flex;gap:6px;align-items:center;">
           <span id="externalTotal" style="font-size:14px;font-weight:700;color:var(--ink-soft);white-space:nowrap;"></span>
-          <button id="externalEditAccountsBtn" class="edit-only" onclick="openExternalAccountsManager()" style="display:none;padding:3px 9px;border-radius:8px;border:1px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">⚙️ Gérer</button>
+          <button id="externalEditAccountsBtn" onclick="openExternalAccountsManager()" class="help-btn">✦ Gérer</button>
         </div>
       </div>
       <div id="externalAccountTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
@@ -13269,7 +13269,7 @@ function setTxType(t) {
     fromSel.innerHTML = `<option value="">💳 Compte courant (défaut)</option>` +
       `<option value="__cash__">💵 Espèces en poche</option>` +
       (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("") +
-      (_extOpts ? `<optgroup label="Autres comptes">${_extOpts}</optgroup>` : "");
+      _extOpts;
   }
   if (fromSel && !isExpense) fromSel.value = "";
   // Retrait espèces : sélecteur de compte source
@@ -14127,33 +14127,72 @@ function openAccountEdit(type) {
         <input type="text" id="accEditName" value="${escapeHtml(lbl)}" placeholder="Espèces en poche" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
       </div>`;
   } else if (type === "epargne") {
-    title.textContent = "✏️ Comptes épargne";
-    const cats = state.savingsCategories || [];
-    const breakdown = state.accounts?.savingsBreakdown || {};
-    body.innerHTML = `
-      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px;">Clique sur l'emoji pour le changer. Modifie le nom et le solde de départ.</p>
-      ${cats.map(c => {
-        const curEmoji = (state.accounts?.savingsEmojis?.[c]) || "🏦";
-        const eid = "savEmoji_" + CSS.escape(c);
-        return `
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);">
-          <button type="button" id="savEmojiBtn_${escapeHtml(c)}" onclick="_openEmojiPopup(this,'savEmoji_${escapeHtml(c)}')" style="width:38px;height:38px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;">${escapeHtml(curEmoji)}</button>
-          <input type="hidden" id="savEmoji_${escapeHtml(c)}" data-saving-emoji="${escapeHtml(c)}" class="acc-saving-emoji" value="${escapeHtml(curEmoji)}" />
-          <input data-saving-name="${escapeHtml(c)}" class="acc-saving-name" value="${escapeHtml(c)}" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
-          <input data-saving-start="${escapeHtml(c)}" class="acc-saving-start" type="number" value="${(breakdown[c] || 0).toFixed(2)}" step="0.01" placeholder="Solde départ" style="width:90px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
-          <button onclick="_deleteSavAcc('${escapeHtml(c)}')" title="Supprimer" style="flex-shrink:0;width:30px;height:30px;border:none;background:none;color:#d44;font-size:16px;cursor:pointer;border-radius:6px;">🗑</button>
-        </div>`;
-      }).join("")}
-      <div style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px;">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <button type="button" id="newSavEmojiBtn" onclick="_openEmojiPopup(this,'newSavEmoji')" style="width:38px;height:38px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;">🏦</button>
-          <input type="hidden" id="newSavEmoji" value="🏦" />
-          <input type="text" id="newSavAccName" placeholder="Nom du nouveau compte…" style="flex:1;min-width:100px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);" />
-          <button onclick="_addSavAccFromEdit()" style="padding:8px 14px;border-radius:10px;border:none;background:var(--lavender-soft);color:#6b4d99;font-weight:700;cursor:pointer;font-family:inherit;">Ajouter</button>
-        </div>
-      </div>`;
+    openSavingsAccountsManager(); return;
   }
   document.getElementById("accountEditModal").classList.add("open");
+}
+function openSavingsAccountsManager() {
+  const cats = state.savingsCategories || [];
+  const breakdown = state.accounts?.savingsBreakdown || {};
+  const rows = cats.map(c => {
+    const curEmoji = (state.accounts?.savingsEmojis?.[c]) || "🏦";
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);">
+      <button type="button" onclick="_openEmojiPopup(this,'savEmoji_${escapeHtml(c)}')" style="width:38px;height:38px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;">${escapeHtml(curEmoji)}</button>
+      <input type="hidden" id="savEmoji_${escapeHtml(c)}" data-saving-emoji="${escapeHtml(c)}" class="acc-saving-emoji" value="${escapeHtml(curEmoji)}" />
+      <input data-saving-name="${escapeHtml(c)}" class="acc-saving-name" value="${escapeHtml(c)}" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
+      <input data-saving-start="${escapeHtml(c)}" class="acc-saving-start" type="number" value="${(breakdown[c] || 0).toFixed(2)}" step="0.01" placeholder="Solde départ" style="width:80px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
+      ${cats.length > 1 ? `<button onclick="_deleteSavAcc('${escapeHtml(c)}')" title="Supprimer" style="flex-shrink:0;width:30px;height:30px;border:none;background:none;color:#d44;font-size:16px;cursor:pointer;border-radius:6px;">🗑</button>` : ""}
+    </div>`;
+  }).join("");
+  document.getElementById("helpIcon").textContent = "🏦";
+  document.getElementById("helpTitle").textContent = "Comptes épargne";
+  document.getElementById("helpSubtitle").textContent = "Livret A, PEL, CEL… chacun a son suivi";
+  document.getElementById("helpBody").innerHTML = `
+    <p style="font-size:13px;color:var(--ink-soft);margin:0 0 10px;">Clique sur l'emoji pour le changer. Modifie le nom et le solde de départ. Les changements sont sauvegardés à la fermeture.</p>
+    <div id="savAccList">${rows}</div>
+    <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <button type="button" id="newSavEmojiBtn" onclick="_openEmojiPopup(this,'newSavEmoji')" style="width:38px;height:38px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;">🏦</button>
+      <input type="hidden" id="newSavEmoji" value="🏦" />
+      <input type="text" id="newSavAccName" placeholder="Nom du nouveau compte…" style="flex:1;min-width:100px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);" />
+      <button onclick="_addSavAccFromEdit()" style="padding:8px 14px;border-radius:10px;border:none;background:var(--lavender-soft);color:#6b4d99;font-weight:700;cursor:pointer;font-family:inherit;">Ajouter</button>
+    </div>
+    <div style="margin-top:14px;display:flex;justify-content:flex-end;">
+      <button onclick="_saveSavingsAccounts()" style="padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer ✓</button>
+    </div>`;
+  document.getElementById("helpModal").classList.add("open");
+  const _hf = document.getElementById("helpFooter"); if (_hf) _hf.style.display = "none";
+}
+function _saveSavingsAccounts() {
+  if (!state.accounts) state.accounts = {};
+  if (!state.accounts.savingsEmojis) state.accounts.savingsEmojis = {};
+  if (!state.accounts.savingsBreakdown) state.accounts.savingsBreakdown = {};
+  const nameInputs = document.querySelectorAll(".acc-saving-name");
+  const startInputs = document.querySelectorAll(".acc-saving-start");
+  const emojiInputs = document.querySelectorAll(".acc-saving-emoji");
+  const newCats = [];
+  nameInputs.forEach((inp, i) => {
+    const oldName = inp.dataset.savingName;
+    const newName = inp.value.trim() || oldName;
+    const startVal = parseFloat(startInputs[i]?.value) || 0;
+    const emojiVal = emojiInputs[i]?.value.trim().slice(0, 4) || "🏦";
+    if (newName !== oldName) {
+      state.transactions?.forEach(t => { if (t.category === oldName && (t.type === "savings" || t.type === "savings-out")) t.category = newName; });
+      const idx = state.savingsCategories.indexOf(oldName);
+      if (idx >= 0) state.savingsCategories[idx] = newName;
+      if (state.accounts.savingsEmojis[oldName] !== undefined) { state.accounts.savingsEmojis[newName] = state.accounts.savingsEmojis[oldName]; delete state.accounts.savingsEmojis[oldName]; }
+      if (state.accounts.savingsBreakdown[oldName] !== undefined) { state.accounts.savingsBreakdown[newName] = state.accounts.savingsBreakdown[oldName]; delete state.accounts.savingsBreakdown[oldName]; }
+    }
+    state.accounts.savingsEmojis[newName] = emojiVal;
+    state.accounts.savingsBreakdown[newName] = startVal;
+    newCats.push(newName);
+  });
+  state.savingsCategories = newCats;
+  saveState();
+  _refreshPreleveSur();
+  renderSavings(); renderAccounts();
+  closeHelp();
+  const _hf2 = document.getElementById("helpFooter"); if (_hf2) _hf2.style.display = "";
+  showToast("✅ Comptes épargne enregistrés");
 }
 function _addSavAccFromEdit() {
   const inp = document.getElementById("newSavAccName");
@@ -14169,7 +14208,7 @@ function _addSavAccFromEdit() {
     _refreshPreleveSur();
     showToast("✅ Compte « " + name + " » ajouté");
   } else { showToast("⚠️ Ce compte existe déjà."); }
-  openAccountEdit("epargne");
+  openSavingsAccountsManager();
 }
 function _deleteSavAcc(name) {
   if ((state.savingsCategories || []).length <= 1) { showToast("⚠️ Il faut au moins un compte."); return; }
@@ -14182,7 +14221,7 @@ function _deleteSavAcc(name) {
     saveState();
     _refreshPreleveSur();
     renderSavings();
-    openAccountEdit("epargne");
+    openSavingsAccountsManager();
   });
 }
 function _refreshPreleveSur() {
@@ -14190,7 +14229,7 @@ function _refreshPreleveSur() {
   if (!el) return;
   const savOpts = (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
   const extOpts = (state.externalAccounts || []).map(a => `<option value="ext:${escapeHtml(a.id)}">${a.emoji} ${escapeHtml(a.name)}</option>`).join("");
-  el.innerHTML = `<option value="">💳 Compte courant (défaut)</option><option value="__cash__">💵 Espèces en poche</option>${savOpts}${extOpts ? '<optgroup label="Autres comptes">' + extOpts + '</optgroup>' : ''}`;
+  el.innerHTML = `<option value="">💳 Compte courant (défaut)</option><option value="__cash__">💵 Espèces en poche</option>${savOpts}${extOpts}`;
 }
 function _quickAddSavingsAccount() {
   openAccountEdit("epargne");
@@ -14205,7 +14244,9 @@ function _accCalibrateNow() {
   state.accounts.courantStart = newStart;
   document.getElementById("accEditStart").value = newStart.toFixed(2);
 }
+function _closeEmojiPopup() { const p = document.getElementById("_sharedEmojiPopup"); if (p) p.style.display = "none"; _emojiPopupTarget = null; _emojiPopupHiddenId = null; }
 function closeAccountEdit() {
+  _closeEmojiPopup();
   document.getElementById("accountEditModal").classList.remove("open");
   _accountEditType = null;
 }
@@ -24638,7 +24679,7 @@ function openHelp(key) {
   document.getElementById("helpBody").innerHTML = h.body;
   document.getElementById("helpModal").classList.add("open");
 }
-function closeHelp() { document.getElementById("helpModal").classList.remove("open"); }
+function closeHelp() { _closeEmojiPopup(); document.getElementById("helpModal").classList.remove("open"); }
 function openHelpForCurrentView() {
   const active = document.querySelector(".tab.active");
   const view = active?.dataset?.view || "today";
