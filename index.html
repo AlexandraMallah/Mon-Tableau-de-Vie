@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1040</title>
+<title>Mon Tableau de Vie 🌿 · v1041</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1919,12 +1919,10 @@
           <span id="routineTodayBadge" style="font-size:12px;color:var(--ink-soft);"></span>
         </div>
         <div id="routineTodayBlock"></div>
-        <!-- Toggles opt-in cycle/pilule/pas/calories (mode édition) -->
-        <div class="edit-only" style="margin-top:10px;padding:12px 16px;border-radius:12px;background:var(--bg-1);border:1.5px dashed var(--lavender);display:flex;flex-direction:column;gap:10px;box-sizing:border-box;width:100%;">
-          <div style="font-size:11px;font-weight:600;color:var(--ink-softer);letter-spacing:.05em;">⚙️ Habitudes &amp; suivi — activer / désactiver :</div>
+        <!-- Toggle opt-in cycle/pilule (mode édition) — séparé -->
+        <div class="edit-only" style="margin-top:10px;padding:12px 16px;border-radius:12px;background:var(--bg-1);border:1.5px dashed var(--lavender);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-sizing:border-box;width:100%;">
+          <div style="font-size:11px;font-weight:600;color:var(--ink-softer);letter-spacing:.05em;white-space:nowrap;">🌸 Cycle menstruel — activer le suivi :</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button onclick="_toggleFeature('pas')" id="featurePasBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🚶 Pas &amp; distance</button>
-            <button onclick="_toggleFeature('calories')" id="featureCalBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🔥 Calories dépensées</button>
             <button onclick="_toggleFeature('pill')" id="featurePillBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">💊 Suivi pilule</button>
             <button onclick="_toggleFeature('cycle')" id="featureCycleBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🩸 Suivi règles</button>
           </div>
@@ -6579,13 +6577,16 @@ function renderHabits() {
   const allRoutineIds = [...(getRoutines().matin || []), ...(getRoutines().soir || [])].map(s => s.id);
   const ROUTINE_IDS = new Set(allRoutineIds);
   const f = state.features || {};
-  const _sysHidden = new Set([
-    ...(f.pas === false ? ["h-pas"] : []),
-    ...(f.calories === false ? ["h-calories","h-cal-dep"] : []),
-  ]);
-  const visibleHabits = state.habits.filter(h => !ROUTINE_IDS.has(h.id) && !_sysHidden.has(h.id));
-  const done = visibleHabits.filter(h => isHabitDone(h, today.habits[h.id])).length;
-  document.getElementById("habitCount").textContent = `${done}/${visibleHabits.length}`;
+  // Les habitudes système pas/calories sont toujours affichées (grisées si désactivées)
+  const _fullyHidden = new Set(["h-calories"]); // h-calories est l'ancienne, h-cal-dep la nouvelle
+  const visibleHabits = state.habits.filter(h => !ROUTINE_IDS.has(h.id) && !_fullyHidden.has(h.id));
+  const activeHabits = visibleHabits.filter(h => {
+    if (h.id === 'h-pas' && f.pas === false) return false;
+    if (h.id === 'h-cal-dep' && f.calories === false) return false;
+    return true;
+  });
+  const done = activeHabits.filter(h => isHabitDone(h, today.habits[h.id])).length;
+  document.getElementById("habitCount").textContent = `${done}/${activeHabits.length}`;
   document.getElementById("habitList").innerHTML = visibleHabits.map(h => {
     const value = today.habits[h.id];
     const isDone = isHabitDone(h, value);
@@ -6593,7 +6594,13 @@ function renderHabits() {
     const streakClass = streak >= 7 ? "hot" : "";
     const streakText = streak > 0 ? `🔥 ${streak}j` : "—";
     const inEdit = document.body.classList.contains('edit-mode');
-    const editBtns = inEdit ? `<span style="display:inline-flex;gap:6px;margin-left:6px;"><span onclick="event.stopPropagation();_editHabit('${h.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Modifier">✏️</span><span onclick="event.stopPropagation();_deleteHabit('${h.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Supprimer">🗑️</span></span>` : "";
+    const _isSysHabit = h.id === 'h-pas' || h.id === 'h-cal-dep';
+    const _sysFeatureKey = h.id === 'h-pas' ? 'pas' : h.id === 'h-cal-dep' ? 'calories' : null;
+    const editBtns = inEdit
+      ? (_isSysHabit
+          ? `<span style="display:inline-flex;gap:6px;margin-left:6px;"><span onclick="event.stopPropagation();_editHabit('${h.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Modifier objectif">✏️</span><button onclick="event.stopPropagation();_toggleFeature('${_sysFeatureKey}')" style="font-size:10px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;color:var(--ink-soft);" title="Désactiver">Désactiver</button></span>`
+          : `<span style="display:inline-flex;gap:6px;margin-left:6px;"><span onclick="event.stopPropagation();_editHabit('${h.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Modifier">✏️</span><span onclick="event.stopPropagation();_deleteHabit('${h.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Supprimer">🗑️</span></span>`)
+      : "";
     if (h.type === "numeric") {
       const num = Number(value) || 0;
       const pct = Math.min(100, Math.round((num / (h.target || 1)) * 100));
@@ -6613,6 +6620,17 @@ function renderHabits() {
       })();
       const _nameSpan = `<span style="font-size:14px;cursor:pointer;white-space:nowrap;font-weight:600;" onclick="_goToHealth('${_healthTarget}')" title="Voir dans Santé">${escapeHtml(h.name)} <span style="font-size:11px;color:var(--ink-softer);">↗</span></span>`;
       const _isCalDep = h.id === 'h-cal-dep';
+      // Habitudes système désactivées → carte grisée avec bouton Activer
+      const _isSysPas = h.id === 'h-pas';
+      const _isSysCal = _isCalDep;
+      const _sysDisabled = (_isSysPas && f.pas === false) || (_isSysCal && f.calories === false);
+      if (_sysDisabled) {
+        const featureKey = _isSysPas ? 'pas' : 'calories';
+        return `<div style="opacity:0.45;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1.5px dashed var(--line);background:var(--bg-1);">
+          <span style="font-size:14px;font-weight:600;color:var(--ink-soft);">${_isSysPas ? '🚶' : '🔥'} ${escapeHtml(h.name)}</span>
+          <button onclick="_toggleFeature('${featureKey}')" style="margin-left:auto;padding:4px 12px;border-radius:999px;border:1.5px solid var(--lavender);background:var(--lavender-soft);font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink);font-weight:600;opacity:1;">Activer</button>
+        </div>`;
+      }
       const _autoBtn = _isCalDep ? `<button type="button" onclick="_autoCalcKcal(Number(getToday().habits?.['h-pas']||0),true)" title="Recalculer depuis les pas" style="padding:3px 8px;border-radius:8px;border:1px solid var(--lavender);background:var(--lavender-soft);font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">🔄 Auto</button>` : "";
       return `
         <div class="habit habit-numeric ${isDone ? "done" : ""}" style="flex-direction:column;align-items:stretch;gap:6px;">
