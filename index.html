@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1029</title>
+<title>Mon Tableau de Vie 🌿 · v1030</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3113,7 +3113,10 @@
       <div id="externalList"></div>
     </div>
     <div class="card" style="margin-bottom:18px;">
-      <h2 style="margin:0 0 12px;">💰 Épargne</h2>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+        <h2 style="margin:0;flex:1;">💰 Épargne</h2>
+        <button onclick="_quickAddSavingsAccount()" style="font-size:12px;padding:5px 12px;border-radius:10px;border:1.5px dashed var(--lavender);background:var(--lavender-soft);color:#6b4d99;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;">+ Nouveau compte</button>
+      </div>
       <div style="display:flex;gap:24px;margin-bottom:14px;flex-wrap:wrap;">
         <div>
           <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Total</div>
@@ -13204,11 +13207,15 @@ function _saveExtAccounts() {
     state.externalAccounts.push({ id: "ext-" + Date.now(), name: newName.value.trim(), emoji: (newEmoji?.value.trim().slice(0,2)) || "🧾" });
   }
   saveState();
-  // Envoi immédiat vers Firebase (pas de délai de 800ms) pour éviter que le listener cloud écrase
   _fbFlushPending();
   closeHelp();
   const _hf2=document.getElementById("helpFooter"); if(_hf2) _hf2.style.display="";
   renderExternalSummary();
+  // Mettre à jour le sélecteur dans le formulaire Nouvelle transaction
+  const extAccSel = document.getElementById("txExternalAccount");
+  if (extAccSel) extAccSel.innerHTML = (state.externalAccounts||[]).map(a=>`<option value="${escapeHtml(a.id)}">${a.emoji} ${escapeHtml(a.name)}</option>`).join("");
+  const modalExtSel = document.getElementById("txModalExternalAccount");
+  if (modalExtSel) modalExtSel.innerHTML = (state.externalAccounts||[]).map(a=>`<option value="${escapeHtml(a.id)}">${a.emoji} ${escapeHtml(a.name)}</option>`).join("");
   showToast("✅ Comptes enregistrés");
 }
 function _addExtAcc() {
@@ -13859,6 +13866,22 @@ function _addSavAccFromEdit() {
     saveState();
   }
   openAccountEdit("epargne");
+}
+function _quickAddSavingsAccount() {
+  _showPrompt("Nom du compte épargne (ex : Livret A, PEL, CEL…)", "", function(name) {
+    if (!name || !name.trim()) return;
+    if (!state.savingsCategories) state.savingsCategories = [];
+    if (!state.savingsCategories.includes(name.trim())) {
+      state.savingsCategories.push(name.trim());
+      saveState();
+      populateTxCategories();
+      renderSavings();
+      renderAccounts();
+      showToast("✅ Compte « " + name.trim() + " » ajouté");
+    } else {
+      showToast("⚠️ Ce compte existe déjà.");
+    }
+  });
 }
 function _accCalibrateNow() {
   const real = parseFloat(prompt("Ton solde réel aujourd'hui (en €) :"));
