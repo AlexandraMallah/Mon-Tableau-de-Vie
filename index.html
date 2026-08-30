@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1023</title>
+<title>Mon Tableau de Vie 🌿 · v1024</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7865,7 +7865,7 @@ function admCloseMission() { document.getElementById("admMissionModal").classLis
 function admSaveMission() {
   var date = document.getElementById("admMDate").value.trim();
   var lieu = document.getElementById("admMLieu").value.trim();
-  if (!date || !lieu) { alert("Date et lieu obligatoires."); return; }
+  if (!date || !lieu) { showToast("📅 Date et lieu obligatoires."); return; }
   function n(v) { var x = parseFloat(v); return isNaN(x) ? null : x; }
   var gsel = document.getElementById("admMGroupId");
   var groupId = gsel ? gsel.value : _admMissionGroupId;
@@ -7928,7 +7928,7 @@ admSaveMission = function() {
     var date    = document.getElementById("admMDate").value.trim();
     var montant = parseFloat(document.getElementById("admMRemb").value) || 0;
     var statut  = document.getElementById("admMStatut").value || null;
-    if (!date) { alert("Date obligatoire."); return; }
+    if (!date) { showToast("📅 Date obligatoire."); return; }
     var obj = { id: _admAboId || ("a" + Date.now()), date:date, montant:montant, statut:statut };
     var arr = state.admin.abonnement;
     var found = false;
@@ -8006,7 +8006,7 @@ function admDayClick(ds) {
 function admSaveConge() {
   var debut = document.getElementById("admCDebut").value.trim();
   var fin   = document.getElementById("admCFin").value.trim();
-  if (!debut || !fin) { alert("Dates obligatoires."); return; }
+  if (!debut || !fin) { showToast("📅 Dates obligatoires."); return; }
   var jours = parseFloat(document.getElementById("admCJours").value) || null;
   var obj = {
     id:     _admCongeId || ("c" + Date.now()),
@@ -8090,7 +8090,7 @@ function _createCongesCat() {
   var label = document.getElementById("newCongesCatLabel").value.trim();
   var color = document.getElementById("newCongesCatColor").value || "#6b9ec4";
   var droits = parseFloat(document.getElementById("newCongesCatDroits").value) || 0;
-  if (!label) { alert("Nom obligatoire."); return; }
+  if (!label) { showToast("✏️ Nom obligatoire."); return; }
   var cfg = _getCongesConfig();
   var id = "cg_" + label.toLowerCase().replace(/[^a-z0-9]/g,"_").slice(0,16) + "_" + Date.now();
   var bg = color; // colorBg not strictly needed for new code
@@ -8114,7 +8114,7 @@ function _restoreHoliday(date) {
 function _addCustomHoliday() {
   var date = document.getElementById("newHolidayDate").value;
   var name = document.getElementById("newHolidayName").value.trim();
-  if (!date) { alert("Date obligatoire."); return; }
+  if (!date) { showToast("📅 Date obligatoire."); return; }
   var cfg = _getCongesConfig();
   if (!cfg.customHolidays.find(function(h){ return h.date === date && !h.deleted; })) {
     cfg.customHolidays = cfg.customHolidays.filter(function(h){ return h.date !== date; });
@@ -8252,7 +8252,7 @@ function _createTimeCat() {
   var emoji = (document.getElementById("newTimeCatEmoji").value.trim() || "📁");
   var label = document.getElementById("newTimeCatLabel").value.trim();
   var color = document.getElementById("newTimeCatColor").value || "#6aaed6";
-  if (!label) { alert("Nom obligatoire."); return; }
+  if (!label) { showToast("✏️ Nom obligatoire."); return; }
   var bg = color + "22";
   // Ajouter comme vrai projet → onglets Travail + liste tâches + suivi Temps
   if (!state.work.postdocProjects) state.work.postdocProjects = [];
@@ -11210,7 +11210,7 @@ function selectFoodReason(r) {
 
 function saveFoodEntry() {
   const name = document.getElementById("foodEntryName").value.trim();
-  if (!name) { alert("Indique ce que tu as mangé."); return; }
+  if (!name) { showToast("🍽️ Indique ce que tu as mangé."); return; }
   const d = getToday();
   if (!d.foodLog) d.foodLog = [];
   const id = document.getElementById("foodEntryId").value;
@@ -12946,7 +12946,7 @@ function confirmRenamecat() {
   const oldName = _renameCatList[_renameCatIdx];
   const newName = document.getElementById('renameCatInput').value.trim();
   if (!newName || newName === oldName) { closeRenameCatModal(); return; }
-  if (_renameCatList.includes(newName)) { alert('Cette catégorie existe déjà.'); return; }
+  if (_renameCatList.includes(newName)) { showToast("⚠️ Cette catégorie existe déjà."); return; }
   _renameCatList[_renameCatIdx] = newName;
   state.transactions.forEach(t => { if (t.category === oldName) t.category = newName; });
   saveState();
@@ -13930,7 +13930,7 @@ function renderCash() {
 }
 function cashWithdrawal() {
   const amt = parseFloat(document.getElementById("cashAmountInput").value);
-  if (!amt || amt <= 0) { alert("Entre un montant de retrait."); return; }
+  if (!amt || amt <= 0) { showToast("💰 Entre un montant de retrait."); return; }
   const note = document.getElementById("cashNoteInput").value.trim() || "Retrait espèces";
   // 1. Retire du compte courant via une transaction
   const txId = "tx" + Date.now();
@@ -13945,7 +13945,7 @@ function cashWithdrawal() {
 }
 function addCash(dir) {
   const amt = parseFloat(document.getElementById("cashAmountInput").value);
-  if (!amt || amt <= 0) { alert("Entre un montant valide."); return; }
+  if (!amt || amt <= 0) { showToast("💰 Entre un montant valide."); return; }
   const note = document.getElementById("cashNoteInput").value.trim();
   if (!state.accounts.cashLog) state.accounts.cashLog = [];
   const date = new Date().toISOString().slice(0,10);
@@ -14322,7 +14322,7 @@ function saveTxFromModal() {
   const tx = state.transactions.find(t => t.id === id);
   if (!tx) return;
   const amount = Number(document.getElementById("txModalAmount").value);
-  if (!amount || amount <= 0) { alert("Montant invalide"); return; }
+  if (!amount || amount <= 0) { showToast("💰 Montant invalide."); return; }
   const category = document.getElementById("txModalCategory").value;
   const note = document.getElementById("txModalNote").value.trim();
   const dateStr = document.getElementById("txModalDate").value;
@@ -15200,8 +15200,8 @@ function submitVirementEpargne() {
   const amt  = parseFloat(document.getElementById("virAmount").value);
   const date = document.getElementById("virDate").value;
   const note = document.getElementById("virNote").value.trim();
-  if (!from || !to || !amt || amt <= 0 || !date) { alert("Remplis tous les champs obligatoires."); return; }
-  if (from === to) { alert("Le compte source et le compte destination sont identiques."); return; }
+  if (!from || !to || !amt || amt <= 0 || !date) { showToast("⚠️ Remplis tous les champs obligatoires."); return; }
+  if (from === to) { showToast("⚠️ Les comptes source et destination sont identiques."); return; }
   const dateIso = new Date(date + "T12:00:00").toISOString();
   const label = note || `Virement ${from} → ${to}`;
   const mkId = () => "tx" + Date.now() + Math.random().toString(36).slice(2, 6);
@@ -17411,7 +17411,7 @@ document.getElementById("gcalModal")?.addEventListener("click", e => {
 async function saveGoogleCal() {
   const url = document.getElementById("gcalUrlInput").value.trim();
   const result = document.getElementById("gcalTestResult");
-  if (!url) { alert("Colle d'abord l'URL iCal."); return; }
+  if (!url) { showToast("📅 Colle d'abord l'URL iCal."); return; }
   // Test du fetch
   result.style.display = "";
   result.style.background = "var(--lavender-soft)";
@@ -17654,7 +17654,7 @@ document.getElementById("icsFile")?.addEventListener("change", e => {
   reader.onload = ev => {
     try {
       const result = parseICS(ev.target.result);
-      if (!result.events.length) { alert("Aucun événement trouvé dans ce fichier ICS."); return; }
+      if (!result.events.length) { showToast("📅 Aucun événement trouvé dans ce fichier ICS."); return; }
       const detectedColor = result.color || "#aee0c8";
       const detectedName = result.name || f.name.replace(/\.ics$/i, "") || "Calendrier";
       const customColor = detectedColor;
@@ -19744,7 +19744,7 @@ function saveRecipe() {
   if (!state.domestique.recipes) state.domestique.recipes = [];
   const id = document.getElementById("recipeModalId").value;
   const name = document.getElementById("recipeModalName").value.trim();
-  if (!name) { alert("Le nom est obligatoire."); return; }
+  if (!name) { showToast("✏️ Le nom est obligatoire."); return; }
   const servings = parseInt(document.getElementById("recipeModalServings").value) || 4;
   const notes = document.getElementById("recipeModalNotes").value.trim();
   const category = document.getElementById("recipeModalCategory")?.value || "";
@@ -20675,7 +20675,7 @@ function saveRef() {
   const b = _getGlobalBiblio();
   const id = document.getElementById("refModalId").value;
   const title = document.getElementById("refModalTitle2").value.trim();
-  if (!title) { alert("Le titre est obligatoire."); return; }
+  if (!title) { showToast("✏️ Le titre est obligatoire."); return; }
   const existing = id ? (b.refs||[]).find(r=>r.id===id) : null;
   const data = {
     id: id || "ref" + Date.now(),
@@ -20860,12 +20860,12 @@ function closeCodeModal() { document.getElementById("codeModal").classList.remov
 function saveCode() {
   const projects = _getBiblioProjects();
   const p = projects.find(x => x.id === _biblioProjectId) || projects[0];
-  if (!p) { alert("Aucun projet sélectionné."); return; }
+  if (!p) { showToast("⚠️ Aucun projet sélectionné."); return; }
   if (!p.biblio) p.biblio = _biblioDef();
   if (!p.biblio.codes) p.biblio.codes = [];
   const id = document.getElementById("codeModalId").value;
   const label = document.getElementById("codeModalLabel").value.trim();
-  if (!label) { alert("L'intitulé est obligatoire."); return; }
+  if (!label) { showToast("✏️ L'intitulé est obligatoire."); return; }
   const parentId = document.getElementById("codeModalParent")?.value || "";
   const data = {
     id: id || "code" + Date.now(), label,
@@ -21229,9 +21229,9 @@ function closeExtractModal() { document.getElementById("extractModal").classList
 function saveExtract() {
   const id = document.getElementById("extractModalId").value;
   const text = document.getElementById("extractModalText").value.trim();
-  if (!text) { alert("Le passage est obligatoire."); return; }
+  if (!text) { showToast("✏️ Le passage est obligatoire."); return; }
   const refId = document.getElementById("extractModalRef").value;
-  if (!refId) { alert("Choisis une référence."); return; }
+  if (!refId) { showToast("⚠️ Choisis une référence."); return; }
 
   // S'assurer qu'on a un projet actif — en créer un si besoin
   if (!_getBiblioProjects().length) {
@@ -21243,7 +21243,7 @@ function saveExtract() {
   }
   // Forcer l'initialisation de _biblioProjectId
   const b = _getActiveBiblio();
-  if (!b) { alert("Aucun projet sélectionné. Crée un projet dans l'onglet Codes."); return; }
+  if (!b) { showToast("⚠️ Aucun projet sélectionné. Crée un projet dans l'onglet Codes."); return; }
 
   // Codes sélectionnés
   const codes = [..._extractSelectedCodeIds];
@@ -21258,7 +21258,7 @@ function saveExtract() {
   // Sauvegarder DIRECTEMENT dans state (via la référence du projet)
   const projects = _getBiblioProjects();
   const p = projects.find(x => x.id === _biblioProjectId);
-  if (!p) { alert("Projet introuvable. Recharge la page."); return; }
+  if (!p) { showToast("⚠️ Projet introuvable. Recharge la page."); return; }
   if (!p.biblio) p.biblio = _biblioDef();
   if (!p.biblio.extracts) p.biblio.extracts = [];
 
@@ -21700,7 +21700,7 @@ function saveEditDomesticTask(id) {
   const t = (state.domestique.tasks || []).find(x => x.id === id);
   if (!t) { _editingDomTaskId = null; renderDomesticTasks(); return; }
   const name = document.getElementById("editDomName-"+id)?.value.trim();
-  if (!name) { alert("Le nom ne peut pas être vide."); return; }
+  if (!name) { showToast("✏️ Le nom ne peut pas être vide."); return; }
   t.name     = name;
   t.category = document.getElementById("editDomCat-"+id)?.value || "";
   t.priority = document.getElementById("editDomPrio-"+id)?.value || "medium";
@@ -22380,7 +22380,7 @@ function clearAllCheckedGroceries() {
 }
 function addRecurringToLatestEvent(name) {
   if (!state.domestique.groceryEvents.length) {
-    alert("Crée d'abord un événement de courses pour y ajouter cet article.");
+    showToast("🛒 Crée d'abord un événement de courses pour y ajouter cet article.");
     return;
   }
   // Trouve l'événement le plus récent par date
@@ -22960,7 +22960,7 @@ function importData() {
       let data;
       try { data = JSON.parse(reader.result); }
       catch (err) { alert("Fichier illisible — ce n'est pas un .json valide."); return; }
-      if (!data || typeof data !== "object") { alert("Fichier non reconnu."); return; }
+      if (!data || typeof data !== "object") { showToast("⚠️ Fichier non reconnu."); return; }
       // Deux formats acceptés : dump {clé: "...json..."} (contient STORE_KEY) ou objet state direct
       const isDump = typeof data[STORE_KEY] === "string";
       const isState = data.history !== undefined || data.transactions !== undefined;
@@ -24858,7 +24858,7 @@ async function cloudPull() {
     const workData   = workSnap.exists   ? _readCloudState(workSnap.data())   : null;
     const biblioData = biblioSnap.exists ? (_readCloudState(biblioSnap.data()) || biblioSnap.data()) : null;
     const remote = _assembleRemote(stateData, workData, biblioData);
-    if (!remote) { alert("Aucune donnée dans le cloud pour l'instant."); _fbSetStatus("ok"); return; }
+    if (!remote) { showToast("☁️ Aucune donnée dans le cloud pour l'instant."); _fbSetStatus("ok"); return; }
     // Remplacement total — on garde seulement le calendrier Google local
     const calEvents = state.calEvents || [];
     const calSources = state.calSources || [];
@@ -25188,7 +25188,7 @@ let _micActive = false;
 
 function toggleJournalMic() {
   if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
-    alert("Ton navigateur ne supporte pas la dictée vocale. Essaie Chrome ou Safari.");
+    showToast("🎤 Ton navigateur ne supporte pas la dictée vocale. Essaie Chrome ou Safari.");
     return;
   }
   if (_micActive) {
