@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1051</title>
+<title>Mon Tableau de Vie 🌿 · v1053</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13402,16 +13402,34 @@ function renderExternalSummary() {
     </details>`;
 }
 
+// Emojis disponibles pour les comptes
+const _ACC_EMOJIS = ["🏦","🏧","💳","💰","💵","💶","💴","🪙","💎","📗","📊","📈","💹","🏠","🚗","✈️","🌍","🎓","💼","🛍️","🎁","🧾","📦","🌸","⭐","🔐","💙","💜","🧡","💚"];
+function _extEmojiPickerHtml(inputId, current) {
+  return `<div style="display:flex;flex-wrap:wrap;gap:4px;padding:8px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);margin-bottom:4px;">
+    ${_ACC_EMOJIS.map(e => `<button type="button" onclick="_pickExtEmoji('${inputId}',this,'${e}')" style="font-size:20px;padding:4px;border-radius:8px;border:2px solid ${e===current?'var(--lavender)':'transparent'};background:${e===current?'var(--lavender-soft)':'transparent'};cursor:pointer;line-height:1;transition:all 0.15s;" title="${e}">${e}</button>`).join("")}
+  </div>
+  <input type="hidden" id="${inputId}" value="${escapeHtml(current)}" />`;
+}
+function _pickExtEmoji(inputId, btn, emoji) {
+  document.getElementById(inputId).value = emoji;
+  btn.closest('div').querySelectorAll('button').forEach(b => {
+    b.style.borderColor = 'transparent'; b.style.background = 'transparent';
+  });
+  btn.style.borderColor = 'var(--lavender)'; btn.style.background = 'var(--lavender-soft)';
+}
+
 // Gestionnaire de comptes externes (mode édition)
 function openExternalAccountsManager() {
   const accounts = state.externalAccounts || [];
   const rows = accounts.map((a, i) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);">
-      <input value="${escapeHtml(a.emoji)}" maxlength="2" style="width:44px;text-align:center;padding:5px;border:1px solid var(--line);border-radius:8px;font-size:16px;font-family:inherit;" id="extEmoji_${i}" />
-      <input value="${escapeHtml(a.name)}" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" id="extName_${i}" />
-      ${accounts.length > 1 ? `<button onclick="_delExtAcc('${a.id}')" style="padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:white;color:#f08080;font-size:13px;cursor:pointer;">✕</button>` : ""}
+    <div style="padding:10px 0;border-bottom:1px solid var(--line);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:22px;width:36px;text-align:center;" id="extEmojiDisplay_${i}">${escapeHtml(a.emoji)}</span>
+        <input value="${escapeHtml(a.name)}" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" id="extName_${i}" />
+        ${accounts.length > 1 ? `<button onclick="_delExtAcc('${a.id}')" style="padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:white;color:#f08080;font-size:13px;cursor:pointer;">✕</button>` : ""}
+      </div>
+      ${_extEmojiPickerHtml('extEmoji_' + i, a.emoji)}
     </div>`).join("");
-  // Utilise la modale générique d'aide (réutilisée pour ce formulaire)
   document.getElementById("helpIcon").textContent = "🧾";
   document.getElementById("helpTitle").textContent = "Gérer mes autres comptes";
   document.getElementById("helpSubtitle").textContent = "Compte joint, Revolut, PayPal… chacun a son onglet";
@@ -13423,7 +13441,6 @@ function openExternalAccountsManager() {
       <button onclick="_saveExtAccounts()" style="padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer ✓</button>
     </div>`;
   document.getElementById("helpModal").classList.add("open");
-  // Masquer le bouton "Compris" par défaut
   const _hf=document.getElementById("helpFooter"); if(_hf) _hf.style.display="none";
 }
 function _saveExtAccounts() {
@@ -13445,7 +13462,6 @@ function _saveExtAccounts() {
   closeHelp();
   const _hf2=document.getElementById("helpFooter"); if(_hf2) _hf2.style.display="";
   renderExternalSummary();
-  // Mettre à jour le sélecteur dans le formulaire Nouvelle transaction
   const extAccSel = document.getElementById("txExternalAccount");
   if (extAccSel) extAccSel.innerHTML = (state.externalAccounts||[]).map(a=>`<option value="${escapeHtml(a.id)}">${a.emoji} ${escapeHtml(a.name)}</option>`).join("");
   const modalExtSel = document.getElementById("txModalExternalAccount");
@@ -13453,14 +13469,14 @@ function _saveExtAccounts() {
   showToast("✅ Comptes enregistrés");
 }
 function _addExtAcc() {
-  // Ajoute un champ directement dans la liste existante
   const listEl = document.getElementById("extAccList");
   if (!listEl) return;
-  const newIdx = (state.externalAccounts || []).length;
-  const tempId = "ext-new-" + Date.now();
   const row = document.createElement("div");
-  row.style.cssText = "display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);";
-  row.innerHTML = `<input value="🧾" maxlength="2" style="width:44px;text-align:center;padding:5px;border:1px solid var(--lavender);border-radius:8px;font-size:16px;font-family:inherit;" id="extNewEmoji" /><input placeholder="Nom du compte (ex : Revolut, Compte joint…)" style="flex:1;padding:6px 10px;border:1px solid var(--lavender);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" id="extNewName" />`;
+  row.style.cssText = "padding:10px 0;border-bottom:1px solid var(--line);";
+  row.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+    <span style="font-size:22px;width:36px;text-align:center;" id="extNewEmojiDisplay">🧾</span>
+    <input placeholder="Nom du compte (ex : Revolut, Compte joint…)" style="flex:1;padding:6px 10px;border:1px solid var(--lavender);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" id="extNewName" />
+  </div>` + _extEmojiPickerHtml('extNewEmoji', '🧾');
   listEl.appendChild(row);
   document.getElementById("extNewName").focus();
 }
@@ -14111,7 +14127,13 @@ function _quickAddSavingsAccount() {
       populateTxCategories();
       renderSavings();
       renderAccounts();
-      showToast("✅ Compte « " + name.trim() + " » ajouté");
+      // Mettre à jour le select "Prélevé sur" dans le formulaire transaction
+      const fromSavEl = document.getElementById("txFromSavings");
+      if (fromSavEl) {
+        fromSavEl.innerHTML = `<option value="">💳 Compte courant (défaut)</option><option value="__cash__">💵 Espèces en poche</option>` +
+          (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
+      }
+      showToast("✅ Compte « " + name.trim() + " » ajouté — visible dans « Prélevé sur »");
     } else {
       showToast("⚠️ Ce compte existe déjà.");
     }
