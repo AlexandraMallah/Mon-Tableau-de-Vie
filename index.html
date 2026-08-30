@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1065</title>
+<title>Mon Tableau de Vie 🌿 · v1066</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13211,7 +13211,7 @@ function setTxType(t) {
   document.getElementById("txTypeExpense").classList.toggle("active", t === "expense");
   document.getElementById("txTypeIncome").classList.toggle("active", t === "income");
   document.getElementById("txTypeSavings").classList.toggle("active", t === "savings");
-  document.getElementById("txTypeExternal").classList.toggle("active", t === "external");
+  document.getElementById("txTypeExternal")?.classList.toggle("active", t === "external");
   document.getElementById("txTypeSavingsOut").classList.toggle("active", t === "savings-out");
   document.getElementById("txTypeCashWithdrawal").classList.toggle("active", t === "cash-withdrawal");
   // Afficher le toggle frais pro + charge fixe uniquement pour les dépenses
@@ -14817,6 +14817,7 @@ function setTxModalType(t, presetCategory) {
   };
   for (const [type, c] of Object.entries(cfg)) {
     const b = document.getElementById(c.btn);
+    if (!b) continue;
     if (type === t) {
       b.style.background = c.bg; b.style.borderColor = c.border; b.style.fontWeight = "600";
     } else {
