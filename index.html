@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1077</title>
+<title>Mon Tableau de Vie 🌿 · v1078</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4341,24 +4341,70 @@
 
 <!-- Modal nouvelle/édition activité -->
 <div class="modal-bg" id="activityModal" onclick="event.target===this&&_closeActivityModal()">
-  <div class="modal" style="max-width:500px;padding:28px 24px;" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+  <div class="modal" style="max-width:480px;padding:24px;" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
       <h3 id="actModalTitle" style="margin:0;font-size:18px;">✨ Nouvelle activité</h3>
       <button onclick="_closeActivityModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
     </div>
-    <p class="modal-hint">Ajoute une activité à ta bibliothèque (sport, loisir, routine…). Définis un objectif hebdomadaire ou mensuel si tu veux suivre ta régularité. Pour modifier ou supprimer, clique sur l'activité depuis la vue Activités en mode édition.</p>
+
+    <!-- Toggle type : Loisir vs Sport -->
+    <div style="display:flex;gap:8px;margin-bottom:18px;margin-top:14px;">
+      <button id="actTypeLoisir" onclick="_setActType('loisir')"
+        style="flex:1;padding:10px;border-radius:12px;border:2px solid var(--lavender);background:var(--bg-2);color:var(--ink);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;">
+        🎯 Loisir / Routine
+      </button>
+      <button id="actTypeSport" onclick="_setActType('sport')"
+        style="flex:1;padding:10px;border-radius:12px;border:2px solid var(--line);background:white;color:var(--ink-soft);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;">
+        🏃 Sport
+      </button>
+    </div>
+
+    <!-- Mode Sport : choisir le sport d'abord -->
+    <div id="actModalSportPicker" style="display:none;margin-bottom:16px;">
+      <label style="font-size:12px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:8px;">SPORT</label>
+      <select id="actModalMetPreset" onchange="_applyMetPreset()"
+        style="width:100%;padding:11px 12px;border:1.5px solid var(--mint);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:white;cursor:pointer;">
+        <option value="">— Choisir un sport —</option>
+        <option value="3.0|🧘|Yoga">🧘 Yoga</option>
+        <option value="3.5|🧘|Pilates">🧘 Pilates</option>
+        <option value="4.8|💃|Danse">💃 Danse</option>
+        <option value="5.0|🏋️|Musculation">🏋️ Musculation</option>
+        <option value="5.0|🏄|Surf">🏄 Surf</option>
+        <option value="5.3|🏂|Snowboard">🏂 Snowboard</option>
+        <option value="6.8|⛷️|Ski">⛷️ Ski</option>
+        <option value="7.0|🏸|Badminton">🏸 Badminton</option>
+        <option value="7.3|🎾|Tennis">🎾 Tennis</option>
+        <option value="7.5|🚴|Vélo">🚴 Vélo</option>
+        <option value="8.0|🏊|Natation">🏊 Natation</option>
+        <option value="8.0|🧗|Escalade">🧗 Escalade</option>
+        <option value="8.0|⛹️|Basket">⛹️ Basket</option>
+        <option value="9.8|🏃|Course à pied">🏃 Course à pied</option>
+        <option value="9.8|🥊|Boxe">🥊 Boxe</option>
+        <option value="10.3|🥋|Judo">🥋 Judo</option>
+        <option value="custom||Autre sport…">✏️ Autre sport…</option>
+      </select>
+      <input type="hidden" id="actModalMet" />
+      <div id="actModalCustomMet" style="display:none;margin-top:10px;">
+        <label style="font-size:12px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:6px;">MET PERSONNALISÉ</label>
+        <input type="number" id="actModalMetCustom" min="1" max="20" step="0.1" placeholder="ex : 6.5"
+          style="width:100%;padding:10px;border:1.5px solid var(--mint);border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;text-align:center;color:var(--ink);background:var(--bg-1);" />
+        <p style="font-size:11px;color:var(--ink-softer);margin:6px 0 0;">Le MET mesure l'intensité vs le repos (marche ≈ 3, course ≈ 10). Cherche le MET de ton activité en ligne si besoin.</p>
+      </div>
+    </div>
+
     <!-- Emoji preview + nom -->
-    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
-      <div id="actModalEmojiPreview" style="font-size:36px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border:2px solid var(--mint);border-radius:14px;background:var(--mint-soft);flex-shrink:0;cursor:default;">🏃</div>
+    <label style="font-size:12px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:8px;">NOM &amp; EMOJI</label>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
+      <div id="actModalEmojiPreview" style="font-size:32px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;border:2px solid var(--mint);border-radius:12px;background:var(--mint-soft);flex-shrink:0;cursor:default;">🏃</div>
       <input type="text" id="actModalName" placeholder="Nom de l'activité…" maxlength="40"
         onkeydown="if(event.key==='Enter')_saveActivityModal()"
         style="flex:1;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);" />
     </div>
     <!-- Grille emoji -->
-    <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:8px;">EMOJI</div>
-    <div id="actEmojiGrid" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;max-height:160px;overflow-y:auto;"></div>
+    <div id="actEmojiGrid" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px;max-height:130px;overflow-y:auto;"></div>
+
     <!-- Objectif -->
-    <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:8px;">OBJECTIF (optionnel)</div>
+    <label style="font-size:12px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:8px;">OBJECTIF (optionnel)</label>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
       <input type="number" id="actModalGoalCount" min="1" max="31" placeholder="—"
         style="width:72px;padding:9px 10px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:15px;font-weight:600;text-align:center;color:var(--ink);background:var(--bg-1);" />
@@ -4368,40 +4414,8 @@
         <option value="month">mois</option>
       </select>
     </div>
-    <!-- Sport MET -->
-    <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:8px;">CALORIES (optionnel)</div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--ink);">
-        <input type="checkbox" id="actModalIsSport" onchange="_toggleActSportFields()" style="width:16px;height:16px;cursor:pointer;" />
-        Activité sportive (calcul kcal automatique)
-      </label>
-    </div>
-    <div id="actModalSportFields" style="display:none;margin-bottom:16px;">
-      <label style="font-size:13px;color:var(--ink-soft);display:block;margin-bottom:6px;">MET de l'activité</label>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
-        <select id="actModalMetPreset" onchange="_applyMetPreset()" style="flex:1;padding:9px 10px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--bg-1);cursor:pointer;">
-          <option value="">— Choisir un sport type —</option>
-          <option value="3.0">Yoga (3.0)</option>
-          <option value="3.5">Pilates (3.5)</option>
-          <option value="4.8">Danse (4.8)</option>
-          <option value="5.0">Musculation (5.0)</option>
-          <option value="5.0">Surf (5.0)</option>
-          <option value="5.3">Snowboard (5.3)</option>
-          <option value="6.8">Ski (6.8)</option>
-          <option value="7.0">Badminton (7.0)</option>
-          <option value="7.3">Tennis (7.3)</option>
-          <option value="7.5">Vélo (7.5)</option>
-          <option value="8.0">Natation (8.0)</option>
-          <option value="8.0">Escalade (8.0)</option>
-          <option value="8.0">Basket (8.0)</option>
-          <option value="9.8">Course à pied (9.8)</option>
-          <option value="9.8">Boxe (9.8)</option>
-          <option value="10.3">Judo (10.3)</option>
-        </select>
-        <input type="number" id="actModalMet" min="1" max="20" step="0.1" placeholder="MET"
-          style="width:80px;padding:9px 10px;border:1.5px solid var(--mint);border-radius:12px;font-family:inherit;font-size:14px;font-weight:700;text-align:center;color:var(--ink);background:var(--bg-1);" />
-      </div>
-    </div>
+
+    <input type="hidden" id="actModalIsSport" value="0" />
     <input type="hidden" id="actModalEditId" value="" />
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button onclick="_closeActivityModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
@@ -9936,13 +9950,43 @@ function _calcSportKcal(met, durationMin) {
   return Math.round(met * w * (durationMin / 60));
 }
 
-function _toggleActSportFields() {
-  const on = document.getElementById("actModalIsSport").checked;
-  document.getElementById("actModalSportFields").style.display = on ? "block" : "none";
+function _setActType(type) {
+  const isSport = type === "sport";
+  document.getElementById("actModalIsSport").value = isSport ? "1" : "0";
+  const lBtn = document.getElementById("actTypeLoisir");
+  const sBtn = document.getElementById("actTypeSport");
+  lBtn.style.borderColor = isSport ? "var(--line)" : "var(--lavender)";
+  lBtn.style.background  = isSport ? "white" : "var(--bg-2)";
+  lBtn.style.color       = isSport ? "var(--ink-soft)" : "var(--ink)";
+  sBtn.style.borderColor = isSport ? "var(--mint)" : "var(--line)";
+  sBtn.style.background  = isSport ? "var(--mint-soft)" : "white";
+  sBtn.style.color       = isSport ? "var(--ink)" : "var(--ink-soft)";
+  document.getElementById("actModalSportPicker").style.display = isSport ? "block" : "none";
 }
 function _applyMetPreset() {
   const v = document.getElementById("actModalMetPreset").value;
-  if (v) document.getElementById("actModalMet").value = v;
+  if (!v) return;
+  if (v === "custom") {
+    document.getElementById("actModalMet").value = "";
+    document.getElementById("actModalCustomMet").style.display = "block";
+    return;
+  }
+  document.getElementById("actModalCustomMet").style.display = "none";
+  const [met, emoji, name] = v.split("|");
+  document.getElementById("actModalMet").value = met;
+  // Pré-remplir nom et emoji si champs vides
+  if (!document.getElementById("actModalName").value.trim() && name) {
+    document.getElementById("actModalName").value = name;
+  }
+  if (emoji) {
+    _actModalEmoji = emoji;
+    document.getElementById("actModalEmojiPreview").textContent = emoji;
+    document.querySelectorAll("[data-actemojikey]").forEach(btn => {
+      const sel = btn.dataset.actemojikey === emoji;
+      btn.style.borderColor = sel ? "var(--mint)" : "var(--line)";
+      btn.style.background  = sel ? "var(--mint-soft)" : "white";
+    });
+  }
 }
 
 const _ACT_EMOJIS = [
@@ -9963,10 +10007,11 @@ function _openActivityModal(id) {
   document.getElementById("actModalEmojiPreview").textContent = _actModalEmoji;
   // Sport fields
   const isSport = !!(a?.sport);
-  document.getElementById("actModalIsSport").checked = isSport;
-  document.getElementById("actModalSportFields").style.display = isSport ? "block" : "none";
+  _setActType(isSport ? "sport" : "loisir");
   document.getElementById("actModalMet").value = a?.met || "";
   document.getElementById("actModalMetPreset").value = "";
+  document.getElementById("actModalCustomMet").style.display = "none";
+  if (isSport && a?.met) document.getElementById("actModalMetCustom").value = a.met;
   document.getElementById("actEmojiGrid").innerHTML = _ACT_EMOJIS.map(e =>
     `<button onclick="_selectActEmoji('${e}')" data-actemojikey="${e}" style="
       font-size:22px;padding:6px 8px;border-radius:10px;cursor:pointer;font-family:inherit;
@@ -9994,8 +10039,11 @@ function _saveActivityModal() {
   const goalCount = Number(document.getElementById("actModalGoalCount").value) || 0;
   const goalPeriod = document.getElementById("actModalGoalPeriod").value;
   const goal = goalCount > 0 ? { count: goalCount, period: goalPeriod } : null;
-  const isSport = document.getElementById("actModalIsSport").checked;
-  const met = isSport ? (Number(document.getElementById("actModalMet").value) || null) : null;
+  const isSport = document.getElementById("actModalIsSport").value === "1";
+  const metRaw = isSport
+    ? (Number(document.getElementById("actModalMetCustom").value) || Number(document.getElementById("actModalMet").value) || null)
+    : null;
+  const met = metRaw;
   const editId = document.getElementById("actModalEditId").value;
   if (editId) {
     const a = state.activities.find(x => x.id === editId);
