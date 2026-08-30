@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1006</title>
+<title>Mon Tableau de Vie 🌿 · v1008</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5130,13 +5130,9 @@
     <div style="border-top:1px solid var(--line);padding-top:14px;">
       <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;font-weight:600;">Nouveau projet</div>
       <div style="margin-bottom:8px;">
-        <div style="font-size:11px;color:var(--ink-softer);margin-bottom:5px;">Choisir un emoji :</div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;max-height:100px;overflow-y:auto;padding:4px;background:var(--bg-1);border-radius:8px;">
-          <span id="newTimeCatEmojiPreview" style="font-size:20px;padding:4px 6px;border-radius:6px;background:var(--lavender-soft);border:1.5px solid var(--lavender);cursor:default;min-width:32px;text-align:center;">📁</span>
-          <span style="width:1px;background:var(--line);margin:2px 2px;"></span>
-          ${["📁","📂","📌","🎯","✍️","📝","📖","📚","🔬","🧪","🎓","📊","📈","🗂️","💡","🏛️","🌍","🔭","🖊️","📐","🧑‍🏫","💬","📣","🏆","🤝","🌱","⚡","🔗","🧭","🗺️","📋","🎤","🖥️","📡","🔑","🎨","🧩","💎","🚀","🌟","🎪","🏗️","🔧","📮","🗓️","📩","🧠","🏅","💼","🌈","🔐","🎭","🧬","📸","🎵","🌺","🛠️","🔍","💻","🏠","🌿"].map(e =>
-            `<span onclick="_pickTimeCatEmoji('${e}')" style="font-size:18px;padding:3px 5px;border-radius:6px;cursor:pointer;transition:background 0.1s;" onmouseover="this.style.background='var(--lavender-soft)'" onmouseout="this.style.background='transparent'">${e}</span>`
-          ).join("")}
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span id="newTimeCatEmojiPreview" style="font-size:26px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--bg-1);border:1px solid var(--line);cursor:default;">📁</span>
+          <div id="newTimeCatEmojiGrid" style="display:flex;flex-wrap:wrap;gap:4px;flex:1;max-height:90px;overflow-y:auto;padding:6px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);"></div>
         </div>
         <input type="hidden" id="newTimeCatEmoji" value="📁" />
       </div>
@@ -8125,6 +8121,15 @@ function openTimeCatsModal() {
   const prev = document.getElementById("newTimeCatEmojiPreview"); if (prev) prev.textContent = "📁";
   document.getElementById("newTimeCatLabel").value = "";
   document.getElementById("newTimeCatColor").value = "#6aaed6";
+  // Remplir la grille d'emojis
+  var grid = document.getElementById("newTimeCatEmojiGrid");
+  if (grid && !grid.dataset.filled) {
+    var emojis = ["📁","📂","📌","🎯","✍️","📝","📖","📚","🔬","🧪","🎓","📊","📈","🗂️","💡","🏛️","🌍","🔭","🖊️","📐","🧑‍🏫","💬","📣","🏆","🤝","🌱","⚡","🔗","🧭","🗺️","📋","🎤","🖥️","📡","🔑","🎨","🧩","💎","🚀","🌟","🎪","🏗️","🔧","📮","🗓️","📩","🧠","🏅","💼","🌈","🔐","🎭","🧬","📸","🎵","🌺","🛠️","🔍","💻","🏠","🌿"];
+    grid.innerHTML = emojis.map(function(e) {
+      return '<span onclick="_pickTimeCatEmoji(\'' + e + '\')" style="font-size:20px;padding:4px;border-radius:6px;cursor:pointer;transition:background 0.1s;line-height:1;" onmouseover="this.style.background=\'var(--lavender-soft)\'" onmouseout="this.style.background=\'transparent\'">' + e + '</span>';
+    }).join("");
+    grid.dataset.filled = "1";
+  }
   document.getElementById("timeCatsModal").classList.add("open");
   setTimeout(() => document.getElementById("newTimeCatLabel").focus(), 80);
 }
@@ -18516,15 +18521,15 @@ function renderPersoProjects() {
       + '<div class="card" style="margin-bottom:14px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"><h3 style="margin:0;font-size:14px;">✅ Listes</h3>'
       + '<button onclick="_persoAddList(\'' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px dashed ' + color + ';background:' + bg + ';color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Nouvelle liste</button>'
       + '</div><div id="persoLists-' + pp.id + '">' + _renderPersoLists(pp) + '</div></div>'
-      + (pp.budget ?
-          '<div class="card" style="margin-bottom:14px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">'
-          + '<h3 style="margin:0;font-size:14px;">💰 Budget — <span style="color:' + color + ';">' + spent.toFixed(0) + ' €</span> / ' + pp.budget.toLocaleString("fr-FR") + ' €</h3>'
-          + '<div style="display:flex;gap:6px;">'
-          + '<button onclick="_addPersoBudgetSection(\'' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px solid ' + color + ';background:' + bg + ';color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Section</button>'
-          + '<button onclick="_persoAddExpense(\'' + pp.id + '\',\'\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px dashed ' + color + ';background:white;color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Dépense</button>'
-          + '</div></div>'
-          + '<div id="persoBudget-' + pp.id + '">' + _renderPersoBudget(pp) + '</div></div>'
-        : '');
+      + '<div class="card" style="margin-bottom:14px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">'
+      + '<h3 style="margin:0;font-size:14px;">💰 Budget' + (pp.budget ? ' — <span style="color:' + color + ';">' + spent.toFixed(0) + ' €</span> / ' + pp.budget.toLocaleString("fr-FR") + ' €' : '') + '</h3>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      + (pp.budget ? '<button onclick="_addPersoBudgetSection(\'' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px solid ' + color + ';background:' + bg + ';color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Section</button>' : '')
+      + (pp.budget ? '<button onclick="_persoAddExpense(\'' + pp.id + '\',\'\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px dashed ' + color + ';background:white;color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Dépense</button>' : '')
+      + '<button onclick="openPersoProjectModal(\'' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;">' + (pp.budget ? '✏️ Modifier' : '⚙️ Configurer') + '</button>'
+      + '</div></div>'
+      + (pp.budget ? '<div id="persoBudget-' + pp.id + '">' + _renderPersoBudget(pp) + '</div>' : '<p style="color:var(--ink-softer);font-size:12px;font-style:italic;margin:0 0 4px;">Aucun budget défini — clique sur ⚙️ Configurer pour en ajouter un.</p>')
+      + '</div>';
     viewsEl.appendChild(viewDiv);
   });
 }
@@ -24048,7 +24053,7 @@ const HELP_TEXTS = {
         <li><strong>☑️ To-do du jour</strong> — Ce sont les choses à faire <em>aujourd'hui</em> : passer un appel, faire des courses, envoyer un mail… C'est la même liste que celle visible dans l'onglet Aujourd'hui. Elle se vide chaque jour pour repartir à zéro.</li>
         <li><strong>📋 Mes listes</strong> — Des listes libres que tu gardes dans le temps : liste valise, liste cadeaux à faire, liste des films à voir… Tu crées autant de listes que tu veux, avec des items à cocher et décocher.</li>
         <li><strong>📝 Notes libres</strong> — Des notes avec un titre et un contenu libre, idéales pour des infos à retenir : code wifi, contact plombier, numéro d'assurance, instructions d'entretien…</li>
-        <li><strong>🗒️ Tâches domestiques</strong> — Différent du To-do du jour : ce sont des tâches qui restent en tête et que tu n'as pas forcément le temps de traiter aujourd'hui (mettre à jour les finances, acheter un nouvel appareil, planifier des travaux…). Chaque tâche peut avoir une priorité et une deadline.</li>
+        <li><strong>🗒️ Tâches</strong> — Différent du To-do du jour : ce sont des tâches qui restent en tête et que tu n'as pas forcément le temps de traiter aujourd'hui (mettre à jour les finances, acheter un nouvel appareil, planifier des travaux…). Chaque tâche peut avoir une priorité et une deadline.</li>
       </ul>
       <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
         💡 <strong>Règle simple :</strong> To-do du jour = "je le fais aujourd'hui". Tâches domestiques = "je dois y penser mais pas forcément maintenant". Listes = "j'y reviens quand j'en ai besoin". Notes = "je veux retrouver cette info plus tard".
