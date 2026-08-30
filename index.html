@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1071</title>
+<title>Mon Tableau de Vie 🌿 · v1072</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14462,17 +14462,25 @@ function _addSavAccFromEdit() {
   const inp = document.getElementById("newSavAccName");
   const name = inp?.value.trim();
   if (!name) { showToast("⚠️ Entre un nom de compte."); return; }
-  if (!(state.savingsCategories || []).includes(name)) {
-    state.savingsCategories.push(name);
-    const emoji = document.getElementById("newSavEmoji")?.value || "🏦";
-    if (!state.accounts) state.accounts = {};
-    if (!state.accounts.savingsEmojis) state.accounts.savingsEmojis = {};
-    state.accounts.savingsEmojis[name] = emoji;
-    saveState();
-    _refreshPreleveSur();
-    showToast("✅ Compte « " + name + " » ajouté");
-  } else { showToast("⚠️ Ce compte existe déjà."); }
-  openSavingsAccountsManager();
+  if ((state.savingsCategories || []).includes(name)) { showToast("⚠️ Ce compte existe déjà."); return; }
+  const emoji = document.getElementById("newSavEmoji")?.value || "🏦";
+  const listEl = document.getElementById("savAccList");
+  if (!listEl) { openSavingsAccountsManager(); return; }
+  // Ajouter la ligne dans le DOM sans recharger la modale
+  const uid = "new_" + Date.now();
+  const rowHtml = `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);">
+    <button type="button" onclick="_openEmojiPopup(this,'savEmoji_${uid}')" style="width:38px;height:38px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;">${escapeHtml(emoji)}</button>
+    <input type="hidden" id="savEmoji_${uid}" data-saving-emoji="${escapeHtml(name)}" class="acc-saving-emoji" value="${escapeHtml(emoji)}" />
+    <input data-saving-name="${escapeHtml(name)}" class="acc-saving-name" value="${escapeHtml(name)}" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
+    <input data-saving-start="${escapeHtml(name)}" class="acc-saving-start" type="number" value="0.00" step="0.01" placeholder="Solde départ" style="width:80px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
+    <button onclick="_deleteSavAcc('${escapeHtml(name)}')" title="Supprimer" style="flex-shrink:0;width:30px;height:30px;border:none;background:none;color:#d44;font-size:16px;cursor:pointer;border-radius:6px;">🗑</button>
+  </div>`;
+  listEl.insertAdjacentHTML("beforeend", rowHtml);
+  // Réinitialiser le formulaire
+  inp.value = "";
+  const emojiInp = document.getElementById("newSavEmoji"); if (emojiInp) emojiInp.value = "🏦";
+  const emojiBtn = document.getElementById("newSavEmojiBtn"); if (emojiBtn) emojiBtn.textContent = "🏦";
+  inp.focus();
 }
 function _deleteSavAcc(name) {
   const hasTxs = (state.transactions || []).some(t => t.category === name && (t.type === "savings" || t.type === "savings-out"));
