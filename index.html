@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1043</title>
+<title>Mon Tableau de Vie 🌿 · v1045</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2780,6 +2780,13 @@
   <section class="view" data-view="health">
     <div class="card">
         <h2>💪 Composition corporelle</h2>
+        <!-- Toggles sections Santé — visibles en mode édition -->
+        <div class="edit-only" style="margin-bottom:12px;padding:12px 14px;border:1.5px dashed var(--lavender);border-radius:12px;background:var(--bg-2);display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+          <span style="font-size:12px;color:var(--ink-soft);width:100%;margin-bottom:2px;">Afficher / masquer des sections :</span>
+          <button id="featureBodyCompBtn" onclick="_toggleFeature('bodyComp')" style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;">🧬 Masse grasse / maigre</button>
+          <button id="featureCaloriesHealthBtn" onclick="_toggleFeature('calories')" style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;">🔥 Suivi calorique</button>
+          <button id="featureEnergyBtn" onclick="_toggleFeature('energyBalance')" style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;">⚖️ Balance énergétique</button>
+        </div>
         <!-- Profil corporel : taille + objectif poids -->
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:linear-gradient(135deg,var(--sky-soft),var(--lavender-soft));border-radius:12px;padding:10px 14px;flex:1;min-width:240px;">
@@ -2788,11 +2795,12 @@
               onchange="_saveBodyProfile()"
               style="width:80px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;" />
             <span style="font-size:13px;color:var(--ink-soft);">cm</span>
-            <span style="font-size:13px;font-weight:600;margin-left:4px;">🎂</span>
+            <span style="font-size:13px;color:var(--ink-soft);margin-left:4px;">Âge</span>
             <input type="number" id="bodyAgeInput" placeholder="Âge" step="1" min="10" max="99"
               onchange="_saveBodyProfile()"
               style="width:60px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;" />
             <span style="font-size:13px;color:var(--ink-soft);">ans</span>
+            <span style="font-size:13px;color:var(--ink-soft);">Sexe</span>
             <select id="bodySexInput" onchange="_saveBodyProfile()"
               style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);background:white;">
               <option value="">Sexe</option>
@@ -2826,12 +2834,12 @@
             <div class="stat-val" id="weightToday">—</div>
             <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;" id="weightTrend"></div>
           </div>
-          <div class="stat">
+          <div class="stat" id="statBodyFat">
             <div class="stat-label">Masse grasse</div>
             <div class="stat-val" id="bodyFatToday">—</div>
             <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;" id="bodyFatTrend"></div>
           </div>
-          <div class="stat">
+          <div class="stat" id="statMuscleMass">
             <div class="stat-label">Masse maigre</div>
             <div class="stat-val" id="muscleMassToday">—</div>
             <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;" id="muscleMassTrend"></div>
@@ -5860,6 +5868,8 @@ function migrate(s) {
   if (s.features.cycle === undefined) s.features.cycle = false;
   if (s.features.pas === undefined) s.features.pas = true;
   if (s.features.calories === undefined) s.features.calories = true;
+  if (s.features.bodyComp === undefined) s.features.bodyComp = true;
+  if (s.features.energyBalance === undefined) s.features.energyBalance = true;
   // Migration : s'assurer que h-cal-dep existe dans les habitudes (target 2000 kcal)
   if (!Array.isArray(s.habits)) s.habits = [];
   if (!s.habits.find(h => h.id === 'h-cal-dep')) {
@@ -11653,6 +11663,26 @@ function _syncFeatureSections() {
   const skincareCard = document.getElementById("healthSkincareCard");
   if (pillCard) pillCard.style.display = f.pill ? "" : "none";
   if (skincareCard) skincareCard.style.gridColumn = f.pill ? "" : "1 / -1";
+  // Composition corporelle (masse grasse/maigre)
+  const bcOn = f.bodyComp !== false;
+  ["bodyFatInput","muscleMassInput","statBodyFat","statMuscleMass","bodyMetricFat","bodyMetricMuscle"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = bcOn ? "" : "none";
+  });
+  const bodyCompBtn = document.getElementById("featureBodyCompBtn");
+  if (bodyCompBtn) { bodyCompBtn.style.background = bcOn ? "var(--lavender-soft)" : "white"; bodyCompBtn.style.borderColor = bcOn ? "var(--lavender)" : "var(--line)"; }
+  // Suivi calorique (graphique + balance)
+  const calOn = f.calories !== false;
+  const calCard = document.getElementById("healthCalorieCard");
+  if (calCard) calCard.style.display = calOn ? "" : "none";
+  const calHealthBtn = document.getElementById("featureCaloriesHealthBtn");
+  if (calHealthBtn) { calHealthBtn.style.background = calOn ? "var(--lavender-soft)" : "white"; calHealthBtn.style.borderColor = calOn ? "var(--lavender)" : "var(--line)"; }
+  // Balance énergétique
+  const ebOn = f.energyBalance !== false;
+  const ebCard = document.getElementById("energyBalanceCard");
+  if (ebCard) ebCard.style.display = ebOn ? "" : "none";
+  const ebBtn = document.getElementById("featureEnergyBtn");
+  if (ebBtn) { ebBtn.style.background = ebOn ? "var(--lavender-soft)" : "white"; ebBtn.style.borderColor = ebOn ? "var(--lavender)" : "var(--line)"; }
   // Rafraîchir la liste des habitudes immédiatement (grisé/actif)
   if (typeof renderHabits === "function") renderHabits();
 }
