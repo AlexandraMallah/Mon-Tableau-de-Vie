@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1037</title>
+<title>Mon Tableau de Vie 🌿 · v1038</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -561,6 +561,8 @@
     font-size: 13px; display: flex; justify-content: space-between; align-items: center;
   }
   .sub-total-banner strong { font-size: 16px; font-weight: 700; }
+  /* Bouton aide mobile : caché par défaut, visible seulement sous 640px */
+  #mobileHelpBtn { display: none; }
   @media (max-width: 700px) {
     .sub-row { grid-template-columns: 1fr auto; gap: 8px; }
     .sub-row .sub-freq-badge, .sub-row .sub-renewal { grid-column: 1 / -1; justify-self: start; }
@@ -1863,7 +1865,7 @@
     <button id="helpNavBtn" onclick="openHelpForCurrentView()" title="Aide sur cette section" style="margin-left:auto;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">ℹ️ Aide</button>
   </nav>
   <!-- Bouton aide mobile (sous la nav, caché sur desktop) -->
-  <div id="mobileHelpBtn" style="display:none;">
+  <div id="mobileHelpBtn">
     <button onclick="openHelpForCurrentView()" style="background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;">ℹ️ Aide</button>
   </div>
 
