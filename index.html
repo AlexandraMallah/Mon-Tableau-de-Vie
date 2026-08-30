@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1012</title>
+<title>Mon Tableau de Vie 🌿 · v1014</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6082,7 +6082,21 @@ function setupTabs() {
       document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
       t.classList.add("active");
       const view = t.dataset.view;
-      document.querySelector(`.view[data-view="${view}"]`).classList.add("active");
+      const viewEl = document.querySelector(`.view[data-view="${view}"]`);
+      viewEl.classList.add("active");
+      // Activer le premier sous-onglet si aucun n'est actif
+      const activeSubTab = viewEl.querySelector(".sub-tab.active");
+      if (!activeSubTab) {
+        const firstSubTab = viewEl.querySelector(".sub-tab");
+        if (firstSubTab) firstSubTab.click();
+      } else {
+        // S'assurer que la sous-vue correspondante est visible
+        const activeSub = viewEl.querySelector(`.sub-view[data-sub="${activeSubTab.dataset.sub}"]`);
+        if (activeSub && !activeSub.classList.contains("active")) {
+          viewEl.querySelectorAll(".sub-view").forEach(v => v.classList.remove("active"));
+          activeSub.classList.add("active");
+        }
+      }
       onViewChange(view);
     });
   });
