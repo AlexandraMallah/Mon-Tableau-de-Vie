@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="fr" translate="no">
+<html lang="fr">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="google" content="notranslate" />
 <meta name="color-scheme" content="light" />
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
@@ -14,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1063</title>
+<title>Mon Tableau de Vie 🌿 · v1065</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3012,11 +3011,11 @@
           <div class="value" id="accountCourant">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="accountCourantDetail"></div>
         </div>
-        <div class="money-stat" style="background:linear-gradient(135deg,white 0%,#fff8e1 100%);cursor:pointer;position:relative;" onclick="_toggleCashDetail()">
-          <button onclick="event.stopPropagation();openAccountEdit('cash')" title="Modifier" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">✏️</button>
+        <div class="money-stat" style="background:linear-gradient(135deg,white 0%,#fff8e1 100%);position:relative;">
+          <button onclick="openAccountEdit('cash')" title="Modifier" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">✏️</button>
           <div class="label" id="cashAccountLabel">💵 Espèces en poche</div>
           <div class="value" id="cashBalanceDisplay" style="color:#b8860b;">0,00 €</div>
-          <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">Cliquer pour gérer</div>
+          <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="cashSubLabel"></div>
         </div>
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,var(--lavender-soft) 100%);position:relative;">
           <button onclick="openAllAccountsManager()" title="Gérer les comptes" class="help-btn" style="position:absolute;top:8px;right:8px;font-size:11px;padding:3px 9px;">✦</button>
@@ -3030,20 +3029,6 @@
       </div>
       <p style="color:var(--ink-soft);font-size:12px;margin:10px 0 0;">💡 Quand tu ajoutes une transaction <strong>💰 Épargne</strong>, le montant est <strong>retiré du compte courant</strong> et <strong>ajouté au compte épargne</strong>. Pour ajuster les soldes de départ : clique sur ✏️.</p>
 
-      <!-- Espèces — panneau déroulant -->
-      <div id="cashDetailPanel" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
-        <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:8px;">💵 Gérer mes espèces</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <input type="number" id="cashAmountInput" placeholder="Montant €" step="0.01" min="0"
-            style="width:110px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:14px;color:var(--ink);" />
-          <input type="text" id="cashNoteInput" placeholder="Motif (ex: retrait, marché…)"
-            style="flex:1;min-width:120px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:14px;color:var(--ink);" />
-          <button onclick="cashWithdrawal()" style="padding:7px 14px;border-radius:9px;border:none;background:#fff3cd;color:#7a5c00;font-weight:700;cursor:pointer;font-family:inherit;">🏧 Retrait CB</button>
-          <button onclick="addCash(1)"  style="padding:7px 14px;border-radius:9px;border:none;background:#d4edda;color:#2d6a35;font-weight:700;cursor:pointer;font-family:inherit;">+ Reçu</button>
-          <button onclick="setCashBalance()" style="padding:7px 12px;border-radius:9px;border:1px solid var(--line);background:var(--bg-1);color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;">📍 Caler</button>
-        </div>
-        <div id="cashLog" style="margin-top:10px;display:flex;flex-direction:column;gap:3px;max-height:160px;overflow-y:auto;"></div>
-      </div>
     </div>
     <div class="money-summary" id="moneySummary"></div>
     <div class="card" style="margin-bottom:18px;">
@@ -3077,7 +3062,6 @@
       <div class="tx-form">
         <div class="type-toggle">
           <button id="txTypeExpense" class="active expense" onclick="setTxType('expense')">− Dépense</button>
-          <button id="txTypeExternal" class="external" onclick="setTxType('external')">🧾 Autres comptes</button>
           <button id="txTypeIncome" class="income" onclick="setTxType('income')">+ Revenu</button>
           <button id="txTypeSavings" class="savings" onclick="setTxType('savings')">💰 Épargne</button>
           <button id="txTypeSavingsOut" class="savings-out" onclick="setTxType('savings-out')">🏦→💳 Retrait épargne</button>
@@ -4225,7 +4209,7 @@
   </div>
 </div>
 
-<div class="modal-bg" id="confirmModal" style="z-index:600;" onclick="event.target===this&&_closeConfirm(false)">
+<div class="modal-bg" id="confirmModal" style="z-index:9000;" onclick="event.target===this&&_closeConfirm(false)">
   <div class="modal" style="max-width:360px;padding:28px 24px;text-align:center;" onclick="event.stopPropagation()">
     <div id="confirmIcon" style="font-size:36px;margin-bottom:10px;">🗑️</div>
     <div id="confirmMsg" style="font-size:15px;color:var(--ink);line-height:1.5;margin-bottom:20px;"></div>
@@ -4770,7 +4754,6 @@
     <label>Type</label>
     <div class="type-toggle" style="display:flex;gap:6px;margin-bottom:6px;">
       <button type="button" id="txModalTypeExpense" onclick="setTxModalType('expense')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">− Dépense</button>
-      <button type="button" id="txModalTypeExternal" onclick="setTxModalType('external')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">🧾 Autres comptes</button>
       <button type="button" id="txModalTypeIncome" onclick="setTxModalType('income')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">+ Revenu</button>
       <button type="button" id="txModalTypeSavings" onclick="setTxModalType('savings')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">💰 Épargne</button>
       <button type="button" id="txModalTypeSavingsOut" onclick="setTxModalType('savings-out')" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:13px;">🏦→💳 Retrait</button>
@@ -13353,7 +13336,7 @@ function renderExternalSummary() {
   }
   // Onglets des comptes
   if (tabsEl) {
-    const hasTxs = accounts.filter(a => state.transactions.some(t => t.type === "external" && (t.externalAccountId === a.id || (!t.externalAccountId && a.id === "ext-default"))));
+    const hasTxs = accounts.filter(a => state.transactions.some(t => (t.type === "external" && (t.externalAccountId === a.id || (!t.externalAccountId && a.id === "ext-default"))) || (t.type === "expense" && (t.fromSavingsAccount||"").startsWith("ext:") && t.fromSavingsAccount.slice(4) === a.id)));
     const showAll = accounts.length > 1;
     tabsEl.style.display = showAll ? "flex" : "none";
     if (showAll) {
@@ -13378,10 +13361,17 @@ function renderExternalSummary() {
   if (nextBtn) nextBtn.disabled = _externalMonthOffset >= 0;
   const txs = state.transactions.filter(tx => {
     const d = new Date(tx.date);
-    if (tx.type !== "external" || tx.category === "↩ Retour hors compte") return false;
     if (d < start || d >= end) return false;
-    if (_externalAccountFilter) return (tx.externalAccountId || "ext-default") === _externalAccountFilter;
-    return true;
+    if (tx.type === "external" && tx.category !== "↩ Retour hors compte") {
+      if (_externalAccountFilter) return (tx.externalAccountId || "ext-default") === _externalAccountFilter;
+      return true;
+    }
+    if (tx.type === "expense" && (tx.fromSavingsAccount||"").startsWith("ext:")) {
+      const extId = tx.fromSavingsAccount.slice(4);
+      if (_externalAccountFilter) return extId === _externalAccountFilter;
+      return true;
+    }
+    return false;
   }).sort((a, b) => new Date(b.date) - new Date(a.date));
   const total = txs.reduce((s, tx) => s + tx.amount, 0);
   if (totalEl) totalEl.textContent = total.toFixed(2) + " €";
@@ -13398,7 +13388,8 @@ function renderExternalSummary() {
     </div>`).join("");
   const txRows = txs.map(tx => {
     const d = new Date(tx.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-    const acc = accounts.find(a => a.id === (tx.externalAccountId || "ext-default"));
+    const extId = tx.type === "expense" ? (tx.fromSavingsAccount||"").slice(4) : (tx.externalAccountId || "ext-default");
+    const acc = accounts.find(a => a.id === extId);
     const accLabel = acc && accounts.length > 1 ? `<span style="font-size:10px;background:var(--lavender-soft);border-radius:4px;padding:1px 5px;color:#6b4d99;">${acc.emoji} ${escapeHtml(acc.name)}</span>` : "";
     return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed #f0eaf8;font-size:12px;">
       <span style="flex:1;color:var(--ink-soft);">${escapeHtml(tx.category)} — ${escapeHtml(tx.note || "—")} ${accLabel}</span>
@@ -13462,10 +13453,6 @@ function _pickSharedEmoji(emoji) {
   _emojiPopupTarget = null; _emojiPopupHiddenId = null; _emojiPopupCallback = null;
 }
 function _delAllAccDom(a, rowEl) {
-  const canDelSav = (state.savingsCategories || []).length > 1;
-  const canDelExt = (state.externalAccounts || []).length > 1;
-  if (a.type === "savings" && !canDelSav) { showToast("⚠️ Il faut au moins un compte épargne."); return; }
-  if (a.type === "external" && !canDelExt) { showToast("⚠️ Il faut au moins un compte secondaire."); return; }
   const msg = (a.type === "external" && (state.transactions||[]).some(t=>t.type==="external"&&t.externalAccountId===a.extId))
     ? "Ce compte a des transactions — supprimer quand même ?" : "Supprimer « " + a.name + " » ?";
   _showConfirm(msg, () => {
@@ -13473,6 +13460,7 @@ function _delAllAccDom(a, rowEl) {
       state.savingsCategories = (state.savingsCategories||[]).filter(c=>c!==a.name);
       if (state.accounts?.savingsBreakdown) delete state.accounts.savingsBreakdown[a.name];
       if (state.accounts?.savingsEmojis) delete state.accounts.savingsEmojis[a.name];
+      state.transactions = (state.transactions||[]).filter(t=>!(t.category===a.name&&(t.type==="savings"||t.type==="savings-out")));
     } else {
       const fallback = (state.externalAccounts.find(x=>x.id!==a.extId)||{}).id||"";
       state.transactions?.forEach(t=>{if(t.type==="external"&&t.externalAccountId===a.extId)t.externalAccountId=fallback;});
@@ -13547,7 +13535,6 @@ function _addExtAcc() {
   document.getElementById("extName_" + tmpId)?.focus();
 }
 function _delExtAcc(id) {
-  if ((state.externalAccounts || []).length <= 1) { showToast("⚠️ Il faut au moins un compte."); return; }
   const hasTxs = state.transactions.some(t => t.type === "external" && t.externalAccountId === id);
   const msg = hasTxs
     ? "Ce compte a des transactions — elles seront rattachées au premier compte. Supprimer ?"
@@ -14254,16 +14241,15 @@ function _addAllAcc() {
 function _delAllAcc(uid) {
   if (uid.startsWith("sav__")) {
     const name = uid.slice(5);
-    if ((state.savingsCategories || []).length <= 1) { showToast("⚠️ Il faut au moins un compte épargne."); return; }
     _showConfirm("Supprimer « " + name + " » ?", () => {
       state.savingsCategories = (state.savingsCategories || []).filter(c => c !== name);
       if (state.accounts?.savingsBreakdown) delete state.accounts.savingsBreakdown[name];
       if (state.accounts?.savingsEmojis) delete state.accounts.savingsEmojis[name];
+      state.transactions = (state.transactions||[]).filter(t=>!(t.category===name&&(t.type==="savings"||t.type==="savings-out")));
       saveState(); _refreshPreleveSur(); renderSavings(); renderAccounts(); openAllAccountsManager();
     });
   } else {
     const extId = uid.slice(5);
-    if ((state.externalAccounts || []).length <= 1) { showToast("⚠️ Il faut au moins un compte."); return; }
     const hasTxs = (state.transactions || []).some(t => t.type === "external" && t.externalAccountId === extId);
     const msg = hasTxs ? "Ce compte a des transactions — supprimer quand même ?" : "Supprimer ce compte ?";
     _showConfirm(msg, () => {
@@ -14391,13 +14377,13 @@ function _addSavAccFromEdit() {
   openSavingsAccountsManager();
 }
 function _deleteSavAcc(name) {
-  if ((state.savingsCategories || []).length <= 1) { showToast("⚠️ Il faut au moins un compte."); return; }
   const hasTxs = (state.transactions || []).some(t => t.category === name && (t.type === "savings" || t.type === "savings-out"));
   const msg = hasTxs ? "Ce compte a des transactions. Supprimer quand même ?" : "Supprimer « " + name + " » ?";
   _showConfirm(msg, () => {
     state.savingsCategories = (state.savingsCategories || []).filter(c => c !== name);
     if (state.accounts?.savingsBreakdown) delete state.accounts.savingsBreakdown[name];
     if (state.accounts?.savingsEmojis) delete state.accounts.savingsEmojis[name];
+    state.transactions = (state.transactions||[]).filter(t=>!(t.category===name&&(t.type==="savings"||t.type==="savings-out")));
     saveState();
     _refreshPreleveSur();
     renderSavings();
@@ -15380,6 +15366,8 @@ function renderBalanceEvolutionChart() {
         y: {
           grid: { color: "#f3eef9" },
           ticks: { color: "#8a8499", callback: v => v.toFixed(0) + " €" },
+          min: Math.floor((Math.min(...balances) - 100) / 50) * 50,
+          max: Math.ceil((Math.max(...balances) + 100) / 50) * 50,
         },
       },
     },
@@ -16029,7 +16017,7 @@ function renderBudgetGauge() {
     if (tx.type === "savings-out")  savingsOut += tx.amount;
     // Jauge = vraies dépenses courantes seulement : type "Dépense", hors frais pro,
     // hors "Hors compte" (external) et hors charges fixes (retirées plus bas).
-    if (tx.type === "expense" && !tx.reimbursable) {
+    if (tx.type === "expense" && !tx.reimbursable && !(tx.fromSavingsAccount||"").startsWith("ext:")) {
       const net = txNetAmount(tx);
       spentRaw += net;
       if (tx.fixedCharge) fixedTotal += net;
