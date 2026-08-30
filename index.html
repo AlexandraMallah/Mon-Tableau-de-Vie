@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1076</title>
+<title>Mon Tableau de Vie 🌿 · v1077</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4401,12 +4401,6 @@
         <input type="number" id="actModalMet" min="1" max="20" step="0.1" placeholder="MET"
           style="width:80px;padding:9px 10px;border:1.5px solid var(--mint);border-radius:12px;font-family:inherit;font-size:14px;font-weight:700;text-align:center;color:var(--ink);background:var(--bg-1);" />
       </div>
-      <div id="actModalNeedsDistance" style="display:flex;align-items:center;gap:8px;">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--ink-soft);">
-          <input type="checkbox" id="actModalHasDistance" style="width:14px;height:14px;cursor:pointer;" />
-          Demander la distance lors de chaque séance
-        </label>
-      </div>
     </div>
     <input type="hidden" id="actModalEditId" value="" />
     <div style="display:flex;gap:10px;justify-content:flex-end;">
@@ -4554,11 +4548,6 @@
       <label style="font-size:13px;color:var(--ink-soft);display:block;margin-bottom:6px;">⏱ Durée (minutes)</label>
       <input type="number" id="actTimeDuration" min="1" max="600" placeholder="ex : 45"
         style="width:100%;padding:10px;border:1.5px solid var(--mint);border-radius:12px;font-size:18px;text-align:center;font-family:inherit;color:var(--ink);background:white;box-sizing:border-box;" />
-      <div id="actTimeDistanceWrap" style="display:none;margin-top:10px;">
-        <label style="font-size:13px;color:var(--ink-soft);display:block;margin-bottom:6px;">📏 Distance (km, optionnel)</label>
-        <input type="number" id="actTimeDistance" min="0" max="500" step="0.1" placeholder="ex : 5.2"
-          style="width:100%;padding:10px;border:1.5px solid var(--lavender);border-radius:12px;font-size:18px;text-align:center;font-family:inherit;color:var(--ink);background:white;box-sizing:border-box;" />
-      </div>
       <div id="actTimeKcalPreview" style="font-size:12px;color:var(--ink-softer);margin-top:8px;text-align:center;"></div>
     </div>
     <input type="hidden" id="actTimePendingActId" value="" />
@@ -9824,9 +9813,6 @@ function toggleActivityDay(actId, dateKey) {
     if (isSport) {
       const durInput = document.getElementById('actTimeDuration');
       durInput.value = '';
-      const distWrap = document.getElementById('actTimeDistanceWrap');
-      distWrap.style.display = act?.hasDistance ? 'block' : 'none';
-      document.getElementById('actTimeDistance').value = '';
       document.getElementById('actTimeKcalPreview').textContent = '';
       durInput.oninput = () => {
         const min = Number(durInput.value) || 0;
@@ -9844,13 +9830,11 @@ function _actTimeConfirm() {
   const time = document.getElementById('actTimeInput').value;
   const act = state.activities.find(a => a.id === actId);
   const duration = Number(document.getElementById('actTimeDuration')?.value) || 0;
-  const distance = Number(document.getElementById('actTimeDistance')?.value) || 0;
   const day = ensureHistoryEntry(dateKey);
   const entry = { done: true };
   if (time) entry.time = time;
   if (duration) entry.duration = duration;
-  if (distance) entry.distance = distance;
-  day.activities[actId] = (time || duration || distance) ? entry : 1;
+  day.activities[actId] = (time || duration) ? entry : 1;
   // Ajouter kcal sport au kcal du jour (en plus du BMR/pas)
   if (act?.sport && act?.met && duration > 0) {
     const sportKcal = _calcSportKcal(act.met, duration);
@@ -9983,7 +9967,6 @@ function _openActivityModal(id) {
   document.getElementById("actModalSportFields").style.display = isSport ? "block" : "none";
   document.getElementById("actModalMet").value = a?.met || "";
   document.getElementById("actModalMetPreset").value = "";
-  document.getElementById("actModalHasDistance").checked = !!(a?.hasDistance);
   document.getElementById("actEmojiGrid").innerHTML = _ACT_EMOJIS.map(e =>
     `<button onclick="_selectActEmoji('${e}')" data-actemojikey="${e}" style="
       font-size:22px;padding:6px 8px;border-radius:10px;cursor:pointer;font-family:inherit;
@@ -10013,14 +9996,13 @@ function _saveActivityModal() {
   const goal = goalCount > 0 ? { count: goalCount, period: goalPeriod } : null;
   const isSport = document.getElementById("actModalIsSport").checked;
   const met = isSport ? (Number(document.getElementById("actModalMet").value) || null) : null;
-  const hasDistance = isSport ? document.getElementById("actModalHasDistance").checked : false;
   const editId = document.getElementById("actModalEditId").value;
   if (editId) {
     const a = state.activities.find(x => x.id === editId);
-    if (a) { a.name = name; a.emoji = emoji; if (!a.hormonesManual) a.hormones = autoHormones(name); a.goal = goal; a.sport = isSport || undefined; a.met = met || undefined; a.hasDistance = hasDistance || undefined; }
+    if (a) { a.name = name; a.emoji = emoji; if (!a.hormonesManual) a.hormones = autoHormones(name); a.goal = goal; a.sport = isSport || undefined; a.met = met || undefined; }
   } else {
     const obj = { id: "a" + Date.now(), name, emoji, hormones: autoHormones(name), goal };
-    if (isSport) { obj.sport = true; if (met) obj.met = met; if (hasDistance) obj.hasDistance = true; }
+    if (isSport) { obj.sport = true; if (met) obj.met = met; }
     state.activities.push(obj);
   }
   _closeActivityModal();
