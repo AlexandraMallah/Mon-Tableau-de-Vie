@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1046</title>
+<title>Mon Tableau de Vie 🌿 · v1047</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7112,7 +7112,8 @@ function _renderProjFicheTasks(projId) {
       <button class="task-del" onclick="deleteTask('${t.id}');_renderProjFicheTasks('${projId}')">✕</button>
     </div>`;
   }).join("") : `<p style="color:var(--ink-soft);font-size:13px;font-style:italic;margin:20px 0;">Aucune tâche. Ajoute-en depuis ✅ Tâches ou avec le bouton ci-dessous.</p>`;
-  container.innerHTML = rows + `<button onclick="_addTaskFromProjTab('${projId}')" style="margin-top:8px;width:100%;padding:9px;border-radius:10px;border:1.5px dashed var(--line);background:var(--bg-1);font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">+ Ajouter une tâche</button>`;
+  const rowsWrapped = sorted.length ? `<div class="task-list" style="margin-bottom:8px;">${rows}</div>` : rows;
+  container.innerHTML = rowsWrapped + `<button onclick="_addTaskFromProjTab('${projId}')" style="margin-top:8px;width:100%;padding:9px;border-radius:10px;border:1.5px dashed var(--line);background:var(--bg-1);font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">+ Ajouter une tâche</button>`;
 }
 
 function _renderProjFicheTemps(projId) {
