@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1010</title>
+<title>Mon Tableau de Vie 🌿 · v1012</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7145,7 +7145,7 @@ function renderProjectFiche(p) {
 
   // Contenu des onglets Suivi spécialisés (IDs préservés pour les fonctions existantes)
   const suiviInner = p.id === "p-seed-candidatures" ? `
-    <div id="candTasksCard" style="display:none;margin-bottom:14px;"></div>
+    <div id="candTasksCard" style="display:none;"></div>
     <div class="card">
       <div class="work-header">
         <h2 style="margin:0;">Suivi candidatures <span class="count" id="candCount"></span></h2>
@@ -11242,7 +11242,7 @@ let _rpBdDown = false;
 let _rpSelectedId = "";
 function openRecipePick() {
   const recipes = state.domestique?.recipes || [];
-  if (!recipes.length) { alert("Aucune recette — crée-en une dans l'onglet 🍳 Cuisine."); return; }
+  if (!recipes.length) { showToast("🍳 Aucune recette — crée-en une dans l'onglet Cuisine."); return; }
   _rpSelectedId = recipes[0].id;
   const s = document.getElementById("recipePickSearch"); if (s) s.value = "";
   document.getElementById("recipePickPortions").value = "1";
@@ -19762,7 +19762,7 @@ let _mealCatFilter = "", _mealKcalMin = null, _mealKcalMax = null;
 
 function pickRecipeForMeal(dateKey, slot) {
   const recipes = state.domestique.recipes || [];
-  if (!recipes.length) { alert("Aucune recette — crée-en une dans l'onglet 🍳 Cuisine."); return; }
+  if (!recipes.length) { showToast("🍳 Aucune recette — crée-en une dans l'onglet Cuisine."); return; }
   _mealPickDate = dateKey; _mealPickSlot = slot;
   _mealCatFilter = ""; _mealKcalMin = null; _mealKcalMax = null;
   const s = document.getElementById("mealRecipeSearch"); if (s) s.value = "";
