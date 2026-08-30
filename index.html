@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1067</title>
+<title>Mon Tableau de Vie 🌿 · v1068</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3006,13 +3006,11 @@
       </div>
       <div class="money-accounts-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
         <div class="money-stat" id="accountCourantCard" style="background:linear-gradient(135deg,white 0%,var(--sky-soft) 100%);position:relative;">
-          <button onclick="openAccountEdit('courant')" title="Modifier ce compte" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">✏️</button>
           <div class="label" id="accountCourantLabel">💳 Compte courant</div>
           <div class="value" id="accountCourant">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="accountCourantDetail"></div>
         </div>
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,#fff8e1 100%);position:relative;">
-          <button onclick="openAccountEdit('cash')" title="Modifier" style="position:absolute;top:8px;right:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">✏️</button>
           <div class="label" id="cashAccountLabel">💵 Espèces en poche</div>
           <div class="value" id="cashBalanceDisplay" style="color:#b8860b;">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="cashSubLabel"></div>
@@ -3027,7 +3025,7 @@
       <div style="margin-top:12px;">
         <button onclick="openAllAccountsManager()" class="help-btn" style="font-size:13px;padding:7px 16px;">✦ Gérer mes comptes</button>
       </div>
-      <p style="color:var(--ink-soft);font-size:12px;margin:10px 0 0;">💡 Quand tu ajoutes une transaction <strong>💰 Épargne</strong>, le montant est <strong>retiré du compte courant</strong> et <strong>ajouté au compte épargne</strong>. Pour ajuster les soldes de départ : clique sur ✏️.</p>
+      <p style="color:var(--ink-soft);font-size:12px;margin:10px 0 0;">💡 Quand tu ajoutes une transaction <strong>💰 Épargne</strong>, le montant est <strong>retiré du compte courant</strong> et <strong>ajouté au compte épargne</strong>. Pour ajuster les soldes de départ : utilise les liens <strong>Modifier départ</strong> sous chaque carte.</p>
 
     </div>
     <div class="money-summary" id="moneySummary"></div>
