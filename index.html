@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1039</title>
+<title>Mon Tableau de Vie 🌿 · v1040</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5850,6 +5850,11 @@ function migrate(s) {
   if (s.features.cycle === undefined) s.features.cycle = false;
   if (s.features.pas === undefined) s.features.pas = true;
   if (s.features.calories === undefined) s.features.calories = true;
+  // Migration : s'assurer que h-cal-dep existe dans les habitudes (target 2000 kcal)
+  if (!Array.isArray(s.habits)) s.habits = [];
+  if (!s.habits.find(h => h.id === 'h-cal-dep')) {
+    s.habits.push({ id: "h-cal-dep", name: "Calories dépensées", type: "numeric", target: 2000, unit: "kcal" });
+  }
   // Migration : auto-activer pilule si l'utilisateur a déjà des données pillTaken
   if (!s.features.pill && s.history) {
     const hasPillData = Object.values(s.history).some(d => d && d.pillTaken);
@@ -6745,7 +6750,14 @@ function _autoCalcKcal(steps, forceOverwrite) {
     const dks = Object.keys(state.history).sort().reverse();
     for (const d of dks) { const w = Number(state.history[d]?.weight); if (w > 0) { weightKg = w; break; } }
   }
-  if (!heightCm || !weightKg || steps <= 0) return null;
+  if (!heightCm || !weightKg || steps <= 0) {
+    if (forceOverwrite) {
+      if (!heightCm) showToast("📏 Remplis ta taille dans Santé → Composition corporelle pour activer le calcul auto.");
+      else if (!weightKg) showToast("⚖️ Enregistre ton poids dans Santé → Composition corporelle pour activer le calcul auto.");
+      else showToast("🚶 Entre d'abord tes pas du jour pour calculer les kcal.");
+    }
+    return null;
+  }
   // Formule : Margaria / ACSM — 1.036 kcal par kg par km
   const strideMeter = heightCm * 0.00415;
   const distanceKm  = (steps * strideMeter) / 1000;
