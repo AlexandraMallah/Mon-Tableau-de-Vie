@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1035</title>
+<title>Mon Tableau de Vie 🌿 · v1036</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1917,10 +1917,12 @@
           <span id="routineTodayBadge" style="font-size:12px;color:var(--ink-soft);"></span>
         </div>
         <div id="routineTodayBlock"></div>
-        <!-- Toggles opt-in cycle/pilule (mode édition) -->
-        <div class="edit-only" style="margin-top:10px;padding:12px 16px;border-radius:12px;background:var(--bg-1);border:1.5px dashed var(--lavender);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-sizing:border-box;width:100%;">
-          <div style="font-size:11px;font-weight:600;color:var(--ink-softer);letter-spacing:.05em;white-space:nowrap;">🌸 Cycle menstruel — activer le suivi :</div>
+        <!-- Toggles opt-in cycle/pilule/pas/calories (mode édition) -->
+        <div class="edit-only" style="margin-top:10px;padding:12px 16px;border-radius:12px;background:var(--bg-1);border:1.5px dashed var(--lavender);display:flex;flex-direction:column;gap:10px;box-sizing:border-box;width:100%;">
+          <div style="font-size:11px;font-weight:600;color:var(--ink-softer);letter-spacing:.05em;">⚙️ Habitudes &amp; suivi — activer / désactiver :</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button onclick="_toggleFeature('pas')" id="featurePasBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🚶 Pas &amp; distance</button>
+            <button onclick="_toggleFeature('calories')" id="featureCalBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🔥 Calories dépensées</button>
             <button onclick="_toggleFeature('pill')" id="featurePillBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">💊 Suivi pilule</button>
             <button onclick="_toggleFeature('cycle')" id="featureCycleBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🩸 Suivi règles</button>
           </div>
@@ -4243,7 +4245,9 @@
     <div style="margin-bottom:14px;">
       <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom de l'habitude</div>
       <input type="text" id="habitModalName" placeholder="ex : Méditation, Lecture, Eau…" maxlength="40"
+        oninput="_habitNameHint(this.value)"
         style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;" />
+      <div id="habitNameHint" style="display:none;margin-top:6px;padding:8px 12px;border-radius:10px;background:var(--lavender-soft);border:1px solid var(--lavender);font-size:12px;color:var(--ink-soft);"></div>
     </div>
     <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:8px;">TYPE</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
@@ -5400,7 +5404,7 @@ const TYPE_COLORS = ["#c9b6f0", "#f7c9a3", "#b4d4f1", "#aee0c8", "#efb8c8", "#f5
 
 const DEFAULT_STATE = {
   name: "",
-  features: { pill: false, cycle: false },
+  features: { pill: false, cycle: false, pas: true, calories: true },
   habits: [
     { id: "h-pas", name: "9000 pas", type: "numeric", target: 9000, unit: "pas" },
   ],
@@ -5828,10 +5832,12 @@ function migrate(s) {
 
   // Migration : routines configurables
   if (!s.routines) s.routines = { matin: [], soir: [] };
-  // Migration : features opt-in (pilule, cycle)
-  if (!s.features) s.features = { pill: false, cycle: false };
+  // Migration : features opt-in (pilule, cycle, pas, calories)
+  if (!s.features) s.features = { pill: false, cycle: false, pas: true, calories: true };
   if (s.features.pill === undefined) s.features.pill = false;
   if (s.features.cycle === undefined) s.features.cycle = false;
+  if (s.features.pas === undefined) s.features.pas = true;
+  if (s.features.calories === undefined) s.features.calories = true;
   // Migration : auto-activer pilule si l'utilisateur a déjà des données pillTaken
   if (!s.features.pill && s.history) {
     const hasPillData = Object.values(s.history).some(d => d && d.pillTaken);
@@ -6555,7 +6561,12 @@ function renderHabits() {
   // Les habitudes de routine ont leur propre section — on les exclut ici
   const allRoutineIds = [...(getRoutines().matin || []), ...(getRoutines().soir || [])].map(s => s.id);
   const ROUTINE_IDS = new Set(allRoutineIds);
-  const visibleHabits = state.habits.filter(h => !ROUTINE_IDS.has(h.id));
+  const f = state.features || {};
+  const _sysHidden = new Set([
+    ...(f.pas === false ? ["h-pas"] : []),
+    ...(f.calories === false ? ["h-calories","h-cal-dep"] : []),
+  ]);
+  const visibleHabits = state.habits.filter(h => !ROUTINE_IDS.has(h.id) && !_sysHidden.has(h.id));
   const done = visibleHabits.filter(h => isHabitDone(h, today.habits[h.id])).length;
   document.getElementById("habitCount").textContent = `${done}/${visibleHabits.length}`;
   document.getElementById("habitList").innerHTML = visibleHabits.map(h => {
@@ -6576,11 +6587,14 @@ function renderHabits() {
       const inputMax = isSmall ? (h.target * 5) : "";
       const _healthTarget = (()=>{
         const healthLinks = { 'h-pas': 'healthStepsCard', 'h-eau': 'healthCalorieCard', 'h-calories': 'healthCalorieCard', 'h-pilule': 'healthPillCard' };
-        return healthLinks[h.id] || (/calori|kcal/i.test(h.name) ? 'healthCalorieCard' : /pilule|pill/i.test(h.name) ? 'healthPillCard' : /pas\b/i.test(h.name) ? 'healthStepsCard' : null);
+        if (healthLinks[h.id]) return healthLinks[h.id];
+        if (/calori|kcal/i.test(h.name)) return 'healthCalorieCard';
+        if (/pilule|pill/i.test(h.name)) return 'healthPillCard';
+        if (/\bpas\b|steps/i.test(h.name)) return 'healthStepsCard';
+        // Toute habitude numérique custom a un suivi dans Santé → Mes habitudes
+        return 'habitsTrackingCard';
       })();
-      const _nameSpan = _healthTarget
-        ? `<span style="font-size:14px;cursor:pointer;white-space:nowrap;font-weight:600;" onclick="_goToHealth('${_healthTarget}')" title="Voir dans Santé">${escapeHtml(h.name)} <span style="font-size:11px;color:var(--ink-softer);">↗</span></span>`
-        : `<span style="font-size:14px;font-weight:600;">${escapeHtml(h.name)}</span>`;
+      const _nameSpan = `<span style="font-size:14px;cursor:pointer;white-space:nowrap;font-weight:600;" onclick="_goToHealth('${_healthTarget}')" title="Voir dans Santé">${escapeHtml(h.name)} <span style="font-size:11px;color:var(--ink-softer);">↗</span></span>`;
       return `
         <div class="habit habit-numeric ${isDone ? "done" : ""}" style="flex-direction:column;align-items:stretch;gap:6px;">
           <div style="display:flex;align-items:center;gap:8px;">
@@ -6607,6 +6621,21 @@ function renderHabits() {
   }).join("");
 }
 let _habitSelectedType = "boolean";
+function _habitNameHint(val) {
+  const hint = document.getElementById("habitNameHint");
+  if (!hint) return;
+  const v = val.trim().toLowerCase();
+  if (!v) { hint.style.display = "none"; return; }
+  if (/\bpas\b|steps|marchage|podomètre|km\b|kilom|distance/i.test(v)) {
+    hint.innerHTML = '🚶 <strong>Pas & distance</strong> est déjà suivi avec graphique dans Santé. Active-le via <strong>✏️ Mode édition → Pas & distance</strong> pour ne pas créer de doublon.';
+    hint.style.display = "";
+  } else if (/calori|kcal|dépens|brûl|cal\b/i.test(v)) {
+    hint.innerHTML = '🔥 <strong>Calories dépensées</strong> est déjà suivi avec graphique dans Santé. Active-le via <strong>✏️ Mode édition → Calories dépensées</strong> pour ne pas créer de doublon.';
+    hint.style.display = "";
+  } else {
+    hint.style.display = "none";
+  }
+}
 function _applyHabitSuggest(name, opts) {
   document.getElementById("habitModalName").value = name;
   _selectHabitType(opts.type || "boolean");
@@ -6635,6 +6664,9 @@ function _openHabitModal(id) {
   // Masquer les suggestions en mode édition, afficher en mode création
   const sw = document.getElementById("habitSuggestionsWrap");
   if (sw) sw.style.display = h ? "none" : "";
+  // Réinitialiser le hint de détection
+  const hint = document.getElementById("habitNameHint");
+  if (hint) hint.style.display = "none";
   document.getElementById("habitModal").style.display = "flex";
   setTimeout(() => document.getElementById("habitModalName").focus(), 50);
 }
@@ -11476,10 +11508,16 @@ function _syncFeatureSections() {
   const cycleSec = document.getElementById("cycleSection");
   const pillBtn2  = document.getElementById("featurePillBtn");
   const cycleBtn2 = document.getElementById("featureCycleBtn");
+  const pasBtn    = document.getElementById("featurePasBtn");
+  const calBtn    = document.getElementById("featureCalBtn");
   if (pillSec)  pillSec.style.display  = f.pill  ? "" : "none";
   if (cycleSec) cycleSec.style.display = f.cycle ? "" : "none";
-  if (pillBtn2)  { pillBtn2.style.background  = f.pill  ? "var(--lavender-soft)" : "white"; pillBtn2.style.borderColor  = f.pill  ? "var(--lavender)" : "var(--line)"; pillBtn2.style.color = f.pill  ? "var(--ink)" : "var(--ink-soft)"; }
-  if (cycleBtn2) { cycleBtn2.style.background = f.cycle ? "var(--lavender-soft)" : "white"; cycleBtn2.style.borderColor = f.cycle ? "var(--lavender)" : "var(--line)"; cycleBtn2.style.color = f.cycle ? "var(--ink)" : "var(--ink-soft)"; }
+  function _featStyle(btn, on) { if (!btn) return; btn.style.background = on ? "var(--lavender-soft)" : "white"; btn.style.borderColor = on ? "var(--lavender)" : "var(--line)"; btn.style.color = on ? "var(--ink)" : "var(--ink-soft)"; }
+  _featStyle(pillBtn2, f.pill); _featStyle(cycleBtn2, f.cycle);
+  _featStyle(pasBtn, f.pas !== false); _featStyle(calBtn, f.calories !== false);
+  // Carte Pas dans Santé
+  const stepsCard = document.getElementById("healthStepsCard");
+  if (stepsCard) stepsCard.style.display = f.pas !== false ? "" : "none";
   // Santé : pilule card + routines (span full si pas de pilule)
   const pillCard = document.getElementById("healthPillCard");
   const skincareCard = document.getElementById("healthSkincareCard");
