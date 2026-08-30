@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1096</title>
+<title>Mon Tableau de Vie 🌿 · v1097</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6842,11 +6842,13 @@ function _saveBodyHeight() { _saveBodyProfile(); }
 function _autoSaveWeight(val) {
   const w = Number(val);
   if (!w || w < 20 || w > 300) return;
-  const dk = todayKey();
+  // Utiliser la date sélectionnée dans le picker si disponible, sinon aujourd'hui
+  const dateInput = document.getElementById("bodyCompDate");
+  const dk = (dateInput && dateInput.value) ? dateInput.value : todayKey();
   if (!state.history[dk]) state.history[dk] = { habits: {}, activities: {}, mood: null, sleep: null, energy: null, weight: null, water: 0, journal: "" };
   state.history[dk].weight = w;
   saveState();
-  renderHealth();
+  // Ne PAS appeler renderHealth() ici — ça réinitialiserait le date picker
 }
 
 function _autoCalcKcal(steps, forceOverwrite) {
@@ -11008,14 +11010,12 @@ function renderHealth() {
   renderWater();
   renderStepsStats();
   renderSkincare();
-  // Init date picker + auto-fill form with current date's values
+  // Init date picker — une seule fois, sans écraser la date choisie par l'utilisateur
   const dateInput = document.getElementById("bodyCompDate");
-  if (dateInput) {
-    dateInput.value = todayKey(); // toujours remettre à aujourd'hui à chaque ouverture
-    if (!dateInput.dataset.bound) {
-      dateInput.dataset.bound = "1";
-      dateInput.addEventListener("change", () => fillBodyCompForm(dateInput.value));
-    }
+  if (dateInput && !dateInput.dataset.bound) {
+    dateInput.dataset.bound = "1";
+    dateInput.value = todayKey();
+    dateInput.addEventListener("change", () => fillBodyCompForm(dateInput.value));
   }
   renderTrendPrediction();
   renderHabitsTracking();
