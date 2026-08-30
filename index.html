@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1047</title>
+<title>Mon Tableau de Vie 🌿 · v1049</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1489,7 +1489,7 @@
     #mobileHelpBtn {
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: flex-start;
       margin-bottom: 14px;
     }
     /* Boutons sous-vues Travail / Domestique : icône seule */
@@ -2787,72 +2787,66 @@
           <button id="featureCaloriesHealthBtn" onclick="_toggleFeature('calories')" style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;">🔥 Suivi calorique</button>
           <button id="featureEnergyBtn" onclick="_toggleFeature('energyBalance')" style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;">⚖️ Balance énergétique</button>
         </div>
-        <!-- Profil corporel : taille + objectif poids -->
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:linear-gradient(135deg,var(--sky-soft),var(--lavender-soft));border-radius:12px;padding:10px 14px;flex:1;min-width:240px;">
-            <span style="font-size:13px;font-weight:600;">📏</span>
-            <input type="number" id="bodyHeightInput" placeholder="Taille cm" step="1" min="100" max="220"
-              onchange="_saveBodyProfile()"
-              style="width:80px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;" />
-            <span style="font-size:13px;color:var(--ink-soft);">cm</span>
-            <span style="font-size:13px;color:var(--ink-soft);margin-left:4px;">Âge</span>
-            <input type="number" id="bodyAgeInput" placeholder="Âge" step="1" min="10" max="99"
-              onchange="_saveBodyProfile()"
-              style="width:60px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;" />
-            <span style="font-size:13px;color:var(--ink-soft);">ans</span>
-            <span style="font-size:13px;color:var(--ink-soft);">Sexe</span>
-            <select id="bodySexInput" onchange="_saveBodyProfile()"
-              style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);background:white;">
-              <option value="">Sexe</option>
-              <option value="f">Femme</option>
-              <option value="m">Homme</option>
-              <option value="n">Neutre</option>
-            </select>
-            <span style="font-size:11px;color:var(--ink-softer);margin-left:auto;white-space:nowrap;">pour le calcul kcal</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--mint-soft),var(--sky-soft));border-radius:12px;padding:10px 14px;flex:1;min-width:180px;">
-            <span style="font-size:13px;font-weight:600;">🎯 Objectif poids :</span>
-            <input type="number" id="weightGoalInput" placeholder="ex: 62" step="0.1" min="30" max="200"
-              onchange="saveWeightGoal()"
-              style="width:80px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;" />
-            <span style="font-size:13px;color:var(--ink-soft);">kg</span>
-            <span id="weightGoalStatus" style="font-size:13px;font-weight:600;margin-left:auto;"></span>
-          </div>
+        <!-- Profil corporel : une seule ligne pleine largeur -->
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:linear-gradient(135deg,var(--sky-soft),var(--lavender-soft));border-radius:12px;padding:10px 14px;margin-bottom:12px;">
+          <span style="font-size:13px;font-weight:600;">📏</span>
+          <input type="number" id="bodyHeightInput" placeholder="Taille" step="1" min="100" max="220"
+            onchange="_saveBodyProfile()"
+            style="width:66px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+          <span style="font-size:12px;color:var(--ink-soft);">cm</span>
+          <span style="font-size:12px;color:var(--ink-soft);">Âge</span>
+          <input type="number" id="bodyAgeInput" placeholder="Âge" step="1" min="10" max="99"
+            onchange="_saveBodyProfile()"
+            style="width:52px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+          <span style="font-size:12px;color:var(--ink-soft);">ans</span>
+          <select id="bodySexInput" onchange="_saveBodyProfile()"
+            style="padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;color:var(--ink);background:white;">
+            <option value="">Sexe</option>
+            <option value="f">Femme</option>
+            <option value="m">Homme</option>
+            <option value="n">Neutre</option>
+          </select>
+          <span style="font-size:12px;color:var(--ink-soft);margin-left:6px;">Poids</span>
+          <input type="number" id="weightInput" placeholder="kg" step="0.1" min="30" max="200"
+            style="width:60px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
+          <span style="font-size:12px;color:var(--ink-soft);">kg</span>
         </div>
-        <div style="background:#faf8fd;padding:8px 10px;border-radius:12px;margin-bottom:12px;">
-          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-            <input type="number" id="weightInput" placeholder="Poids kg" step="0.1" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
-            <input type="number" id="bodyFatInput" placeholder="Grasse kg" step="0.1" max="40" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
-            <input type="number" id="muscleMassInput" placeholder="Maigre kg" step="0.1" max="60" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
-            <input type="date" id="bodyCompDate" style="flex:1;min-width:110px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
-            <button class="btn-icon" onclick="saveBodyComp()" style="white-space:nowrap;">Enregistrer</button>
+        <!-- Section suivi poids/composition (togglable via bodyComp) -->
+        <div id="bodyCompSection">
+          <div style="background:#faf8fd;padding:8px 10px;border-radius:12px;margin-bottom:12px;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+              <input type="number" id="bodyFatInput" placeholder="Grasse kg" step="0.1" max="40" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
+              <input type="number" id="muscleMassInput" placeholder="Maigre kg" step="0.1" max="60" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
+              <input type="date" id="bodyCompDate" style="flex:1;min-width:110px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
+              <button class="btn-icon" onclick="saveBodyComp()" style="white-space:nowrap;">Enregistrer</button>
+            </div>
           </div>
-        </div>
-        <div class="stat-grid" style="margin-top:20px;">
-          <div class="stat">
-            <div class="stat-label">Poids</div>
-            <div class="stat-val" id="weightToday">—</div>
-            <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;" id="weightTrend"></div>
+          <div class="stat-grid" style="margin-top:20px;">
+            <div class="stat">
+              <div class="stat-label">Poids</div>
+              <div class="stat-val" id="weightToday">—</div>
+              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;" id="weightTrend"></div>
+            </div>
+            <div class="stat" id="statBodyFat">
+              <div class="stat-label">Masse grasse</div>
+              <div class="stat-val" id="bodyFatToday">—</div>
+              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;" id="bodyFatTrend"></div>
+            </div>
+            <div class="stat" id="statMuscleMass">
+              <div class="stat-label">Masse maigre</div>
+              <div class="stat-val" id="muscleMassToday">—</div>
+              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;" id="muscleMassTrend"></div>
+            </div>
           </div>
-          <div class="stat" id="statBodyFat">
-            <div class="stat-label">Masse grasse</div>
-            <div class="stat-val" id="bodyFatToday">—</div>
-            <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;" id="bodyFatTrend"></div>
+          <!-- Graphique poids pleine largeur -->
+          <div style="margin-top:18px;margin-bottom:18px;">
+            <div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;">
+              <button class="sub-tab active" id="bodyMetricWeight" onclick="switchBodyMetric('weight')">Poids</button>
+              <button class="sub-tab" id="bodyMetricFat" onclick="switchBodyMetric('bodyFat')">Masse grasse</button>
+              <button class="sub-tab" id="bodyMetricMuscle" onclick="switchBodyMetric('muscleMass')">Masse maigre</button>
+            </div>
+            <div class="chart-wrap" style="height:200px;"><canvas id="bodyChart"></canvas></div>
           </div>
-          <div class="stat" id="statMuscleMass">
-            <div class="stat-label">Masse maigre</div>
-            <div class="stat-val" id="muscleMassToday">—</div>
-            <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;" id="muscleMassTrend"></div>
-          </div>
-        </div>
-        <!-- Graphique poids pleine largeur -->
-        <div style="margin-top:18px;margin-bottom:18px;">
-          <div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;">
-            <button class="sub-tab active" id="bodyMetricWeight" onclick="switchBodyMetric('weight')">Poids</button>
-            <button class="sub-tab" id="bodyMetricFat" onclick="switchBodyMetric('bodyFat')">Masse grasse</button>
-            <button class="sub-tab" id="bodyMetricMuscle" onclick="switchBodyMetric('muscleMass')">Masse maigre</button>
-          </div>
-          <div class="chart-wrap" style="height:200px;"><canvas id="bodyChart"></canvas></div>
         </div>
 
         <!-- Navigation mois (pour kcal/pas/balance uniquement) -->
@@ -6647,6 +6641,7 @@ function renderHabits() {
       const _isSysCal = _isCalDep;
       const _sysDisabled = (_isSysPas && f.pas === false) || (_isSysCal && f.calories === false);
       if (_sysDisabled) {
+        if (!inEdit) return "";
         const featureKey = _isSysPas ? 'pas' : 'calories';
         return `<div style="opacity:0.45;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1.5px dashed var(--line);background:var(--bg-1);">
           <span style="font-size:14px;font-weight:600;color:var(--ink-soft);">${_isSysPas ? '🚶' : '🔥'} ${escapeHtml(h.name)}</span>
@@ -6672,10 +6667,11 @@ function renderHabits() {
           </div>
         </div>`;
     }
+    const _boolHealthLink = `<span onclick="event.stopPropagation();_goToHealth('habitsTrackingCard')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;margin-left:3px;" title="Voir dans Santé">↗</span>`;
     return `
       <div class="habit ${isDone ? "done" : ""}" onclick="toggleHabit('${h.id}')">
         <div class="checkbox"></div>
-        <div class="habit-name">${escapeHtml(h.name)}${editBtns}</div>
+        <div class="habit-name">${escapeHtml(h.name)}${_boolHealthLink}${editBtns}</div>
         <div class="habit-streak ${streakClass}">${streakText}</div>
       </div>`;
   }).join("");
@@ -11664,12 +11660,10 @@ function _syncFeatureSections() {
   const skincareCard = document.getElementById("healthSkincareCard");
   if (pillCard) pillCard.style.display = f.pill ? "" : "none";
   if (skincareCard) skincareCard.style.gridColumn = f.pill ? "" : "1 / -1";
-  // Composition corporelle (masse grasse/maigre)
+  // Composition corporelle / suivi poids (graphique + stats + saisie)
   const bcOn = f.bodyComp !== false;
-  ["bodyFatInput","muscleMassInput","statBodyFat","statMuscleMass","bodyMetricFat","bodyMetricMuscle"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = bcOn ? "" : "none";
-  });
+  const bcSec = document.getElementById("bodyCompSection");
+  if (bcSec) bcSec.style.display = bcOn ? "" : "none";
   const bodyCompBtn = document.getElementById("featureBodyCompBtn");
   if (bodyCompBtn) { bodyCompBtn.style.background = bcOn ? "var(--lavender-soft)" : "white"; bodyCompBtn.style.borderColor = bcOn ? "var(--lavender)" : "var(--line)"; }
   // Suivi calorique (graphique + balance)
