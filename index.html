@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1078</title>
+<title>Mon Tableau de Vie 🌿 · v1079</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4362,27 +4362,14 @@
     <!-- Mode Sport : choisir le sport d'abord -->
     <div id="actModalSportPicker" style="display:none;margin-bottom:16px;">
       <label style="font-size:12px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:8px;">SPORT</label>
-      <select id="actModalMetPreset" onchange="_applyMetPreset()"
-        style="width:100%;padding:11px 12px;border:1.5px solid var(--mint);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:white;cursor:pointer;">
-        <option value="">— Choisir un sport —</option>
-        <option value="3.0|🧘|Yoga">🧘 Yoga</option>
-        <option value="3.5|🧘|Pilates">🧘 Pilates</option>
-        <option value="4.8|💃|Danse">💃 Danse</option>
-        <option value="5.0|🏋️|Musculation">🏋️ Musculation</option>
-        <option value="5.0|🏄|Surf">🏄 Surf</option>
-        <option value="5.3|🏂|Snowboard">🏂 Snowboard</option>
-        <option value="6.8|⛷️|Ski">⛷️ Ski</option>
-        <option value="7.0|🏸|Badminton">🏸 Badminton</option>
-        <option value="7.3|🎾|Tennis">🎾 Tennis</option>
-        <option value="7.5|🚴|Vélo">🚴 Vélo</option>
-        <option value="8.0|🏊|Natation">🏊 Natation</option>
-        <option value="8.0|🧗|Escalade">🧗 Escalade</option>
-        <option value="8.0|⛹️|Basket">⛹️ Basket</option>
-        <option value="9.8|🏃|Course à pied">🏃 Course à pied</option>
-        <option value="9.8|🥊|Boxe">🥊 Boxe</option>
-        <option value="10.3|🥋|Judo">🥋 Judo</option>
-        <option value="custom||Autre sport…">✏️ Autre sport…</option>
-      </select>
+      <!-- Champ de recherche + dropdown filtré -->
+      <div style="position:relative;">
+        <input type="text" id="actModalSportSearch" placeholder="🔍 Chercher un sport…" autocomplete="off"
+          oninput="_filterSports()" onfocus="_filterSports()" onblur="setTimeout(_closeSportDropdown,180)"
+          style="width:100%;padding:11px 12px;border:1.5px solid var(--mint);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:white;box-sizing:border-box;cursor:text;" />
+        <div id="actModalSportDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:white;border:1.5px solid var(--mint);border-radius:12px;box-shadow:0 8px 24px rgba(120,100,160,.12);max-height:220px;overflow-y:auto;z-index:500;"></div>
+      </div>
+      <input type="hidden" id="actModalMetPreset" />
       <input type="hidden" id="actModalMet" />
       <div id="actModalCustomMet" style="display:none;margin-top:10px;">
         <label style="font-size:12px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:6px;">MET PERSONNALISÉ</label>
@@ -9963,19 +9950,102 @@ function _setActType(type) {
   sBtn.style.color       = isSport ? "var(--ink)" : "var(--ink-soft)";
   document.getElementById("actModalSportPicker").style.display = isSport ? "block" : "none";
 }
-function _applyMetPreset() {
-  const v = document.getElementById("actModalMetPreset").value;
-  if (!v) return;
-  if (v === "custom") {
+const _SPORTS_LIST = [
+  // Douces
+  {met:2.5, emoji:"🧘", name:"Stretching"},
+  {met:2.8, emoji:"🚶", name:"Marche lente"},
+  {met:3.0, emoji:"🧘", name:"Yoga"},
+  {met:3.5, emoji:"🧘", name:"Pilates"},
+  {met:3.5, emoji:"🎳", name:"Bowling"},
+  {met:3.5, emoji:"🏌️", name:"Golf"},
+  {met:3.8, emoji:"🚶", name:"Marche rapide"},
+  {met:4.0, emoji:"🐴", name:"Équitation"},
+  {met:4.0, emoji:"🏊", name:"Aquagym"},
+  {met:4.3, emoji:"🛹", name:"Skateboard"},
+  {met:4.5, emoji:"🤸", name:"Gym douce"},
+  {met:4.5, emoji:"🎣", name:"Pêche"},
+  // Modérées
+  {met:4.8, emoji:"💃", name:"Danse"},
+  {met:5.0, emoji:"🏋️", name:"Musculation"},
+  {met:5.0, emoji:"🏄", name:"Surf"},
+  {met:5.0, emoji:"🎿", name:"Ski de fond (lent)"},
+  {met:5.3, emoji:"🏂", name:"Snowboard"},
+  {met:5.3, emoji:"🥾", name:"Randonnée"},
+  {met:5.5, emoji:"⛸️", name:"Patinage"},
+  {met:5.5, emoji:"🚣", name:"Canoë / Kayak"},
+  {met:6.0, emoji:"🏐", name:"Volleyball"},
+  {met:6.0, emoji:"🤸", name:"Gym artistique"},
+  {met:6.5, emoji:"💃", name:"Zumba"},
+  {met:6.5, emoji:"🤿", name:"Plongée"},
+  {met:6.8, emoji:"⛷️", name:"Ski alpin"},
+  // Intenses
+  {met:7.0, emoji:"🏸", name:"Badminton"},
+  {met:7.0, emoji:"🏒", name:"Hockey sur glace"},
+  {met:7.3, emoji:"🎾", name:"Tennis"},
+  {met:7.5, emoji:"🚴", name:"Vélo"},
+  {met:7.5, emoji:"🏊", name:"Natation (modérée)"},
+  {met:8.0, emoji:"🏊", name:"Natation"},
+  {met:8.0, emoji:"🧗", name:"Escalade"},
+  {met:8.0, emoji:"⛹️", name:"Basket"},
+  {met:8.0, emoji:"⚽", name:"Football"},
+  {met:8.0, emoji:"🏉", name:"Rugby"},
+  {met:8.0, emoji:"🤾", name:"Handball"},
+  {met:8.0, emoji:"🏋️", name:"CrossFit"},
+  {met:8.3, emoji:"🚣", name:"Aviron"},
+  {met:8.5, emoji:"🥊", name:"Kickboxing"},
+  {met:9.0, emoji:"🏸", name:"Squash (modéré)"},
+  // Très intenses
+  {met:9.8, emoji:"🏃", name:"Course à pied"},
+  {met:9.8, emoji:"🥊", name:"Boxe"},
+  {met:10.0, emoji:"🥋", name:"Karaté"},
+  {met:10.0, emoji:"🥋", name:"Taekwondo"},
+  {met:10.0, emoji:"🚴", name:"Cyclisme (intense)"},
+  {met:10.3, emoji:"🥋", name:"Judo"},
+  {met:11.0, emoji:"🏃", name:"Corde à sauter"},
+  {met:11.0, emoji:"🏃", name:"Course rapide"},
+  {met:12.0, emoji:"🏸", name:"Squash (intense)"},
+  {met:12.0, emoji:"🏃", name:"Sprint / Athlétisme"},
+];
+
+function _filterSports() {
+  const q = (document.getElementById("actModalSportSearch").value || "").toLowerCase().trim();
+  const dd = document.getElementById("actModalSportDropdown");
+  const results = q
+    ? _SPORTS_LIST.filter(s => s.name.toLowerCase().includes(q))
+    : _SPORTS_LIST;
+  dd.innerHTML = results.map(s =>
+    `<div onclick="_selectSport('${s.met}','${s.emoji}','${s.name.replace(/'/g,"&#39;")}')"
+      style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--line);font-size:14px;color:var(--ink);"
+      onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background='white'">
+      <span style="font-size:20px;">${s.emoji}</span>
+      <span style="flex:1;">${s.name}</span>
+      <span style="font-size:12px;color:var(--ink-softer);font-weight:600;">MET ${s.met}</span>
+    </div>`
+  ).join("") + `<div onclick="_selectSport('custom','','Autre sport…')"
+      style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:14px;color:var(--ink-soft);"
+      onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background='white'">
+      ✏️ Autre sport (MET personnalisé)
+    </div>`;
+  dd.style.display = results.length || true ? "block" : "none";
+}
+function _closeSportDropdown() {
+  const dd = document.getElementById("actModalSportDropdown");
+  if (dd) dd.style.display = "none";
+}
+function _selectSport(met, emoji, name) {
+  document.getElementById("actModalSportDropdown").style.display = "none";
+  if (met === "custom") {
+    document.getElementById("actModalSportSearch").value = "";
     document.getElementById("actModalMet").value = "";
     document.getElementById("actModalCustomMet").style.display = "block";
+    setTimeout(() => document.getElementById("actModalMetCustom").focus(), 50);
     return;
   }
   document.getElementById("actModalCustomMet").style.display = "none";
-  const [met, emoji, name] = v.split("|");
+  document.getElementById("actModalSportSearch").value = `${emoji} ${name}`;
   document.getElementById("actModalMet").value = met;
   // Pré-remplir nom et emoji si champs vides
-  if (!document.getElementById("actModalName").value.trim() && name) {
+  if (!document.getElementById("actModalName").value.trim()) {
     document.getElementById("actModalName").value = name;
   }
   if (emoji) {
@@ -9988,6 +10058,7 @@ function _applyMetPreset() {
     });
   }
 }
+function _applyMetPreset() { /* remplacé par _selectSport */ }
 
 const _ACT_EMOJIS = [
   "🏃","🚴","🏊","🧘","🏋️","🤸","🚶","🧗","⛹️","🏄","🎾","🥊","🥋","⛷️","🏂",
@@ -10009,9 +10080,16 @@ function _openActivityModal(id) {
   const isSport = !!(a?.sport);
   _setActType(isSport ? "sport" : "loisir");
   document.getElementById("actModalMet").value = a?.met || "";
-  document.getElementById("actModalMetPreset").value = "";
   document.getElementById("actModalCustomMet").style.display = "none";
-  if (isSport && a?.met) document.getElementById("actModalMetCustom").value = a.met;
+  document.getElementById("actModalMetCustom").value = "";
+  document.getElementById("actModalSportDropdown").style.display = "none";
+  // Si édition d'un sport existant, retrouver le nom dans la liste pour afficher dans la recherche
+  if (isSport && a?.met) {
+    const found = _SPORTS_LIST.find(s => Math.abs(s.met - a.met) < 0.05 && s.emoji === a.emoji);
+    document.getElementById("actModalSportSearch").value = found ? `${found.emoji} ${found.name}` : `MET ${a.met}`;
+  } else {
+    document.getElementById("actModalSportSearch").value = "";
+  }
   document.getElementById("actEmojiGrid").innerHTML = _ACT_EMOJIS.map(e =>
     `<button onclick="_selectActEmoji('${e}')" data-actemojikey="${e}" style="
       font-size:22px;padding:6px 8px;border-radius:10px;cursor:pointer;font-family:inherit;
