@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1068</title>
+<title>Mon Tableau de Vie 🌿 · v1069</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14288,8 +14288,8 @@ function _saveAllAccounts() {
       else newExtAccs.push({ id: extId, name, emoji, balance: bal });
     }
   });
-  if (newSavCats.length) state.savingsCategories = newSavCats;
-  if (newExtAccs.length) state.externalAccounts = newExtAccs;
+  state.savingsCategories = newSavCats;
+  state.externalAccounts = newExtAccs;
   saveState(); _refreshPreleveSur(); renderSavings(); renderExternalSummary(); renderAccounts();
   closeHelp(); const _hf2 = document.getElementById("helpFooter"); if (_hf2) _hf2.style.display = "";
   showToast("✅ Comptes enregistrés");
