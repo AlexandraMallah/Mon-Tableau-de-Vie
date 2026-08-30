@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1053</title>
+<title>Mon Tableau de Vie 🌿 · v1055</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1494,13 +1494,27 @@
       box-shadow: none;
       padding: 0;
     }
+    /* Cacher le bouton Aide de la nav desktop dans la grille mobile */
+    #helpNavBtn { display: none; }
     /* Bouton aide contextuel sous la nav, discret */
     #mobileHelpBtn {
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      margin-top: 10px;
+      margin-top: 16px;
       margin-bottom: 16px;
+    }
+    /* Travail mobile : onglets en pleine largeur, boutons en dessous */
+    section[data-view="work"] > div:first-child {
+      flex-wrap: wrap;
+    }
+    section[data-view="work"] > div:first-child .sub-tabs {
+      width: 100%;
+      flex: none;
+    }
+    section[data-view="work"] > div:first-child .sub-proj-btn,
+    section[data-view="work"] > div:first-child .sub-help-btn {
+      flex-shrink: 0;
     }
     /* Boutons sous-vues Travail / Domestique : icône seule */
     .sub-help-btn .help-label { display: none; }
