@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1018</title>
+<title>Mon Tableau de Vie 🌿 · v1019</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18571,6 +18571,19 @@ function renderPersoProjects() {
   });
 }
 
+function _refreshPersoLists(ppId) {
+  const pp = (state.domestique?.persoProjects||[]).find(p=>p.id===ppId);
+  if (!pp) return;
+  const el = document.getElementById("persoLists-"+ppId);
+  if (el) el.innerHTML = _renderPersoLists(pp);
+}
+function _refreshPersoBudget(ppId) {
+  const pp = (state.domestique?.persoProjects||[]).find(p=>p.id===ppId);
+  if (!pp) return;
+  const el = document.getElementById("persoBudget-"+ppId);
+  if (el) el.innerHTML = _renderPersoBudget(pp);
+}
+
 function _persoProjTabClick(btn, sub) {
   const domesticSection = document.querySelector('section.view[data-view="domestic"]');
   if (!domesticSection) return;
@@ -18784,16 +18797,14 @@ function _savePersoList() {
   if (!pp) return;
   if (!pp.lists) pp.lists = [];
   pp.lists.push({id:"lst"+Date.now(), name, emoji:emojis[pp.lists.length%emojis.length], items:[], sublists:[]});
-  saveState(); _closePersoListModal(); renderPersoProjects();
-  setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(), 50);
+  saveState(); _closePersoListModal(); _refreshPersoLists(ppId);
 }
 function _persoDeleteList(ppId, lstId) {
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   if (!pp) return;
   _showConfirm("Supprimer cette liste ?", ()=>{
     pp.lists = (pp.lists||[]).filter(l=>l.id!==lstId);
-    saveState(); renderPersoProjects();
-    setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50);
+    saveState(); _refreshPersoLists(ppId);
   });
 }
 function _persoAddItem(ppId, lstId) {
@@ -18805,19 +18816,19 @@ function _persoAddItem(ppId, lstId) {
   if (!lst) return;
   if (!lst.items) lst.items=[];
   lst.items.push({id:"itm"+Date.now(),text,done:false});
-  saveState(); renderPersoProjects();
-  setTimeout(()=>{ document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(); document.getElementById(`persoItem-${ppId}-${lstId}`)?.focus(); },50);
+  saveState(); _refreshPersoLists(ppId);
+  setTimeout(()=>document.getElementById(`persoItem-${ppId}-${lstId}`)?.focus(), 50);
 }
 function _persoToggleItem(ppId, lstId, itemId, done) {
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   const lst = (pp?.lists||[]).find(l=>l.id===lstId);
   const item = (lst?.items||[]).find(i=>i.id===itemId);
-  if (item) { item.done = done; saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50); }
+  if (item) { item.done = done; saveState(); _refreshPersoLists(ppId); }
 }
 function _persoDeleteItem(ppId, lstId, itemId) {
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   const lst = (pp?.lists||[]).find(l=>l.id===lstId);
-  if (lst) { lst.items=(lst.items||[]).filter(i=>i.id!==itemId); saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50); }
+  if (lst) { lst.items=(lst.items||[]).filter(i=>i.id!==itemId); saveState(); _refreshPersoLists(ppId); }
 }
 function _persoAddExpense(ppId, sectionId) {
   document.getElementById("persoExpenseProjId").value = ppId;
@@ -18845,8 +18856,7 @@ function _savePersoExpense() {
   }
   if (!section.items) section.items = [];
   section.items.push({id:"exp"+Date.now(), name, amount});
-  saveState(); _closePersoExpenseModal(); renderPersoProjects();
-  setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(), 50);
+  saveState(); _closePersoExpenseModal(); _refreshPersoBudget(ppId);
 }
 function _persoDeleteExpense(ppId, expId) {
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
@@ -18855,7 +18865,7 @@ function _persoDeleteExpense(ppId, expId) {
   (pp.budgetSections||[]).forEach(s=>{ s.items=(s.items||[]).filter(e=>e.id!==expId); });
   // Rétrocompat: aussi dans expenses
   if (pp.expenses) pp.expenses=pp.expenses.filter(e=>e.id!==expId);
-  saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50);
+  saveState(); _refreshPersoBudget(ppId);
 }
 function _addPersoBudgetSection(ppId) {
   document.getElementById("persoBudgetSectionProjId").value = ppId;
@@ -18873,14 +18883,15 @@ function _savePersoBudgetSection() {
   if (!pp) return;
   if (!pp.budgetSections) pp.budgetSections = [];
   pp.budgetSections.push({id:"sec"+Date.now(), name, secBudget, items:[]});
-  saveState(); _closePersoBudgetSectionModal(); renderPersoProjects();
-  setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(), 50);
+  saveState(); _closePersoBudgetSectionModal();
+  const budgetEl = document.getElementById("persoBudget-"+ppId);
+  if (budgetEl) budgetEl.innerHTML = _renderPersoBudget(pp);
 }
 function _persoDeleteBudgetSection(ppId, secId) {
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   if (!pp) return;
   pp.budgetSections = (pp.budgetSections||[]).filter(s=>s.id!==secId);
-  saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50);
+  saveState(); _refreshPersoBudget(ppId);
 }
 // Sous-listes
 function _persoAddSubList(ppId, lstId) {
@@ -18901,15 +18912,14 @@ function _savePersoSubList() {
   if (!lst) return;
   if (!lst.sublists) lst.sublists = [];
   lst.sublists.push({id:"sub"+Date.now(), name, items:[]});
-  saveState(); _closePersoSubListModal(); renderPersoProjects();
-  setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(), 50);
+  saveState(); _closePersoSubListModal(); _refreshPersoLists(ppId);
 }
 function _persoDeleteSubList(ppId, lstId, subId) {
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   const lst = (pp?.lists||[]).find(l=>l.id===lstId);
   if (!lst) return;
   lst.sublists = (lst.sublists||[]).filter(s=>s.id!==subId);
-  saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50);
+  saveState(); _refreshPersoLists(ppId);
 }
 function _persoAddSubItem(ppId, lstId, subId) {
   const inp = document.getElementById(`persoSubItem-${ppId}-${lstId}-${subId}`);
@@ -18921,21 +18931,21 @@ function _persoAddSubItem(ppId, lstId, subId) {
   if (!sub) return;
   if (!sub.items) sub.items=[];
   sub.items.push({id:"itm"+Date.now(), text, done:false});
-  saveState(); renderPersoProjects();
-  setTimeout(()=>{ document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(); document.getElementById(`persoSubItem-${ppId}-${lstId}-${subId}`)?.focus(); }, 50);
+  saveState(); _refreshPersoLists(ppId);
+  setTimeout(()=>document.getElementById(`persoSubItem-${ppId}-${lstId}-${subId}`)?.focus(), 50);
 }
 function _persoToggleSubItem(ppId, lstId, subId, itemId, done) {
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   const lst = (pp?.lists||[]).find(l=>l.id===lstId);
   const sub = (lst?.sublists||[]).find(s=>s.id===subId);
   const item = (sub?.items||[]).find(i=>i.id===itemId);
-  if (item) { item.done=done; saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50); }
+  if (item) { item.done=done; saveState(); _refreshPersoLists(ppId); }
 }
 function _persoDeleteSubItem(ppId, lstId, subId, itemId) {
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   const lst = (pp?.lists||[]).find(l=>l.id===lstId);
   const sub = (lst?.sublists||[]).find(s=>s.id===subId);
-  if (sub) { sub.items=(sub.items||[]).filter(i=>i.id!==itemId); saveState(); renderPersoProjects(); setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(),50); }
+  if (sub) { sub.items=(sub.items||[]).filter(i=>i.id!==itemId); saveState(); _refreshPersoLists(ppId); }
 }
 
 /* ========= NOTES LIBRES ========= */
