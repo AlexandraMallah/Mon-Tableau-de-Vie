@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1003</title>
+<title>Mon Tableau de Vie 🌿 · v1004</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5817,6 +5817,24 @@ function migrate(s) {
     if ((s.accounts?.savingsBreakdown?.[c] || 0) === 0) delete s.accounts?.savingsBreakdown?.[c];
   });
 
+  // Migration : timeCats créés avant le fix → transformer en postdocProjects
+  if (Array.isArray(s.work?.timeCats) && s.work.timeCats.length > 0) {
+    if (!s.work.postdocProjects) s.work.postdocProjects = [];
+    const orphans = s.work.timeCats.filter(tc =>
+      !s.work.postdocProjects.some(p => p.id === tc.key)
+    );
+    orphans.forEach(tc => {
+      s.work.postdocProjects.push({
+        id: tc.key, name: tc.label, emoji: tc.emoji || "📁",
+        color: tc.color || "#b8a5e8", bg: tc.bg || "#f0ebff",
+        progress: 0, checklist: [], links: [], ficheNotesList: []
+      });
+    });
+    s.work.timeCats = s.work.timeCats.filter(tc =>
+      !orphans.some(o => o.key === tc.key)
+    );
+  }
+
   return s;
 }
 function saveState(userAction = true) {
@@ -8092,12 +8110,23 @@ function _renderTimeCatsList() {
   }).join("");
 }
 function _moveTimeCat(idx, dir) {
-  if (!state.work.timeCats) state.work.timeCats = [];
-  var arr = state.work.timeCats;
-  var newIdx = idx + dir;
-  if (newIdx < 0 || newIdx >= arr.length) return;
-  var tmp = arr[idx]; arr[idx] = arr[newIdx]; arr[newIdx] = tmp;
-  _renderTimeCatsList();
+  const cats = getTimeCats();
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= cats.length) return;
+  const catA = cats[idx]; const catB = cats[newIdx];
+  const projs = state.work.postdocProjects || [];
+  const projA = projs.find(p => p.id === catA.key);
+  const projB = projs.find(p => p.id === catB.key);
+  if (projA && projB) {
+    const ai = projs.indexOf(projA); const bi = projs.indexOf(projB);
+    [projs[ai], projs[bi]] = [projs[bi], projs[ai]];
+  } else if (!projA && !projB) {
+    if (!state.work.timeCats) state.work.timeCats = [];
+    const tc = state.work.timeCats;
+    const ai = tc.findIndex(c => c.key === catA.key); const bi = tc.findIndex(c => c.key === catB.key);
+    if (ai >= 0 && bi >= 0) [tc[ai], tc[bi]] = [tc[bi], tc[ai]];
+  }
+  saveState(); _renderTimeCatsList(); renderTimeCatsGrid();
 }
 function _editTimeCatModal(idx) {
   const cat = getTimeCats()[idx];
@@ -8127,28 +8156,39 @@ function _saveEditTimeCat() {
     if (tcIdx >= 0) { state.work.timeCats[tcIdx].emoji = emoji; state.work.timeCats[tcIdx].label = label; }
   }
   saveState(); _closeEditTimeCatModal(); _renderTimeCatsList(); renderTimeCatsGrid();
+  renderWorkProjectTabs(); updateProjectSelect(); renderCustomSectionChips();
 }
 function _deleteTimeCatByIdx(idx) {
   var cat = getTimeCats()[idx];
   if (!cat) return;
-  _showConfirm("Supprimer la catégorie « " + cat.label + " » ?", function() {
-    if (!state.work.timeCats) state.work.timeCats = [];
-    state.work.timeCats.splice(idx, 1);
-    saveState(); _renderTimeCatsList(); renderTimeCatsGrid();
+  _showConfirm("Supprimer « " + cat.label + " » ?", function() {
+    const projIdx = (state.work.postdocProjects||[]).findIndex(p => p.id === cat.key);
+    if (projIdx >= 0) {
+      _recordDeletedSeed(cat.key);
+      state.work.postdocProjects.splice(projIdx, 1);
+      (state.work.postdocTasks||[]).forEach(t => { if (t.projectId === cat.key) t.projectId = ""; });
+      saveState(); _renderTimeCatsList(); renderTimeCatsGrid();
+      renderWorkProjectTabs(); updateProjectSelect(); renderCustomSectionChips(); renderTasks();
+    } else {
+      if (!state.work.timeCats) state.work.timeCats = [];
+      state.work.timeCats = state.work.timeCats.filter(c => c.key !== cat.key);
+      saveState(); _renderTimeCatsList(); renderTimeCatsGrid();
+    }
   });
 }
 function _createTimeCat() {
-  var emoji = (document.getElementById("newTimeCatEmoji").value.trim() || "📌");
+  var emoji = (document.getElementById("newTimeCatEmoji").value.trim() || "📁");
   var label = document.getElementById("newTimeCatLabel").value.trim();
   var color = document.getElementById("newTimeCatColor").value || "#6aaed6";
   if (!label) { alert("Nom obligatoire."); return; }
-  if (!state.work.timeCats) state.work.timeCats = [];
-  var bg = color + "22"; // transparent version
-  var key = "tc_" + label.toLowerCase().replace(/[^a-z0-9]/g,"_").slice(0,20) + "_" + Date.now();
-  state.work.timeCats.push({ key, label, emoji, color, bg });
+  var bg = color + "22";
+  // Ajouter comme vrai projet → onglets Travail + liste tâches + suivi Temps
+  if (!state.work.postdocProjects) state.work.postdocProjects = [];
+  state.work.postdocProjects.push({ id: "p" + Date.now(), name: label, emoji, color, bg, progress: 0, checklist: [], links: [], ficheNotesList: [] });
   document.getElementById("newTimeCatEmoji").value = "";
   document.getElementById("newTimeCatLabel").value = "";
   saveState(); _renderTimeCatsList(); renderTimeCatsGrid();
+  renderWorkProjectTabs(); updateProjectSelect(); renderCustomSectionChips();
 }
 
 /* ========= FIN GESTION ADMINISTRATIVE ========= */
@@ -8403,7 +8443,7 @@ function updateProjectSelect() {
     .filter(p => sectionIds.includes(p.id))
     .sort((a, b) => sectionIds.indexOf(a.id) - sectionIds.indexOf(b.id));
   const customProjects = state.work.postdocProjects.filter(p => !sectionIds.includes(p.id));
-  let html = `<option value="">— Sans section —</option>` +
+  let html = `<option value="">— Sans projet —</option>` +
     fixedProjects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
   if (customProjects.length) {
     html += customProjects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
