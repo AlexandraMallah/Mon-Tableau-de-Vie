@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1084</title>
+<title>Mon Tableau de Vie 🌿 · v1085</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4341,7 +4341,7 @@
 
 <!-- Modal nouvelle/édition activité -->
 <div class="modal-bg" id="activityModal" onclick="event.target===this&&_closeActivityModal()">
-  <div class="modal" style="max-width:480px;padding:24px;" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+  <div class="modal" style="max-width:780px;width:95vw;max-height:92vh;overflow-y:auto;padding:24px;" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <h3 id="actModalTitle" style="margin:0;font-size:18px;">✨ Nouvelle activité</h3>
       <button onclick="_closeActivityModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
@@ -4366,7 +4366,7 @@
         oninput="_renderSportGrid(_selectedSportKey)"
         style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;margin-bottom:10px;" />
       <!-- Grille de sports -->
-      <div id="actSportGrid" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;max-height:220px;overflow-y:auto;padding-bottom:4px;"></div>
+      <div id="actSportGrid" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"></div>
       <!-- Aperçu du sport sélectionné -->
       <div id="actModalSportPreview" style="display:none;padding:11px 14px;background:var(--mint-soft);border-radius:12px;align-items:center;gap:12px;">
         <span id="actModalSportPreviewEmoji" style="font-size:26px;"></span>
