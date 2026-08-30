@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1066</title>
+<title>Mon Tableau de Vie 🌿 · v1067</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14151,7 +14151,7 @@ function openAllAccountsManager() {
   const extAccs = state.externalAccounts || [];
   const allAccs = [
     ...savCats.map(c => ({ uid: "sav__" + c, name: c, emoji: (state.accounts?.savingsEmojis?.[c]) || "🏦", type: "savings", balance: (state.accounts?.savingsBreakdown?.[c]) || 0 })),
-    ...extAccs.map(a => ({ uid: "ext__" + a.id, name: a.name, emoji: a.emoji, type: "external", extId: a.id, balance: 0 }))
+    ...extAccs.map(a => ({ uid: "ext__" + a.id, name: a.name, emoji: a.emoji, type: "external", extId: a.id, balance: a.balance || 0 }))
   ];
   const typeOpts = `<option value="savings">💰 Épargne</option><option value="external">🧾 Compte secondaire</option>`;
   const listEl = document.createElement("div");
@@ -14177,8 +14177,7 @@ function openAllAccountsManager() {
     const balInp = document.createElement("input"); balInp.type = "number"; balInp.step = "0.01";
     balInp.value = a.balance.toFixed(2); balInp.placeholder = "Solde";
     balInp.style.cssText = "width:70px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink);"; balInp.className = "aaBal";
-    balInp.style.display = a.type === "savings" ? "" : "none";
-    typeSel.onchange = () => { balInp.style.display = typeSel.value === "savings" ? "" : "none"; };
+    typeSel.onchange = () => {};
     // delete btn
     const delBtn = document.createElement("button"); delBtn.textContent = "🗑"; delBtn.type = "button";
     delBtn.title = "Supprimer"; delBtn.style.cssText = "flex-shrink:0;width:28px;height:28px;border:none;background:none;color:#d44;font-size:15px;cursor:pointer;border-radius:6px;";
@@ -14287,8 +14286,8 @@ function _saveAllAccounts() {
     } else {
       const extId = origData?.extId || ("ext-" + Date.now() + Math.random());
       const existing = (state.externalAccounts || []).find(a => a.id === extId);
-      if (existing) { existing.name = name; existing.emoji = emoji; newExtAccs.push(existing); }
-      else newExtAccs.push({ id: extId, name, emoji });
+      if (existing) { existing.name = name; existing.emoji = emoji; existing.balance = bal; newExtAccs.push(existing); }
+      else newExtAccs.push({ id: extId, name, emoji, balance: bal });
     }
   });
   if (newSavCats.length) state.savingsCategories = newSavCats;
