@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1081</title>
+<title>Mon Tableau de Vie 🌿 · v1082</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4366,7 +4366,7 @@
         <input type="text" id="actModalSportSearch" placeholder="🔍 Chercher un sport…" autocomplete="off"
           oninput="_filterSports()" onfocus="_filterSports()" onblur="setTimeout(_closeSportDropdown,180)"
           style="width:100%;padding:11px 12px;border:1.5px solid var(--mint);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:white;box-sizing:border-box;" />
-        <div id="actModalSportDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:white;border:1.5px solid var(--mint);border-radius:12px;box-shadow:0 8px 24px rgba(120,100,160,.12);max-height:240px;overflow-y:auto;z-index:500;"></div>
+        <div id="actModalSportDropdown" style="display:none;position:fixed;background:white;border:1.5px solid var(--mint);border-radius:12px;box-shadow:0 8px 32px rgba(120,100,160,.18);overflow-y:auto;z-index:9999;"></div>
       </div>
       <!-- Aperçu sport sélectionné -->
       <div id="actModalSportPreview" style="display:none;margin-top:12px;padding:12px 14px;background:var(--mint-soft);border-radius:12px;display:none;align-items:center;gap:12px;">
@@ -10018,8 +10018,15 @@ const _SPORTS_LIST = [
 ];
 
 function _filterSports() {
-  const q = (document.getElementById("actModalSportSearch").value || "").toLowerCase().trim();
+  const inp = document.getElementById("actModalSportSearch");
+  const q = (inp.value || "").toLowerCase().trim();
   const dd = document.getElementById("actModalSportDropdown");
+  // Positionner en fixed sous le champ
+  const rect = inp.getBoundingClientRect();
+  dd.style.left   = rect.left + "px";
+  dd.style.width  = rect.width + "px";
+  dd.style.top    = (rect.bottom + 4) + "px";
+  dd.style.maxHeight = Math.max(200, window.innerHeight - rect.bottom - 20) + "px";
   const results = q
     ? _SPORTS_LIST.filter(s => s.name.toLowerCase().includes(q))
     : _SPORTS_LIST;
