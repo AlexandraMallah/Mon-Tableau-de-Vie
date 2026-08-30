@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1021</title>
+<title>Mon Tableau de Vie 🌿 · v1022</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18784,38 +18784,44 @@ function _renderPersoBudget(pp) {
     const secPct = secBudget > 0 ? Math.min(100,Math.round(secTotal/secBudget*100)) : 0;
     const secOver = secBudget > 0 && secTotal > secBudget;
     const secRemaining = secBudget - secTotal;
-    const secColor = secBudget > 0 ? _statusColor(secPct, secOver) : col;
+    // Couleur style tâches : hsl inversé — vert quand peu dépensé, rouge quand épuisé
+    const secBarColor = secOver ? '#dc2626' : 'hsl(' + Math.round((1 - secPct/100)*120) + ',72%,45%)';
+    const secBorderColor = secOver ? '#fecaca' : (secPct>=80 ? '#fed7aa' : secPct>=60 ? '#fef08a' : '#bbf7d0');
 
     const itemsHtml = (sec.items||[]).map(function(e) {
-      return '<div onclick="_persoEditExpense(\'' + pp.id + '\',\'' + e.id + '\')" style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-top:1px solid var(--line);cursor:pointer;transition:background 0.12s;" onmouseover="this.style.background=\'var(--bg-1)\'" onmouseout="this.style.background=\'\'">'
+      return '<div onclick="_persoEditExpense(\'' + pp.id + '\',\'' + e.id + '\')" style="display:flex;align-items:center;gap:8px;padding:7px 14px;border-top:1px solid var(--line);cursor:pointer;transition:background 0.12s;" onmouseover="this.style.background=\'var(--bg-1)\'" onmouseout="this.style.background=\'\'">'
         + '<span style="flex:1;font-size:13px;color:var(--ink);">' + escapeHtml(e.name||"") + '</span>'
-        + '<span style="font-size:13px;font-weight:600;color:var(--ink);">' + _fmtAmt(e.amount||0) + '</span>'
-        + '<span style="font-size:11px;color:var(--ink-softer);opacity:0.6;margin-left:2px;">✏️</span>'
-        + '<button onclick="event.stopPropagation();_persoDeleteExpense(\'' + pp.id + '\',\'' + e.id + '\')" title="Supprimer" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-softer);opacity:0.5;padding:0 2px;line-height:1;">✕</button>'
+        + '<span style="font-size:13px;font-weight:600;color:var(--ink-soft);">' + _fmtAmt(e.amount||0) + '</span>'
+        + '<span style="font-size:11px;color:var(--ink-softer);opacity:0.5;">✏️</span>'
+        + '<button onclick="event.stopPropagation();_persoDeleteExpense(\'' + pp.id + '\',\'' + e.id + '\')" title="Supprimer" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-softer);opacity:0.4;padding:0 2px;line-height:1;">✕</button>'
         + '</div>';
     }).join("");
 
-    html += '<div style="margin-bottom:12px;border:1.5px solid var(--line);border-radius:14px;overflow:hidden;">'
-      // Header section
-      + '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);">'
-      + '<div style="width:10px;height:10px;border-radius:50%;background:' + secColor + ';flex-shrink:0;"></div>'
-      + '<span style="flex:1;font-size:14px;font-weight:700;color:var(--ink);">' + escapeHtml(sec.name) + '</span>'
+    const pctBadge = secBudget > 0
+      ? '<span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:7px;background:' + secBarColor + '22;color:' + secBarColor + ';flex-shrink:0;">' + secPct + '%</span>'
+      : '';
+
+    html += '<div style="margin-bottom:10px;border-radius:14px;overflow:hidden;border:1.5px solid ' + secBorderColor + ';border-left:4px solid ' + secBarColor + ';">'
+      // Header
+      + '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);flex-wrap:wrap;">'
+      + '<span style="flex:1;font-size:14px;font-weight:700;color:var(--ink);min-width:0;">' + escapeHtml(sec.name) + '</span>'
+      + pctBadge
       + (secBudget > 0
         ? '<div style="text-align:right;flex-shrink:0;">'
-          + '<div style="font-size:15px;font-weight:800;color:' + secColor + ';">' + (secOver?'+':'') + _fmtAmt(Math.abs(secRemaining)) + ' ' + (secOver?'dépassé':'restant') + '</div>'
+          + '<div style="font-size:14px;font-weight:800;color:' + secBarColor + ';">' + (secOver ? '+' : '') + _fmtAmt(Math.abs(secRemaining)) + ' ' + (secOver ? 'dépassé' : 'restant') + '</div>'
           + '<div style="font-size:11px;color:var(--ink-softer);">' + _fmtAmt(secTotal) + ' / ' + _fmtAmt(secBudget) + '</div>'
           + '</div>'
-        : '<span style="font-size:15px;font-weight:700;color:var(--ink);">' + _fmtAmt(secTotal) + '</span>'
+        : '<span style="font-size:14px;font-weight:700;color:var(--ink-soft);">' + _fmtAmt(secTotal) + '</span>'
       )
       + '<button onclick="_persoAddExpense(\'' + pp.id + '\',\'' + sec.id + '\')" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1.5px solid ' + col + ';background:white;color:' + col + ';cursor:pointer;font-family:inherit;flex-shrink:0;">+ dépense</button>'
-      + '<button onclick="_persoDeleteBudgetSection(\'' + pp.id + '\',\'' + sec.id + '\')" title="Supprimer la section" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-softer);opacity:0.4;padding:0;flex-shrink:0;">✕</button>'
+      + '<button onclick="_persoDeleteBudgetSection(\'' + pp.id + '\',\'' + sec.id + '\')" title="Supprimer" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-softer);opacity:0.4;padding:0;flex-shrink:0;">✕</button>'
       + '</div>'
-      // Barre de progression (seulement si budget défini)
+      // Barre style tâches
       + (secBudget > 0
-        ? '<div style="height:5px;background:var(--line);"><div style="width:' + secPct + '%;height:100%;background:' + secColor + ';transition:width 0.3s;"></div></div>'
+        ? '<div class="task-progress-bar" style="border-radius:0;margin:0;"><div class="task-progress-fill" style="width:' + secPct + '%;background:' + secBarColor + ';"></div></div>'
         : '')
       // Dépenses
-      + (itemsHtml || '<div style="padding:10px 12px;font-size:12px;color:var(--ink-softer);font-style:italic;">Aucune dépense — clique sur "+ dépense".</div>')
+      + (itemsHtml || '<div style="padding:10px 14px;font-size:12px;color:var(--ink-softer);font-style:italic;">Aucune dépense — clique sur "+ dépense".</div>')
       + '</div>';
   });
   return html;
