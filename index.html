@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1016</title>
+<title>Mon Tableau de Vie 🌿 · v1018</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18454,15 +18454,29 @@ function savePersoProject() {
   const desc   = document.getElementById("persoProjectDesc").value.trim();
   if (!state.domestique.persoProjects) state.domestique.persoProjects = [];
   if (id) {
+    // Édition : mise à jour sans re-render complet pour éviter le flash
     const pp = state.domestique.persoProjects.find(p=>p.id===id);
     if (pp) Object.assign(pp, {name,emoji,date,budget,desc});
+    saveState(); closePersoProjectModal();
+    // Mettre à jour le sous-onglet dans la nav sans reconstruire tout
+    const subBtn = document.querySelector(`[data-sub="pp-${id}"]`);
+    if (subBtn) subBtn.textContent = emoji + " " + name;
+    // Mettre à jour le titre dans la fiche
+    const ficheTitle = document.querySelector(`.proj-fiche[data-projid="${id}"] h2`);
+    if (ficheTitle) ficheTitle.textContent = name;
+    const ficheEmoji = document.querySelector(`.proj-fiche[data-projid="${id}"] span[style*="font-size:26px"]`);
+    if (ficheEmoji) ficheEmoji.textContent = emoji;
+    // Rafraîchir juste la section budget si nécessaire
+    const budgetEl = document.getElementById("persoBudget-"+id);
+    if (budgetEl) budgetEl.innerHTML = _renderPersoBudget(pp);
   } else {
     const {color,bg} = _persoAutoColor();
     state.domestique.persoProjects.push({id:"pp"+Date.now(),name,emoji,date,budget,desc,color,bg,status:"planning",notes:"",lists:[],expenses:[]});
+    const ppId = (state.domestique.persoProjects||[]).slice(-1)[0]?.id;
+    saveState(); closePersoProjectModal(); renderPersoProjects();
+    if (ppId) setTimeout(()=>{ const btn = document.querySelector(`[data-sub="pp-${ppId}"]`); if (btn) btn.click(); }, 60);
+    return;
   }
-  const ppId = id || (state.domestique.persoProjects||[]).slice(-1)[0]?.id;
-  saveState(); closePersoProjectModal(); renderPersoProjects();
-  if (ppId) setTimeout(()=>{ const btn = document.querySelector(`[data-sub="pp-${ppId}"]`); if (btn) btn.click(); }, 60);
 }
 function _deletePersoProject() {
   const id = document.getElementById("persoProjectModalId").value;
