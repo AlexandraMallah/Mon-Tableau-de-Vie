@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1072</title>
+<title>Mon Tableau de Vie 🌿 · v1073</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14217,6 +14217,10 @@ function openSecondaryAccountsManager() {
     const db = document.createElement("button"); db.textContent="🗑"; db.type="button"; db.style.cssText="flex-shrink:0;width:28px;height:28px;border:none;background:none;color:#d44;font-size:15px;cursor:pointer;border-radius:6px;";
     db.onclick = () => _delAllAccDom(a2, row2);
     row2.append(eb,ei,ni,ti,bi,db); row2._accData=a2; listEl.appendChild(row2);
+    // Ajouter immédiatement à state pour mise à jour de la liste déroulante
+    if (!Array.isArray(state.externalAccounts)) state.externalAccounts = [];
+    state.externalAccounts.push({ id: a2.extId, name, emoji, balance: 0 });
+    _refreshPreleveSur();
     newNameInp.value=""; newEmojiInp.value="🧾"; newEmojiBtn.textContent="🧾"; newNameInp.focus();
   };
   addRow.append(newEmojiBtn, newEmojiInp, newNameInp, addBtn);
@@ -14476,6 +14480,13 @@ function _addSavAccFromEdit() {
     <button onclick="_deleteSavAcc('${escapeHtml(name)}')" title="Supprimer" style="flex-shrink:0;width:30px;height:30px;border:none;background:none;color:#d44;font-size:16px;cursor:pointer;border-radius:6px;">🗑</button>
   </div>`;
   listEl.insertAdjacentHTML("beforeend", rowHtml);
+  // Ajouter immédiatement à state pour que la liste déroulante se mette à jour
+  if (!state.savingsCategories) state.savingsCategories = [];
+  state.savingsCategories.push(name);
+  if (!state.accounts) state.accounts = {};
+  if (!state.accounts.savingsEmojis) state.accounts.savingsEmojis = {};
+  state.accounts.savingsEmojis[name] = emoji;
+  _refreshPreleveSur();
   // Réinitialiser le formulaire
   inp.value = "";
   const emojiInp = document.getElementById("newSavEmoji"); if (emojiInp) emojiInp.value = "🏦";
