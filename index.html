@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1020</title>
+<title>Mon Tableau de Vie 🌿 · v1021</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5002,9 +5002,10 @@
 <!-- Modal ajout dépense projet perso -->
 <div class="modal-bg" id="persoExpenseModal" onclick="if(event.target===this)_closePersoExpenseModal()">
   <div class="modal" style="max-width:400px;" onclick="event.stopPropagation()">
-    <h3 style="margin:0 0 16px;font-size:17px;">💰 Ajouter une dépense</h3>
+    <h3 id="persoExpenseModalTitle" style="margin:0 0 16px;font-size:17px;">💰 Ajouter une dépense</h3>
     <input type="hidden" id="persoExpenseProjId" />
     <input type="hidden" id="persoExpenseSectionId" />
+    <input type="hidden" id="persoExpenseEditId" />
     <div style="margin-bottom:10px;">
       <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Description</div>
       <input type="text" id="persoExpenseName" maxlength="80" placeholder="ex: Traiteur, Fleurs, Location salle…"
@@ -5018,7 +5019,7 @@
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;">
       <button onclick="_closePersoExpenseModal()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-      <button onclick="_savePersoExpense()" style="padding:9px 20px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
+      <button id="persoExpenseSaveBtn" onclick="_savePersoExpense()" style="padding:9px 20px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
     </div>
   </div>
 </div>
@@ -18786,10 +18787,11 @@ function _renderPersoBudget(pp) {
     const secColor = secBudget > 0 ? _statusColor(secPct, secOver) : col;
 
     const itemsHtml = (sec.items||[]).map(function(e) {
-      return '<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-top:1px solid var(--line);">'
+      return '<div onclick="_persoEditExpense(\'' + pp.id + '\',\'' + e.id + '\')" style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-top:1px solid var(--line);cursor:pointer;transition:background 0.12s;" onmouseover="this.style.background=\'var(--bg-1)\'" onmouseout="this.style.background=\'\'">'
         + '<span style="flex:1;font-size:13px;color:var(--ink);">' + escapeHtml(e.name||"") + '</span>'
         + '<span style="font-size:13px;font-weight:600;color:var(--ink);">' + _fmtAmt(e.amount||0) + '</span>'
-        + '<button onclick="_persoDeleteExpense(\'' + pp.id + '\',\'' + e.id + '\')" title="Supprimer" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-softer);opacity:0.5;padding:0 2px;line-height:1;">✕</button>'
+        + '<span style="font-size:11px;color:var(--ink-softer);opacity:0.6;margin-left:2px;">✏️</span>'
+        + '<button onclick="event.stopPropagation();_persoDeleteExpense(\'' + pp.id + '\',\'' + e.id + '\')" title="Supprimer" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-softer);opacity:0.5;padding:0 2px;line-height:1;">✕</button>'
         + '</div>';
     }).join("");
 
@@ -18879,8 +18881,27 @@ function _persoDeleteItem(ppId, lstId, itemId) {
 function _persoAddExpense(ppId, sectionId) {
   document.getElementById("persoExpenseProjId").value = ppId;
   document.getElementById("persoExpenseSectionId").value = sectionId || "";
+  document.getElementById("persoExpenseEditId").value = "";
   document.getElementById("persoExpenseName").value = "";
   document.getElementById("persoExpenseAmount").value = "";
+  document.getElementById("persoExpenseModalTitle").textContent = "💰 Ajouter une dépense";
+  document.getElementById("persoExpenseSaveBtn").textContent = "Ajouter";
+  document.getElementById("persoExpenseModal").classList.add("open");
+  setTimeout(()=>document.getElementById("persoExpenseName").focus(), 80);
+}
+function _persoEditExpense(ppId, expId) {
+  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
+  if (!pp) return;
+  let exp = null, secId = "";
+  (pp.budgetSections||[]).forEach(s=>{ const f=s.items?.find(e=>e.id===expId); if(f){exp=f;secId=s.id;} });
+  if (!exp) return;
+  document.getElementById("persoExpenseProjId").value = ppId;
+  document.getElementById("persoExpenseSectionId").value = secId;
+  document.getElementById("persoExpenseEditId").value = expId;
+  document.getElementById("persoExpenseName").value = exp.name||"";
+  document.getElementById("persoExpenseAmount").value = exp.amount||"";
+  document.getElementById("persoExpenseModalTitle").textContent = "✏️ Modifier la dépense";
+  document.getElementById("persoExpenseSaveBtn").textContent = "Enregistrer";
   document.getElementById("persoExpenseModal").classList.add("open");
   setTimeout(()=>document.getElementById("persoExpenseName").focus(), 80);
 }
@@ -18888,20 +18909,26 @@ function _closePersoExpenseModal() { document.getElementById("persoExpenseModal"
 function _savePersoExpense() {
   const ppId = document.getElementById("persoExpenseProjId").value;
   const sectionId = document.getElementById("persoExpenseSectionId").value;
+  const editId = document.getElementById("persoExpenseEditId").value;
   const name = document.getElementById("persoExpenseName").value.trim();
   const amount = parseFloat(document.getElementById("persoExpenseAmount").value);
   if (!name || isNaN(amount) || amount < 0) return;
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   if (!pp) return;
   if (!pp.budgetSections) pp.budgetSections = [];
-  let section = pp.budgetSections.find(s=>s.id===sectionId);
-  if (!section) {
-    // Ajouter dans la section "Général" ou la première section disponible
-    section = pp.budgetSections[0];
-    if (!section) { section = {id:"sec"+Date.now(),name:"Général",items:[]}; pp.budgetSections.push(section); }
+  if (editId) {
+    // Mode édition : trouver et mettre à jour
+    (pp.budgetSections||[]).forEach(s=>{ const e=s.items?.find(i=>i.id===editId); if(e){e.name=name;e.amount=amount;} });
+  } else {
+    // Mode ajout
+    let section = pp.budgetSections.find(s=>s.id===sectionId);
+    if (!section) {
+      section = pp.budgetSections[0];
+      if (!section) { section = {id:"sec"+Date.now(),name:"Général",items:[]}; pp.budgetSections.push(section); }
+    }
+    if (!section.items) section.items = [];
+    section.items.push({id:"exp"+Date.now(), name, amount});
   }
-  if (!section.items) section.items = [];
-  section.items.push({id:"exp"+Date.now(), name, amount});
   saveState(); _closePersoExpenseModal(); _refreshPersoBudget(ppId);
 }
 function _persoDeleteExpense(ppId, expId) {
