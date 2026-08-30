@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1008</title>
+<title>Mon Tableau de Vie 🌿 · v1010</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5026,12 +5026,17 @@
 <!-- Modal ajout section budget projet perso -->
 <div class="modal-bg" id="persoBudgetSectionModal" onclick="if(event.target===this)_closePersoBudgetSectionModal()">
   <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
-    <h3 style="margin:0 0 16px;font-size:17px;">📂 Nouvelle section</h3>
+    <h3 style="margin:0 0 16px;font-size:17px;">📂 Nouvelle section budget</h3>
     <input type="hidden" id="persoBudgetSectionProjId" />
-    <div style="margin-bottom:16px;">
+    <div style="margin-bottom:12px;">
       <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom de la section</div>
       <input type="text" id="persoBudgetSectionName" maxlength="60" placeholder="ex: Repas, Décoration, Transport…"
         onkeydown="if(event.key==='Enter')_savePersoBudgetSection()"
+        style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;" />
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Budget alloué à cette section (€) <span style="color:var(--ink-softer);font-weight:400;">(optionnel)</span></div>
+      <input type="number" id="persoBudgetSectionBudget" min="0" step="10" placeholder="ex: 500"
         style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;" />
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;">
@@ -5132,7 +5137,7 @@
       <div style="margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
           <span id="newTimeCatEmojiPreview" style="font-size:26px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--bg-1);border:1px solid var(--line);cursor:default;">📁</span>
-          <div id="newTimeCatEmojiGrid" style="display:flex;flex-wrap:wrap;gap:4px;flex:1;max-height:90px;overflow-y:auto;padding:6px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);"></div>
+          <div id="newTimeCatEmojiGrid" style="display:flex;flex-wrap:wrap;gap:4px;flex:1;padding:6px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);"></div>
         </div>
         <input type="hidden" id="newTimeCatEmoji" value="📁" />
       </div>
@@ -6870,6 +6875,8 @@ function _renderProjFicheTasks(projId) {
   if (!container) return;
   const tasks = (state.work.postdocTasks || []).filter(t => t.projectId === projId);
   const sorted = tasks.slice().sort((a,b)=>{
+    // Tâches terminées tout en bas
+    if (a.done !== b.done) return a.done ? 1 : -1;
     const ord={urgent:0,high:1,medium:2,low:3};
     const pd=(ord[a.priority]??2)-(ord[b.priority]??2);
     if (pd!==0) return pd;
@@ -7122,7 +7129,7 @@ function _renderProjFicheSuivi(projId) {
 
 function renderProjectFiche(p) {
   const col = p.color || "#b8a5e8";
-  const activeTab = _projFicheActiveTab[p.id] || "tasks";
+  const activeTab = _projFicheActiveTab[p.id] || (p.id === "p-seed-candidatures" ? "suivi" : "tasks");
   const hasSuivi = ["p-seed-candidatures","p-seed-valo","p-seed-enseignement"].includes(p.id);
   const suiviLabel = p.id === "p-seed-candidatures" ? "📊 Candidatures" :
                      p.id === "p-seed-valo"         ? "📊 Publications" :
@@ -18547,75 +18554,79 @@ function _persoProjTabClick(btn, sub) {
 function _renderPersoNotesList(pp) {
   if (!pp.notesList) {
     pp.notesList = [];
-    if (pp.notes && pp.notes.trim()) { pp.notesList.push({id:"pn"+Date.now(), title:"Note", content: pp.notes, subnotes:[]}); pp.notes=""; }
+    if (pp.notes && pp.notes.trim()) {
+      pp.notesList.push({id:"pn"+Date.now(), title:"Note", content: pp.notes, date: new Date().toISOString().slice(0,10)});
+      pp.notes = "";
+    }
   }
   if (!pp.notesList.length) return '<p style="color:var(--ink-softer);font-size:12px;font-style:italic;">Aucune note — clique sur + Note.</p>';
-  const {color="#c9a0dc", bg="#f5ecff", id: ppId} = pp;
-  const noteStyle = "border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--bg-1);";
-  const tStyle = "width:100%;border:none;outline:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);background:transparent;padding:0 0 4px;border-bottom:1px dashed var(--line);margin-bottom:6px;";
-  const taStyle = "width:100%;border:none;outline:none;font-family:inherit;font-size:12px;color:var(--ink);background:transparent;resize:vertical;min-height:40px;box-sizing:border-box;line-height:1.6;";
-  const subStyle = "margin:8px 0 0 12px;padding-left:10px;border-left:3px solid "+color+";";
-  return pp.notesList.map((note, ni) => {
-    const subs = (note.subnotes||[]).map((sn,si) => `<div style="${subStyle}">
-      <input value="${escapeHtml(sn.title||"")}" placeholder="Titre…" style="${tStyle}font-size:12px;font-weight:500;" onchange="_savePersoNoteField('${ppId}',${ni},'title',this.value,${si})" onblur="_savePersoNoteField('${ppId}',${ni},'title',this.value,${si})">
-      <textarea placeholder="Contenu…" style="${taStyle}" onchange="_savePersoNoteField('${ppId}',${ni},'content',this.value,${si})" onblur="_savePersoNoteField('${ppId}',${ni},'content',this.value,${si})">${escapeHtml(sn.content||"")}</textarea>
-      <button onclick="_deletePersoSubNote('${ppId}',${ni},${si})" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;padding:0;">✕ supprimer</button>
-    </div>`).join("");
-    return `<div style="${noteStyle}">
-      <div style="display:flex;align-items:flex-start;gap:6px;">
-        <div style="flex:1;">
-          <input value="${escapeHtml(note.title||"")}" placeholder="Titre de la note…" style="${tStyle}" onchange="_savePersoNoteField('${ppId}',${ni},'title',this.value)" onblur="_savePersoNoteField('${ppId}',${ni},'title',this.value)">
-          <textarea placeholder="Contenu…" style="${taStyle}" onchange="_savePersoNoteField('${ppId}',${ni},'content',this.value)" onblur="_savePersoNoteField('${ppId}',${ni},'content',this.value)">${escapeHtml(note.content||"")}</textarea>
-        </div>
-        <button onclick="_deletePersoNote('${ppId}',${ni})" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--ink-softer);padding:0 2px;" title="Supprimer">🗑</button>
-      </div>
-      ${subs}
-      <button onclick="_addPersoSubNote('${ppId}',${ni})" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--line);background:none;color:var(--ink-soft);cursor:pointer;font-family:inherit;margin-top:6px;">+ sous-note</button>
-    </div>`;
-  }).join("");
+  return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;">'
+    + pp.notesList.map(n => {
+        const preview = (n.content||"").slice(0,100).replace(/\n/g," ");
+        const rawDate = n.date || (n.createdAt ? new Date(n.createdAt).toISOString().slice(0,10) : null);
+        const dateStr = rawDate ? new Date(rawDate).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}) : "";
+        return '<div onclick="_openPersoNoteModal(\'' + pp.id + '\',\'' + n.id + '\')" style="background:var(--bg-1);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;transition:box-shadow 0.15s;min-width:0;" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(120,100,160,0.12)\'" onmouseout="this.style.boxShadow=\'none\'">'
+          + '<div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(n.title||"Sans titre") + '</div>'
+          + (preview ? '<div style="font-size:12px;color:var(--ink-soft);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">' + escapeHtml(preview) + (n.content&&n.content.length>100?"…":"") + '</div>' : '')
+          + (dateStr ? '<div style="font-size:10px;color:var(--ink-softer);margin-top:8px;">' + dateStr + '</div>' : '')
+          + '</div>';
+      }).join("")
+    + '</div>';
 }
 function _addPersoNote(ppId) {
+  _openPersoNoteModal(ppId, null);
+}
+function _openPersoNoteModal(ppId, noteId) {
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   if (!pp) return;
   if (!pp.notesList) pp.notesList = [];
-  pp.notesList.push({id:"pn"+Date.now(), title:"", content:"", subnotes:[]});
-  saveState();
-  const el = document.getElementById("persoNotesList-"+ppId);
-  if (el) el.innerHTML = _renderPersoNotesList(pp);
+  const n = noteId ? pp.notesList.find(x=>x.id===noteId) : null;
+  document.getElementById("persoNoteModalTitle").textContent = n ? "✏️ Modifier la note" : "📝 Nouvelle note";
+  document.getElementById("persoNoteEditPpId").value = ppId;
+  document.getElementById("persoNoteEditId").value = noteId || "";
+  document.getElementById("persoNoteTitle").value = n?.title || "";
+  document.getElementById("persoNoteContent").value = n?.content || "";
+  const dateVal = n?.date || new Date().toISOString().slice(0,10);
+  document.getElementById("persoNoteDate").value = dateVal;
+  const delBtn = document.getElementById("persoNoteDeleteBtn");
+  if (delBtn) delBtn.style.display = noteId ? "inline-block" : "none";
+  document.getElementById("persoNoteModal").style.display = "flex";
+  setTimeout(()=>document.getElementById(n?"persoNoteContent":"persoNoteTitle").focus(), 60);
 }
-function _deletePersoNote(ppId, ni) {
+function _closePersoNoteModal() { document.getElementById("persoNoteModal").style.display = "none"; }
+function _savePersoNote() {
+  const ppId = document.getElementById("persoNoteEditPpId").value;
+  const noteId = document.getElementById("persoNoteEditId").value;
+  const title = document.getElementById("persoNoteTitle").value.trim();
+  const content = document.getElementById("persoNoteContent").value;
+  const date = document.getElementById("persoNoteDate").value || new Date().toISOString().slice(0,10);
+  if (!title && !content.trim()) return;
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  if (!pp || !pp.notesList) return;
-  pp.notesList.splice(ni, 1); saveState();
+  if (!pp) return;
+  if (!pp.notesList) pp.notesList = [];
+  if (noteId) {
+    const n = pp.notesList.find(x=>x.id===noteId);
+    if (n) { n.title=title; n.content=content; n.date=date; n.updatedAt=Date.now(); }
+  } else {
+    pp.notesList.push({id:"pn"+Date.now(), title, content, date, createdAt:Date.now()});
+  }
+  saveState(); _closePersoNoteModal();
   const el = document.getElementById("persoNotesList-"+ppId);
   if (el) el.innerHTML = _renderPersoNotesList(pp);
 }
-function _addPersoSubNote(ppId, ni) {
+function _deletePersoNoteFromModal() {
+  const ppId = document.getElementById("persoNoteEditPpId").value;
+  const noteId = document.getElementById("persoNoteEditId").value;
+  if (!noteId) return;
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  if (!pp || !pp.notesList[ni]) return;
-  if (!pp.notesList[ni].subnotes) pp.notesList[ni].subnotes = [];
-  pp.notesList[ni].subnotes.push({id:"psn"+Date.now(), title:"", content:""});
-  saveState();
-  const el = document.getElementById("persoNotesList-"+ppId);
-  if (el) el.innerHTML = _renderPersoNotesList(pp);
-}
-function _deletePersoSubNote(ppId, ni, si) {
-  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  if (!pp || !pp.notesList[ni]) return;
-  pp.notesList[ni].subnotes.splice(si, 1); saveState();
-  const el = document.getElementById("persoNotesList-"+ppId);
-  if (el) el.innerHTML = _renderPersoNotesList(pp);
-}
-var _persoNotesTimer = {};
-function _savePersoNoteField(ppId, ni, field, val, si) {
-  clearTimeout(_persoNotesTimer[ppId]);
-  _persoNotesTimer[ppId] = setTimeout(() => {
-    const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-    if (!pp || !pp.notesList[ni]) return;
-    if (si !== undefined) { if (pp.notesList[ni].subnotes[si]) pp.notesList[ni].subnotes[si][field] = val; }
-    else { pp.notesList[ni][field] = val; }
-    saveState();
-  }, 600);
+  if (!pp) return;
+  const n = pp.notesList.find(x=>x.id===noteId);
+  _showConfirm("Supprimer la note « " + (n?.title||"Sans titre") + " » ?", ()=>{
+    pp.notesList = pp.notesList.filter(x=>x.id!==noteId);
+    saveState(); _closePersoNoteModal();
+    const el = document.getElementById("persoNotesList-"+ppId);
+    if (el) el.innerHTML = _renderPersoNotesList(pp);
+  });
 }
 
 function _renderPersoLists(pp) {
@@ -18700,14 +18711,20 @@ function _renderPersoBudget(pp) {
         + '<button onclick="_persoDeleteExpense(\'' + pp.id + '\',\'' + e.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.4;">✕</button>'
         + '</div>';
     }).join("");
+    const secBudget = sec.secBudget || 0;
+    const secPct = secBudget > 0 ? Math.min(100, Math.round(secTotal/secBudget*100)) : null;
+    const secOver = secBudget > 0 && secTotal > secBudget;
+    const secBarHtml = secBudget > 0 ? '<div style="height:4px;background:var(--line);border-radius:2px;margin:0 12px 8px;"><div style="width:' + (secPct||0) + '%;height:100%;background:' + (secOver?"#dc2626":col) + ';border-radius:2px;"></div></div>' : '';
     html += '<div style="margin-bottom:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden;">'
-      + '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:' + bg + ';">'
+      + '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:' + bg + ';flex-wrap:wrap;">'
       + '<span style="font-size:13px;font-weight:700;flex:1;color:var(--ink);">📂 ' + escapeHtml(sec.name) + '</span>'
-      + '<span style="font-size:12px;font-weight:600;color:' + col + ';">' + secTotal.toFixed(0) + ' €</span>'
+      + '<span style="font-size:12px;font-weight:600;color:' + (secOver?"#dc2626":col) + ';">' + secTotal.toFixed(0) + ' €' + (secBudget > 0 ? ' / ' + secBudget.toLocaleString("fr-FR") + ' €' : '') + '</span>'
+      + '<button onclick="_addPersoBudgetSection(\'' + pp.id + '\',\'' + sec.id + '\')" title="Modifier le budget de la section" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;">⚙️</button>'
       + '<button onclick="_persoAddExpense(\'' + pp.id + '\',\'' + sec.id + '\')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid ' + col + ';background:white;color:' + col + ';cursor:pointer;font-family:inherit;">+ dépense</button>'
       + '<button onclick="_persoDeleteBudgetSection(\'' + pp.id + '\',\'' + sec.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.4;padding:0 2px;">✕</button>'
       + '</div>'
-      + (itemsHtml ? '<div style="padding:4px 4px;">' + itemsHtml + '</div>' : '<p style="color:var(--ink-softer);font-size:12px;padding:8px 12px;font-style:italic;margin:0;">Aucune dépense dans cette section.</p>')
+      + secBarHtml
+      + (itemsHtml ? '<div style="padding:4px 4px;">' + itemsHtml + '</div>' : '<p style="color:var(--ink-softer);font-size:12px;padding:8px 12px;font-style:italic;margin:0;">Aucune dépense — clique sur "+ dépense".</p>')
       + '</div>';
   });
   return html;
@@ -18821,10 +18838,11 @@ function _savePersoBudgetSection() {
   const ppId = document.getElementById("persoBudgetSectionProjId").value;
   const name = document.getElementById("persoBudgetSectionName").value.trim();
   if (!name) return;
+  const secBudget = parseFloat(document.getElementById("persoBudgetSectionBudget").value) || 0;
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   if (!pp) return;
   if (!pp.budgetSections) pp.budgetSections = [];
-  pp.budgetSections.push({id:"sec"+Date.now(), name, items:[]});
+  pp.budgetSections.push({id:"sec"+Date.now(), name, secBudget, items:[]});
   saveState(); _closePersoBudgetSectionModal(); renderPersoProjects();
   setTimeout(()=>document.querySelector(`[data-sub="pp-${ppId}"]`)?.click(), 50);
 }
@@ -25181,6 +25199,30 @@ function _micPulse(on) {
       <div style="flex:1;"></div>
       <button onclick="_closeFreeNoteModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
       <button onclick="_saveFreeNote()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal note projet perso -->
+<div id="persoNoteModal" onclick="event.target===this&&_closePersoNoteModal()" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--card);border-radius:22px;padding:28px 24px;max-width:520px;width:94%;box-shadow:0 12px 48px rgba(60,50,80,.22);" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <h3 id="persoNoteModalTitle" style="margin:0;font-size:18px;">📝 Nouvelle note</h3>
+      <button onclick="_closePersoNoteModal()" style="margin-left:auto;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-softer);">✕</button>
+    </div>
+    <input type="hidden" id="persoNoteEditPpId" />
+    <input type="hidden" id="persoNoteEditId" />
+    <input type="text" id="persoNoteTitle" placeholder="Titre de la note…" maxlength="80"
+      style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:15px;font-weight:600;color:var(--ink);background:var(--bg-1);box-sizing:border-box;margin-bottom:10px;" />
+    <input type="date" id="persoNoteDate"
+      style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;margin-bottom:10px;" />
+    <textarea id="persoNoteContent" placeholder="Écris ta note ici…" rows="7"
+      style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;resize:vertical;line-height:1.6;"></textarea>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap;">
+      <button id="persoNoteDeleteBtn" onclick="_deletePersoNoteFromModal()" style="padding:10px 16px;border-radius:12px;border:1.5px solid #ffb3b3;background:white;color:#e06060;cursor:pointer;font-family:inherit;font-size:14px;display:none;">🗑️ Supprimer</button>
+      <div style="flex:1;"></div>
+      <button onclick="_closePersoNoteModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button onclick="_savePersoNote()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
     </div>
   </div>
 </div>
