@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1042</title>
+<title>Mon Tableau de Vie 🌿 · v1043</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2782,13 +2782,25 @@
         <h2>💪 Composition corporelle</h2>
         <!-- Profil corporel : taille + objectif poids -->
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-          <div style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--sky-soft),var(--lavender-soft));border-radius:12px;padding:10px 14px;flex:1;min-width:180px;">
-            <span style="font-size:13px;font-weight:600;">📏 Taille :</span>
-            <input type="number" id="bodyHeightInput" placeholder="ex: 165" step="1" min="100" max="220"
-              onchange="_saveBodyHeight()"
-              style="width:70px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;" />
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:linear-gradient(135deg,var(--sky-soft),var(--lavender-soft));border-radius:12px;padding:10px 14px;flex:1;min-width:240px;">
+            <span style="font-size:13px;font-weight:600;">📏</span>
+            <input type="number" id="bodyHeightInput" placeholder="Taille cm" step="1" min="100" max="220"
+              onchange="_saveBodyProfile()"
+              style="width:80px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;" />
             <span style="font-size:13px;color:var(--ink-soft);">cm</span>
-            <span id="bodyHeightHint" style="font-size:11px;color:var(--ink-softer);margin-left:auto;">pour le calcul des kcal</span>
+            <span style="font-size:13px;font-weight:600;margin-left:4px;">🎂</span>
+            <input type="number" id="bodyAgeInput" placeholder="Âge" step="1" min="10" max="99"
+              onchange="_saveBodyProfile()"
+              style="width:60px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;" />
+            <span style="font-size:13px;color:var(--ink-soft);">ans</span>
+            <select id="bodySexInput" onchange="_saveBodyProfile()"
+              style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);background:white;">
+              <option value="">Sexe</option>
+              <option value="f">Femme</option>
+              <option value="m">Homme</option>
+              <option value="n">Neutre</option>
+            </select>
+            <span style="font-size:11px;color:var(--ink-softer);margin-left:auto;white-space:nowrap;">pour le calcul kcal</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--mint-soft),var(--sky-soft));border-radius:12px;padding:10px 14px;flex:1;min-width:180px;">
             <span style="font-size:13px;font-weight:600;">🎯 Objectif poids :</span>
@@ -6745,49 +6757,66 @@ function toggleHabit(id) {
   saveState();
   renderTodayView();
 }
-// ── Taille corporelle ─────────────────────────────────────────────
-function _saveBodyHeight() {
-  const v = parseFloat(document.getElementById("bodyHeightInput")?.value);
-  if (!v || v < 100 || v > 220) return;
+// ── Profil corporel (taille, âge, sexe) ───────────────────────────
+function _saveBodyProfile() {
+  const h = parseFloat(document.getElementById("bodyHeightInput")?.value);
+  const a = parseInt(document.getElementById("bodyAgeInput")?.value);
+  const s = document.getElementById("bodySexInput")?.value;
   if (!state.health) state.health = {};
-  state.health.heightCm = v;
+  if (h >= 100 && h <= 220) state.health.heightCm = h;
+  if (a >= 10 && a <= 99) state.health.ageyears = a;
+  if (s) state.health.sex = s;
   saveState();
-  showToast("📏 Taille enregistrée — le calcul kcal est mis à jour");
-  // Recalculer les kcal d'aujourd'hui si les pas sont déjà renseignés
+  showToast("✅ Profil mis à jour — calcul kcal recalculé");
   const steps = Number(getToday().habits?.['h-pas']) || 0;
   if (steps > 0) _autoCalcKcal(steps, false);
 }
+// garde rétrocompat
+function _saveBodyHeight() { _saveBodyProfile(); }
 
 function _autoCalcKcal(steps, forceOverwrite) {
   const heightCm = state.health?.heightCm || 0;
+  const age      = state.health?.ageyears  || 0;
+  const sex      = state.health?.sex       || "";
   // Chercher le poids le plus récent dans l'historique
   const dk = getSelectedDayKey();
   let weightKg = Number(state.history[dk]?.weight) || 0;
   if (!weightKg) {
-    // Fallback : dernier poids connu
     const dks = Object.keys(state.history).sort().reverse();
     for (const d of dks) { const w = Number(state.history[d]?.weight); if (w > 0) { weightKg = w; break; } }
   }
   if (!heightCm || !weightKg || steps <= 0) {
     if (forceOverwrite) {
-      if (!heightCm) showToast("📏 Remplis ta taille dans Santé → Composition corporelle pour activer le calcul auto.");
-      else if (!weightKg) showToast("⚖️ Enregistre ton poids dans Santé → Composition corporelle pour activer le calcul auto.");
+      if (!heightCm || !age || !sex) showToast("📏 Remplis taille, âge et sexe dans Santé → Composition corporelle pour activer le calcul auto.");
+      else if (!weightKg) showToast("⚖️ Enregistre ton poids dans Santé pour activer le calcul auto.");
       else showToast("🚶 Entre d'abord tes pas du jour pour calculer les kcal.");
     }
     return null;
   }
-  // Formule : Margaria / ACSM — 1.036 kcal par kg par km
+
+  // ── BMR : formule Mifflin-St Jeor (la plus précise, validée par l'ACSM) ──
+  // Femme : (10×poids) + (6.25×taille) − (5×âge) − 161
+  // Homme : (10×poids) + (6.25×taille) − (5×âge) + 5
+  // Neutre : moyenne des deux
+  let bmr;
+  const base = (10 * weightKg) + (6.25 * heightCm) - (5 * (age || 30));
+  if (sex === "f")      bmr = base - 161;
+  else if (sex === "m") bmr = base + 5;
+  else                  bmr = base - 78; // moyenne F/M
+
+  // ── Calories des pas : Margaria — 1.036 kcal/kg/km ──
   const strideMeter = heightCm * 0.00415;
   const distanceKm  = (steps * strideMeter) / 1000;
-  const kcal = Math.round(distanceKm * weightKg * 1.036);
+  const stepKcal    = distanceKm * weightKg * 1.036;
+
+  const total = Math.round(bmr + stepKcal);
   const t = getToday();
   const existing = Number(t.habits?.['h-cal-dep']) || 0;
-  // N'écraser que si pas de valeur manuelle (forceOverwrite = bouton Auto)
   if (!existing || forceOverwrite) {
-    t.habits['h-cal-dep'] = kcal;
+    t.habits['h-cal-dep'] = total;
     saveState();
     renderTodayView();
-    return kcal;
+    return total;
   }
   return null;
 }
@@ -11578,9 +11607,13 @@ function renderWeightGoalStatus() {
   const el = document.getElementById("weightGoalStatus");
   const inp = document.getElementById("weightGoalInput");
   if (inp && goal) inp.value = goal;
-  // Charger la taille
+  // Charger le profil corporel
   const hInp = document.getElementById("bodyHeightInput");
   if (hInp && state.health?.heightCm) hInp.value = state.health.heightCm;
+  const aInp = document.getElementById("bodyAgeInput");
+  if (aInp && state.health?.ageyears) aInp.value = state.health.ageyears;
+  const sInp = document.getElementById("bodySexInput");
+  if (sInp && state.health?.sex) sInp.value = state.health.sex;
   if (!el || !goal) return;
   // Trouver le dernier poids enregistré
   const entries = Object.entries(state.history||{})
