@@ -14,7 +14,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1061</title>
+<title>Mon Tableau de Vie 🌿 · v1063</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3165,7 +3165,7 @@
     </div>
     <div class="card" id="externalCard" style="margin-bottom:18px;display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
-        <h2 style="margin:0;white-space:nowrap;font-size:15px;" id="externalCardTitle">🧾 Suivi de mes autres comptes</h2>
+        <h2 style="margin:0;white-space:nowrap;font-size:15px;" id="externalCardTitle">🧾 Comptes secondaires</h2>
         <div style="display:flex;gap:6px;align-items:center;">
           <span id="externalTotal" style="font-size:14px;font-weight:700;color:var(--ink-soft);white-space:nowrap;"></span>
           <button id="externalEditAccountsBtn" onclick="openAllAccountsManager()" class="help-btn">✦ Gérer</button>
@@ -13348,7 +13348,7 @@ function renderExternalSummary() {
     if (accounts.length === 1) {
       titleEl.textContent = (accounts[0].emoji || "🧾") + " " + (accounts[0].name || "Autres comptes");
     } else {
-      titleEl.textContent = "🧾 Suivi de mes autres comptes";
+      titleEl.textContent = "🧾 Comptes secondaires";
     }
   }
   // Onglets des comptes
@@ -13418,7 +13418,9 @@ function renderExternalSummary() {
 // Emojis disponibles pour les comptes
 const _ACC_EMOJIS = ["🏦","🏧","💳","💰","💵","💶","💴","🪙","💎","📗","📊","📈","💹","🏠","🚗","✈️","🌍","🎓","💼","🛍️","🎁","🧾","📦","🌸","⭐","🔐","💙","💜","🧡","💚"];
 let _emojiPopupTarget = null;
-function _openEmojiPopup(btn, hiddenId) {
+let _emojiPopupHiddenId = null;
+let _emojiPopupCallback = null;
+function _openEmojiPopup(btn, hiddenIdOrNull, callbackOrNull) {
   let popup = document.getElementById("_sharedEmojiPopup");
   if (!popup) {
     popup = document.createElement("div");
@@ -13426,32 +13428,59 @@ function _openEmojiPopup(btn, hiddenId) {
     popup.style.cssText = "position:fixed;z-index:9999;background:white;border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-wrap:wrap;gap:4px;width:220px;box-shadow:0 6px 24px rgba(0,0,0,0.15);";
     popup.innerHTML = _ACC_EMOJIS.map(e => `<button type="button" onclick="_pickSharedEmoji('${e}')" style="width:32px;height:32px;font-size:20px;border:none;background:none;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center;" title="${e}">${e}</button>`).join("");
     document.body.appendChild(popup);
-    document.addEventListener("click", function _closeOnOutside(ev) {
-      if (!popup.contains(ev.target) && ev.target !== _emojiPopupTarget) {
-        popup.style.display = "none";
-        document.removeEventListener("click", _closeOnOutside, true);
-      }
-    }, true);
   }
   if (_emojiPopupTarget === btn && popup.style.display !== "none") {
     popup.style.display = "none"; _emojiPopupTarget = null; return;
   }
   _emojiPopupTarget = btn;
-  _emojiPopupHiddenId = hiddenId;
+  _emojiPopupHiddenId = hiddenIdOrNull || null;
+  _emojiPopupCallback = (typeof callbackOrNull === "function") ? callbackOrNull : null;
   const rect = btn.getBoundingClientRect();
   popup.style.display = "flex";
   popup.style.top = (rect.bottom + 4) + "px";
   popup.style.left = Math.min(rect.left, window.innerWidth - 236) + "px";
+  // close on outside click
+  setTimeout(() => {
+    const handler = (ev) => {
+      if (!popup.contains(ev.target) && ev.target !== btn) {
+        popup.style.display = "none";
+        document.removeEventListener("click", handler, true);
+      }
+    };
+    document.addEventListener("click", handler, true);
+  }, 0);
 }
-let _emojiPopupHiddenId = null;
 function _pickSharedEmoji(emoji) {
   const popup = document.getElementById("_sharedEmojiPopup");
   if (popup) popup.style.display = "none";
-  if (!_emojiPopupHiddenId) return;
-  const inp = document.getElementById(_emojiPopupHiddenId);
-  if (inp) inp.value = emoji;
-  if (_emojiPopupTarget) { _emojiPopupTarget.textContent = emoji; }
-  _emojiPopupTarget = null; _emojiPopupHiddenId = null;
+  if (_emojiPopupCallback) { _emojiPopupCallback(emoji); }
+  else if (_emojiPopupHiddenId) {
+    const inp = document.getElementById(_emojiPopupHiddenId);
+    if (inp) inp.value = emoji;
+    if (_emojiPopupTarget) _emojiPopupTarget.textContent = emoji;
+  }
+  _emojiPopupTarget = null; _emojiPopupHiddenId = null; _emojiPopupCallback = null;
+}
+function _delAllAccDom(a, rowEl) {
+  const canDelSav = (state.savingsCategories || []).length > 1;
+  const canDelExt = (state.externalAccounts || []).length > 1;
+  if (a.type === "savings" && !canDelSav) { showToast("⚠️ Il faut au moins un compte épargne."); return; }
+  if (a.type === "external" && !canDelExt) { showToast("⚠️ Il faut au moins un compte secondaire."); return; }
+  const msg = (a.type === "external" && (state.transactions||[]).some(t=>t.type==="external"&&t.externalAccountId===a.extId))
+    ? "Ce compte a des transactions — supprimer quand même ?" : "Supprimer « " + a.name + " » ?";
+  _showConfirm(msg, () => {
+    if (a.type === "savings") {
+      state.savingsCategories = (state.savingsCategories||[]).filter(c=>c!==a.name);
+      if (state.accounts?.savingsBreakdown) delete state.accounts.savingsBreakdown[a.name];
+      if (state.accounts?.savingsEmojis) delete state.accounts.savingsEmojis[a.name];
+    } else {
+      const fallback = (state.externalAccounts.find(x=>x.id!==a.extId)||{}).id||"";
+      state.transactions?.forEach(t=>{if(t.type==="external"&&t.externalAccountId===a.extId)t.externalAccountId=fallback;});
+      state.externalAccounts = state.externalAccounts.filter(x=>x.id!==a.extId);
+    }
+    saveState(); _refreshPreleveSur(); renderSavings(); renderExternalSummary(); renderAccounts();
+    rowEl.remove();
+  });
 }
 
 // Gestionnaire de comptes externes (mode édition)
@@ -14137,37 +14166,68 @@ function openAllAccountsManager() {
     ...savCats.map(c => ({ uid: "sav__" + c, name: c, emoji: (state.accounts?.savingsEmojis?.[c]) || "🏦", type: "savings", balance: (state.accounts?.savingsBreakdown?.[c]) || 0 })),
     ...extAccs.map(a => ({ uid: "ext__" + a.id, name: a.name, emoji: a.emoji, type: "external", extId: a.id, balance: 0 }))
   ];
-  const typeOpts = `<option value="savings">💰 Épargne</option><option value="external">🧾 Autre compte courant</option>`;
-  const rows = allAccs.map(a => `
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;">
-      <button type="button" onclick="_openEmojiPopup(this,'allAccEmoji_${escapeHtml(a.uid)}')" style="width:38px;height:38px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;">${escapeHtml(a.emoji)}</button>
-      <input type="hidden" id="allAccEmoji_${escapeHtml(a.uid)}" value="${escapeHtml(a.emoji)}" />
-      <input id="allAccName_${escapeHtml(a.uid)}" value="${escapeHtml(a.name)}" placeholder="Nom" style="flex:1;min-width:80px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
-      ${a.type === "savings" ? `<input id="allAccBal_${escapeHtml(a.uid)}" type="number" value="${a.balance.toFixed(2)}" step="0.01" placeholder="Solde" style="width:80px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />` : `<input id="allAccBal_${escapeHtml(a.uid)}" type="hidden" value="0" />`}
-      <select id="allAccType_${escapeHtml(a.uid)}" style="padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink);background:white;">${typeOpts}</select>
-      <button onclick="_delAllAcc('${escapeHtml(a.uid)}')" title="Supprimer" style="flex-shrink:0;width:30px;height:30px;border:none;background:none;color:#d44;font-size:16px;cursor:pointer;border-radius:6px;">🗑</button>
-    </div>`).join("");
+  const typeOpts = `<option value="savings">💰 Épargne</option><option value="external">🧾 Compte secondaire</option>`;
+  const listEl = document.createElement("div");
+  listEl.id = "allAccList";
+  allAccs.forEach((a, i) => {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line);";
+    // emoji btn
+    const emojiBtn = document.createElement("button");
+    emojiBtn.type = "button"; emojiBtn.textContent = a.emoji;
+    emojiBtn.style.cssText = "width:36px;height:36px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;";
+    const emojiInp = document.createElement("input"); emojiInp.type = "hidden"; emojiInp.value = a.emoji; emojiInp.className = "aaEmoji";
+    emojiBtn.onclick = () => _openEmojiPopup(emojiBtn, null, v => { emojiInp.value = v; emojiBtn.textContent = v; });
+    // name
+    const nameInp = document.createElement("input"); nameInp.value = a.name; nameInp.placeholder = "Nom";
+    nameInp.style.cssText = "flex:1;min-width:60px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);"; nameInp.className = "aaName";
+    // type select
+    const typeSel = document.createElement("select");
+    typeSel.innerHTML = typeOpts; typeSel.value = a.type;
+    typeSel.style.cssText = "padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:11px;font-family:inherit;color:var(--ink);background:white;"; typeSel.className = "aaType";
+    typeSel.value = a.type;
+    // balance (only for savings)
+    const balInp = document.createElement("input"); balInp.type = "number"; balInp.step = "0.01";
+    balInp.value = a.balance.toFixed(2); balInp.placeholder = "Solde";
+    balInp.style.cssText = "width:70px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink);"; balInp.className = "aaBal";
+    balInp.style.display = a.type === "savings" ? "" : "none";
+    typeSel.onchange = () => { balInp.style.display = typeSel.value === "savings" ? "" : "none"; };
+    // delete btn
+    const delBtn = document.createElement("button"); delBtn.textContent = "🗑"; delBtn.type = "button";
+    delBtn.title = "Supprimer"; delBtn.style.cssText = "flex-shrink:0;width:28px;height:28px;border:none;background:none;color:#d44;font-size:15px;cursor:pointer;border-radius:6px;";
+    delBtn.onclick = () => _delAllAccDom(a, row);
+    row.append(emojiBtn, emojiInp, nameInp, typeSel, balInp, delBtn);
+    row._accData = a;
+    listEl.appendChild(row);
+  });
   document.getElementById("helpIcon").textContent = "🏦";
   document.getElementById("helpTitle").textContent = "Mes comptes";
   document.getElementById("helpSubtitle").textContent = "Épargne, Revolut, compte joint… tout en un";
-  document.getElementById("helpBody").innerHTML = `
-    <p style="font-size:13px;color:var(--ink-soft);margin:0 0 10px;">Clique sur l'emoji pour le changer. Choisis le type : Épargne → section Épargne ; Autre compte courant → section Suivi.</p>
-    <div id="allAccList">${rows}</div>
-    <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <button type="button" id="newAllAccEmojiBtn" onclick="_openEmojiPopup(this,'newAllAccEmoji')" style="width:38px;height:38px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;">🏦</button>
-      <input type="hidden" id="newAllAccEmoji" value="🏦" />
-      <input type="text" id="newAllAccName" placeholder="Nom du compte…" style="flex:1;min-width:80px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);" />
-      <select id="newAllAccType" style="padding:8px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink);background:white;">${typeOpts}</select>
-      <button onclick="_addAllAcc()" style="padding:8px 12px;border-radius:10px;border:none;background:var(--lavender-soft);color:#6b4d99;font-weight:700;cursor:pointer;font-family:inherit;">Ajouter</button>
-    </div>
-    <div style="margin-top:14px;display:flex;justify-content:flex-end;">
-      <button onclick="_saveAllAccounts()" style="padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer ✓</button>
-    </div>`;
-  // Set select values after render
-  allAccs.forEach(a => {
-    const sel = document.getElementById("allAccType_" + a.uid);
-    if (sel) sel.value = a.type;
-  });
+  const bodyEl = document.getElementById("helpBody");
+  bodyEl.innerHTML = `<p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">Clique sur l'emoji pour le changer · 💰 Épargne = section Épargne · 🧾 Compte secondaire = section Comptes secondaires</p>`;
+  bodyEl.appendChild(listEl);
+  // Add row
+  const addRow = document.createElement("div");
+  addRow.style.cssText = "margin-top:10px;border-top:1px solid var(--line);padding-top:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;";
+  const newEmojiBtn = document.createElement("button"); newEmojiBtn.type = "button"; newEmojiBtn.textContent = "🏦";
+  newEmojiBtn.style.cssText = "width:36px;height:36px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;";
+  const newEmojiInp = document.createElement("input"); newEmojiInp.type = "hidden"; newEmojiInp.id = "newAllAccEmoji"; newEmojiInp.value = "🏦";
+  newEmojiBtn.onclick = () => _openEmojiPopup(newEmojiBtn, null, v => { newEmojiInp.value = v; newEmojiBtn.textContent = v; });
+  const newNameInp = document.createElement("input"); newNameInp.id = "newAllAccName"; newNameInp.placeholder = "Nom du compte…";
+  newNameInp.style.cssText = "flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);";
+  const newTypeSel = document.createElement("select"); newTypeSel.id = "newAllAccType"; newTypeSel.innerHTML = typeOpts;
+  newTypeSel.style.cssText = "padding:7px;border:1px solid var(--line);border-radius:8px;font-size:11px;font-family:inherit;color:var(--ink);background:white;";
+  const addBtn = document.createElement("button"); addBtn.textContent = "Ajouter"; addBtn.type = "button";
+  addBtn.style.cssText = "padding:7px 12px;border-radius:8px;border:none;background:var(--lavender-soft);color:#6b4d99;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;";
+  addBtn.onclick = _addAllAcc;
+  addRow.append(newEmojiBtn, newEmojiInp, newNameInp, newTypeSel, addBtn);
+  bodyEl.appendChild(addRow);
+  const saveRow = document.createElement("div");
+  saveRow.style.cssText = "margin-top:12px;display:flex;justify-content:flex-end;";
+  const saveBtn = document.createElement("button"); saveBtn.textContent = "Enregistrer ✓";
+  saveBtn.style.cssText = "padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;";
+  saveBtn.onclick = _saveAllAccounts; saveRow.appendChild(saveBtn);
+  bodyEl.appendChild(saveRow);
   document.getElementById("helpModal").classList.add("open");
   const _hf = document.getElementById("helpFooter"); if (_hf) _hf.style.display = "none";
 }
@@ -14219,14 +14279,17 @@ function _saveAllAccounts() {
   if (!state.accounts.savingsEmojis) state.accounts.savingsEmojis = {};
   if (!state.accounts.savingsBreakdown) state.accounts.savingsBreakdown = {};
   const newSavCats = []; const newExtAccs = [];
-  document.querySelectorAll("[id^='allAccName_']").forEach(nameEl => {
-    const uid = nameEl.id.replace("allAccName_", "");
+  const list = document.getElementById("allAccList");
+  if (!list) { closeHelp(); return; }
+  list.querySelectorAll(".aaName").forEach(nameEl => {
+    const row = nameEl.closest("div");
     const name = nameEl.value.trim(); if (!name) return;
-    const emoji = document.getElementById("allAccEmoji_" + uid)?.value || "🏦";
-    const type = document.getElementById("allAccType_" + uid)?.value || "savings";
-    const bal = parseFloat(document.getElementById("allAccBal_" + uid)?.value) || 0;
+    const emoji = row.querySelector(".aaEmoji")?.value || "🏦";
+    const type = row.querySelector(".aaType")?.value || "savings";
+    const bal = parseFloat(row.querySelector(".aaBal")?.value) || 0;
+    const origData = row._accData; // set during render
     if (type === "savings") {
-      const oldName = uid.startsWith("sav__") ? uid.slice(5) : null;
+      const oldName = origData?.type === "savings" ? origData.name : null;
       if (oldName && oldName !== name) {
         state.transactions?.forEach(t => { if (t.category === oldName && (t.type === "savings" || t.type === "savings-out")) t.category = name; });
         if (state.accounts.savingsBreakdown[oldName] !== undefined) { state.accounts.savingsBreakdown[name] = state.accounts.savingsBreakdown[oldName]; delete state.accounts.savingsBreakdown[oldName]; }
@@ -14236,14 +14299,14 @@ function _saveAllAccounts() {
       state.accounts.savingsBreakdown[name] = bal;
       newSavCats.push(name);
     } else {
-      const extId = uid.startsWith("ext__") ? uid.slice(5) : ("ext-" + Date.now() + Math.random());
+      const extId = origData?.extId || ("ext-" + Date.now() + Math.random());
       const existing = (state.externalAccounts || []).find(a => a.id === extId);
       if (existing) { existing.name = name; existing.emoji = emoji; newExtAccs.push(existing); }
       else newExtAccs.push({ id: extId, name, emoji });
     }
   });
-  state.savingsCategories = newSavCats.length ? newSavCats : state.savingsCategories;
-  state.externalAccounts = newExtAccs.length ? newExtAccs : state.externalAccounts;
+  if (newSavCats.length) state.savingsCategories = newSavCats;
+  if (newExtAccs.length) state.externalAccounts = newExtAccs;
   saveState(); _refreshPreleveSur(); renderSavings(); renderExternalSummary(); renderAccounts();
   closeHelp(); const _hf2 = document.getElementById("helpFooter"); if (_hf2) _hf2.style.display = "";
   showToast("✅ Comptes enregistrés");
