@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1024</title>
+<title>Mon Tableau de Vie 🌿 · v1025</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7642,14 +7642,17 @@ function admRenderBudget() {
     + "</tr></thead><tbody>" + (aRows || "<tr><td colspan='13' style='color:var(--ink-softer);font-style:italic;text-align:center;padding:10px;'>Aucun abonnement — clique sur + Ajouter</td></tr>") + "</tbody></table></div>";
 }
 
-function admAddMissionGroup() {
-  var name = prompt("Nom du groupe (ex: Missions CNRS, Colloques, Frais logiciels…) :");
-  if (!name || !name.trim()) return;
-  if (!state.admin.missionGroups) state.admin.missionGroups = [{ id: "mg-default", name: "Missions", emoji: "🧾" }];
-  const emojis = ["🧾","🚆","🏨","✈️","🎓","📋","💼","🌍","🏛️","🖥️"];
-  const emoji = emojis[state.admin.missionGroups.length % emojis.length];
-  state.admin.missionGroups.push({ id: "mg" + Date.now(), name: name.trim(), emoji });
-  saveState(); admRenderBudget();
+function admAddMissionGroup(cb) {
+  _showPrompt("Nom du groupe (ex: Missions CNRS, Colloques…)", "", function(name) {
+    if (!name || !name.trim()) return;
+    if (!state.admin.missionGroups) state.admin.missionGroups = [{ id: "mg-default", name: "Missions", emoji: "🧾" }];
+    const emojis = ["🧾","🚆","🏨","✈️","🎓","📋","💼","🌍","🏛️","🖥️"];
+    const emoji = emojis[state.admin.missionGroups.length % emojis.length];
+    const newG = { id: "mg" + Date.now(), name: name.trim(), emoji };
+    state.admin.missionGroups.push(newG);
+    saveState(); admRenderBudget();
+    if (cb) cb(newG);
+  });
 }
 
 function admDeleteMissionGroup(id) {
@@ -7843,10 +7846,25 @@ function admOpenMission(id, groupId) {
   var m = id ? (state.admin.missions.filter(function(x){ return x.id === id; })[0] || {}) : {};
   _admMissionGroupId = m.groupId || groupId || "mg-default";
   document.getElementById("admMissionTitle").textContent = id ? "Modifier la mission" : "+ Nouvelle mission";
-  // Sélecteur de groupe dynamique
-  var groups = (state.admin.missionGroups) || [{ id:"mg-default", name:"Missions" }];
+  // Sélecteur de groupe dynamique — créer le groupe par défaut si absent
+  if (!state.admin) state.admin = {};
+  if (!state.admin.missionGroups || !state.admin.missionGroups.length) {
+    state.admin.missionGroups = [{ id:"mg-default", name:"Missions", emoji:"🧾" }];
+    saveState();
+  }
+  var groups = state.admin.missionGroups;
   var gsel = document.getElementById("admMGroupId");
-  if (gsel) { gsel.innerHTML = groups.map(function(g){ return '<option value="'+g.id+'"'+(g.id===_admMissionGroupId?' selected':'')+'>'+escapeHtml(g.name)+'</option>'; }).join(""); }
+  if (gsel) {
+    gsel.innerHTML = groups.map(function(g){ return '<option value="'+g.id+'"'+(g.id===_admMissionGroupId?' selected':'')+'>'+escapeHtml((g.emoji||"")+" "+g.name)+'</option>'; }).join("");
+    // Option pour créer un nouveau groupe directement
+    gsel.innerHTML += '<option value="__new__">➕ Nouveau groupe…</option>';
+    gsel.onchange = function() {
+      if (gsel.value === "__new__") {
+        gsel.value = groups[0]?.id || "mg-default";
+        admAddMissionGroup(function(newG) { admOpenMission(_admMissionId, newG.id); });
+      }
+    };
+  }
   document.getElementById("admMDate").value    = m.date     || "";
   document.getElementById("admMLieu").value    = m.lieu     || "";
   document.getElementById("admMTrain").value   = m.train    || "";
