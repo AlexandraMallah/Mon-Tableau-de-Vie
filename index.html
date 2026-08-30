@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1019</title>
+<title>Mon Tableau de Vie 🌿 · v1020</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18559,11 +18559,10 @@ function renderPersoProjects() {
       + '<button onclick="_persoAddList(\'' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px dashed ' + color + ';background:' + bg + ';color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Nouvelle liste</button>'
       + '</div><div id="persoLists-' + pp.id + '">' + _renderPersoLists(pp) + '</div></div>'
       + '<div class="card" style="margin-bottom:14px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">'
-      + '<h3 style="margin:0;font-size:14px;">💰 Budget' + (pp.budget ? ' — <span style="color:' + color + ';">' + spent.toFixed(0) + ' €</span> / ' + pp.budget.toLocaleString("fr-FR") + ' €' : '') + '</h3>'
+      + '<h3 style="margin:0;font-size:14px;">💰 Budget</h3>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
       + (pp.budget ? '<button onclick="_addPersoBudgetSection(\'' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px solid ' + color + ';background:' + bg + ';color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Section</button>' : '')
-      + (pp.budget ? '<button onclick="_persoAddExpense(\'' + pp.id + '\',\'\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px dashed ' + color + ';background:white;color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Dépense</button>' : '')
-      + '<button onclick="openPersoProjectModal(\'' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;">' + (pp.budget ? '✏️ Modifier' : '⚙️ Configurer') + '</button>'
+      + '<button onclick="openPersoProjectModal(\'' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;">' + (pp.budget ? '✏️ Modifier le budget' : '⚙️ Configurer le budget') + '</button>'
       + '</div></div>'
       + (pp.budget ? '<div id="persoBudget-' + pp.id + '">' + _renderPersoBudget(pp) + '</div>' : '<p style="color:var(--ink-softer);font-size:12px;font-style:italic;margin:0 0 4px;">Aucun budget défini — clique sur ⚙️ Configurer pour en ajouter un.</p>')
       + '</div>';
@@ -18734,40 +18733,87 @@ function _renderPersoLists(pp) {
 function _renderPersoBudget(pp) {
   const col = pp.color||"#c9a0dc";
   const bg = pp.bg||"#f5ecff";
-  // Sections
   const sections = pp.budgetSections||[];
   const totalSpent = sections.reduce((s,sec)=>(sec.items||[]).reduce((t,e)=>t+(e.amount||0),s),0);
-  const budgetBarW = pp.budget ? Math.min(100, Math.round(totalSpent/pp.budget*100)) : 0;
-  const overBudget = pp.budget && totalSpent > pp.budget;
+  const totalBudget = pp.budget||0;
+  const totalRemaining = totalBudget - totalSpent;
+  const totalPct = totalBudget > 0 ? Math.min(100,Math.round(totalSpent/totalBudget*100)) : 0;
+  const overAll = totalBudget > 0 && totalSpent > totalBudget;
 
-  let html = '<div style="height:6px;background:var(--line);border-radius:3px;margin-bottom:12px;"><div style="width:' + budgetBarW + '%;height:100%;background:' + (overBudget?"#dc2626":col) + ';border-radius:3px;transition:width 0.3s;"></div></div>';
+  function _fmtAmt(n) {
+    const v = Math.abs(n);
+    return (v % 1 === 0 ? v.toFixed(0) : v.toFixed(2)) + ' €';
+  }
+  function _statusColor(pct, over) {
+    if (over || pct >= 100) return "#dc2626";
+    if (pct >= 80) return "#f97316";
+    if (pct >= 60) return "#eab308";
+    return "#22c55e";
+  }
+
+  // Carte résumé globale
+  const globalColor = _statusColor(totalPct, overAll);
+  let html = '';
+  if (totalBudget > 0) {
+    html += '<div style="background:' + bg + ';border-radius:14px;padding:14px 16px;margin-bottom:16px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;">'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-softer);margin-bottom:2px;">Total dépensé</div>'
+      + '<div style="font-size:22px;font-weight:800;color:var(--ink);">' + _fmtAmt(totalSpent) + ' <span style="font-size:13px;font-weight:500;color:var(--ink-soft);">/ ' + _fmtAmt(totalBudget) + '</span></div>'
+      + '</div>'
+      + '<div style="text-align:right;">'
+      + '<div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-softer);margin-bottom:2px;">' + (overAll ? 'Dépassement' : 'Restant') + '</div>'
+      + '<div style="font-size:22px;font-weight:800;color:' + globalColor + ';">' + (overAll ? '+' : '') + _fmtAmt(Math.abs(totalRemaining)) + '</div>'
+      + '</div>'
+      + '</div>'
+      + '<div style="height:8px;background:rgba(0,0,0,0.07);border-radius:4px;">'
+      + '<div style="width:' + totalPct + '%;height:100%;background:' + globalColor + ';border-radius:4px;transition:width 0.3s;"></div>'
+      + '</div>'
+      + '</div>';
+  }
 
   if (!sections.length) {
-    html += '<p style="color:var(--ink-softer);font-size:12px;font-style:italic;margin-bottom:10px;">Aucune section — commence par créer une section (ex: Repas, Déco, Transport…)</p>';
+    html += '<p style="color:var(--ink-softer);font-size:12px;font-style:italic;margin:0;">Crée une section pour commencer (ex: Repas, Déco, Transport…)</p>';
+    return html;
   }
+
   sections.forEach(function(sec) {
     const secTotal = (sec.items||[]).reduce((t,e)=>t+(e.amount||0),0);
+    const secBudget = sec.secBudget || 0;
+    const secPct = secBudget > 0 ? Math.min(100,Math.round(secTotal/secBudget*100)) : 0;
+    const secOver = secBudget > 0 && secTotal > secBudget;
+    const secRemaining = secBudget - secTotal;
+    const secColor = secBudget > 0 ? _statusColor(secPct, secOver) : col;
+
     const itemsHtml = (sec.items||[]).map(function(e) {
-      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:8px;">'
-        + '<span style="flex:1;font-size:13px;">' + escapeHtml(e.name||"") + '</span>'
-        + '<span style="font-weight:600;font-size:13px;">' + (e.amount||0).toFixed(2) + ' €</span>'
-        + '<button onclick="_persoDeleteExpense(\'' + pp.id + '\',\'' + e.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.4;">✕</button>'
+      return '<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-top:1px solid var(--line);">'
+        + '<span style="flex:1;font-size:13px;color:var(--ink);">' + escapeHtml(e.name||"") + '</span>'
+        + '<span style="font-size:13px;font-weight:600;color:var(--ink);">' + _fmtAmt(e.amount||0) + '</span>'
+        + '<button onclick="_persoDeleteExpense(\'' + pp.id + '\',\'' + e.id + '\')" title="Supprimer" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-softer);opacity:0.5;padding:0 2px;line-height:1;">✕</button>'
         + '</div>';
     }).join("");
-    const secBudget = sec.secBudget || 0;
-    const secPct = secBudget > 0 ? Math.min(100, Math.round(secTotal/secBudget*100)) : null;
-    const secOver = secBudget > 0 && secTotal > secBudget;
-    const secBarHtml = secBudget > 0 ? '<div style="height:4px;background:var(--line);border-radius:2px;margin:0 12px 8px;"><div style="width:' + (secPct||0) + '%;height:100%;background:' + (secOver?"#dc2626":col) + ';border-radius:2px;"></div></div>' : '';
-    html += '<div style="margin-bottom:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden;">'
-      + '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:' + bg + ';flex-wrap:wrap;">'
-      + '<span style="font-size:13px;font-weight:700;flex:1;color:var(--ink);">📂 ' + escapeHtml(sec.name) + '</span>'
-      + '<span style="font-size:12px;font-weight:600;color:' + (secOver?"#dc2626":col) + ';">' + secTotal.toFixed(0) + ' €' + (secBudget > 0 ? ' / ' + secBudget.toLocaleString("fr-FR") + ' €' : '') + '</span>'
-      + '<button onclick="_addPersoBudgetSection(\'' + pp.id + '\',\'' + sec.id + '\')" title="Modifier le budget de la section" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;">⚙️</button>'
-      + '<button onclick="_persoAddExpense(\'' + pp.id + '\',\'' + sec.id + '\')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid ' + col + ';background:white;color:' + col + ';cursor:pointer;font-family:inherit;">+ dépense</button>'
-      + '<button onclick="_persoDeleteBudgetSection(\'' + pp.id + '\',\'' + sec.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.4;padding:0 2px;">✕</button>'
+
+    html += '<div style="margin-bottom:12px;border:1.5px solid var(--line);border-radius:14px;overflow:hidden;">'
+      // Header section
+      + '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);">'
+      + '<div style="width:10px;height:10px;border-radius:50%;background:' + secColor + ';flex-shrink:0;"></div>'
+      + '<span style="flex:1;font-size:14px;font-weight:700;color:var(--ink);">' + escapeHtml(sec.name) + '</span>'
+      + (secBudget > 0
+        ? '<div style="text-align:right;flex-shrink:0;">'
+          + '<div style="font-size:15px;font-weight:800;color:' + secColor + ';">' + (secOver?'+':'') + _fmtAmt(Math.abs(secRemaining)) + ' ' + (secOver?'dépassé':'restant') + '</div>'
+          + '<div style="font-size:11px;color:var(--ink-softer);">' + _fmtAmt(secTotal) + ' / ' + _fmtAmt(secBudget) + '</div>'
+          + '</div>'
+        : '<span style="font-size:15px;font-weight:700;color:var(--ink);">' + _fmtAmt(secTotal) + '</span>'
+      )
+      + '<button onclick="_persoAddExpense(\'' + pp.id + '\',\'' + sec.id + '\')" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1.5px solid ' + col + ';background:white;color:' + col + ';cursor:pointer;font-family:inherit;flex-shrink:0;">+ dépense</button>'
+      + '<button onclick="_persoDeleteBudgetSection(\'' + pp.id + '\',\'' + sec.id + '\')" title="Supprimer la section" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-softer);opacity:0.4;padding:0;flex-shrink:0;">✕</button>'
       + '</div>'
-      + secBarHtml
-      + (itemsHtml ? '<div style="padding:4px 4px;">' + itemsHtml + '</div>' : '<p style="color:var(--ink-softer);font-size:12px;padding:8px 12px;font-style:italic;margin:0;">Aucune dépense — clique sur "+ dépense".</p>')
+      // Barre de progression (seulement si budget défini)
+      + (secBudget > 0
+        ? '<div style="height:5px;background:var(--line);"><div style="width:' + secPct + '%;height:100%;background:' + secColor + ';transition:width 0.3s;"></div></div>'
+        : '')
+      // Dépenses
+      + (itemsHtml || '<div style="padding:10px 12px;font-size:12px;color:var(--ink-softer);font-style:italic;">Aucune dépense — clique sur "+ dépense".</div>')
       + '</div>';
   });
   return html;
