@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1069</title>
+<title>Mon Tableau de Vie 🌿 · v1070</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14220,20 +14220,35 @@ function _addAllAcc() {
   if (!name) { showToast("⚠️ Entre un nom."); return; }
   const emoji = document.getElementById("newAllAccEmoji")?.value || "🏦";
   const type = document.getElementById("newAllAccType")?.value || "savings";
-  if (!state.accounts) state.accounts = {};
-  if (type === "savings") {
-    if (!(state.savingsCategories || []).includes(name)) {
-      if (!state.savingsCategories) state.savingsCategories = [];
-      state.savingsCategories.push(name);
-      if (!state.accounts.savingsEmojis) state.accounts.savingsEmojis = {};
-      state.accounts.savingsEmojis[name] = emoji;
-    } else { showToast("⚠️ Ce compte existe déjà."); return; }
-  } else {
-    if (!Array.isArray(state.externalAccounts)) state.externalAccounts = [];
-    state.externalAccounts.push({ id: "ext-" + Date.now(), name, emoji });
-  }
-  saveState(); _refreshPreleveSur(); renderSavings(); renderExternalSummary(); renderAccounts();
-  openAllAccountsManager();
+  const typeOpts = `<option value="savings">💰 Épargne</option><option value="external">🧾 Compte secondaire</option>`;
+  // Ajouter une ligne dans le DOM sans recharger la modale
+  const listEl = document.getElementById("allAccList");
+  if (!listEl) { openAllAccountsManager(); return; }
+  const a = { uid: (type === "savings" ? "sav__" : "ext__") + Date.now(), name, emoji, type, extId: "ext-" + Date.now(), balance: 0 };
+  const row = document.createElement("div");
+  row.style.cssText = "display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line);";
+  const emojiBtn = document.createElement("button"); emojiBtn.type = "button"; emojiBtn.textContent = emoji;
+  emojiBtn.style.cssText = "width:36px;height:36px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;";
+  const emojiInp = document.createElement("input"); emojiInp.type = "hidden"; emojiInp.value = emoji; emojiInp.className = "aaEmoji";
+  emojiBtn.onclick = () => _openEmojiPopup(emojiBtn, null, v => { emojiInp.value = v; emojiBtn.textContent = v; });
+  const nameInp = document.createElement("input"); nameInp.value = name; nameInp.placeholder = "Nom";
+  nameInp.style.cssText = "flex:1;min-width:60px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);"; nameInp.className = "aaName";
+  const typeSel = document.createElement("select"); typeSel.innerHTML = typeOpts; typeSel.value = type;
+  typeSel.style.cssText = "padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:11px;font-family:inherit;color:var(--ink);background:white;"; typeSel.className = "aaType";
+  typeSel.value = type;
+  typeSel.onchange = () => {};
+  const balInp = document.createElement("input"); balInp.type = "number"; balInp.step = "0.01"; balInp.value = "0.00"; balInp.placeholder = "Solde";
+  balInp.style.cssText = "width:70px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink);"; balInp.className = "aaBal";
+  const delBtn = document.createElement("button"); delBtn.textContent = "🗑"; delBtn.type = "button";
+  delBtn.title = "Supprimer"; delBtn.style.cssText = "flex-shrink:0;width:28px;height:28px;border:none;background:none;color:#d44;font-size:15px;cursor:pointer;border-radius:6px;";
+  delBtn.onclick = () => _delAllAccDom(a, row);
+  row.append(emojiBtn, emojiInp, nameInp, typeSel, balInp, delBtn);
+  row._accData = a;
+  listEl.appendChild(row);
+  // Réinitialiser le formulaire d'ajout
+  const newNameInp = document.getElementById("newAllAccName"); if (newNameInp) { newNameInp.value = ""; newNameInp.focus(); }
+  const newEmojiInp = document.getElementById("newAllAccEmoji"); if (newEmojiInp) newEmojiInp.value = "🏦";
+  const newEmojiBtn = newEmojiInp?.previousElementSibling; if (newEmojiBtn) newEmojiBtn.textContent = "🏦";
 }
 function _delAllAcc(uid) {
   if (uid.startsWith("sav__")) {
