@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1004</title>
+<title>Mon Tableau de Vie 🌿 · v1006</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5128,10 +5128,20 @@
     <p class="modal-hint" style="margin-top:-4px;">Chaque projet créé ici apparaît automatiquement comme onglet dans Travail, comme section dans Tâches, et comme catégorie dans le suivi Temps. Réorganise avec ▲▼, modifie avec ✏️, supprime avec ✕.</p>
     <div id="timeCatsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:320px;overflow-y:auto;"></div>
     <div style="border-top:1px solid var(--line);padding-top:14px;">
-      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;font-weight:600;">Nouvelle catégorie</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;font-weight:600;">Nouveau projet</div>
+      <div style="margin-bottom:8px;">
+        <div style="font-size:11px;color:var(--ink-softer);margin-bottom:5px;">Choisir un emoji :</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;max-height:100px;overflow-y:auto;padding:4px;background:var(--bg-1);border-radius:8px;">
+          <span id="newTimeCatEmojiPreview" style="font-size:20px;padding:4px 6px;border-radius:6px;background:var(--lavender-soft);border:1.5px solid var(--lavender);cursor:default;min-width:32px;text-align:center;">📁</span>
+          <span style="width:1px;background:var(--line);margin:2px 2px;"></span>
+          ${["📁","📂","📌","🎯","✍️","📝","📖","📚","🔬","🧪","🎓","📊","📈","🗂️","💡","🏛️","🌍","🔭","🖊️","📐","🧑‍🏫","💬","📣","🏆","🤝","🌱","⚡","🔗","🧭","🗺️","📋","🎤","🖥️","📡","🔑","🎨","🧩","💎","🚀","🌟","🎪","🏗️","🔧","📮","🗓️","📩","🧠","🏅","💼","🌈","🔐","🎭","🧬","📸","🎵","🌺","🛠️","🔍","💻","🏠","🌿"].map(e =>
+            `<span onclick="_pickTimeCatEmoji('${e}')" style="font-size:18px;padding:3px 5px;border-radius:6px;cursor:pointer;transition:background 0.1s;" onmouseover="this.style.background='var(--lavender-soft)'" onmouseout="this.style.background='transparent'">${e}</span>`
+          ).join("")}
+        </div>
+        <input type="hidden" id="newTimeCatEmoji" value="📁" />
+      </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <input type="text" id="newTimeCatEmoji" placeholder="📌" maxlength="4" style="width:44px;padding:8px;border:1px solid var(--line);border-radius:10px;font-size:16px;text-align:center;font-family:inherit;" />
-        <input type="text" id="newTimeCatLabel" placeholder="Nom de la catégorie" style="flex:1;min-width:120px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" />
+        <input type="text" id="newTimeCatLabel" placeholder="Nom du projet" style="flex:1;min-width:120px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" onkeydown="if(event.key==='Enter')_createTimeCat()" />
         <input type="color" id="newTimeCatColor" value="#6aaed6" style="width:38px;height:38px;padding:2px;border:1px solid var(--line);border-radius:10px;cursor:pointer;" title="Couleur" />
         <button onclick="_createTimeCat()" style="padding:8px 16px;border-radius:10px;border:none;background:var(--lavender);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Ajouter</button>
       </div>
@@ -6862,17 +6872,44 @@ function _switchProjFicheTab(projId, tab) {
 function _renderProjFicheTasks(projId) {
   const container = document.querySelector(`.proj-fiche[data-projid="${projId}"] .proj-fiche-panel[data-panel="tasks"]`);
   if (!container) return;
-  const p = (state.work.postdocProjects || []).find(pp => pp.id === projId);
-  const col = p?.color || "#b8a5e8";
   const tasks = (state.work.postdocTasks || []).filter(t => t.projectId === projId);
-  const sorted = tasks.sort((a,b)=>{ const ord={urgent:0,high:1,medium:2,low:3}; return (ord[a.priority]??2)-(ord[b.priority]??2); });
-  const rows = sorted.length
-    ? sorted.map(t => `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:${t.done?"var(--bg-1)":"white"};border:1px solid var(--line);margin-bottom:6px;opacity:${t.done?0.6:1};">
-        <input type="checkbox" ${t.done?"checked":""} onchange="_toggleTaskFromProjTab('${t.id}',this.checked)" style="accent-color:${col};" />
-        <span style="flex:1;font-size:14px;${t.done?"text-decoration:line-through;color:var(--ink-soft);":"color:var(--ink);"}">${escapeHtml(t.name||"")}</span>
-        ${t.deadline?`<span style="font-size:11px;color:var(--ink-softer);">${t.deadline.slice(5).replace("-","/")} </span>`:""}
-      </div>`).join("")
-    : `<p style="color:var(--ink-soft);font-size:13px;font-style:italic;margin:20px 0;">Aucune tâche. Ajoute-en depuis ✅ Tâches ou avec le bouton ci-dessous.</p>`;
+  const sorted = tasks.slice().sort((a,b)=>{
+    const ord={urgent:0,high:1,medium:2,low:3};
+    const pd=(ord[a.priority]??2)-(ord[b.priority]??2);
+    if (pd!==0) return pd;
+    if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
+    if (a.deadline) return -1; if (b.deadline) return 1;
+    return 0;
+  });
+  const rows = sorted.length ? sorted.map(t => {
+    const pct = taskProgress(t);
+    const progressColor = pct >= 100 ? '#4ade80' : `hsl(${Math.round(pct*1.2)},72%,52%)`;
+    const progressHtml = pct > 0 ? `<div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%;background:${progressColor};"></div></div>` : "";
+    const pctBadge = pct > 0 && !t.done ? `<span class="task-pct-badge" style="color:${progressColor};background:${progressColor}22;">${pct}%</span>` : "";
+    let dlText = "", dlClass = "";
+    if (t.deadline) {
+      const today = new Date(); today.setHours(0,0,0,0);
+      const dl = new Date(t.deadline + "T00:00:00");
+      const diff = Math.round((dl - today) / 86400000);
+      if (diff < 0) { dlText = `En retard (${t.deadline.slice(5).replace("-","/")})`; dlClass = "overdue"; }
+      else if (diff === 0) { dlText = "Aujourd'hui"; dlClass = "today"; }
+      else if (diff <= 3) { dlText = `Dans ${diff}j (${t.deadline.slice(5).replace("-","/")})`; dlClass = "soon"; }
+      else { dlText = t.deadline.slice(5).replace("-","/"); }
+    }
+    return `<div class="task-row prio-${t.priority||"medium"} ${t.done?"done":""}">
+      <div class="task-checkbox" onclick="_toggleTaskFromProjTab('${t.id}',${!t.done})"></div>
+      <div class="task-body">
+        <div class="task-meta">
+          <span class="task-name">${escapeHtml(t.name||"")}</span>
+          ${pctBadge}
+          ${dlText ? `<span class="task-deadline ${dlClass}">${dlText}</span>` : ""}
+        </div>
+        ${progressHtml}
+      </div>
+      <button class="task-edit-btn" onclick="openTaskEditModal('${t.id}')" title="Modifier">✏️</button>
+      <button class="task-del" onclick="deleteTask('${t.id}');_renderProjFicheTasks('${projId}')">✕</button>
+    </div>`;
+  }).join("") : `<p style="color:var(--ink-soft);font-size:13px;font-style:italic;margin:20px 0;">Aucune tâche. Ajoute-en depuis ✅ Tâches ou avec le bouton ci-dessous.</p>`;
   container.innerHTML = rows + `<button onclick="_addTaskFromProjTab('${projId}')" style="margin-top:8px;width:100%;padding:9px;border-radius:10px;border:1.5px dashed var(--line);background:var(--bg-1);font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">+ Ajouter une tâche</button>`;
 }
 
@@ -8084,10 +8121,12 @@ function saveCongesConfig() {
 /* -- Time cats modal -- */
 function openTimeCatsModal() {
   _renderTimeCatsList();
-  document.getElementById("newTimeCatEmoji").value = "";
+  document.getElementById("newTimeCatEmoji").value = "📁";
+  const prev = document.getElementById("newTimeCatEmojiPreview"); if (prev) prev.textContent = "📁";
   document.getElementById("newTimeCatLabel").value = "";
   document.getElementById("newTimeCatColor").value = "#6aaed6";
   document.getElementById("timeCatsModal").classList.add("open");
+  setTimeout(() => document.getElementById("newTimeCatLabel").focus(), 80);
 }
 function closeTimeCatsModal() { document.getElementById("timeCatsModal").classList.remove("open"); }
 function _renderTimeCatsList() {
@@ -8176,6 +8215,12 @@ function _deleteTimeCatByIdx(idx) {
     }
   });
 }
+function _pickTimeCatEmoji(e) {
+  const hidden = document.getElementById("newTimeCatEmoji");
+  const preview = document.getElementById("newTimeCatEmojiPreview");
+  if (hidden) hidden.value = e;
+  if (preview) preview.textContent = e;
+}
 function _createTimeCat() {
   var emoji = (document.getElementById("newTimeCatEmoji").value.trim() || "📁");
   var label = document.getElementById("newTimeCatLabel").value.trim();
@@ -8185,7 +8230,8 @@ function _createTimeCat() {
   // Ajouter comme vrai projet → onglets Travail + liste tâches + suivi Temps
   if (!state.work.postdocProjects) state.work.postdocProjects = [];
   state.work.postdocProjects.push({ id: "p" + Date.now(), name: label, emoji, color, bg, progress: 0, checklist: [], links: [], ficheNotesList: [] });
-  document.getElementById("newTimeCatEmoji").value = "";
+  document.getElementById("newTimeCatEmoji").value = "📁";
+  const _eprev = document.getElementById("newTimeCatEmojiPreview"); if (_eprev) _eprev.textContent = "📁";
   document.getElementById("newTimeCatLabel").value = "";
   saveState(); _renderTimeCatsList(); renderTimeCatsGrid();
   renderWorkProjectTabs(); updateProjectSelect(); renderCustomSectionChips();
@@ -24017,8 +24063,8 @@ const HELP_TEXTS = {
         <li><strong>📖 Recettes</strong> — Crée tes recettes avec ingrédients (quantités, calories) et instructions. Tu peux les classer par catégorie (Plat en sauce, Salade, Dessert…). C'est la <em>base de tout le reste</em>.</li>
         <li><strong>🍽 Planning repas</strong> — Planifie chaque repas de la semaine (matin, midi, soir). Quand tu cliques sur un créneau, tu peux y associer une de tes recettes existantes — ou saisir un repas libre. Le planning se remplit depuis ta bibliothèque de recettes.</li>
         <li><strong>🛒 Liste de courses</strong> — Tes courses sont organisées <strong>par événement</strong> (ex : "Courses semaine", "Dîner copines", "Repas de Noël"…). Tu peux créer autant d'événements que tu veux et ajouter des articles manuellement. Depuis le planning repas, tu peux aussi cliquer sur <em>Générer la liste de courses</em> : tous les ingrédients des recettes planifiées s'ajoutent automatiquement à l'événement de ton choix. Les deux modes coexistent.</li>
-        <li><strong>🔥 Suivi calorique</strong> — Dans l'onglet <strong>Aujourd'hui</strong>, l'habitude "Apport calorique" te permet d'enregistrer ce que tu manges. Tu peux piocher dans tes recettes (les calories sont déjà calculées) <em>ou</em> ajouter n'importe quel aliment sans recette — dans ce cas, tu saisit les calories à la main. Le total du jour apparaît dans Aujourd'hui et le graphique cumulatif dans Alimentation.</li>
-        <li><strong>🥦 Kcal aliments</strong> — Une base d'aliments bruts (100g) pour estimer les calories de plats faits maison sans recette complète.</li>
+        <li><strong>🔥 Suivi calorique</strong> — Dans l'onglet <strong>Aujourd'hui</strong>, la section "🍽️ Alimentation du jour" te permet d'enregistrer ce que tu manges. Tu peux ajouter une de tes recettes (les calories sont déjà calculées) <em>ou</em> saisir n'importe quel aliment à la main avec ses calories. Le total du jour s'affiche en temps réel. Le graphique calories est visible dans l'onglet <strong>Santé</strong>.</li>
+        <li><strong>🥦 Kcal aliments</strong> — Une base d'aliments bruts que tu construis toi-même (nom, quantité de référence, kcal). Ces aliments sont <strong>liés aux recettes</strong> : quand tu crées ou modifies une recette, commence à taper le nom d'un aliment de ta base dans le champ "Ingrédient" — l'autocomplétion le propose, et en le sélectionnant, les kcal, le poids et les portions se remplissent automatiquement.</li>
       </ul>
       <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
         💡 <strong>Circuit idéal :</strong> Crée tes recettes → planifie ta semaine en les utilisant → génère ta liste de courses en un clic → coche ce que tu manges dans Aujourd'hui pour suivre tes calories.
