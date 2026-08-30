@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1036</title>
+<title>Mon Tableau de Vie 🌿 · v1037</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2780,14 +2780,24 @@
   <section class="view" data-view="health">
     <div class="card">
         <h2>💪 Composition corporelle</h2>
-        <!-- Objectif poids -->
-        <div style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--mint-soft),var(--sky-soft));border-radius:12px;padding:10px 14px;margin-bottom:12px;flex-wrap:wrap;">
-          <span style="font-size:13px;font-weight:600;">🎯 Objectif poids :</span>
-          <input type="number" id="weightGoalInput" placeholder="ex: 62" step="0.1" min="30" max="200"
-            onchange="saveWeightGoal()"
-            style="width:80px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;" />
-          <span style="font-size:13px;color:var(--ink-soft);">kg</span>
-          <span id="weightGoalStatus" style="font-size:13px;font-weight:600;margin-left:auto;"></span>
+        <!-- Profil corporel : taille + objectif poids -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--sky-soft),var(--lavender-soft));border-radius:12px;padding:10px 14px;flex:1;min-width:180px;">
+            <span style="font-size:13px;font-weight:600;">📏 Taille :</span>
+            <input type="number" id="bodyHeightInput" placeholder="ex: 165" step="1" min="100" max="220"
+              onchange="_saveBodyHeight()"
+              style="width:70px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;" />
+            <span style="font-size:13px;color:var(--ink-soft);">cm</span>
+            <span id="bodyHeightHint" style="font-size:11px;color:var(--ink-softer);margin-left:auto;">pour le calcul des kcal</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--mint-soft),var(--sky-soft));border-radius:12px;padding:10px 14px;flex:1;min-width:180px;">
+            <span style="font-size:13px;font-weight:600;">🎯 Objectif poids :</span>
+            <input type="number" id="weightGoalInput" placeholder="ex: 62" step="0.1" min="30" max="200"
+              onchange="saveWeightGoal()"
+              style="width:80px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;" />
+            <span style="font-size:13px;color:var(--ink-soft);">kg</span>
+            <span id="weightGoalStatus" style="font-size:13px;font-weight:600;margin-left:auto;"></span>
+          </div>
         </div>
         <div style="background:#faf8fd;padding:8px 10px;border-radius:12px;margin-bottom:12px;">
           <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
@@ -3119,7 +3129,7 @@
     </div>
     <div class="card" id="externalCard" style="margin-bottom:18px;display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
-        <h2 style="margin:0;white-space:nowrap;font-size:15px;">🧾 Suivi de mes autres comptes</h2>
+        <h2 style="margin:0;white-space:nowrap;font-size:15px;" id="externalCardTitle">🧾 Suivi de mes autres comptes</h2>
         <div style="display:flex;gap:6px;align-items:center;">
           <span id="externalTotal" style="font-size:14px;font-weight:700;color:var(--ink-soft);white-space:nowrap;"></span>
           <button id="externalEditAccountsBtn" class="edit-only" onclick="openExternalAccountsManager()" style="display:none;padding:3px 9px;border-radius:8px;border:1px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">⚙️ Gérer</button>
@@ -6595,6 +6605,8 @@ function renderHabits() {
         return 'habitsTrackingCard';
       })();
       const _nameSpan = `<span style="font-size:14px;cursor:pointer;white-space:nowrap;font-weight:600;" onclick="_goToHealth('${_healthTarget}')" title="Voir dans Santé">${escapeHtml(h.name)} <span style="font-size:11px;color:var(--ink-softer);">↗</span></span>`;
+      const _isCalDep = h.id === 'h-cal-dep';
+      const _autoBtn = _isCalDep ? `<button type="button" onclick="_autoCalcKcal(Number(getToday().habits?.['h-pas']||0),true)" title="Recalculer depuis les pas" style="padding:3px 8px;border-radius:8px;border:1px solid var(--lavender);background:var(--lavender-soft);font-size:11px;cursor:pointer;font-family:inherit;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">🔄 Auto</button>` : "";
       return `
         <div class="habit habit-numeric ${isDone ? "done" : ""}" style="flex-direction:column;align-items:stretch;gap:6px;">
           <div style="display:flex;align-items:center;gap:8px;">
@@ -6606,6 +6618,7 @@ function renderHabits() {
               style="width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:right;background:white;" />
             <span style="font-size:11px;color:var(--ink-soft);">/ ${h.target}${h.unit ? " " + h.unit : ""}</span>
             ${_renderKmField(h, num)}
+            ${_autoBtn}
             <div style="flex:1;min-width:60px;background:white;height:5px;border-radius:999px;overflow:hidden;margin-left:4px;">
               <div style="width:${Math.min(100, pct)}%;height:100%;background:${barColor};transition:width 0.4s;"></div>
             </div>
@@ -6707,6 +6720,46 @@ function toggleHabit(id) {
   saveState();
   renderTodayView();
 }
+// ── Taille corporelle ─────────────────────────────────────────────
+function _saveBodyHeight() {
+  const v = parseFloat(document.getElementById("bodyHeightInput")?.value);
+  if (!v || v < 100 || v > 220) return;
+  if (!state.health) state.health = {};
+  state.health.heightCm = v;
+  saveState();
+  showToast("📏 Taille enregistrée — le calcul kcal est mis à jour");
+  // Recalculer les kcal d'aujourd'hui si les pas sont déjà renseignés
+  const steps = Number(getToday().habits?.['h-pas']) || 0;
+  if (steps > 0) _autoCalcKcal(steps, false);
+}
+
+function _autoCalcKcal(steps, forceOverwrite) {
+  const heightCm = state.health?.heightCm || 0;
+  // Chercher le poids le plus récent dans l'historique
+  const dk = getSelectedDayKey();
+  let weightKg = Number(state.history[dk]?.weight) || 0;
+  if (!weightKg) {
+    // Fallback : dernier poids connu
+    const dks = Object.keys(state.history).sort().reverse();
+    for (const d of dks) { const w = Number(state.history[d]?.weight); if (w > 0) { weightKg = w; break; } }
+  }
+  if (!heightCm || !weightKg || steps <= 0) return null;
+  // Formule : Margaria / ACSM — 1.036 kcal par kg par km
+  const strideMeter = heightCm * 0.00415;
+  const distanceKm  = (steps * strideMeter) / 1000;
+  const kcal = Math.round(distanceKm * weightKg * 1.036);
+  const t = getToday();
+  const existing = Number(t.habits?.['h-cal-dep']) || 0;
+  // N'écraser que si pas de valeur manuelle (forceOverwrite = bouton Auto)
+  if (!existing || forceOverwrite) {
+    t.habits['h-cal-dep'] = kcal;
+    saveState();
+    renderTodayView();
+    return kcal;
+  }
+  return null;
+}
+
 function setHabitValue(id, val) {
   const t = getToday();
   const v = Number(val) || 0;
@@ -6714,6 +6767,10 @@ function setHabitValue(id, val) {
   // Si c'est l'eau, synchronise aussi today.water pour rétrocompat
   if (id === "h-eau" || /eau/i.test(state.habits.find(h => h.id === id)?.name || "")) {
     t.water = v;
+  }
+  // Si c'est les pas → calculer les kcal automatiquement (sans écraser une saisie manuelle)
+  if (id === "h-pas" && v > 0) {
+    setTimeout(() => _autoCalcKcal(v, false), 0);
   }
   saveState();
   renderTodayView();
@@ -11484,6 +11541,9 @@ function renderWeightGoalStatus() {
   const el = document.getElementById("weightGoalStatus");
   const inp = document.getElementById("weightGoalInput");
   if (inp && goal) inp.value = goal;
+  // Charger la taille
+  const hInp = document.getElementById("bodyHeightInput");
+  if (hInp && state.health?.heightCm) hInp.value = state.health.heightCm;
   if (!el || !goal) return;
   // Trouver le dernier poids enregistré
   const entries = Object.entries(state.history||{})
@@ -13162,6 +13222,15 @@ function renderExternalSummary() {
   if (!card || !listEl) return;
   const accounts = state.externalAccounts || [{ id: "ext-default", name: "Autres comptes", emoji: "🧾" }];
   card.style.display = "";
+  // Titre dynamique : nom du compte si unique, générique si plusieurs
+  const titleEl = document.getElementById("externalCardTitle");
+  if (titleEl) {
+    if (accounts.length === 1) {
+      titleEl.textContent = (accounts[0].emoji || "🧾") + " " + (accounts[0].name || "Autres comptes");
+    } else {
+      titleEl.textContent = "🧾 Suivi de mes autres comptes";
+    }
+  }
   // Onglets des comptes
   if (tabsEl) {
     const hasTxs = accounts.filter(a => state.transactions.some(t => t.type === "external" && (t.externalAccountId === a.id || (!t.externalAccountId && a.id === "ext-default"))));
