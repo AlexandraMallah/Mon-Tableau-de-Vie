@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1014</title>
+<title>Mon Tableau de Vie 🌿 · v1016</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18460,7 +18460,9 @@ function savePersoProject() {
     const {color,bg} = _persoAutoColor();
     state.domestique.persoProjects.push({id:"pp"+Date.now(),name,emoji,date,budget,desc,color,bg,status:"planning",notes:"",lists:[],expenses:[]});
   }
+  const ppId = id || (state.domestique.persoProjects||[]).slice(-1)[0]?.id;
   saveState(); closePersoProjectModal(); renderPersoProjects();
+  if (ppId) setTimeout(()=>{ const btn = document.querySelector(`[data-sub="pp-${ppId}"]`); if (btn) btn.click(); }, 60);
 }
 function _deletePersoProject() {
   const id = document.getElementById("persoProjectModalId").value;
