@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1038</title>
+<title>Mon Tableau de Vie 🌿 · v1039</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10512,6 +10512,11 @@ function saveBodyComp() {
   saveState();
   renderHealth();
   renderBodyChart(currentBodyMetric);
+  // Si le poids est pour aujourd'hui et qu'on a des pas → recalculer les kcal
+  if (w > 0 && dateKey === todayKey()) {
+    const steps = Number(state.history[dateKey]?.habits?.['h-pas']) || 0;
+    if (steps > 0) _autoCalcKcal(steps, false);
+  }
 }
 function fillBodyCompForm(dateKey) {
   const entry = state.history[dateKey || todayKey()];
