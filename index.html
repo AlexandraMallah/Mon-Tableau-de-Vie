@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1049</title>
+<title>Mon Tableau de Vie 🌿 · v1051</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -172,6 +172,15 @@
     font-family: inherit;
   }
   .btn-icon:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+  /* Bouton Aide — style pastel doux */
+  .help-btn {
+    background: linear-gradient(135deg, var(--lavender-soft), var(--sky-soft, #e8f4ff));
+    border: 1px solid var(--lavender); color: var(--ink-soft);
+    padding: 5px 13px; border-radius: 999px; cursor: pointer;
+    font-size: 12px; font-family: inherit; transition: all 0.2s;
+    white-space: nowrap; flex-shrink: 0; letter-spacing: 0.01em;
+  }
+  .help-btn:hover { background: var(--lavender-soft); color: var(--ink); border-color: var(--lavender); transform: translateY(-1px); }
   /* header buttons — pilule comme les onglets de nav */
   .header-actions .btn-icon,
   #syncUserAvatar,
@@ -1490,7 +1499,8 @@
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      margin-bottom: 14px;
+      margin-top: 10px;
+      margin-bottom: 16px;
     }
     /* Boutons sous-vues Travail / Domestique : icône seule */
     .sub-help-btn .help-label { display: none; }
@@ -1862,11 +1872,11 @@
     <button class="tab" data-view="calendar">Calendrier</button>
     <button class="tab" data-view="journal">Journal</button>
     <button class="tab" data-view="pillars">Piliers</button>
-    <button id="helpNavBtn" onclick="openHelpForCurrentView()" title="Aide sur cette section" style="margin-left:auto;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">ℹ️ Aide</button>
+    <button id="helpNavBtn" onclick="openHelpForCurrentView()" title="Aide sur cette section" class="help-btn" style="margin-left:auto;">✦ Aide</button>
   </nav>
   <!-- Bouton aide mobile (sous la nav, caché sur desktop) -->
   <div id="mobileHelpBtn">
-    <button onclick="openHelpForCurrentView()" style="background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;">ℹ️ Aide</button>
+    <button onclick="openHelpForCurrentView()" class="help-btn">✦ Aide</button>
   </div>
 
   <!-- VIEW: TODAY -->
@@ -2371,7 +2381,7 @@
         <button class="sub-tab" data-sub="administratif">🗂️ Administratif</button>
       </div>
       <button onclick="openTimeCatsModal()" title="Gérer mes projets" class="sub-proj-btn" style="flex-shrink:0;background:var(--lavender-soft);border:1.5px solid var(--lavender);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink);cursor:pointer;font-family:inherit;white-space:nowrap;font-weight:600;">⚙️<span class="proj-label"> Projets</span></button>
-      <button onclick="openHelpForCurrentSubView('work')" title="Aide sur cet onglet" class="sub-help-btn" style="flex-shrink:0;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;">ℹ️<span class="help-label"> Aide</span></button>
+      <button onclick="openHelpForCurrentSubView('work')" title="Aide sur cet onglet" class="help-btn sub-help-btn">✦<span class="help-label"> Aide</span></button>
     </div>
 
     <!-- Sub: Tâches -->
@@ -2781,9 +2791,9 @@
     <div class="card">
         <h2>💪 Composition corporelle</h2>
         <!-- Toggles sections Santé — visibles en mode édition -->
-        <div class="edit-only" style="margin-bottom:12px;padding:12px 14px;border:1.5px dashed var(--lavender);border-radius:12px;background:var(--bg-2);display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+        <div class="edit-only" style="margin:0 -24px 16px;padding:12px 24px;border-top:1.5px dashed var(--lavender);border-bottom:1.5px dashed var(--lavender);background:var(--bg-2);display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
           <span style="font-size:12px;color:var(--ink-soft);width:100%;margin-bottom:2px;">Afficher / masquer des sections :</span>
-          <button id="featureBodyCompBtn" onclick="_toggleFeature('bodyComp')" style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;">🧬 Masse grasse / maigre</button>
+          <button id="featureBodyCompBtn" onclick="_toggleFeature('bodyComp')" style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;">🧬 Suivi poids</button>
           <button id="featureCaloriesHealthBtn" onclick="_toggleFeature('calories')" style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;">🔥 Suivi calorique</button>
           <button id="featureEnergyBtn" onclick="_toggleFeature('energyBalance')" style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;">⚖️ Balance énergétique</button>
         </div>
@@ -3133,7 +3143,7 @@
       <div class="card-row" style="margin-bottom:14px;">
         <h2 style="margin:0;">🎯 Budget de vie</h2>
         <div style="display:flex;align-items:center;gap:8px;">
-          <button onclick="openHelp('money')" title="Aide sur les finances" class="sub-help-btn" style="background:none;border:1.5px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11px;color:var(--ink-soft);cursor:pointer;font-family:inherit;">ℹ️<span class="help-label"> Aide</span></button>
+          <button onclick="openHelp('money')" title="Aide sur les finances" class="help-btn sub-help-btn">✦<span class="help-label"> Aide</span></button>
           <span id="budgetMonthLabel" style="font-size:12px;color:var(--ink-soft);">Ce mois</span>
           <button onclick="_budgetNavMonth(-1)" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 2px;">◀</button>
           <button onclick="_budgetNavMonth(1)" id="budgetNavNext" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 2px;">▶</button>
@@ -3316,7 +3326,7 @@
         <div id="persoProjectTabs" style="display:contents;"></div>
         <button onclick="openPersoProjectModal()" style="padding:5px 12px;border-radius:20px;border:1.5px dashed var(--line);background:white;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">+ Projet</button>
       </div>
-      <button onclick="openHelpForCurrentSubView('domestic')" title="Aide sur cet onglet" class="sub-help-btn" style="flex-shrink:0;background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;">ℹ️<span class="help-label"> Aide</span></button>
+      <button onclick="openHelpForCurrentSubView('domestic')" title="Aide sur cet onglet" class="help-btn sub-help-btn">✦<span class="help-label"> Aide</span></button>
     </div>
     <div id="persoProjectViews"></div>
 
