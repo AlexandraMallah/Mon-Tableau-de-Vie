@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1033</title>
+<title>Mon Tableau de Vie 🌿 · v1034</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -187,13 +187,16 @@
     z-index: 100;
     background: var(--nav-bg);
     color: var(--nav-ink);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 10px 14px;
     margin-top: 4px;
     margin-bottom: 14px;
     border-radius: 18px;
     box-shadow: 0 4px 20px rgba(120, 100, 160, 0.12), 0 0 0 1px rgba(180,160,220,0.15);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
   }
   nav.tabs::-webkit-scrollbar { height: 0; }
   .tab {
