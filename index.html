@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1095</title>
+<title>Mon Tableau de Vie 🌿 · v1096</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4269,8 +4269,8 @@
 </div>
 
 <!-- Modal ajout/édition habitude -->
-<div class="modal-bg" id="habitModal" onclick="event.target===this&&_closeHabitModal()">
-  <div class="modal" style="max-width:440px;padding:28px 24px;" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+<div class="modal-bg" id="habitModal">
+  <div class="modal" style="max-width:440px;padding:28px 24px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
       <h3 id="habitModalTitle" style="margin:0;font-size:18px;">✨ Nouvelle habitude</h3>
       <button onclick="_closeHabitModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
