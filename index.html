@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1092</title>
+<title>Mon Tableau de Vie 🌿 · v1093</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10031,19 +10031,18 @@ const _SPORTS_LIST = [
   {met:8.5, emoji:"🥊", name:"Kickboxing"},
   {met:8.5, emoji:"🚵", name:"VTT"},
   {met:8.5, emoji:"🚴", name:"Spinning"},
-  {met:9.0, emoji:"🏸", name:"Squash — modéré"},
+  {met:10.5, emoji:"🏸", name:"Squash"},
   {met:9.0, emoji:"🏃", name:"Triathlon"},
   // ── Très intenses ────────────────────────────────────────────
   {met:9.8, emoji:"🏃", name:"Course (jogging)"},
   {met:9.8, emoji:"🥊", name:"Boxe"},
   {met:10.0, emoji:"🥋", name:"Karaté"},
   {met:10.0, emoji:"🥊", name:"Muay Thai"},
-  {met:10.0, emoji:"🚴", name:"Cyclisme (intense)"},
+  {met:10.0, emoji:"🚴", name:"Cyclisme"},
   {met:10.3, emoji:"🥋", name:"Judo"},
   {met:11.0, emoji:"🏃", name:"Corde à sauter"},
   {met:11.0, emoji:"🏃", name:"Course (rapide)"},
-  {met:12.0, emoji:"🏸", name:"Squash — intense"},
-  {met:12.0, emoji:"🏃", name:"Sprint / Athlétisme"},
+  {met:12.0, emoji:"🏃", name:"Sprint"},
 ];
 
 // Tous les sports (= _SPORTS_LIST, alias pour la grille)
@@ -10061,7 +10060,7 @@ function _renderSportGrid(selectedKey) {
     return `<button onclick="_selectSport('${s.met}','${s.emoji}','${s.name.replace(/'/g,"&#39;")}')"
       style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:10px;border:2px solid ${sel?'var(--mint)':'var(--line)'};background:${sel?'var(--mint-soft)':'white'};cursor:pointer;font-family:inherit;min-width:54px;max-width:88px;transition:all .12s;">
       <span style="font-size:20px;line-height:1;">${s.emoji}</span>
-      <span style="font-size:9.5px;color:${sel?'var(--ink)':'var(--ink-soft)'};font-weight:${sel?700:500};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:84px;text-align:center;">${s.name}</span>
+      <span style="font-size:9.5px;color:${sel?'var(--ink)':'var(--ink-soft)'};font-weight:${sel?700:500};text-align:center;line-height:1.25;word-break:break-word;max-width:80px;">${s.name}</span>
     </button>`;
   }).join("") +
   (!q ? `<button onclick="_selectSport('custom','','')"
