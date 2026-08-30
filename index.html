@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1088</title>
+<title>Mon Tableau de Vie 🌿 · v1089</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10095,7 +10095,10 @@ function _selectSport(met, emoji, name) {
   preview.style.display = "flex";
   document.getElementById("actModalSportPreviewEmoji").textContent = emoji;
   document.getElementById("actModalSportPreviewName").textContent = name;
-  document.getElementById("actModalSportPreviewMet").textContent = `MET ${met} · ≈ ${_calcSportKcal(Number(met), 60)} kcal/heure pour ton poids`;
+  const _w = _getRecentWeight();
+  const _hasWeight = Object.values(state.history||{}).some(d => Number(d?.weight) > 0);
+  const _wLabel = _hasWeight ? `ton poids (${_w} kg)` : `60 kg (poids estimé — renseigne le tien dans Santé)`;
+  document.getElementById("actModalSportPreviewMet").textContent = `MET ${met} · ≈ ${_calcSportKcal(Number(met), 60)} kcal/heure pour ${_wLabel}`;
 }
 function _applyMetPreset() { /* remplacé par _selectSport */ }
 
@@ -10137,7 +10140,7 @@ function _openActivityModal(id) {
       document.getElementById("actModalSportPreview").style.display = "flex";
       document.getElementById("actModalSportPreviewEmoji").textContent = found.emoji;
       document.getElementById("actModalSportPreviewName").textContent = found.name;
-      document.getElementById("actModalSportPreviewMet").textContent = `MET ${found.met} · ≈ ${_calcSportKcal(found.met, 60)} kcal/heure pour ton poids`;
+      { const _w2 = _getRecentWeight(); const _hw2 = Object.values(state.history||{}).some(d=>Number(d?.weight)>0); const _wl2 = _hw2?`ton poids (${_w2} kg)`:`60 kg (estimé — renseigne dans Santé)`; document.getElementById("actModalSportPreviewMet").textContent = `MET ${found.met} · ≈ ${_calcSportKcal(found.met, 60)} kcal/heure pour ${_wl2}`; }
     }
   }
   _renderSportGrid(_selectedSportKey);
