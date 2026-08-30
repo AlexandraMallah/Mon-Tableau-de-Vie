@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1032</title>
+<title>Mon Tableau de Vie 🌿 · v1033</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4220,33 +4220,6 @@
       <button onclick="_closeHabitModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
     </div>
     <p class="modal-hint" style="text-align:left;">Crée une habitude à cocher chaque jour. Choisis un type <strong>booléen</strong> (oui/non) ou <strong>numérique</strong> (avec objectif chiffré). Pour modifier ou supprimer une habitude existante, clique dessus depuis Aujourd'hui en mode édition. Le suivi sur le temps long (streak, taux de réussite, graphique) est disponible dans l'onglet <strong>Santé → Mes habitudes</strong>.</p>
-    <!-- Suggestions rapides -->
-    <div id="habitSuggestionsWrap" style="margin-bottom:18px;">
-      <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:8px;">SUGGESTIONS RAPIDES <span style="font-weight:400;font-size:10px;">(cliquer pour pré-remplir)</span></div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;">
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Eau',{type:'numeric',target:2,unit:'L'})">💧 Eau</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Pas',{type:'numeric',target:8000,unit:'pas'})">🚶 Pas</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Lecture',{type:'numeric',target:30,unit:'min'})">📚 Lecture</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Calories dépensées',{type:'numeric',target:1500,unit:'kcal'})">🔥 Calories</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Fruits & légumes',{type:'numeric',target:5,unit:'portions'})">🥗 Fruits &amp; légumes</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Protéines',{type:'numeric',target:80,unit:'g'})">🥩 Protéines</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Caféine',{type:'numeric',target:2,unit:'tasses'})">☕ Caféine max</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Sans alcool',{type:'boolean'})">🍷 Sans alcool</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Étirements',{type:'numeric',target:10,unit:'min'})">🤸 Étirements</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Exercice respiratoire',{type:'boolean'})">🫁 Respiration</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Journal',{type:'boolean'})">✍️ Journal</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Sans réseaux sociaux',{type:'boolean'})">📵 No réseaux</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Temps d\'écran',{type:'numeric',target:2,unit:'h max'})">📺 Temps écran</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Plein air',{type:'boolean'})">☀️ Plein air</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Coucher avant 23h',{type:'boolean'})">🕙 Coucher tôt</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Appeler un proche',{type:'boolean'})">🤝 Appeler un proche</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Vitamines',{type:'boolean'})">💊 Vitamines</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Lecture',{type:'boolean'})">📖 Lecture</button>
-        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Complément alimentaire',{type:'boolean'})">🧴 Complément</button>
-      </div>
-      <div style="font-size:11px;color:var(--ink-softer);margin-top:8px;">💊 Suivi pilule &amp; 🩸 règles → section dédiée dans "Aujourd'hui" · 🏋️ Sport &amp; 🧘 Méditation → Activités</div>
-    </div>
-    <div style="height:1px;background:var(--line);margin-bottom:16px;"></div>
     <div style="margin-bottom:14px;">
       <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom de l'habitude</div>
       <input type="text" id="habitModalName" placeholder="ex : Méditation, Lecture, Eau…" maxlength="40"
@@ -4280,6 +4253,33 @@
       </div>
     </div>
     <input type="hidden" id="habitModalId" value="" />
+    <div style="height:1px;background:var(--line);margin:16px 0 14px;"></div>
+    <!-- Suggestions rapides — optionnel -->
+    <div id="habitSuggestionsWrap" style="margin-bottom:18px;">
+      <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:8px;">OU PARTIR D'UNE SUGGESTION <span style="font-weight:400;font-size:10px;">(cliquer pour pré-remplir)</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Eau',{type:'numeric',target:2,unit:'L'})">💧 Eau</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Pas',{type:'numeric',target:8000,unit:'pas'})">🚶 Pas</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Lecture',{type:'numeric',target:30,unit:'min'})">📚 Lecture</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Calories dépensées',{type:'numeric',target:1500,unit:'kcal'})">🔥 Calories</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Fruits & légumes',{type:'numeric',target:5,unit:'portions'})">🥗 Fruits &amp; légumes</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Protéines',{type:'numeric',target:80,unit:'g'})">🥩 Protéines</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Caféine',{type:'numeric',target:2,unit:'tasses'})">☕ Caféine max</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Sans alcool',{type:'boolean'})">🍷 Sans alcool</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Étirements',{type:'numeric',target:10,unit:'min'})">🤸 Étirements</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Exercice respiratoire',{type:'boolean'})">🫁 Respiration</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Journal',{type:'boolean'})">✍️ Journal</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Sans réseaux sociaux',{type:'boolean'})">📵 No réseaux</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Temps d\'écran',{type:'numeric',target:2,unit:'h max'})">📺 Temps écran</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Plein air',{type:'boolean'})">☀️ Plein air</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Coucher avant 23h',{type:'boolean'})">🕙 Coucher tôt</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Appeler un proche',{type:'boolean'})">🤝 Appeler un proche</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Vitamines',{type:'boolean'})">💊 Vitamines</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Lecture',{type:'boolean'})">📖 Lecture</button>
+        <button type="button" class="habit-suggest-chip" onclick="_applyHabitSuggest('Complément alimentaire',{type:'boolean'})">🧴 Complément</button>
+      </div>
+      <div style="font-size:11px;color:var(--ink-softer);margin-top:8px;">💊 Suivi pilule &amp; 🩸 règles → section dédiée dans "Aujourd'hui" · 🏋️ Sport &amp; 🧘 Méditation → Activités</div>
+    </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button onclick="_closeHabitModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
       <button onclick="_saveHabitModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
