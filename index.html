@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1073</title>
+<title>Mon Tableau de Vie 🌿 · v1074</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15546,11 +15546,8 @@ function renderSavings() {
 
   // Répartition par compte
   const breakdown = state.accounts.savingsBreakdown || {};
-  const cats = [...new Set([
-    ...Object.keys(breakdown),
-    ...state.transactions.filter(t => t.type === "savings" || t.type === "savings-out").map(t => t.category).filter(Boolean),
-    ...(state.savingsCategories || []),
-  ])].filter(Boolean);
+  // Source de vérité unique : savingsCategories
+  const cats = (state.savingsCategories || []).filter(Boolean);
 
   // Solde par compte = solde de départ configuré + mouvements transactions
   // epargneStart est alloué au premier compte ou à "LEP" par défaut
