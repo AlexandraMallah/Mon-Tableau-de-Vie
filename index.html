@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1079</title>
+<title>Mon Tableau de Vie 🌿 · v1080</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4342,13 +4342,13 @@
 <!-- Modal nouvelle/édition activité -->
 <div class="modal-bg" id="activityModal" onclick="event.target===this&&_closeActivityModal()">
   <div class="modal" style="max-width:480px;padding:24px;" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <h3 id="actModalTitle" style="margin:0;font-size:18px;">✨ Nouvelle activité</h3>
       <button onclick="_closeActivityModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);">✕</button>
     </div>
 
     <!-- Toggle type : Loisir vs Sport -->
-    <div style="display:flex;gap:8px;margin-bottom:18px;margin-top:14px;">
+    <div style="display:flex;gap:8px;margin-bottom:18px;">
       <button id="actTypeLoisir" onclick="_setActType('loisir')"
         style="flex:1;padding:10px;border-radius:12px;border:2px solid var(--lavender);background:var(--bg-2);color:var(--ink);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;">
         🎯 Loisir / Routine
@@ -4359,38 +4359,47 @@
       </button>
     </div>
 
-    <!-- Mode Sport : choisir le sport d'abord -->
+    <!-- Mode SPORT : picker uniquement -->
     <div id="actModalSportPicker" style="display:none;margin-bottom:16px;">
       <label style="font-size:12px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:8px;">SPORT</label>
-      <!-- Champ de recherche + dropdown filtré -->
       <div style="position:relative;">
         <input type="text" id="actModalSportSearch" placeholder="🔍 Chercher un sport…" autocomplete="off"
           oninput="_filterSports()" onfocus="_filterSports()" onblur="setTimeout(_closeSportDropdown,180)"
-          style="width:100%;padding:11px 12px;border:1.5px solid var(--mint);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:white;box-sizing:border-box;cursor:text;" />
-        <div id="actModalSportDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:white;border:1.5px solid var(--mint);border-radius:12px;box-shadow:0 8px 24px rgba(120,100,160,.12);max-height:220px;overflow-y:auto;z-index:500;"></div>
+          style="width:100%;padding:11px 12px;border:1.5px solid var(--mint);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:white;box-sizing:border-box;" />
+        <div id="actModalSportDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:white;border:1.5px solid var(--mint);border-radius:12px;box-shadow:0 8px 24px rgba(120,100,160,.12);max-height:240px;overflow-y:auto;z-index:500;"></div>
       </div>
-      <input type="hidden" id="actModalMetPreset" />
-      <input type="hidden" id="actModalMet" />
+      <!-- Aperçu sport sélectionné -->
+      <div id="actModalSportPreview" style="display:none;margin-top:12px;padding:12px 14px;background:var(--mint-soft);border-radius:12px;display:none;align-items:center;gap:12px;">
+        <span id="actModalSportPreviewEmoji" style="font-size:28px;"></span>
+        <div>
+          <div id="actModalSportPreviewName" style="font-weight:700;font-size:15px;color:var(--ink);"></div>
+          <div id="actModalSportPreviewMet" style="font-size:12px;color:var(--ink-soft);margin-top:2px;"></div>
+        </div>
+      </div>
       <div id="actModalCustomMet" style="display:none;margin-top:10px;">
-        <label style="font-size:12px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:6px;">MET PERSONNALISÉ</label>
-        <input type="number" id="actModalMetCustom" min="1" max="20" step="0.1" placeholder="ex : 6.5"
-          style="width:100%;padding:10px;border:1.5px solid var(--mint);border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;text-align:center;color:var(--ink);background:var(--bg-1);" />
-        <p style="font-size:11px;color:var(--ink-softer);margin:6px 0 0;">Le MET mesure l'intensité vs le repos (marche ≈ 3, course ≈ 10). Cherche le MET de ton activité en ligne si besoin.</p>
+        <label style="font-size:12px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:6px;">NOM DU SPORT &amp; MET</label>
+        <input type="text" id="actModalCustomSportName" placeholder="Nom du sport…" maxlength="40"
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;margin-bottom:8px;" />
+        <input type="number" id="actModalMetCustom" min="1" max="20" step="0.1" placeholder="MET (ex : 6.5)"
+          style="width:100%;padding:10px;border:1.5px solid var(--mint);border-radius:12px;font-family:inherit;font-size:14px;font-weight:700;text-align:center;color:var(--ink);background:var(--bg-1);" />
+        <p style="font-size:11px;color:var(--ink-softer);margin:6px 0 0;">Le MET mesure l'intensité vs le repos (marche ≈ 3, course ≈ 10).</p>
       </div>
+      <input type="hidden" id="actModalMet" />
     </div>
 
-    <!-- Emoji preview + nom -->
-    <label style="font-size:12px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:8px;">NOM &amp; EMOJI</label>
-    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
-      <div id="actModalEmojiPreview" style="font-size:32px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;border:2px solid var(--mint);border-radius:12px;background:var(--mint-soft);flex-shrink:0;cursor:default;">🏃</div>
-      <input type="text" id="actModalName" placeholder="Nom de l'activité…" maxlength="40"
-        onkeydown="if(event.key==='Enter')_saveActivityModal()"
-        style="flex:1;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);" />
+    <!-- Mode LOISIR : nom + grille emoji (pas de scroll) -->
+    <div id="actModalLoisirFields">
+      <label style="font-size:12px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:8px;">NOM &amp; EMOJI</label>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
+        <div id="actModalEmojiPreview" style="font-size:32px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;border:2px solid var(--mint);border-radius:12px;background:var(--mint-soft);flex-shrink:0;">✨</div>
+        <input type="text" id="actModalName" placeholder="Nom de l'activité…" maxlength="40"
+          onkeydown="if(event.key==='Enter')_saveActivityModal()"
+          style="flex:1;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);" />
+      </div>
+      <div id="actEmojiGrid" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px;"></div>
     </div>
-    <!-- Grille emoji -->
-    <div id="actEmojiGrid" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px;max-height:130px;overflow-y:auto;"></div>
 
-    <!-- Objectif -->
+    <!-- Objectif (commun aux deux modes) -->
     <label style="font-size:12px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:8px;">OBJECTIF (optionnel)</label>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
       <input type="number" id="actModalGoalCount" min="1" max="31" placeholder="—"
@@ -9949,6 +9958,7 @@ function _setActType(type) {
   sBtn.style.background  = isSport ? "var(--mint-soft)" : "white";
   sBtn.style.color       = isSport ? "var(--ink)" : "var(--ink-soft)";
   document.getElementById("actModalSportPicker").style.display = isSport ? "block" : "none";
+  document.getElementById("actModalLoisirFields").style.display = isSport ? "none" : "block";
 }
 const _SPORTS_LIST = [
   // Douces
@@ -10034,36 +10044,33 @@ function _closeSportDropdown() {
 }
 function _selectSport(met, emoji, name) {
   document.getElementById("actModalSportDropdown").style.display = "none";
+  const preview = document.getElementById("actModalSportPreview");
   if (met === "custom") {
     document.getElementById("actModalSportSearch").value = "";
     document.getElementById("actModalMet").value = "";
     document.getElementById("actModalCustomMet").style.display = "block";
-    setTimeout(() => document.getElementById("actModalMetCustom").focus(), 50);
+    preview.style.display = "none";
+    setTimeout(() => document.getElementById("actModalCustomSportName").focus(), 50);
     return;
   }
   document.getElementById("actModalCustomMet").style.display = "none";
   document.getElementById("actModalSportSearch").value = `${emoji} ${name}`;
   document.getElementById("actModalMet").value = met;
-  // Pré-remplir nom et emoji si champs vides
-  if (!document.getElementById("actModalName").value.trim()) {
-    document.getElementById("actModalName").value = name;
-  }
-  if (emoji) {
-    _actModalEmoji = emoji;
-    document.getElementById("actModalEmojiPreview").textContent = emoji;
-    document.querySelectorAll("[data-actemojikey]").forEach(btn => {
-      const sel = btn.dataset.actemojikey === emoji;
-      btn.style.borderColor = sel ? "var(--mint)" : "var(--line)";
-      btn.style.background  = sel ? "var(--mint-soft)" : "white";
-    });
-  }
+  _actModalEmoji = emoji;
+  _actModalSportName = name;
+  // Aperçu sport sélectionné
+  preview.style.display = "flex";
+  document.getElementById("actModalSportPreviewEmoji").textContent = emoji;
+  document.getElementById("actModalSportPreviewName").textContent = name;
+  document.getElementById("actModalSportPreviewMet").textContent = `MET ${met} · ≈ ${_calcSportKcal(Number(met), 60)} kcal/heure pour ton poids`;
 }
 function _applyMetPreset() { /* remplacé par _selectSport */ }
 
 const _ACT_EMOJIS = [
-  "🏃","🚴","🏊","🧘","🏋️","🤸","🚶","🧗","⛹️","🏄","🎾","🥊","🥋","⛷️","🏂",
-  "🏌️","🎯","🎳","🏓","🏸","🏇","🤾","💃","🕺","🐕","🧹","🌱","🍳","🎵","🎸",
-  "🎨","📚","✍️","🎭","🎬","🎲","🧵","🧶","🚗","✈️","🛁","💆","🧖","🍵","🌙",
+  "🎨","🖌️","✍️","📚","📖","🎵","🎸","🎹","🥁","🎻",
+  "🎭","🎬","🎤","🎮","🧩","🎲","📷","🎙️","🎧","📝",
+  "🍳","🧁","🌱","🪴","🌿","🐕","🐈","✈️","🚗","🛳️",
+  "💆","🧖","🛁","🍵","🌙","🛒","🧵","🧶","📺","🏖️",
 ];
 let _actModalEmoji = "🏃";
 
@@ -10083,6 +10090,8 @@ function _openActivityModal(id) {
   document.getElementById("actModalCustomMet").style.display = "none";
   document.getElementById("actModalMetCustom").value = "";
   document.getElementById("actModalSportDropdown").style.display = "none";
+  document.getElementById("actModalSportPreview").style.display = "none";
+  _actModalSportName = "";
   // Si édition d'un sport existant, retrouver le nom dans la liste pour afficher dans la recherche
   if (isSport && a?.met) {
     const found = _SPORTS_LIST.find(s => Math.abs(s.met - a.met) < 0.05 && s.emoji === a.emoji);
@@ -10110,18 +10119,32 @@ function _selectActEmoji(e) {
   });
 }
 function _closeActivityModal() { document.getElementById("activityModal").style.display = "none"; }
+let _actModalSportName = "";
 function _saveActivityModal() {
-  const name = document.getElementById("actModalName").value.trim();
-  if (!name) { document.getElementById("actModalName").focus(); return; }
-  const emoji = _actModalEmoji || "✨";
+  const isSport = document.getElementById("actModalIsSport").value === "1";
+  let name, emoji, met;
+  if (isSport) {
+    const isCustom = document.getElementById("actModalCustomMet").style.display !== "none";
+    if (isCustom) {
+      name = document.getElementById("actModalCustomSportName").value.trim();
+      met = Number(document.getElementById("actModalMetCustom").value) || null;
+      emoji = _actModalEmoji || "🏃";
+    } else {
+      name = _actModalSportName || document.getElementById("actModalSportSearch").value.replace(/^\S+\s/,"").trim();
+      met = Number(document.getElementById("actModalMet").value) || null;
+      emoji = _actModalEmoji || "🏃";
+    }
+    if (!name) { showToast("⚠️ Choisis un sport dans la liste."); return; }
+    if (!met) { showToast("⚠️ Indique un MET pour calculer les kcal."); return; }
+  } else {
+    name = document.getElementById("actModalName").value.trim();
+    if (!name) { document.getElementById("actModalName").focus(); return; }
+    emoji = _actModalEmoji || "✨";
+    met = null;
+  }
   const goalCount = Number(document.getElementById("actModalGoalCount").value) || 0;
   const goalPeriod = document.getElementById("actModalGoalPeriod").value;
   const goal = goalCount > 0 ? { count: goalCount, period: goalPeriod } : null;
-  const isSport = document.getElementById("actModalIsSport").value === "1";
-  const metRaw = isSport
-    ? (Number(document.getElementById("actModalMetCustom").value) || Number(document.getElementById("actModalMet").value) || null)
-    : null;
-  const met = metRaw;
   const editId = document.getElementById("actModalEditId").value;
   if (editId) {
     const a = state.activities.find(x => x.id === editId);
