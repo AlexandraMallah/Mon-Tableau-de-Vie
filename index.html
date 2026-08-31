@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1106</title>
+<title>Mon Tableau de Vie 🌿 · v1107</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -101,39 +101,54 @@
 
   /* ===== THÈME MINIMAL ===== */
   body.t-minimal {
-    --bg-1: #f5f5f5;
-    --bg-2: #ebebeb;
+    --bg-1: #fafafa;
+    --bg-2: #f3f3f3;
     --card: #ffffff;
-    --ink: #111111;
-    --ink-soft: #555555;
-    --ink-softer: #999999;
-    --line: #e0e0e0;
-    --lavender: #1a1a1a;
-    --lavender-soft: #ebebeb;
-    --pink: #444444;
-    --pink-soft: #e0e0e0;
-    --peach: #666666;
-    --peach-soft: #e8e8e8;
-    --mint: #333333;
-    --mint-soft: #e4e4e4;
-    --sky: #555555;
-    --sky-soft: #e0e0e0;
-    --rose: #777777;
-    --rose-soft: #e8e8e8;
-    --butter: #888888;
-    --butter-soft: #eeeeee;
-    --lilac: #444444;
-    --lilac-soft: #e4e4e4;
-    --red: #b00000;
-    --orange: #cc6600;
-    --green: #007a40;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-    --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.12);
-    --nav-bg: rgba(255, 255, 255, 0.97);
-    --nav-ink: #111111;
-    --radius-card: 4px;
+    --ink: #0d0d0d;
+    --ink-soft: #3d3d3d;
+    --ink-softer: #888888;
+    --line: #e2e2e2;
+    --lavender: #0d0d0d;
+    --lavender-soft: #f0f0f0;
+    --pink: #333333;
+    --pink-soft: #efefef;
+    --peach: #555555;
+    --peach-soft: #f0f0f0;
+    --mint: #0d0d0d;
+    --mint-soft: #ececec;
+    --sky: #444444;
+    --sky-soft: #efefef;
+    --rose: #666666;
+    --rose-soft: #f0f0f0;
+    --butter: #777777;
+    --butter-soft: #f3f3f3;
+    --lilac: #333333;
+    --lilac-soft: #eeeeee;
+    --red: #111111;
+    --orange: #333333;
+    --green: #111111;
+    --shadow: 0 1px 0 rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+    --shadow-hover: 0 2px 6px rgba(0,0,0,0.10);
+    --nav-bg: rgba(255,255,255,0.98);
+    --nav-ink: #0d0d0d;
+    --radius-card: 2px;
     --font-main: "DM Sans", "Helvetica Neue", sans-serif;
   }
+
+  /* ── Thème Minimal : neutralisation des couleurs résiduelles ── */
+  body.t-minimal .card { border: 1px solid #e2e2e2; box-shadow: none !important; }
+  body.t-minimal .nav { box-shadow: 0 1px 0 #e2e2e2 !important; }
+  body.t-minimal .ring-card { background: white !important; border: 1px solid #e2e2e2 !important; box-shadow: none !important; }
+  body.t-minimal button[style*="background:linear-gradient"],
+  body.t-minimal button[style*="background: linear-gradient"] { background: #f0f0f0 !important; color: #0d0d0d !important; }
+  body.t-minimal [style*="background:linear-gradient(135deg,var(--sky-soft"],
+  body.t-minimal [style*="background:linear-gradient(135deg,var(--lavender-soft"] { background: #f5f5f5 !important; }
+  body.t-minimal .nav-tab.active { background: #0d0d0d !important; color: #fff !important; }
+  body.t-minimal .nav-tab { color: #555 !important; }
+  body.t-minimal .activity-day-dot.done { background: #0d0d0d !important; color: white !important; }
+  body.t-minimal .habit.done { background: #f0f0f0 !important; }
+  body.t-minimal .checkbox { border-color: #aaa !important; }
+  body.t-minimal .habit.done .checkbox { background: #0d0d0d !important; border-color: #0d0d0d !important; }
 
   * { box-sizing: border-box; }
   html { color-scheme: light; background: #fdf6f0; } /* fond clair immédiat avant CSS vars */
@@ -6258,10 +6273,10 @@ const RING_COLORS_SERIEUX = [
   { fg: "#a4c8d8", bg: "#d8eef5" },
 ];
 const RING_COLORS_MINIMAL = [
-  { fg: "#111", bg: "#d4d4d4" },
-  { fg: "#2a2a2a", bg: "#d8d8d8" },
-  { fg: "#3a3a3a", bg: "#dcdcdc" },
-  { fg: "#4a4a4a", bg: "#e0e0e0" },
+  { fg: "#0d0d0d", bg: "#e0e0e0" },
+  { fg: "#222222", bg: "#e4e4e4" },
+  { fg: "#383838", bg: "#e8e8e8" },
+  { fg: "#555555", bg: "#ececec" },
 ];
 function _getRingColors() {
   const b = document.body.classList;
