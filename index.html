@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1104</title>
+<title>Mon Tableau de Vie 🌿 · v1105</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6366,7 +6366,7 @@ function _addEmotion() {
   document.getElementById("emModalLabel").value = "";
   const grid = document.getElementById("emEmojiGrid");
   if (grid) grid.innerHTML = _EM_EMOJIS.map(([em,lbl]) =>
-    `<span onclick="document.getElementById('emModalEmoji').value='${em}';document.getElementById('emModalLabel').value=document.getElementById('emModalLabel').value||'${lbl}'"
+    `<span onclick="document.getElementById('emModalEmoji').value='${em}';document.getElementById('emModalLabel').value='${lbl}'"
       title="${lbl}" style="cursor:pointer;font-size:22px;padding:4px 6px;border-radius:8px;border:1.5px solid transparent;transition:background 0.15s;"
       onmouseover="this.style.background='var(--lavender-soft)'" onmouseout="this.style.background='transparent'">${em}</span>`
   ).join("");
