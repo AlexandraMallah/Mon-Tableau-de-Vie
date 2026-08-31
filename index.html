@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1108</title>
+<title>Mon Tableau de Vie 🌿 · v1109</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6630,7 +6630,7 @@ function renderHabits() {
       const num = Number(value) || 0;
       const pct = Math.min(100, Math.round((num / (h.target || 1)) * 100));
       const _hbS = document.body.classList.contains("t-serieux");
-      const barColor = isDone ? (_hbS?"#a0c0a8":_hbM?"#555":"var(--mint)") : (num >= 7000 && /pas/i.test(h.name)) ? (_hbS?"#e0c4a0":_hbM?"#888":"var(--peach)") : (_hbS?"#d0ac84":_hbM?"#aaa":"var(--rose)");
+      const barColor = isDone ? (_hbS?"#a0c0a8":"var(--mint)") : (num >= 7000 && /pas/i.test(h.name)) ? (_hbS?"#e0c4a0":"var(--peach)") : (_hbS?"#d0ac84":"var(--rose)");
       const isSmall = (h.target || 1) <= 30;
       const inputStep = isSmall ? 1 : 100;
       const inputMax = isSmall ? (h.target * 5) : "";
@@ -8697,10 +8697,6 @@ function renderTaskProgress() {
     { fg: "#6b9ec4", bg: "#d4e8f4" }, { fg: "#88a890", bg: "#ccddd0" },
     { fg: "#d4aa84", bg: "#f0e0cc" }, { fg: "#8ab8cc", bg: "#d0eaf4" },
     { fg: "#a0c0a8", bg: "#d8ead8" }, { fg: "#c0986e", bg: "#e8d4c0" },
-  ] : _isM ? [
-    { fg: "#333", bg: "#ebebeb" }, { fg: "#555", bg: "#e4e4e4" },
-    { fg: "#777", bg: "#dedede" }, { fg: "#444", bg: "#e8e8e8" },
-    { fg: "#666", bg: "#e0e0e0" }, { fg: "#888", bg: "#d8d8d8" },
   ] : [
     { fg: "#f5a880", bg: "#fff3ef" }, { fg: "#80c4e8", bg: "#e8f5fb" },
     { fg: "#d890c8", bg: "#faeef7" }, { fg: "#98d890", bg: "#edfaeb" },
@@ -8716,13 +8712,6 @@ function renderTaskProgress() {
       if (isAutreProject(p))   return { fg: "#a4cce0", bg: "#d8eef5" };
       if (isCandProject(p))    return { fg: "#88a890", bg: "#ccddd0" };
       if (isPrixTheseProject(p))return { fg: "#c0986e", bg: "#e8d4c0" };
-    } else if (_isM) {
-      if (isPostdocProject(p)) return { fg: "#333", bg: "#ebebeb" };
-      if (isValoProject(p))    return { fg: "#555", bg: "#e4e4e4" };
-      if (isTeachingProject(p))return { fg: "#777", bg: "#dedede" };
-      if (isAutreProject(p))   return { fg: "#888", bg: "#d8d8d8" };
-      if (isCandProject(p))    return { fg: "#444", bg: "#e8e8e8" };
-      if (isPrixTheseProject(p))return { fg: "#666", bg: "#e0e0e0" };
     } else {
       if (isPostdocProject(p)) return { fg: "#6aaed6", bg: "var(--sky-soft)" };
       if (isValoProject(p))    return { fg: "#e890a4", bg: "var(--pink-soft)" };
@@ -12323,9 +12312,9 @@ function renderPillSante() {
     const title = tipParts.join(" · ");
     const _isS = document.body.classList.contains("t-serieux");
       let bg;
-    if (isToday) bg = taken ? (_isS?"#6b9ec4":_isM?"#333":"#7c5cbf") : (_isS?"#a4cce0":_isM?"#888":"#b4d4f1");
-    else if (taken) bg = _isS?"#8ab4d4":_isM?"#777":"#c9b6f0";
-    else bg = _isS?"#d4e8f4":_isM?"#ccc":"#ece6f5";
+    if (isToday) bg = taken ? (_isS?"#6b9ec4":"#7c5cbf") : (_isS?"#a4cce0":"#b4d4f1");
+    else if (taken) bg = _isS?"#8ab4d4":"#c9b6f0";
+    else bg = _isS?"#d4e8f4":"#ece6f5";
     const opacity = taken || isToday || flow ? "1" : "0.5";
     const dot = flow ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;border-radius:50%;background:${CYCLE_DOT[flow]};"></div></div>` : "";
     return `<div data-tip="${title}" onmouseenter="showHoverTip(event,this.dataset.tip)" onmousemove="moveHoverTip(event)" onmouseleave="hideHoverTip()" style="position:relative;width:18px;height:18px;border-radius:4px;background:${bg};opacity:${opacity};cursor:default;">${dot}</div>`;
