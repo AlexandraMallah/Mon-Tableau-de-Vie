@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1102</title>
+<title>Mon Tableau de Vie 🌿 · v1103</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6704,6 +6704,12 @@ function renderHabits() {
         </div>`;
       }
       const _autoBtn = _isCalDep ? `<button type="button" onclick="_autoCalcKcal(Number(getToday().habits?.['h-pas']||0),true)" title="Recalculer depuis les pas" style="padding:4px 12px;border-radius:999px;border:none;background:linear-gradient(135deg,var(--lavender-soft),var(--mint-soft));font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink);white-space:nowrap;flex-shrink:0;font-weight:600;letter-spacing:0.01em;">✦ Calcul auto</button>` : "";
+      const _kcalBd = _isCalDep ? _getKcalBreakdown(Number(getToday().habits?.['h-pas']||0)) : null;
+      const _kcalBdHtml = _kcalBd ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;">
+        <span style="font-size:11px;background:var(--bg-1);padding:3px 8px;border-radius:8px;color:var(--ink-soft);">🛋️ Repos&nbsp;<strong style="color:var(--ink);">${_kcalBd.bmr}</strong> kcal</span>
+        <span style="font-size:11px;background:var(--bg-1);padding:3px 8px;border-radius:8px;color:var(--ink-soft);">🚶 Pas&nbsp;<strong style="color:var(--ink);">${_kcalBd.stepKcal}</strong> kcal</span>
+        <span style="font-size:11px;background:var(--bg-1);padding:3px 8px;border-radius:8px;color:var(--ink-soft);">🏃 Sport&nbsp;<strong style="color:var(--ink);">${_kcalBd.sportKcal}</strong> kcal</span>
+      </div>` : "";
       return `
         <div class="habit habit-numeric ${isDone ? "done" : ""}" style="flex-direction:column;align-items:stretch;gap:6px;">
           <div style="display:flex;align-items:center;gap:8px;">
@@ -6720,6 +6726,7 @@ function renderHabits() {
               <div style="width:${Math.min(100, pct)}%;height:100%;background:${barColor};transition:width 0.4s;"></div>
             </div>
           </div>
+          ${_kcalBdHtml}
         </div>`;
     }
     const _boolHealthLink = `<span onclick="event.stopPropagation();_goToHealth('habitsTrackingCard')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;margin-left:3px;" title="Voir dans Santé">↗</span>`;
@@ -6847,6 +6854,32 @@ function _autoSaveWeight(val) {
   // Ne PAS appeler renderHealth() ici — ça réinitialiserait le date picker
 }
 
+function _getKcalBreakdown(steps) {
+  const heightCm = state.health?.heightCm || 0;
+  const age      = state.health?.ageyears  || 30;
+  const sex      = state.health?.sex       || "";
+  const dk = getSelectedDayKey();
+  let weightKg = Number(state.history[dk]?.weight) || 0;
+  if (!weightKg) {
+    const dks = Object.keys(state.history).sort().reverse();
+    for (const d of dks) { const w = Number(state.history[d]?.weight); if (w > 0) { weightKg = w; break; } }
+  }
+  if (!heightCm || !weightKg) return null;
+  const base = (10 * weightKg) + (6.25 * heightCm) - (5 * age);
+  const bmr  = Math.round(sex === "f" ? base - 161 : sex === "m" ? base + 5 : base - 78);
+  const strideMeter = heightCm * 0.00415;
+  const distanceKm  = ((steps || 0) * strideMeter) / 1000;
+  const stepKcal    = Math.round(distanceKm * weightKg * 1.036);
+  const dayActs = state.history[dk]?.activities || {};
+  let sportKcal = 0;
+  for (const [actId, actVal] of Object.entries(dayActs)) {
+    if (actVal?.duration) {
+      const act = (state.activities || []).find(a => a.id === actId);
+      if (act?.sport && act?.met) sportKcal += _calcSportKcal(act.met, actVal.duration);
+    }
+  }
+  return { bmr, stepKcal, sportKcal: Math.round(sportKcal) };
+}
 function _autoCalcKcal(steps, forceOverwrite) {
   const heightCm = state.health?.heightCm || 0;
   const age      = state.health?.ageyears  || 0;
