@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1105</title>
+<title>Mon Tableau de Vie 🌿 · v1106</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6365,13 +6365,18 @@ function _addEmotion() {
   document.getElementById("emModalEmoji").value = "😊";
   document.getElementById("emModalLabel").value = "";
   const grid = document.getElementById("emEmojiGrid");
-  if (grid) grid.innerHTML = _EM_EMOJIS.map(([em,lbl]) =>
-    `<span onclick="document.getElementById('emModalEmoji').value='${em}';document.getElementById('emModalLabel').value='${lbl}'"
-      title="${lbl}" style="cursor:pointer;font-size:22px;padding:4px 6px;border-radius:8px;border:1.5px solid transparent;transition:background 0.15s;"
+  if (grid) grid.innerHTML = _EM_EMOJIS.map(([em,lbl], i) =>
+    `<span onclick="_pickEmSuggest(${i})"
+      title="${lbl.replace(/"/g,'&quot;')}" style="cursor:pointer;font-size:22px;padding:4px 6px;border-radius:8px;border:1.5px solid transparent;transition:background 0.15s;"
       onmouseover="this.style.background='var(--lavender-soft)'" onmouseout="this.style.background='transparent'">${em}</span>`
   ).join("");
   document.getElementById("emotionModal").style.display = "flex";
   setTimeout(() => document.getElementById("emModalLabel").focus(), 50);
+}
+function _pickEmSuggest(i) {
+  const [em, lbl] = _EM_EMOJIS[i];
+  document.getElementById("emModalEmoji").value = em;
+  document.getElementById("emModalLabel").value = lbl;
 }
 function _closeEmotionModal() { document.getElementById("emotionModal").style.display = "none"; }
 function _saveEmotionModal() {
