@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1110</title>
+<title>Mon Tableau de Vie 🌿 · v1111</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13051,50 +13051,98 @@ function renderEnergyBalance() {
   const el = document.getElementById('energyBalanceContent');
   if (!el) return;
   const days = _healthMonthDates();
-  let totalBurned = 0, totalConsumed = 0, daysWithBoth = 0;
+
+  // Jours consécutifs sans données alimentaires (en partant d'aujourd'hui)
+  let consecutiveNoFood = 0;
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i = 0; i <= 60; i++) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const log = state.history[todayKey(d)]?.foodLog || [];
+    const c = log.reduce((s, e) => s + (e.calories || 0), 0);
+    if (c > 0) break;
+    consecutiveNoFood++;
+  }
+  const foodStale = consecutiveNoFood >= 5;
+
+  // Calories dépensées : jours avec burned > 0 (indépendant des repas)
+  let totalBurned = 0, daysWithBurned = 0;
+  let totalConsumed = 0, daysWithBoth = 0;
   days.forEach(d => {
     const day = state.history[todayKey(d)];
     const b = Number(day?.habits?.['h-cal-dep']) || 0;
     const c = (day?.foodLog || []).reduce((s, e) => s + (e.calories || 0), 0);
-    if (b > 0 && c > 0) { totalBurned += b; totalConsumed += c; daysWithBoth++; }
+    if (b > 0) { totalBurned += b; daysWithBurned++; }
+    if (b > 0 && c > 0) { totalConsumed += c; daysWithBoth++; }
   });
 
-  // Récap mensuel
-  if (!daysWithBoth) {
+  if (!daysWithBurned && !daysWithBoth) {
     el.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;margin-top:8px;">Renseigne calories dépensées <strong>et</strong> repas le même jour pour voir le récap mensuel.</p>`;
     return;
   }
-  const avgB = Math.round(totalBurned / daysWithBoth);
-  const avgC = Math.round(totalConsumed / daysWithBoth);
-  const diff = avgB - avgC;
-  const isBalanced = Math.abs(diff) < 150;
-  const statusColor = isBalanced ? '#4d9c7e' : diff > 0 ? '#4d9c7e' : '#c08a4d';
-  const statusLabel = isBalanced ? '⚖️ Équilibre' : diff > 0 ? '📉 Déficit calorique' : '📈 Surplus calorique';
-  const statusDesc = isBalanced
-    ? 'Apports et dépenses équilibrés ce mois.'
-    : diff > 0
-    ? `Tu brûles plus que tu n'ingères — ${Math.abs(diff).toLocaleString('fr-FR')} kcal/j de déficit en moyenne.`
-    : `Tu ingères plus que tu ne brûles — ${Math.abs(diff).toLocaleString('fr-FR')} kcal/j de surplus en moyenne.`;
-  el.innerHTML = `
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-      <div style="flex:1;min-width:90px;background:var(--mint-soft);border-radius:10px;padding:10px 12px;text-align:center;">
+
+  const avgB = daysWithBurned ? Math.round(totalBurned / daysWithBurned) : null;
+  const avgC = daysWithBoth   ? Math.round(totalConsumed / daysWithBoth) : null;
+  const diff = (avgB && avgC) ? avgB - avgC : null;
+  const isBalanced = diff !== null && Math.abs(diff) < 150;
+  const statusColor = !diff ? '#999' : isBalanced ? '#4d9c7e' : diff > 0 ? '#4d9c7e' : '#c08a4d';
+
+  // Carte Dépensées (toujours visible)
+  const cardBurned = avgB
+    ? `<div style="flex:1;min-width:90px;background:var(--mint-soft);border-radius:10px;padding:10px 12px;text-align:center;">
         <div style="font-size:10px;color:var(--ink-softer);margin-bottom:2px;">🏃 Dépensées/j</div>
         <div style="font-size:17px;font-weight:700;color:#3a7a5e;">${avgB.toLocaleString('fr-FR')}</div>
         <div style="font-size:10px;color:var(--ink-softer);">kcal moy.</div>
-      </div>
-      <div style="flex:1;min-width:90px;background:var(--peach-soft);border-radius:10px;padding:10px 12px;text-align:center;">
+      </div>`
+    : '';
+
+  // Carte Ingérées (grisée si données périmées)
+  const cardConsumed = foodStale
+    ? `<div style="flex:1;min-width:90px;background:#f3f3f3;border-radius:10px;padding:10px 12px;text-align:center;opacity:0.6;">
+        <div style="font-size:10px;color:#aaa;margin-bottom:2px;">🍽️ Ingérées/j</div>
+        <div style="font-size:17px;font-weight:700;color:#bbb;">—</div>
+        <div style="font-size:10px;color:#bbb;">données absentes</div>
+      </div>`
+    : avgC
+    ? `<div style="flex:1;min-width:90px;background:var(--peach-soft);border-radius:10px;padding:10px 12px;text-align:center;">
         <div style="font-size:10px;color:var(--ink-softer);margin-bottom:2px;">🍽️ Ingérées/j</div>
         <div style="font-size:17px;font-weight:700;color:#a0622a;">${avgC.toLocaleString('fr-FR')}</div>
         <div style="font-size:10px;color:var(--ink-softer);">kcal moy.</div>
-      </div>
-      <div style="flex:1;min-width:90px;background:var(--bg-2);border-radius:10px;padding:10px 12px;text-align:center;border-left:3px solid ${statusColor};">
+      </div>`
+    : '';
+
+  // Carte Déficit (grisée si données périmées)
+  const cardDiff = foodStale
+    ? `<div style="flex:1;min-width:90px;background:#f3f3f3;border-radius:10px;padding:10px 12px;text-align:center;opacity:0.6;">
+        <div style="font-size:10px;color:#aaa;margin-bottom:2px;">📉 Déficit/j</div>
+        <div style="font-size:17px;font-weight:700;color:#bbb;">—</div>
+        <div style="font-size:10px;color:#bbb;">données absentes</div>
+      </div>`
+    : diff !== null
+    ? `<div style="flex:1;min-width:90px;background:var(--bg-2);border-radius:10px;padding:10px 12px;text-align:center;border-left:3px solid ${statusColor};">
         <div style="font-size:10px;color:var(--ink-softer);margin-bottom:2px;">${diff > 0 ? '📉 Déficit/j' : diff < 0 ? '📈 Surplus/j' : '⚖️ Équilibre'}</div>
         <div style="font-size:17px;font-weight:700;color:${statusColor};">${Math.abs(diff).toLocaleString('fr-FR')}</div>
         <div style="font-size:10px;color:var(--ink-softer);">kcal moy.</div>
-      </div>
+      </div>`
+    : '';
+
+  // Message
+  let msgHtml = '';
+  if (foodStale) {
+    msgHtml = `<div style="background:#f5f5f5;border-radius:10px;padding:10px 12px;border-left:3px solid #ccc;font-size:12px;color:#888;margin-top:2px;">⚠️ Repas non renseignés depuis ${consecutiveNoFood} jours — impossible de calculer le déficit ou l'apport calorique.</div>`;
+  } else if (diff !== null) {
+    const statusLabel = isBalanced ? '⚖️ Équilibre' : diff > 0 ? '📉 Déficit calorique' : '📈 Surplus calorique';
+    const statusDesc = isBalanced ? 'Apports et dépenses équilibrés ce mois.'
+      : diff > 0 ? `Tu brûles plus que tu n'ingères — ${Math.abs(diff).toLocaleString('fr-FR')} kcal/j de déficit en moyenne.`
+      : `Tu ingères plus que tu ne brûles — ${Math.abs(diff).toLocaleString('fr-FR')} kcal/j de surplus en moyenne.`;
+    msgHtml = `<div style="background:var(--bg-2);border-radius:10px;padding:10px 12px;border-left:3px solid ${statusColor};font-size:12px;color:var(--ink-soft);">${statusLabel} — ${statusDesc}</div>`;
+  }
+
+  el.innerHTML = `
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+      ${cardBurned}${cardConsumed}${cardDiff}
     </div>
-    <div style="background:var(--bg-2);border-radius:10px;padding:10px 12px;border-left:3px solid ${statusColor};font-size:12px;color:var(--ink-soft);">${statusLabel} — ${statusDesc}</div>
-    <p style="font-size:11px;color:var(--ink-softer);margin-top:6px;">Calculé sur ${daysWithBoth} jour${daysWithBoth>1?'s':''} avec les deux valeurs renseignées.</p>`;
+    ${msgHtml}
+    <p style="font-size:11px;color:var(--ink-softer);margin-top:6px;">Calculé sur ${daysWithBurned} jour${daysWithBurned>1?'s':''} (dépenses) / ${daysWithBoth} j (repas + dépenses).</p>`;
 }
 
 function renderCalorieChart() {
