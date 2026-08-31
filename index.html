@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1098</title>
+<title>Mon Tableau de Vie 🌿 · v1100</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6344,7 +6344,8 @@ const EMOTIONS_DEFAULT = [
   { id: "calme",      label: "Sereine",    emoji: "🌿" },
   { id: "goumin",     label: "En goumin",  emoji: "💔" },
   { id: "fatiguee",   label: "Fatiguée",   emoji: "😴" },
-  { id: "anxieuse",   label: "Malade",     emoji: "🤒" },
+  { id: "anxieuse",   label: "Anxieuse",   emoji: "😰" },
+  { id: "malade",     label: "Malade",     emoji: "🤒" },
   { id: "stressee",   label: "Stressée",   emoji: "🌀" },
   { id: "irritable",  label: "Irritable",  emoji: "😤" },
   { id: "colere",     label: "En colère",  emoji: "😡" },
@@ -17094,15 +17095,17 @@ function renderJournalMoodTags(text) {
 function renderJournal() {
   const today = getToday();
   const text = today.journal || "";
-  document.getElementById("journalToday").value = text;
-  renderJournalMoodTags(text);
+  const active = document.activeElement;
+  const taEl = document.getElementById("journalToday");
+  if (active !== taEl) taEl.value = text;
+  renderJournalMoodTags(active === taEl ? taEl.value : text);
   // Prompts dev perso
   const aEl = document.getElementById("journalAccomplishment");
   const gEl = document.getElementById("journalGratitude");
   const hEl = document.getElementById("journalHighlight");
-  if (aEl) aEl.value = today.accomplishment || "";
-  if (gEl) gEl.value = today.gratitude || "";
-  if (hEl) hEl.value = today.highlight || "";
+  if (aEl && active !== aEl) aEl.value = today.accomplishment || "";
+  if (gEl && active !== gEl) gEl.value = today.gratitude || "";
+  if (hEl && active !== hEl) hEl.value = today.highlight || "";
   renderJournalDreamNotes();
   renderDreamHistory();
 
