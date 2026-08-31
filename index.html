@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1103</title>
+<title>Mon Tableau de Vie 🌿 · v1104</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2761,6 +2761,12 @@
           <button onclick="_openActivityModal(null)" style="padding:6px 14px;border-radius:999px;border:none;background:var(--mint-soft);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Nouvelle</button>
         </div>
         <p style="color:var(--ink-soft);font-size:12px;margin:0 0 10px;">Clique sur un jour de la semaine pour marquer une séance ✓</p>
+        <!-- Navigation semaine -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <button onclick="navActWeek(-1)" style="padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:white;cursor:pointer;font-size:14px;color:var(--ink);">◀</button>
+          <span id="actWeekLabel" style="flex:1;text-align:center;font-size:12px;color:var(--ink-soft);font-weight:600;"></span>
+          <button id="actWeekNextBtn" onclick="navActWeek(1)" style="padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:white;cursor:pointer;font-size:14px;color:var(--ink);" disabled>▶</button>
+        </div>
         <!-- Formulaire ajout/édition inline -->
         <div id="activityForm" style="display:none;background:var(--bg-1);border-radius:14px;padding:12px;margin-bottom:12px;border:1px solid var(--line);">
           <input type="hidden" id="actFormEditId" value="" />
@@ -9838,11 +9844,16 @@ function ensureHistoryEntry(dateKey) {
   if (e.wakeTime === undefined) e.wakeTime = null;
   return e;
 }
-function currentWeekDates() {
-  const today = new Date();
-  const dow = today.getDay(); // 0=dim, 1=lun…
+let _actWeekOffset = 0; // 0 = semaine en cours, -1 = semaine précédente…
+function navActWeek(delta) {
+  _actWeekOffset = Math.min(0, _actWeekOffset + delta);
+  renderActivities();
+}
+function currentWeekDates(offset) {
+  const off = offset !== undefined ? offset : _actWeekOffset;
+  const today = new Date(); today.setHours(0,0,0,0);
   const monday = new Date(today);
-  monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+  monday.setDate(today.getDate() - ((today.getDay()+6)%7) + off*7);
   monday.setHours(0, 0, 0, 0);
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday);
@@ -9933,6 +9944,19 @@ function renderActivities() {
   const weekDates = currentWeekDates();
   const todayStr = todayKey();
   const DAY_LABELS = ["L", "M", "M", "J", "V", "S", "D"];
+  // Label de semaine
+  const _wLabel = document.getElementById("actWeekLabel");
+  if (_wLabel) {
+    if (_actWeekOffset === 0) {
+      _wLabel.textContent = "Cette semaine";
+    } else {
+      const mon = weekDates[0], sun = weekDates[6];
+      const fmt = d => d.toLocaleDateString("fr-FR", {day:"numeric",month:"short"});
+      _wLabel.textContent = `Sem. du ${fmt(mon)} au ${fmt(sun)}`;
+    }
+  }
+  const _nextBtn = document.getElementById("actWeekNextBtn");
+  if (_nextBtn) _nextBtn.disabled = _actWeekOffset >= 0;
   document.getElementById("activityList").innerHTML = state.activities.map(a => {
     const weekTotal = activityWeekTotal(a.id);
     const dotsHtml = weekDates.map((d, i) => {
@@ -11054,6 +11078,8 @@ function renderHealth() {
     dateInput.value = todayKey();
     dateInput.addEventListener("change", () => fillBodyCompForm(dateInput.value));
   }
+  // Toujours recharger les valeurs du formulaire (poids, graisse, muscle) depuis l'historique
+  if (dateInput) fillBodyCompForm(dateInput.value || todayKey());
   renderTrendPrediction();
   renderHabitsTracking();
 }
