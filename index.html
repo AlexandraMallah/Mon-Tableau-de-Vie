@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1111</title>
+<title>Mon Tableau de Vie 🌿 · v1112</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2877,7 +2877,11 @@
         <div class="stat" id="stepsMonthlyTile" style="transition:background 0.3s;"></div>
         <div class="stat" id="stepsBestTile"></div>
       </div>
-      <div style="height:14px;"></div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin:12px 0 6px;">
+        <button onclick="navStepsMonth(-1)" style="background:var(--lavender-soft);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;color:var(--ink);display:flex;align-items:center;justify-content:center;">◀</button>
+        <span id="stepsMonthLabel" style="font-size:14px;font-weight:600;color:var(--ink);min-width:130px;text-align:center;"></span>
+        <button id="stepsMonthNext" onclick="navStepsMonth(1)" style="background:var(--lavender-soft);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;color:var(--ink);display:flex;align-items:center;justify-content:center;">▶</button>
+      </div>
       <p style="color:var(--ink-soft);font-size:12px;margin:0 0 6px;">🟢 ≥ 9000 · 🟠 7000-8999 · 🔴 < 7000 · pointillé vert = objectif</p>
       <div class="chart-wrap" style="height:240px;"><canvas id="stepsChart"></canvas></div>
     </div>
@@ -6189,7 +6193,7 @@ function onViewChange(view) {
   if (view === "today") maybeLoadWeather();
   if (view === "work") updateWorkTabBadges();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
-  if (view === "health") { _healthMonthOffset = 0; _renderHealthMonthLabel(); renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderTrendPrediction(); renderSkincare(); renderPillSante(); renderCustomSymptomsSante(); renderEnergyBalance(); renderHabitsTracking(); }
+  if (view === "health") { _healthMonthOffset = 0; _stepsMonthOffset = 0; _renderHealthMonthLabel(); _renderStepsMonthLabel(); renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderStepsStats(); renderTrendPrediction(); renderSkincare(); renderPillSante(); renderCustomSymptomsSante(); renderEnergyBalance(); renderHabitsTracking(); }
   if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
@@ -11096,38 +11100,7 @@ function _syncPasKm(val, fromKm) {
     if (inp) inp.value = km;
   }
 }
-function renderStepsStats() {
-  const h = getStepsHabit();
-  if (!h || !document.getElementById("stepsTodayTile")) return;
-  const target = h.target || 9000;
-  const today = getStepsForDate(new Date());
-  const monthDates = _healthMonthDates();
-  const values = monthDates.map(d => getStepsForDate(d)).filter(v => v > 0);
-  const monthlyAvg = values.length ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
-  const best = values.length ? Math.max(...values) : 0;
-  const daysGoal = monthDates.filter(d => getStepsForDate(d) >= target).length;
-
-  const ct = colorForSteps(today);
-  const cm = colorForSteps(monthlyAvg);
-  const todayPct = Math.round((today / target) * 100);
-  document.getElementById("stepsTodayTile").innerHTML = `
-    <div class="stat-label">Aujourd'hui</div>
-    <div class="stat-val" style="color:${ct.fg};">${today.toLocaleString("fr-FR")}</div>
-    <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">${todayPct}% de l'objectif ${today >= target ? "✓" : ""}</div>
-  `;
-  document.getElementById("stepsTodayTile").style.background = ct.bg;
-  document.getElementById("stepsMonthlyTile").innerHTML = `
-    <div class="stat-label">Moy. du mois</div>
-    <div class="stat-val" style="color:${cm.fg};">${monthlyAvg.toLocaleString("fr-FR")}</div>
-    <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">sur ${values.length} j renseigné${values.length > 1 ? "s" : ""}</div>
-  `;
-  document.getElementById("stepsMonthlyTile").style.background = cm.bg;
-  document.getElementById("stepsBestTile").innerHTML = `
-    <div class="stat-label">🏆 Meilleur jour</div>
-    <div class="stat-val" style="color:var(--lavender);">${best.toLocaleString("fr-FR")}</div>
-    <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">${daysGoal} jour${daysGoal > 1 ? "s" : ""} objectif atteint</div>
-  `;
-}
+// renderStepsStats est définie plus bas avec _stepsMonthDates
 /* ========= ROUTINES MATIN / SOIR ========= */
 function _routineColor(key) {
   const b = document.body.classList;
@@ -12701,11 +12674,61 @@ function toggleSkincare(id) {
   renderHabits();
 }
 
+let _stepsMonthOffset = 0;
+function _stepsMonthDates() {
+  const ref = new Date(); ref.setDate(1);
+  ref.setMonth(ref.getMonth() + _stepsMonthOffset);
+  const start = new Date(ref.getFullYear(), ref.getMonth(), 1);
+  const end   = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
+  const dates = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) dates.push(new Date(d));
+  return dates;
+}
+function navStepsMonth(delta) {
+  if (_stepsMonthOffset + delta > 0) return;
+  _stepsMonthOffset += delta;
+  _renderStepsMonthLabel();
+  renderStepsChart();
+  renderStepsStats();
+}
+function _renderStepsMonthLabel() {
+  const el = document.getElementById("stepsMonthLabel");
+  const nxt = document.getElementById("stepsMonthNext");
+  if (!el) return;
+  const ref = new Date(); ref.setDate(1);
+  ref.setMonth(ref.getMonth() + _stepsMonthOffset);
+  el.textContent = ref.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  if (nxt) { nxt.style.opacity = _stepsMonthOffset >= 0 ? "0.3" : "1"; nxt.style.pointerEvents = _stepsMonthOffset >= 0 ? "none" : "auto"; }
+}
+function renderStepsStats() {
+  const dates = _stepsMonthDates();
+  const now = new Date(); now.setHours(0,0,0,0);
+  const todayStr = todayKey(now);
+  const todayVal = getStepsForDate(now);
+  const monthVals = dates.filter(d => d <= now).map(d => getStepsForDate(d)).filter(v => v > 0);
+  const monthAvg = monthVals.length ? Math.round(monthVals.reduce((a,b)=>a+b,0)/monthVals.length) : 0;
+  const allVals = Object.entries(state.history||{}).map(([,d])=>Number(d?.habits?.['h-pas'])||0).filter(v=>v>0);
+  const best = allVals.length ? Math.max(...allVals) : 0;
+  const targetSteps = getStepsHabit()?.target || 9000;
+  const todayPct = targetSteps ? Math.round(todayVal/targetSteps*100) : 0;
+  const daysOnTarget = allVals.filter(v=>v>=targetSteps).length;
+  const todayTile = document.getElementById("stepsTodayTile");
+  const mTile = document.getElementById("stepsMonthlyTile");
+  const bTile = document.getElementById("stepsBestTile");
+  const _isS = document.body.classList.contains("t-serieux");
+  const todayBg = todayVal >= targetSteps ? (_isS?"#ccddd0":"#d8f0e5") : todayVal >= 7000 ? (_isS?"#f0e0cc":"#fce5d1") : (_isS?"#f0d0d0":"#fde8e8");
+  if (todayTile) todayTile.innerHTML = `<div class="stat-label">Aujourd'hui</div><div class="stat-value" style="font-size:20px;">${todayVal.toLocaleString("fr-FR")}</div><div class="stat-hint">${todayPct}% de l'objectif</div>`;
+  if (todayTile) todayTile.style.background = todayBg;
+  const monthBg = monthAvg >= targetSteps ? (_isS?"#ccddd0":"#d8f0e5") : monthAvg >= 7000 ? (_isS?"#f0e0cc":"#fce5d1") : "";
+  if (mTile) mTile.innerHTML = `<div class="stat-label">Moy. du mois</div><div class="stat-value" style="font-size:20px;">${monthAvg.toLocaleString("fr-FR")}</div><div class="stat-hint">sur ${monthVals.length} j renseignés</div>`;
+  if (mTile) mTile.style.background = monthBg;
+  if (bTile) bTile.innerHTML = `<div class="stat-label">🏆 Meilleur jour</div><div class="stat-value" style="font-size:20px;color:var(--lavender);">${best.toLocaleString("fr-FR")}</div><div class="stat-hint">${daysOnTarget} jours objectif atteint</div>`;
+}
 function renderStepsChart() {
   const h = getStepsHabit();
   if (!h || !document.getElementById("stepsChart")) return;
   const target = h.target || 9000;
-  const dates = _healthMonthDates();
+  const dates = _stepsMonthDates();
   const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
   const values = dates.map(d => getStepsForDate(d));
   const _isStepsS = document.body.classList.contains("t-serieux");
