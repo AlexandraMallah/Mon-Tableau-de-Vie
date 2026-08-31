@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1101</title>
+<title>Mon Tableau de Vie 🌿 · v1102</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2473,12 +2473,6 @@
           <span style="font-size:12px;color:var(--ink-softer);">Catégories de temps</span>
         </div>
         <div id="timeCatsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:8px;"></div>
-        <div style="display:flex;align-items:center;gap:8px;background:#fdf6d8;padding:7px 10px;border-radius:10px;margin-bottom:8px;">
-          <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;">🔧 Autre</span>
-          <input type="number" id="timeAutre" step="0.25" min="0" placeholder="0" style="width:64px;flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#b8900a;background:white;text-align:center;" onchange="saveTimeWork()" />
-          <span style="font-size:12px;color:var(--ink-soft);">h</span>
-          <input type="text" id="timeAutreNote" placeholder="Préciser…" maxlength="120" style="flex:1;padding:4px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" oninput="saveTimeNote()" />
-        </div>
         <div style="padding:8px 12px;background:linear-gradient(135deg,var(--butter-soft),white);border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:13px;color:var(--ink-soft);">Total du jour</span>
           <strong id="timeDayTotal" style="font-size:16px;color:var(--ink);">0 h</strong>
@@ -6836,7 +6830,7 @@ function _saveBodyProfile() {
   saveState();
   showToast("✅ Profil mis à jour — calcul kcal recalculé");
   const steps = Number(getToday().habits?.['h-pas']) || 0;
-  if (steps > 0) _autoCalcKcal(steps, false);
+  _autoCalcKcal(steps, false);
 }
 // garde rétrocompat
 function _saveBodyHeight() { _saveBodyProfile(); }
@@ -6864,11 +6858,10 @@ function _autoCalcKcal(steps, forceOverwrite) {
     const dks = Object.keys(state.history).sort().reverse();
     for (const d of dks) { const w = Number(state.history[d]?.weight); if (w > 0) { weightKg = w; break; } }
   }
-  if (!heightCm || !weightKg || steps <= 0) {
+  if (!heightCm || !weightKg) {
     if (forceOverwrite) {
       if (!heightCm || !age || !sex) showToast("📏 Remplis taille, âge et sexe dans Santé → Composition corporelle pour activer le calcul auto.");
-      else if (!weightKg) showToast("⚖️ Enregistre ton poids dans Santé pour activer le calcul auto.");
-      else showToast("🚶 Entre d'abord tes pas du jour pour calculer les kcal.");
+      else showToast("⚖️ Enregistre ton poids dans Santé pour activer le calcul auto.");
     }
     return null;
   }
@@ -10910,7 +10903,7 @@ function saveBodyComp() {
   // Si le poids est pour aujourd'hui et qu'on a des pas → recalculer les kcal
   if (w > 0 && dateKey === todayKey()) {
     const steps = Number(state.history[dateKey]?.habits?.['h-pas']) || 0;
-    if (steps > 0) _autoCalcKcal(steps, false);
+    _autoCalcKcal(steps, false);
   }
 }
 function fillBodyCompForm(dateKey) {
@@ -18814,11 +18807,7 @@ function renderTimeCatsGrid() {
     </div>`).join("");
 }
 function fillTimeForm(dateKey) {
-  const wt = getWorkTime(dateKey);
   renderTimeCatsGrid();
-  document.getElementById("timeAutre").value = wt.autre || "";
-  const noteEl = document.getElementById("timeAutreNote");
-  if (noteEl) noteEl.value = wt.autreNote || "";
 }
 function _addTimeCat() {
   _showPrompt("Nom de la catégorie de temps", "", label => {
