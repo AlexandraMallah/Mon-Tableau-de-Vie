@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1107</title>
+<title>Mon Tableau de Vie 🌿 · v1108</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -100,56 +100,6 @@
   }
 
   /* ===== THÈME MINIMAL ===== */
-  body.t-minimal {
-    --bg-1: #fafafa;
-    --bg-2: #f3f3f3;
-    --card: #ffffff;
-    --ink: #0d0d0d;
-    --ink-soft: #3d3d3d;
-    --ink-softer: #888888;
-    --line: #e2e2e2;
-    --lavender: #0d0d0d;
-    --lavender-soft: #f0f0f0;
-    --pink: #333333;
-    --pink-soft: #efefef;
-    --peach: #555555;
-    --peach-soft: #f0f0f0;
-    --mint: #0d0d0d;
-    --mint-soft: #ececec;
-    --sky: #444444;
-    --sky-soft: #efefef;
-    --rose: #666666;
-    --rose-soft: #f0f0f0;
-    --butter: #777777;
-    --butter-soft: #f3f3f3;
-    --lilac: #333333;
-    --lilac-soft: #eeeeee;
-    --red: #111111;
-    --orange: #333333;
-    --green: #111111;
-    --shadow: 0 1px 0 rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
-    --shadow-hover: 0 2px 6px rgba(0,0,0,0.10);
-    --nav-bg: rgba(255,255,255,0.98);
-    --nav-ink: #0d0d0d;
-    --radius-card: 2px;
-    --font-main: "DM Sans", "Helvetica Neue", sans-serif;
-  }
-
-  /* ── Thème Minimal : neutralisation des couleurs résiduelles ── */
-  body.t-minimal .card { border: 1px solid #e2e2e2; box-shadow: none !important; }
-  body.t-minimal .nav { box-shadow: 0 1px 0 #e2e2e2 !important; }
-  body.t-minimal .ring-card { background: white !important; border: 1px solid #e2e2e2 !important; box-shadow: none !important; }
-  body.t-minimal button[style*="background:linear-gradient"],
-  body.t-minimal button[style*="background: linear-gradient"] { background: #f0f0f0 !important; color: #0d0d0d !important; }
-  body.t-minimal [style*="background:linear-gradient(135deg,var(--sky-soft"],
-  body.t-minimal [style*="background:linear-gradient(135deg,var(--lavender-soft"] { background: #f5f5f5 !important; }
-  body.t-minimal .nav-tab.active { background: #0d0d0d !important; color: #fff !important; }
-  body.t-minimal .nav-tab { color: #555 !important; }
-  body.t-minimal .activity-day-dot.done { background: #0d0d0d !important; color: white !important; }
-  body.t-minimal .habit.done { background: #f0f0f0 !important; }
-  body.t-minimal .checkbox { border-color: #aaa !important; }
-  body.t-minimal .habit.done .checkbox { background: #0d0d0d !important; border-color: #0d0d0d !important; }
-
   * { box-sizing: border-box; }
   html { color-scheme: light; background: #fdf6f0; } /* fond clair immédiat avant CSS vars */
   html, body { margin: 0; padding: 0; }
@@ -1872,7 +1822,6 @@
       <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);">
         <button id="themeBtnSmooth"  onclick="applyTheme('smooth')"  title="Smooth"  style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">🌸</button>
         <button id="themeBtnSerieux" onclick="applyTheme('serieux')" title="Sérieux" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">💼</button>
-        <button id="themeBtnMinimal" onclick="applyTheme('minimal')" title="Minimal" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">⬜</button>
       </div>
       <!-- Traduction -->
       <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);">
@@ -3868,20 +3817,6 @@
             </div>
           </div>
           <span id="themeCheckSerieux" style="margin-left:auto;font-size:20px;display:none;">✓</span>
-        </div>
-        <div id="themeCardMinimal" onclick="applyTheme('minimal')" style="cursor:pointer;border-radius:12px;border:2px solid #e0e0e0;background:linear-gradient(135deg,#f5f5f5,#ebebeb);padding:14px 16px;display:flex;align-items:center;gap:12px;">
-          <span style="font-size:28px;">⬜</span>
-          <div>
-            <div style="font-weight:600;font-size:14px;color:#111;">Minimal</div>
-            <div style="font-size:12px;color:#555;margin-top:2px;">Noir, blanc, gris · épuré et concentré</div>
-            <div style="display:flex;gap:4px;margin-top:6px;">
-              <span style="width:14px;height:14px;border-radius:50%;background:#111;display:inline-block;"></span>
-              <span style="width:14px;height:14px;border-radius:50%;background:#555;display:inline-block;"></span>
-              <span style="width:14px;height:14px;border-radius:50%;background:#999;display:inline-block;"></span>
-              <span style="width:14px;height:14px;border-radius:50%;background:#e0e0e0;border:1px solid #ccc;display:inline-block;"></span>
-            </div>
-          </div>
-          <span id="themeCheckMinimal" style="margin-left:auto;font-size:20px;display:none;">✓</span>
         </div>
       </div>
     </div>
@@ -6000,7 +5935,7 @@ let state = loadState();
 (function() {
   const t = state.uiTheme || "smooth";
   if (t === "serieux") document.body.classList.add("t-serieux");
-  else if (t === "minimal") document.body.classList.add("t-minimal");
+  
   // Init boutons header (DOM peut ne pas être prêt — on le refait dans renderApp)
   window._pendingTheme = t;
 })();
@@ -6272,16 +6207,9 @@ const RING_COLORS_SERIEUX = [
   { fg: "#88a890", bg: "#ccddd0" },
   { fg: "#a4c8d8", bg: "#d8eef5" },
 ];
-const RING_COLORS_MINIMAL = [
-  { fg: "#0d0d0d", bg: "#e0e0e0" },
-  { fg: "#222222", bg: "#e4e4e4" },
-  { fg: "#383838", bg: "#e8e8e8" },
-  { fg: "#555555", bg: "#ececec" },
-];
 function _getRingColors() {
   const b = document.body.classList;
   if (b.contains("t-serieux")) return RING_COLORS_SERIEUX;
-  if (b.contains("t-minimal")) return RING_COLORS_MINIMAL;
   return RING_COLORS;
 }
 function ringSvg(pct, idx) {
@@ -6701,7 +6629,7 @@ function renderHabits() {
     if (h.type === "numeric") {
       const num = Number(value) || 0;
       const pct = Math.min(100, Math.round((num / (h.target || 1)) * 100));
-      const _hbS = document.body.classList.contains("t-serieux"), _hbM = document.body.classList.contains("t-minimal");
+      const _hbS = document.body.classList.contains("t-serieux");
       const barColor = isDone ? (_hbS?"#a0c0a8":_hbM?"#555":"var(--mint)") : (num >= 7000 && /pas/i.test(h.name)) ? (_hbS?"#e0c4a0":_hbM?"#888":"var(--peach)") : (_hbS?"#d0ac84":_hbM?"#aaa":"var(--rose)");
       const isSmall = (h.target || 1) <= 30;
       const inputStep = isSmall ? 1 : 100;
@@ -8765,7 +8693,6 @@ function renderTaskProgress() {
     if (t.done) tasksByProject[key].done++;
   }
   const _isS = document.body.classList.contains("t-serieux");
-  const _isM = document.body.classList.contains("t-minimal");
   const CUSTOM_COLORS = _isS ? [
     { fg: "#6b9ec4", bg: "#d4e8f4" }, { fg: "#88a890", bg: "#ccddd0" },
     { fg: "#d4aa84", bg: "#f0e0cc" }, { fg: "#8ab8cc", bg: "#d0eaf4" },
@@ -9014,7 +8941,7 @@ function renderTasks() {
     const dlText = t.deadline ? `${isEvent ? "📅" : "⏰"} ${formatDeadline(t.deadline)}` : "";
     const tagHtml = project ? `<span class="task-project-tag">${escapeHtml(project.name)}</span>` : "";
     const pct = taskProgress(t);
-    const progressColor = pct >= 100 ? (document.body.classList.contains('t-minimal') ? '#333' : document.body.classList.contains('t-serieux') ? '#3d8b78' : '#4ade80') : document.body.classList.contains('t-minimal') ? `hsl(0,0%,${Math.round(70 - pct * 0.4)}%)` : document.body.classList.contains('t-serieux') ? `hsl(${210 - Math.round(pct * 0.4)},60%,${40 + Math.round(pct * 0.08)}%)` : `hsl(${Math.round(pct * 1.2)}, 72%, 52%)`;
+    const progressColor = pct >= 100 ? (document.body.classList.contains('t-serieux') ? '#3d8b78' : '#4ade80') : document.body.classList.contains('t-serieux') ? `hsl(${210 - Math.round(pct * 0.4)},60%,${40 + Math.round(pct * 0.08)}%)` : `hsl(${Math.round(pct * 1.2)}, 72%, 52%)`;
     const progressHtml = pct > 0 ? `<div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%;background:${progressColor};"></div></div>` : "";
     const pctBadge = pct > 0 && !t.done ? `<span class="task-pct-badge" style="color:${progressColor};background:${progressColor}22;">${pct}%</span>` : "";
     const kindBadge = isEvent
@@ -9408,7 +9335,7 @@ function _getCurrentEditTask() {
   return state.work.postdocTasks.find(x => x.id === id);
 }
 function updateModalPreview(pct) {
-  const col = pct >= 100 ? (document.body.classList.contains('t-minimal') ? '#333' : document.body.classList.contains('t-serieux') ? '#3d8b78' : '#4ade80') : document.body.classList.contains('t-minimal') ? `hsl(0,0%,${Math.round(70 - pct * 0.4)}%)` : document.body.classList.contains('t-serieux') ? `hsl(${210 - Math.round(pct * 0.4)},60%,${40 + Math.round(pct * 0.08)}%)` : `hsl(${Math.round(pct * 1.2)}, 72%, 52%)`;
+  const col = pct >= 100 ? (document.body.classList.contains('t-serieux') ? '#3d8b78' : '#4ade80') : document.body.classList.contains('t-serieux') ? `hsl(${210 - Math.round(pct * 0.4)},60%,${40 + Math.round(pct * 0.08)}%)` : `hsl(${Math.round(pct * 1.2)}, 72%, 52%)`;
   const bar = document.getElementById("taskEditPreviewBar");
   const val = document.getElementById("taskEditProgressVal");
   if (bar) { bar.style.width = pct + "%"; bar.style.background = pct > 0 ? col : "transparent"; }
@@ -10321,11 +10248,9 @@ function renderActivityStats() {
 let activityChart;
 const PASTEL_PALETTE = ["#c9b6f0", "#f5b6c9", "#b4d4f1", "#f7c9a3", "#aee0c8", "#efb8c8", "#f5e6a8", "#d4b6f0"];
 const _PAL_SERIEUX   = ["#8ab4d4","#e0c4a0","#a0c0a8","#d0ac84","#a4cce0","#cca88c","#b4d4e4","#acc4d8"];
-const _PAL_MINIMAL   = ["#555555","#777777","#999999","#444444","#666666","#888888","#333333","#aaaaaa"];
 function _getPal() {
   const b = document.body.classList;
   if (b.contains("t-serieux")) return _PAL_SERIEUX;
-  if (b.contains("t-minimal")) return _PAL_MINIMAL;
   return PASTEL_PALETTE;
 }
 
@@ -10339,7 +10264,6 @@ const HORMONES = [
 function _hormoneColor(h) {
   const b = document.body.classList;
   if (b.contains("t-serieux")) return h.colorS;
-  if (b.contains("t-minimal")) return h.colorM;
   return h.color;
 }
 
@@ -11220,7 +11144,6 @@ function _routineColor(key) {
   const meta = ROUTINES_META[key];
   if (!meta) return "#c9b6f0";
   if (b.contains("t-serieux")) return meta.colorS;
-  if (b.contains("t-minimal")) return meta.colorM;
   return meta.color;
 }
 const ROUTINES_META = {
@@ -12399,8 +12322,7 @@ function renderPillSante() {
     if (flow) tipParts.push("🩸 " + flowLabel);
     const title = tipParts.join(" · ");
     const _isS = document.body.classList.contains("t-serieux");
-    const _isM = document.body.classList.contains("t-minimal");
-    let bg;
+      let bg;
     if (isToday) bg = taken ? (_isS?"#6b9ec4":_isM?"#333":"#7c5cbf") : (_isS?"#a4cce0":_isM?"#888":"#b4d4f1");
     else if (taken) bg = _isS?"#8ab4d4":_isM?"#777":"#c9b6f0";
     else bg = _isS?"#d4e8f4":_isM?"#ccc":"#ece6f5";
@@ -12426,11 +12348,9 @@ let _habitNb = 90;
 const _HABIT_SKIP = new Set(["h-eau","h-pas","h-pilule","h-skincare-matin","h-skincare-soir","h-calories","h-cal-dep"]);
 const _HABIT_PALETTE         = ["#c9b6f0","#aee0c8","#f9c7c7","#b6d6f0","#f9e0b6","#d4f0b6","#f0b6d4","#b6f0e4","#f0d4b6","#b6b6f0"];
 const _HABIT_PAL_SERIEUX     = ["#8ab4d4","#e0c4a0","#a0c0a8","#d0ac84","#a4cce0","#cca88c","#b4d4e4","#acc4d8","#d8c8b0","#8cc0d4"];
-const _HABIT_PAL_MINIMAL     = ["#555","#777","#666","#888","#999","#444","#aaa","#333","#bbb","#666"];
 function _getHabitPal() {
   const b = document.body.classList;
   if (b.contains("t-serieux")) return _HABIT_PAL_SERIEUX;
-  if (b.contains("t-minimal")) return _HABIT_PAL_MINIMAL;
   return _HABIT_PALETTE;
 }
 function _habitColor(id) {
@@ -15472,15 +15392,9 @@ const _CAT_PAL_SERIEUX = [
   "#bcd4e4","#d0bca4","#a8ccd8","#c8b494","#88bccf","#dfc8a8",
   "#b0d0c4","#d8bca8","#9ac8d8","#d0bc9c","#b0d0e0","#dcca9e",
 ];
-const _CAT_PAL_MINIMAL = [
-  "#555","#777","#666","#888","#999","#444","#aaa","#333",
-  "#5a5a5a","#3a3a3a","#6a6a6a","#4a4a4a","#7a7a7a","#2a2a2a","#8a8a8a","#606060",
-  "#484848","#686868","#383838","#585858","#787878","#282828","#404040","#707070",
-];
 function _getCatPal() {
   const b = document.body.classList;
   if (b.contains("t-serieux")) return _CAT_PAL_SERIEUX;
-  if (b.contains("t-minimal")) return _CAT_PAL_MINIMAL;
   return CAT_PALETTE;
 }
 function catColor(cat) {
@@ -15761,7 +15675,7 @@ function renderMoneyFlowChart() {
     }).reduce((s, t) => s + (t.partialReimbIncome ? 0 : t.amount), 0);
   };
   const _isFlowS = document.body.classList.contains("t-serieux");
-  const _isFlowM = document.body.classList.contains("t-minimal");
+  const _isFlowM = false;
   const flowDatasets = [
     { label: "Revenus",         data: months.map(m => monthSum(m, "income")),       backgroundColor: _isFlowS?"#a0c0a8":_isFlowM?"#555":"#aee0c8", borderRadius: 8 },
     { label: "Dépenses",        data: months.map(m => monthSum(m, "expense")),      backgroundColor: _isFlowS?"#d0ac84":_isFlowM?"#888":"#efb8c8", borderRadius: 8 },
@@ -15966,7 +15880,7 @@ function renderSavings() {
   if (!el || cats.length === 0) return;
   const maxBal = Math.max(...Object.values(balByCat), 1);
   const _isSvS = document.body.classList.contains("t-serieux");
-  const _isSvM = document.body.classList.contains("t-minimal");
+  const _isSvM = false;
   const COLORS = _isSvS
     ? ["#8ab4d4","#a0c0a8","#e0c4a0","#a4cce0","#d0ac84","#b4d4e4"]
     : _isSvM
@@ -16181,7 +16095,7 @@ function renderSavingsChart() {
     state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "income"; }).reduce((s, t) => s + t.amount, 0)
   );
   const _isSavS = document.body.classList.contains("t-serieux");
-  const _isSavM = document.body.classList.contains("t-minimal");
+  const _isSavM = false;
   savingsChart = new Chart(document.getElementById("savingsChart"), {
     type: "bar",
     data: { labels, datasets: [{ label: "Mis de côté", data, backgroundColor: _isSavS?"#8ab4d4":_isSavM?"#666":"#c9b6f0", borderRadius: 8 }] },
@@ -17276,7 +17190,6 @@ function _pillarColor(idx) {
   const S = ["#a0c0a8","#8ab4d4","#a4cce0","#e0c4a0","#d0ac84","#cca88c"];
   const M = ["#666","#555","#777","#888","#999","#444"];
   if (b.contains("t-serieux")) return S[idx] || S[0];
-  if (b.contains("t-minimal")) return M[idx] || M[0];
   return null; // null = utiliser p.color (smooth)
 }
 
@@ -17945,8 +17858,8 @@ function renderPillars() {
       datasets: [{
         label: "Score (%)",
         data: computed.map(p => p.score),
-        backgroundColor: document.body.classList.contains("t-serieux") ? "rgba(107,158,196,0.20)" : document.body.classList.contains("t-minimal") ? "rgba(100,100,100,0.15)" : "rgba(174,224,200,0.25)",
-        borderColor: document.body.classList.contains("t-serieux") ? "#6b9ec4" : document.body.classList.contains("t-minimal") ? "#666" : "#aee0c8",
+        backgroundColor: document.body.classList.contains("t-serieux") ? "rgba(107,158,196,0.20)" : "rgba(174,224,200,0.25)",
+        borderColor: document.body.classList.contains("t-serieux") ? "#6b9ec4" : "#aee0c8",
         borderWidth: 2,
         pointBackgroundColor: computed.map(p => p._tc),
         pointBorderColor: "white",
@@ -23973,13 +23886,12 @@ function switchSettingsTab(tab) {
   });
 }
 function applyTheme(id, persist = true) {
-  document.body.classList.remove("t-serieux","t-minimal");
+  document.body.classList.remove("t-serieux");
   if (id === "serieux") document.body.classList.add("t-serieux");
-  else if (id === "minimal") document.body.classList.add("t-minimal");
   state.uiTheme = id;
   if (persist) saveState();
   // Mettre à jour les boutons header
-  ["smooth","serieux","minimal"].forEach(t => {
+  ["smooth","serieux"].forEach(t => {
     const key = t.charAt(0).toUpperCase() + t.slice(1);
     const btn  = document.getElementById("themeBtn" + key);
     const chk  = document.getElementById("themeCheck" + key);
@@ -24004,7 +23916,7 @@ function openSettings(tab) {
   switchSettingsTab(tab || "profil");
   // Rafraîchir les checkmarks de thème
   const curTheme = state.uiTheme || "smooth";
-  ["smooth","serieux","minimal"].forEach(t => {
+  ["smooth","serieux"].forEach(t => {
     const chk  = document.getElementById("themeCheck" + t.charAt(0).toUpperCase() + t.slice(1));
     const card = document.getElementById("themeCard"  + t.charAt(0).toUpperCase() + t.slice(1));
     if (chk)  chk.style.display  = t === curTheme ? "" : "none";
