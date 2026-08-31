@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1100</title>
+<title>Mon Tableau de Vie 🌿 · v1101</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -407,7 +407,7 @@
   .activity-meta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
   .activity-day-dots { display: flex; gap: 5px; flex-wrap: nowrap; }
   .activity-day-dot {
-    width: 30px; height: 40px; border-radius: 8px;
+    width: 30px; min-height: 40px; border-radius: 8px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 3px; cursor: pointer; border: 1.5px solid var(--line);
     background: #faf8fd; transition: all 0.15s; user-select: none; flex-shrink: 0;
@@ -1440,6 +1440,7 @@
     white-space: nowrap;
   }
   @media (max-width: 640px) { body.edit-mode::after { font-size: 11px; padding: 7px 12px; bottom: 8px; } }
+  body.edit-mode:has(.modal-bg.open)::after { display: none; }
 
   /* ========= RESPONSIVE ========= */
   @media (max-width: 880px) {
@@ -1911,17 +1912,17 @@
       <div id="weatherIcon" style="font-size:32px;line-height:1;">⛅</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
-          <span id="weatherCity" style="font-size:22px;font-weight:700;color:var(--ink);">📍 —</span>
-          <span id="weatherTemp" style="font-size:22px;font-weight:700;color:var(--ink);">—</span>
+          <span id="weatherCity" style="font-size:clamp(13px,4vw,22px);font-weight:700;color:var(--ink);word-break:break-word;">📍 —</span>
+          <span id="weatherTemp" style="font-size:clamp(13px,4vw,22px);font-weight:700;color:var(--ink);flex-shrink:0;">—</span>
         </div>
         <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;display:flex;flex-wrap:wrap;gap:2px 12px;">
-          <span id="weatherDesc" style="white-space:normal;text-transform:capitalize;word-break:break-word;">Chargement…</span>
+          <span id="weatherDesc" style="white-space:normal;word-break:break-word;">Chargement…</span>
           <span id="weatherFeels" style="white-space:nowrap;">Ressenti : —</span>
           <span id="weatherHumidity" style="white-space:nowrap;">Humidité : —</span>
           <span id="weatherWind" style="white-space:nowrap;">Vent : —</span>
         </div>
       </div>
-      <div id="weatherControls" style="display:none;flex-direction:column;gap:4px;align-items:flex-end;">
+      <div id="weatherControls" style="display:none;flex-direction:row;flex-wrap:wrap;gap:4px;align-items:center;">
         <button onclick="fetchWeather(true)" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.6);font-size:11px;cursor:pointer;color:var(--ink-soft);" title="Utiliser ma position (géolocalisation)">🔄 Ma position</button>
         <div id="weatherCityInput" style="display:flex;gap:4px;">
           <input type="text" id="weatherManualCity" placeholder="Ville…" style="padding:4px 8px;border:1px solid var(--line);border-radius:7px;font-size:11px;width:90px;font-family:inherit;" onkeydown="if(event.key==='Enter')fetchWeatherByCity()" />
@@ -6149,7 +6150,7 @@ async function fetchWeather(force) {
     document.getElementById("weatherTemp").textContent = "—";
     const denied = geoPerm === "denied" || (e && e.code === 1); // permission bloquée
     if (denied) {
-      document.getElementById("weatherCity").textContent = "📍 Localisation bloquée par le navigateur";
+      document.getElementById("weatherCity").textContent = "📍 Localisation bloquée";
       document.getElementById("weatherDesc").textContent = "Localisation bloquée — autorise-la dans les paramètres du navigateur";
     } else {
       document.getElementById("weatherCity").textContent = "📍 Autoriser la localisation ou saisir une ville →";
@@ -6887,7 +6888,16 @@ function _autoCalcKcal(steps, forceOverwrite) {
   const distanceKm  = (steps * strideMeter) / 1000;
   const stepKcal    = distanceKm * weightKg * 1.036;
 
-  const total = Math.round(bmr + stepKcal);
+  // Ajouter les kcal sport des activités déjà loggées aujourd'hui
+  const dayActs = state.history[dk]?.activities || {};
+  let sportKcalToday = 0;
+  for (const [actId, actVal] of Object.entries(dayActs)) {
+    if (actVal?.duration) {
+      const act = (state.activities || []).find(a => a.id === actId);
+      if (act?.sport && act?.met) sportKcalToday += _calcSportKcal(act.met, actVal.duration);
+    }
+  }
+  const total = Math.round(bmr + stepKcal + sportKcalToday);
   const t = getToday();
   const existing = Number(t.habits?.['h-cal-dep']) || 0;
   if (!existing || forceOverwrite) {
@@ -26172,7 +26182,13 @@ setInterval(() => {
 function scheduleNoteSave() {
   // 1. Sauvegarde immédiate dans localStorage (pas de perte si rechargement)
   _noteFlushToLocalStorage();
-  // 2. Debounce pour Firebase + label "Sauvegardé" + re-render
+  // 2. Mise à jour immédiate du titre dans la sidebar
+  const titleVal = document.getElementById("noteTitleInput")?.value;
+  if (titleVal !== undefined && _currentNoteId) {
+    const activeNoteEl = document.querySelector(`.note-item.active span`);
+    if (activeNoteEl) activeNoteEl.textContent = titleVal || 'Sans titre';
+  }
+  // 3. Debounce pour Firebase + label "Sauvegardé" + re-render
   clearTimeout(_noteSaveTimer);
   _noteSaveTimer = setTimeout(saveCurrentNote, 1200);
 }
