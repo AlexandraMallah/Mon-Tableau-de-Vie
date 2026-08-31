@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1109</title>
+<title>Mon Tableau de Vie 🌿 · v1110</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2940,9 +2940,10 @@
       <div class="card-row" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;">
         <h2 style="margin:0;flex:1;">📊 Mes habitudes</h2>
         <div style="display:flex;gap:4px;">
-          <button onclick="setHabitNb(30)" id="habitBtn30" class="btn-soft" style="font-size:11px;padding:4px 8px;">30j</button>
-          <button onclick="setHabitNb(60)" id="habitBtn60" class="btn-soft" style="font-size:11px;padding:4px 8px;">60j</button>
-          <button onclick="setHabitNb(90)" id="habitBtn90" class="btn-soft" style="font-size:11px;padding:4px 8px;font-weight:700;">90j</button>
+          <button onclick="setHabitNb(30)"  id="habitBtn30"  class="btn-soft" style="font-size:11px;padding:4px 8px;">30j</button>
+          <button onclick="setHabitNb(60)"  id="habitBtn60"  class="btn-soft" style="font-size:11px;padding:4px 8px;">60j</button>
+          <button onclick="setHabitNb(90)"  id="habitBtn90"  class="btn-soft" style="font-size:11px;padding:4px 8px;font-weight:700;">90j</button>
+          <button onclick="setHabitNb(0)"   id="habitBtnAll" class="btn-soft" style="font-size:11px;padding:4px 8px;">Tout</button>
         </div>
       </div>
       <div id="habitsTrackingGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:18px;"></div>
@@ -12349,7 +12350,19 @@ function _habitColor(id) {
 function setHabitNb(n) {
   _habitNb = n;
   [30,60,90].forEach(v => { const b = document.getElementById("habitBtn"+v); if(b) b.style.fontWeight = v===n ? "700" : "400"; });
+  const bAll = document.getElementById("habitBtnAll"); if(bAll) bAll.style.fontWeight = n===0 ? "700" : "400";
   renderHabitsTracking();
+}
+function _habitAllDays() {
+  // Trouve le premier jour de l'historique qui a des données d'habitudes
+  const keys = Object.keys(state.history || {}).filter(dk => {
+    const h = state.history[dk]?.habits;
+    return h && Object.keys(h).length > 0;
+  }).sort();
+  if (!keys.length) return 90;
+  const first = new Date(keys[0]); first.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0,0,0,0);
+  return Math.max(1, Math.round((today - first) / 86400000) + 1);
 }
 function renderHabitsTracking() {
   const el = document.getElementById("habitsTrackingGrid");
@@ -12363,8 +12376,9 @@ function renderHabitsTracking() {
   if (!habits.length) { el.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;font-style:italic;">Aucune habitude personnalisée. Ajoute-en depuis l'onglet <strong>Aujourd'hui → Mes habitudes</strong> (hors routines matin/soir).</p>`; return; }
 
   const today = new Date(); today.setHours(0,0,0,0);
+  const _nbDays = _habitNb === 0 ? _habitAllDays() : _habitNb;
   const days = [];
-  for (let i = _habitNb - 1; i >= 0; i--) {
+  for (let i = _nbDays - 1; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
     days.push(todayKey(d));
   }
@@ -12451,7 +12465,7 @@ function renderHabitsTracking() {
             <strong style="font-size:16px;font-weight:700;color:${col.replace(/f/g,"9")};">${streak}j</strong>
           </div>
           <div style="text-align:center;">
-            <div style="font-size:9px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">${_habitNb}j</div>
+            <div style="font-size:9px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">${_habitNb===0?_nbDays+"j":_habitNb+"j"}</div>
             <strong style="font-size:16px;font-weight:700;color:#4d9c7e;">${pct}%</strong>
           </div>
           <div style="text-align:center;">
@@ -12462,7 +12476,7 @@ function renderHabitsTracking() {
       </div>
       ${gridHtml}
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--ink-softer);">
-        <span>← il y a ${_habitNb} jours</span><span>aujourd'hui →</span>
+        <span>← ${_habitNb===0?"début":"il y a "+_habitNb+" jours"}</span><span>aujourd'hui →</span>
       </div>
     </div>` + _wrapEnd;
   }).join("");
