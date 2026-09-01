@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1128</title>
+<title>Mon Tableau de Vie 🌿 · v1129</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1376,18 +1376,27 @@
     font-size: 26px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
     border-radius: 10px; background: var(--bg-1); border: 1px solid var(--line); margin-bottom: 8px;
   }
-  /* Sélecteur 1/2/3 colonnes (listes Domestique) */
-  .cl-col-picker { display: flex; gap: 6px; }
-  .cl-col-picker button {
-    width: 38px; height: 34px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--card);
-    color: var(--ink); cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; transition: all .1s;
-  }
-  .cl-col-picker button.active { border-color: var(--lavender); background: var(--lavender-soft); }
   /* Rendu multi-colonnes des items d'une liste/sous-liste (desktop uniquement) */
   .cl-items-cols { column-gap: 20px; }
   .cl-items-cols > div { break-inside: avoid; }
   @media (max-width: 700px) { .cl-items-cols { column-count: 1 !important; } }
   .cl-item-num { color: var(--ink-softer); font-size: 12px; font-variant-numeric: tabular-nums; min-width: 16px; text-align: right; flex-shrink: 0; }
+  /* Listes Domestique + listes de projets perso — design unifié, compact */
+  .cl-item-row { border-radius: 8px; transition: background .1s; }
+  .cl-item-row:hover { background: var(--bg-2); }
+  .cl-item-row.done { background: var(--bg-1); }
+  .cl-sec-header button { opacity: .55; transition: opacity .1s; }
+  .cl-sec-header button:hover { opacity: 1; }
+  .cl-add-sub-pill {
+    font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1.5px dashed var(--line);
+    background: none; color: var(--ink-soft); cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  .cl-add-sub-pill:hover { border-color: var(--lavender); color: var(--ink); }
+  .cl-add-row-btn {
+    padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: white;
+    cursor: pointer; font-family: inherit; font-size: 12px; color: var(--ink);
+  }
+  .cl-add-row-btn:hover { border-color: var(--lavender); }
   .modal-hint { font-size:12px;color:var(--ink-soft);margin:-10px 0 14px;line-height:1.5;text-align:left; }
   .modal label { font-size: 13px; color: var(--ink-soft); display: block; margin-bottom: 6px; margin-top: 12px; }
   .modal input[type="text"], .modal input[type="number"], .modal input[type="date"], .modal input[type="url"],
@@ -2216,6 +2225,7 @@
     <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
       <h2 id="newSectionModalTitle" style="margin:0 0 6px;">📂 Nouvelle sous-liste</h2>
       <p class="modal-hint">Crée une sous-catégorie à l'intérieur d'une liste existante (ex : "Trousse de toilette" dans la liste "Valise"). Pour supprimer, glisse vers la gauche ou clique sur la sous-liste en mode édition.</p>
+      <input type="hidden" id="newSectionCtx" value="" />
       <input type="hidden" id="newSectionListIdx" value="" />
       <input type="hidden" id="newSectionMode" value="" />
       <input type="hidden" id="newSectionPath" value="" />
@@ -2229,12 +2239,9 @@
       <label style="margin-top:12px;display:flex;align-items:center;gap:8px;cursor:pointer;">
         <input type="checkbox" id="newSectionNumbered" style="width:16px;height:16px;cursor:pointer;margin:0;" /> Numéroter les éléments (1, 2, 3…)
       </label>
-      <label style="margin-top:12px;">Colonnes <span style="font-weight:400;color:var(--ink-softer);">(interface ordinateur uniquement)</span></label>
-      <div class="cl-col-picker" id="newSectionColsPicker">
-        <button type="button" onclick="_setModalCols('newSectionColsPicker',1)" data-cols="1">1</button>
-        <button type="button" onclick="_setModalCols('newSectionColsPicker',2)" data-cols="2">2</button>
-        <button type="button" onclick="_setModalCols('newSectionColsPicker',3)" data-cols="3">3</button>
-      </div>
+      <label style="margin-top:12px;display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="newSectionTwoCol" style="width:16px;height:16px;cursor:pointer;margin:0;" /> Afficher sur 2 colonnes <span style="font-weight:400;color:var(--ink-softer);">(ordinateur uniquement)</span>
+      </label>
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closeNewSectionModal()">Annuler</button>
@@ -2248,6 +2255,7 @@
     <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
       <h2 id="newListModalTitle" style="margin:0 0 6px;">🗂️ Nouvelle liste</h2>
       <p class="modal-hint">Crée une liste à cocher personnalisée (valise, courses spéciales, checklist déménagement…). Chaque liste peut contenir des sous-listes. Pour renommer ou supprimer une liste, utilise l'icône ✏️ en mode édition.</p>
+      <input type="hidden" id="newListCtx" value="cl" />
       <input type="hidden" id="editListIdx" value="" />
       <label>Nom de la liste</label>
       <input type="text" id="newListName" placeholder="ex : Valise, Courses, Checklist départ…" maxlength="60"
@@ -2259,12 +2267,9 @@
       <label style="margin-top:12px;display:flex;align-items:center;gap:8px;cursor:pointer;">
         <input type="checkbox" id="newListNumbered" style="width:16px;height:16px;cursor:pointer;margin:0;" /> Numéroter les éléments (1, 2, 3…)
       </label>
-      <label style="margin-top:12px;">Colonnes <span style="font-weight:400;color:var(--ink-softer);">(interface ordinateur uniquement)</span></label>
-      <div class="cl-col-picker" id="newListColsPicker">
-        <button type="button" onclick="_setModalCols('newListColsPicker',1)" data-cols="1">1</button>
-        <button type="button" onclick="_setModalCols('newListColsPicker',2)" data-cols="2">2</button>
-        <button type="button" onclick="_setModalCols('newListColsPicker',3)" data-cols="3">3</button>
-      </div>
+      <label style="margin-top:12px;display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="newListTwoCol" style="width:16px;height:16px;cursor:pointer;margin:0;" /> Afficher sur 2 colonnes <span style="font-weight:400;color:var(--ink-softer);">(ordinateur uniquement)</span>
+      </label>
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closeNewListModal()">Annuler</button>
@@ -5088,43 +5093,6 @@
   </div>
 </div>
 
-<!-- Modal ajout liste projet perso -->
-<div class="modal-bg" id="persoListModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)_closePersoListModal()">
-  <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
-    <h3 style="margin:0 0 16px;font-size:17px;">📋 Nouvelle liste</h3>
-    <input type="hidden" id="persoListProjId" />
-    <div style="margin-bottom:16px;">
-      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom de la liste</div>
-      <input type="text" id="persoListName" maxlength="60" placeholder="ex: Invités, Valise, Shopping…"
-        onkeydown="if(event.key==='Enter')_savePersoList()"
-        style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;" />
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button onclick="_closePersoListModal()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-      <button onclick="_savePersoList()" style="padding:9px 20px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Créer</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal ajout sous-liste projet perso -->
-<div class="modal-bg" id="persoSubListModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)_closePersoSubListModal()">
-  <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
-    <h3 style="margin:0 0 16px;font-size:17px;">📑 Nouvelle sous-liste</h3>
-    <input type="hidden" id="persoSubListProjId" />
-    <input type="hidden" id="persoSubListLstId" />
-    <div style="margin-bottom:16px;">
-      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom de la sous-liste</div>
-      <input type="text" id="persoSubListName" maxlength="60" placeholder="ex: Vêtements, Électronique, Documents…"
-        onkeydown="if(event.key==='Enter')_savePersoSubList()"
-        style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;" />
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button onclick="_closePersoSubListModal()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-      <button onclick="_savePersoSubList()" style="padding:9px 20px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Créer</button>
-    </div>
-  </div>
-</div>
-
 <!-- Modal conge -->
 <div class="modal-bg" id="savingsUpdateModal" style="z-index:200;" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeSavingsUpdateModal()">
   <div class="modal" style="max-width:380px;">
@@ -5889,6 +5857,23 @@ function migrate(s) {
   if (!Array.isArray(s.habits)) s.habits = [];
   if (!s.habits.find(h => h.id === 'h-cal-dep')) {
     s.habits.push({ id: "h-cal-dep", name: "Calories dépensées", type: "numeric", target: 2000, unit: "kcal" });
+  }
+  // Migration : listes des projets perso — anciennes sublists (1 niveau, sans emoji) → sections (imbrication illimitée)
+  if (!s._persoListsSectionsMigration) {
+    s._persoListsSectionsMigration = true;
+    (s.domestique?.persoProjects || []).forEach(pp => {
+      (pp.lists || []).forEach(lst => {
+        if (lst.emoji === undefined) lst.emoji = '📋';
+        if (lst.sublists && !lst.sections) {
+          lst.sections = lst.sublists.map(sub => ({
+            id: sub.id, name: sub.name, emoji: '📂',
+            items: sub.items || [], sections: []
+          }));
+          delete lst.sublists;
+        }
+        if (!lst.sections) lst.sections = [];
+      });
+    });
   }
   // Migration : auto-activer pilule si l'utilisateur a déjà des données pillTaken
   if (!s.features.pill && s.history) {
@@ -19399,8 +19384,8 @@ function renderPersoProjects() {
       + '<button onclick="_addPersoNote(\'' + pp.id + '\')" style="font-size:11px;padding:3px 10px;border-radius:8px;border:1.5px dashed ' + color + ';background:' + bg + ';color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Note</button>'
       + '</div><div id="persoNotesList-' + pp.id + '">' + _renderPersoNotesList(pp) + '</div></div>'
       + '<div class="card" style="margin-bottom:14px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"><h3 style="margin:0;font-size:14px;">✅ Listes</h3>'
-      + '<button onclick="_persoAddList(\'' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px dashed ' + color + ';background:' + bg + ';color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Nouvelle liste</button>'
-      + '</div><div id="persoLists-' + pp.id + '">' + _renderPersoLists(pp) + '</div></div>'
+      + '<button onclick="openNewListModal(\'pl:' + pp.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1.5px dashed ' + color + ';background:' + bg + ';color:' + colorDark + ';cursor:pointer;font-family:inherit;">+ Nouvelle liste</button>'
+      + '</div><div id="persoLists-' + pp.id + '">' + _clRenderAllLists('pl:' + pp.id) + '</div></div>'
       + '<div class="card" style="margin-bottom:14px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">'
       + '<h3 style="margin:0;font-size:14px;">💰 Budget</h3>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
@@ -19414,10 +19399,8 @@ function renderPersoProjects() {
 }
 
 function _refreshPersoLists(ppId) {
-  const pp = (state.domestique?.persoProjects||[]).find(p=>p.id===ppId);
-  if (!pp) return;
   const el = document.getElementById("persoLists-"+ppId);
-  if (el) el.innerHTML = _renderPersoLists(pp);
+  if (el) el.innerHTML = _clRenderAllLists('pl:' + ppId);
 }
 function _refreshPersoBudget(ppId) {
   const pp = (state.domestique?.persoProjects||[]).find(p=>p.id===ppId);
@@ -19512,65 +19495,6 @@ function _deletePersoNoteFromModal() {
     const el = document.getElementById("persoNotesList-"+ppId);
     if (el) el.innerHTML = _renderPersoNotesList(pp);
   });
-}
-
-function _renderPersoLists(pp) {
-  if (!(pp.lists||[]).length) return '<p style="color:var(--ink-softer);font-size:12px;font-style:italic;">Aucune liste — clique sur + Nouvelle liste.</p>';
-  const col = pp.color||"#c9a0dc";
-  return pp.lists.map(function(lst) {
-    const allRootItems = lst.items||[];
-    const allSubItems = (lst.sublists||[]).flatMap(s=>s.items||[]);
-    const allItems = allRootItems.concat(allSubItems);
-    const done = allItems.filter(i=>i.done).length;
-    const total = allItems.length;
-
-    // Items racine (non sous-liste)
-    const rootItemsHtml = allRootItems.map(function(item) {
-      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:8px;background:' + (item.done?"var(--bg-1)":"transparent") + ';">'
-        + '<input type="checkbox" ' + (item.done?"checked":"") + ' onchange="_persoToggleItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + item.id + '\',this.checked)" style="accent-color:' + col + ';" />'
-        + '<span style="flex:1;font-size:13px;' + (item.done?"text-decoration:line-through;color:var(--ink-softer);":"") + '">' + escapeHtml(item.text) + '</span>'
-        + '<button onclick="_persoDeleteItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + item.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.4;">✕</button>'
-        + '</div>';
-    }).join("");
-
-    // Sous-listes
-    const sublistsHtml = (lst.sublists||[]).map(function(sub) {
-      const subDone = (sub.items||[]).filter(i=>i.done).length;
-      const subTotal = (sub.items||[]).length;
-      const subItemsHtml = (sub.items||[]).map(function(item) {
-        return '<div style="display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:8px;background:' + (item.done?"var(--bg-1)":"transparent") + ';">'
-          + '<input type="checkbox" ' + (item.done?"checked":"") + ' onchange="_persoToggleSubItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + sub.id + '\',\'' + item.id + '\',this.checked)" style="accent-color:' + col + ';" />'
-          + '<span style="flex:1;font-size:13px;' + (item.done?"text-decoration:line-through;color:var(--ink-softer);":"") + '">' + escapeHtml(item.text) + '</span>'
-          + '<button onclick="_persoDeleteSubItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + sub.id + '\',\'' + item.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.4;">✕</button>'
-          + '</div>';
-      }).join("");
-      return '<div style="margin:8px 0;border-left:3px solid ' + col + ';padding-left:10px;">'
-        + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'
-        + '<span style="font-size:12px;font-weight:700;color:var(--ink-soft);">📑 ' + escapeHtml(sub.name) + '</span>'
-        + '<span style="font-size:11px;color:var(--ink-softer);margin-left:auto;">' + subDone + '/' + subTotal + '</span>'
-        + '<button onclick="_persoDeleteSubList(\'' + pp.id + '\',\'' + lst.id + '\',\'' + sub.id + '\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:0.4;padding:0 2px;">✕</button>'
-        + '</div>'
-        + subItemsHtml
-        + '<div style="display:flex;gap:5px;margin-top:4px;">'
-        + '<input type="text" placeholder="Ajouter…" id="persoSubItem-' + pp.id + '-' + lst.id + '-' + sub.id + '" style="flex:1;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;" onkeydown="if(event.key===\'Enter\')_persoAddSubItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + sub.id + '\')" />'
-        + '<button onclick="_persoAddSubItem(\'' + pp.id + '\',\'' + lst.id + '\',\'' + sub.id + '\')" style="padding:5px 9px;border-radius:8px;border:1px solid var(--line);background:var(--bg-1);cursor:pointer;font-size:12px;">+</button>'
-        + '</div></div>';
-    }).join("");
-
-    return '<div style="margin-bottom:14px;background:var(--bg-1);border-radius:12px;padding:12px;">'
-      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
-      + '<span style="font-size:15px;">' + (lst.emoji||"📋") + '</span>'
-      + '<strong style="font-size:14px;flex:1;">' + escapeHtml(lst.name) + '</strong>'
-      + '<span style="font-size:11px;color:var(--ink-softer);">' + done + '/' + total + '</span>'
-      + '<button onclick="_persoAddSubList(\'' + pp.id + '\',\'' + lst.id + '\')" title="Ajouter une sous-liste" style="background:none;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:11px;color:var(--ink-soft);padding:2px 6px;">+ sous-liste</button>'
-      + '<button onclick="_persoDeleteList(\'' + pp.id + '\',\'' + lst.id + '\')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-softer);padding:0 4px;opacity:0.5;">✕</button>'
-      + '</div>'
-      + rootItemsHtml + sublistsHtml
-      + '<div style="display:flex;gap:6px;margin-top:6px;">'
-      + '<input type="text" placeholder="Ajouter un élément…" id="persoItem-' + pp.id + '-' + lst.id + '" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;background:white;" onkeydown="if(event.key===\'Enter\')_persoAddItem(\'' + pp.id + '\',\'' + lst.id + '\')" />'
-      + '<button onclick="_persoAddItem(\'' + pp.id + '\',\'' + lst.id + '\')" style="padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:12px;">+</button>'
-      + '</div></div>';
-  }).join("");
 }
 
 function _renderPersoBudget(pp) {
@@ -19677,55 +19601,6 @@ function _persoSetStatus(ppId, val) {
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   if (pp) { pp.status = val; saveState(); }
 }
-function _persoAddList(ppId) {
-  document.getElementById("persoListProjId").value = ppId;
-  document.getElementById("persoListName").value = "";
-  document.getElementById("persoListModal").classList.add("open");
-  setTimeout(()=>document.getElementById("persoListName").focus(), 80);
-}
-function _closePersoListModal() { document.getElementById("persoListModal").classList.remove("open"); }
-function _savePersoList() {
-  const ppId = document.getElementById("persoListProjId").value;
-  const name = document.getElementById("persoListName").value.trim();
-  if (!name) return;
-  const emojis = ["📋","👥","🎀","🍽️","🏡","🎵","📸","💌","🌸","✈️"];
-  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  if (!pp) return;
-  if (!pp.lists) pp.lists = [];
-  pp.lists.push({id:"lst"+Date.now(), name, emoji:emojis[pp.lists.length%emojis.length], items:[], sublists:[]});
-  saveState(); _closePersoListModal(); _refreshPersoLists(ppId);
-}
-function _persoDeleteList(ppId, lstId) {
-  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  if (!pp) return;
-  _showConfirm("Supprimer cette liste ?", ()=>{
-    pp.lists = (pp.lists||[]).filter(l=>l.id!==lstId);
-    saveState(); _refreshPersoLists(ppId);
-  });
-}
-function _persoAddItem(ppId, lstId) {
-  const inp = document.getElementById(`persoItem-${ppId}-${lstId}`);
-  const text = inp?.value?.trim();
-  if (!text) return;
-  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
-  if (!lst) return;
-  if (!lst.items) lst.items=[];
-  lst.items.push({id:"itm"+Date.now(),text,done:false});
-  saveState(); _refreshPersoLists(ppId);
-  setTimeout(()=>document.getElementById(`persoItem-${ppId}-${lstId}`)?.focus(), 50);
-}
-function _persoToggleItem(ppId, lstId, itemId, done) {
-  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
-  const item = (lst?.items||[]).find(i=>i.id===itemId);
-  if (item) { item.done = done; saveState(); _refreshPersoLists(ppId); }
-}
-function _persoDeleteItem(ppId, lstId, itemId) {
-  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
-  if (lst) { lst.items=(lst.items||[]).filter(i=>i.id!==itemId); saveState(); _refreshPersoLists(ppId); }
-}
 function _persoAddExpense(ppId, sectionId) {
   document.getElementById("persoExpenseProjId").value = ppId;
   document.getElementById("persoExpenseSectionId").value = sectionId || "";
@@ -19814,61 +19689,6 @@ function _persoDeleteBudgetSection(ppId, secId) {
   pp.budgetSections = (pp.budgetSections||[]).filter(s=>s.id!==secId);
   saveState(); _refreshPersoBudget(ppId);
 }
-// Sous-listes
-function _persoAddSubList(ppId, lstId) {
-  document.getElementById("persoSubListProjId").value = ppId;
-  document.getElementById("persoSubListLstId").value = lstId;
-  document.getElementById("persoSubListName").value = "";
-  document.getElementById("persoSubListModal").classList.add("open");
-  setTimeout(()=>document.getElementById("persoSubListName").focus(), 80);
-}
-function _closePersoSubListModal() { document.getElementById("persoSubListModal").classList.remove("open"); }
-function _savePersoSubList() {
-  const ppId = document.getElementById("persoSubListProjId").value;
-  const lstId = document.getElementById("persoSubListLstId").value;
-  const name = document.getElementById("persoSubListName").value.trim();
-  if (!name) return;
-  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
-  if (!lst) return;
-  if (!lst.sublists) lst.sublists = [];
-  lst.sublists.push({id:"sub"+Date.now(), name, items:[]});
-  saveState(); _closePersoSubListModal(); _refreshPersoLists(ppId);
-}
-function _persoDeleteSubList(ppId, lstId, subId) {
-  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
-  if (!lst) return;
-  lst.sublists = (lst.sublists||[]).filter(s=>s.id!==subId);
-  saveState(); _refreshPersoLists(ppId);
-}
-function _persoAddSubItem(ppId, lstId, subId) {
-  const inp = document.getElementById(`persoSubItem-${ppId}-${lstId}-${subId}`);
-  const text = inp?.value?.trim();
-  if (!text) return;
-  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
-  const sub = (lst?.sublists||[]).find(s=>s.id===subId);
-  if (!sub) return;
-  if (!sub.items) sub.items=[];
-  sub.items.push({id:"itm"+Date.now(), text, done:false});
-  saveState(); _refreshPersoLists(ppId);
-  setTimeout(()=>document.getElementById(`persoSubItem-${ppId}-${lstId}-${subId}`)?.focus(), 50);
-}
-function _persoToggleSubItem(ppId, lstId, subId, itemId, done) {
-  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
-  const sub = (lst?.sublists||[]).find(s=>s.id===subId);
-  const item = (sub?.items||[]).find(i=>i.id===itemId);
-  if (item) { item.done=done; saveState(); _refreshPersoLists(ppId); }
-}
-function _persoDeleteSubItem(ppId, lstId, subId, itemId) {
-  const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
-  const lst = (pp?.lists||[]).find(l=>l.id===lstId);
-  const sub = (lst?.sublists||[]).find(s=>s.id===subId);
-  if (sub) { sub.items=(sub.items||[]).filter(i=>i.id!==itemId); saveState(); _refreshPersoLists(ppId); }
-}
-
 /* ========= NOTES LIBRES ========= */
 function renderFreeNotes() {
   const el = document.getElementById("freeNotesList");
@@ -19933,12 +19753,32 @@ function _deleteFreeNote(id) {
   });
 }
 
-/* ========= LISTES / CHECKLISTS (emboîtement récursif, profondeur illimitée) =========
-   Chaque liste et chaque sous-liste partagent la même forme { items:[], sections:[] } —
-   une sous-liste peut donc elle-même contenir des sous-listes, etc. On adresse un nœud
-   par un chemin (tableau d'index depuis la liste), sérialisé en JSON pour les onclick. */
-function _clNode(li, path) {
-  let node = state.domestique.checklists[li];
+/* ========= LISTES (emboîtement récursif, profondeur illimitée) =========
+   Moteur unique partagé par Domestique > Notes & To-do ("Mes listes") ET par les listes
+   de chaque projet perso (Domestique > Projets). Chaque liste/sous-liste partage la même
+   forme { items:[], sections:[] } — une sous-liste peut donc elle-même contenir des
+   sous-listes, etc. On adresse un nœud par un chemin (tableau d'index depuis la liste),
+   sérialisé en JSON pour les onclick.
+
+   "ctx" identifie où vivent les listes : 'cl' = state.domestique.checklists (Notes & To-do),
+   'pl:<projectId>' = state.domestique.persoProjects[projectId].lists (un projet perso). */
+function _clArray(ctx) {
+  if (ctx === 'cl') {
+    if (!state.domestique.checklists) state.domestique.checklists = [];
+    return state.domestique.checklists;
+  }
+  const pp = (state.domestique.persoProjects || []).find(p => p.id === ctx.slice(3));
+  if (!pp) return [];
+  if (!pp.lists) pp.lists = [];
+  return pp.lists;
+}
+function _clRerenderCtx(ctx) {
+  if (ctx === 'cl') renderChecklists();
+  else _refreshPersoLists(ctx.slice(3));
+}
+function _ctxKey(ctx) { return ctx.replace(':', '_'); }
+function _clNode(ctx, li, path) {
+  let node = _clArray(ctx)[li];
   for (const idx of path) {
     if (!node) return null;
     node = (node.sections || [])[idx];
@@ -19955,29 +19795,26 @@ function _clAllItems(node) {
   return [...direct, ...nested];
 }
 const _CL_DEPTH_BORDER = ['var(--lavender)', 'var(--mint)', 'var(--peach)', 'var(--pink)'];
-function renderChecklists() {
-  const el = document.getElementById('checklistsContainer');
-  if (!el) return;
-  const lists = state.domestique.checklists || [];
-  if (!lists.length) {
-    el.innerHTML = '<p style="color:var(--ink-soft);font-size:13px;margin:0;">Aucune liste — clique sur "+ Nouvelle liste" pour commencer.</p>';
-    return;
-  }
+/* Rend le HTML de toutes les listes d'un contexte donné (pure — ne touche pas le DOM). */
+function _clRenderAllLists(ctx) {
+  const lists = _clArray(ctx);
+  if (!lists.length) return '<p style="color:var(--ink-soft);font-size:13px;margin:0;">Aucune liste — clique sur "+ Nouvelle liste" pour commencer.</p>';
+  const ck = _ctxKey(ctx);
   const itemRow = (it, li, pathJSON, ii, numbered) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:3px 0;" id="clrow_${li}_${_clDomKey(pathJSON)}_${ii}">
+    <div class="cl-item-row${it.done?' done':''}" style="display:flex;align-items:center;gap:8px;padding:5px 6px;" id="clrow_${ck}_${li}_${_clDomKey(pathJSON)}_${ii}">
       ${numbered ? `<span class="cl-item-num">${ii+1}.</span>` : ''}
-      <input type="checkbox" ${it.done?'checked':''} onchange="toggleCLItem(${li},'${pathJSON}',${ii})"
-        style="width:17px;height:17px;cursor:pointer;accent-color:var(--mint);flex-shrink:0;" />
-      <span style="${it.done?'text-decoration:line-through;color:var(--ink-soft);':''}font-size:14px;flex:1;cursor:default;">${escapeHtml(it.text)}</span>
-      <button onclick="editCLItemInline(${li},'${pathJSON}',${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:12px;padding:0 3px;" title="Modifier">✏️</button>
-      <button onclick="deleteCLItem(${li},'${pathJSON}',${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;padding:0 3px;" title="Supprimer">✕</button>
+      <input type="checkbox" ${it.done?'checked':''} onchange="toggleCLItem('${ctx}',${li},'${pathJSON}',${ii})"
+        style="width:16px;height:16px;cursor:pointer;accent-color:var(--mint);flex-shrink:0;" />
+      <span style="${it.done?'text-decoration:line-through;color:var(--ink-softer);':''}font-size:13px;flex:1;cursor:default;">${escapeHtml(it.text)}</span>
+      <button onclick="editCLItemInline('${ctx}',${li},'${pathJSON}',${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);opacity:0.5;font-size:11px;padding:0 3px;" title="Modifier">✏️</button>
+      <button onclick="deleteCLItem('${ctx}',${li},'${pathJSON}',${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);opacity:0.5;font-size:12px;padding:0 3px;" title="Supprimer">✕</button>
     </div>`;
   const addRow = (li, pathJSON) => `
-    <div style="display:flex;gap:6px;margin-top:6px;">
-      <input type="text" id="clInput_${li}_${_clDomKey(pathJSON)}" placeholder="Ajouter un élément…" maxlength="100"
-        style="flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;"
-        onkeydown="if(event.key==='Enter')addCLItem(${li},'${pathJSON}')" />
-      <button onclick="addCLItem(${li},'${pathJSON}')" class="btn-primary" style="padding:7px 14px;">+</button>
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <input type="text" id="clInput_${ck}_${li}_${_clDomKey(pathJSON)}" placeholder="Ajouter…" maxlength="100"
+        style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;background:white;"
+        onkeydown="if(event.key==='Enter')addCLItem('${ctx}',${li},'${pathJSON}')" />
+      <button onclick="addCLItem('${ctx}',${li},'${pathJSON}')" class="cl-add-row-btn">+</button>
     </div>`;
   // Rend récursivement le corps d'un nœud (items + sous-listes) — pour la liste (depth 0)
   // comme pour chaque sous-liste imbriquée (depth 1, 2, 3…), sans limite de profondeur.
@@ -19985,57 +19822,57 @@ function renderChecklists() {
     const pathJSON = JSON.stringify(path);
     const items = node.items || [];
     const sections = node.sections || [];
-    const cols = Math.min(3, Math.max(1, node.columns || 1));
+    const cols = node.columns === 2 ? 2 : 1;
     const itemsHtml = items.map((it,ii) => itemRow(it, li, pathJSON, ii, node.numbered)).join('');
     let html = cols > 1
       ? `<div class="cl-items-cols" style="column-count:${cols};">${itemsHtml}</div>`
       : itemsHtml;
     html += addRow(li, pathJSON);
     if (sections.length) {
-      const dz = (insertAt) => `<div class="_cl-drop-zone" ondragover="_clZoneOver(event)" ondragleave="_clZoneLeave(event)" ondrop="_clZoneDrop(event,${li},'${pathJSON}',${insertAt})" style="height:10px;border-radius:4px;background:transparent;transition:background 0.15s;flex-shrink:0;"></div>`;
+      const dz = (insertAt) => `<div class="_cl-drop-zone" ondragover="_clZoneOver(event)" ondragleave="_clZoneLeave(event)" ondrop="_clZoneDrop(event,'${ctx}',${li},'${pathJSON}',${insertAt})" style="height:8px;border-radius:4px;background:transparent;transition:background 0.15s;"></div>`;
       const secCard = (sec, si) => {
         const childPath = [...path, si];
         const childPathJSON = JSON.stringify(childPath);
         const allSecItems = _clAllItems(sec);
         const borderColor = _CL_DEPTH_BORDER[depth % _CL_DEPTH_BORDER.length];
-        return `<div class="_cl-sec" style="flex:1 1 240px;min-width:0;background:${allSecItems.length>0&&allSecItems.every(i=>i.done)?'#e8f7ee':'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;border-left:3px solid ${borderColor};">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-            <span draggable="true" ondragstart="_clDragStart(event,${li},'${childPathJSON}')" ondragend="_clDragEnd(event)" style="font-size:15px;color:var(--ink-softer);cursor:grab;padding:0 2px;user-select:none;" title="Glisser pour déplacer">⠿</span>
-            <span style="font-size:16px;">${sec.emoji||'📂'}</span>
-            <span style="font-weight:700;font-size:14px;flex:1;">${escapeHtml(sec.name)}</span>
-            <span style="font-size:11px;color:var(--ink-soft);">${allSecItems.filter(i=>i.done).length}/${allSecItems.length}</span>
-            <button onclick="moveCLSection(${li},'${childPathJSON}',-1)" ${si===0?'disabled':''} style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;opacity:${si===0?'0.3':'1'};" title="Monter">▲</button>
-            <button onclick="moveCLSection(${li},'${childPathJSON}',1)" ${si===sections.length-1?'disabled':''} style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;opacity:${si===sections.length-1?'0.3':'1'};" title="Descendre">▼</button>
-            <button onclick="editCLSection(${li},'${childPathJSON}')" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;" title="Modifier">✏️</button>
-            <button onclick="deleteCLSection(${li},'${childPathJSON}')" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:13px;padding:0 2px;" title="Supprimer">🗑️</button>
+        return `<div class="_cl-sec" style="margin:8px 0;padding-left:10px;border-left:3px solid ${borderColor};">
+          <div class="cl-sec-header" style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span draggable="true" ondragstart="_clDragStart(event,'${ctx}',${li},'${childPathJSON}')" ondragend="_clDragEnd(event)" style="font-size:13px;color:var(--ink-softer);cursor:grab;user-select:none;opacity:.55;" title="Glisser pour déplacer">⠿</span>
+            <span style="font-size:13px;">${sec.emoji||'📂'}</span>
+            <span style="font-weight:700;font-size:13px;color:var(--ink-soft);flex:1;">${escapeHtml(sec.name)}</span>
+            <span style="font-size:11px;color:var(--ink-softer);">${allSecItems.filter(i=>i.done).length}/${allSecItems.length}</span>
+            <button onclick="addCLSection('${ctx}',${li},'${childPathJSON}')" class="cl-add-sub-pill" title="Ajouter une sous-liste">+ sous-liste</button>
+            <button onclick="moveCLSection('${ctx}',${li},'${childPathJSON}',-1)" ${si===0?'disabled':''} style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;padding:0 1px;">▲</button>
+            <button onclick="moveCLSection('${ctx}',${li},'${childPathJSON}',1)" ${si===sections.length-1?'disabled':''} style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;padding:0 1px;">▼</button>
+            <button onclick="editCLSection('${ctx}',${li},'${childPathJSON}')" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;padding:0 1px;" title="Modifier">✏️</button>
+            <button onclick="deleteCLSection('${ctx}',${li},'${childPathJSON}')" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;padding:0 1px;" title="Supprimer">✕</button>
           </div>
           ${renderBody(li, sec, childPath, depth+1)}
         </div>`;
       };
-      html += `<div style="display:flex;flex-direction:column;margin-top:14px;">` + dz(0);
-      for (let r=0; r<Math.ceil(sections.length/2); r++) {
-        const i0=r*2, i1=r*2+1;
-        html += `<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:stretch;">` + secCard(sections[i0],i0) + (i1<sections.length?secCard(sections[i1],i1):'') + `</div>` + dz((r+1)*2);
-      }
-      html += `</div>`;
+      html += dz(0) + sections.map((sec,si) => secCard(sec,si) + dz(si+1)).join('');
     }
-    html += `<button onclick="addCLSection(${li},'${pathJSON}')" style="margin-top:12px;background:none;border:1.5px dashed var(--line);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;width:100%;">+ Ajouter une sous-liste</button>`;
+    html += `<button onclick="addCLSection('${ctx}',${li},'${pathJSON}')" class="cl-add-sub-pill" style="margin-top:6px;">+ sous-liste</button>`;
     return html;
   };
-  el.innerHTML = lists.map((lst, li) => {
+  return lists.map((lst, li) => {
     const allItems = _clAllItems(lst);
     const doneCount = allItems.filter(i=>i.done).length;
-    return `<div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-        <span style="font-size:18px;">${lst.emoji||'🗂️'}</span>
-        <strong style="flex:1;font-size:15px;">${escapeHtml(lst.name)}</strong>
-        <span style="font-size:12px;color:var(--ink-soft);">${doneCount}/${allItems.length}</span>
-        <button onclick="editChecklist(${li})" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-soft);padding:0 4px;" title="Modifier">✏️</button>
-        <button onclick="deleteChecklist(${li})" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-soft);padding:0 4px;" title="Supprimer">🗑️</button>
+    return `<div style="border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-size:16px;">${lst.emoji||'🗂️'}</span>
+        <strong style="flex:1;font-size:14px;">${escapeHtml(lst.name)}</strong>
+        <span style="font-size:11px;color:var(--ink-soft);">${doneCount}/${allItems.length}</span>
+        <button onclick="editChecklist('${ctx}',${li})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);opacity:.6;font-size:13px;padding:0 3px;" title="Modifier">✏️</button>
+        <button onclick="deleteChecklist('${ctx}',${li})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);opacity:.6;font-size:13px;padding:0 3px;" title="Supprimer">✕</button>
       </div>
       ${renderBody(li, lst, [], 0)}
     </div>`;
   }).join('');
+}
+function renderChecklists() {
+  const el = document.getElementById('checklistsContainer');
+  if (el) el.innerHTML = _clRenderAllLists('cl');
 }
 /* Catalogue unique d'emojis, utilisé par TOUS les sélecteurs de l'app
    (listes, projets, activités, plantes, routines, suivi santé…) pour
@@ -20099,16 +19936,9 @@ function pickEmoji(containerId, hiddenId, previewId, emoji, afterPickFn) {
   renderEmojiPicker(containerId, hiddenId, previewId, emoji, afterPickFn);
   if (afterPickFn && typeof window[afterPickFn] === "function") window[afterPickFn](emoji);
 }
-function _setModalCols(pickerId, n) {
-  const picker = document.getElementById(pickerId);
-  if (!picker) return;
-  picker.dataset.value = n;
-  picker.querySelectorAll('button').forEach(b => b.classList.toggle('active', Number(b.dataset.cols) === n));
-}
-function _getModalCols(pickerId) {
-  return Number(document.getElementById(pickerId)?.dataset.value || 1);
-}
-function openNewListModal() {
+function openNewListModal(ctx) {
+  ctx = ctx || 'cl';
+  document.getElementById('newListCtx').value = ctx;
   document.getElementById('newListModalTitle').textContent = '🗂️ Nouvelle liste';
   document.getElementById('newListSaveBtn').textContent = 'Créer';
   document.getElementById('editListIdx').value = '';
@@ -20116,14 +19946,16 @@ function openNewListModal() {
   document.getElementById('newListEmoji').value = '🗂️';
   document.getElementById('newListEmojiPreview').textContent = '🗂️';
   document.getElementById('newListNumbered').checked = false;
-  _setModalCols('newListColsPicker', 1);
+  document.getElementById('newListTwoCol').checked = false;
   renderEmojiPicker('newListEmojiPicker','newListEmoji','newListEmojiPreview','🗂️');
   document.getElementById('newListModal').classList.add('open');
   setTimeout(() => document.getElementById('newListName').focus(), 50);
 }
-function editChecklist(li) {
-  const lst = state.domestique.checklists[li];
+function editChecklist(ctx, li) {
+  const lst = _clArray(ctx)[li];
+  if (!lst) return;
   const em = lst.emoji || '🗂️';
+  document.getElementById('newListCtx').value = ctx;
   document.getElementById('newListModalTitle').textContent = '✏️ Modifier la liste';
   document.getElementById('newListSaveBtn').textContent = 'Enregistrer';
   document.getElementById('editListIdx').value = li;
@@ -20131,7 +19963,7 @@ function editChecklist(li) {
   document.getElementById('newListEmoji').value = em;
   document.getElementById('newListEmojiPreview').textContent = em;
   document.getElementById('newListNumbered').checked = !!lst.numbered;
-  _setModalCols('newListColsPicker', lst.columns || 1);
+  document.getElementById('newListTwoCol').checked = lst.columns === 2;
   renderEmojiPicker('newListEmojiPicker','newListEmoji','newListEmojiPreview', em);
   document.getElementById('newListModal').classList.add('open');
   setTimeout(() => document.getElementById('newListName').focus(), 50);
@@ -20140,37 +19972,38 @@ function closeNewListModal() { document.getElementById('newListModal').classList
 function saveNewList() {
   const name = document.getElementById('newListName').value.trim();
   if (!name) return;
+  const ctx = document.getElementById('newListCtx').value || 'cl';
   const emoji = document.getElementById('newListEmoji').value.trim() || '🗂️';
   const numbered = document.getElementById('newListNumbered').checked;
-  const columns = _getModalCols('newListColsPicker');
+  const columns = document.getElementById('newListTwoCol').checked ? 2 : 1;
   const idx = document.getElementById('editListIdx').value;
-  if (!state.domestique.checklists) state.domestique.checklists = [];
+  const arr = _clArray(ctx);
   if (idx !== '') {
-    const lst = state.domestique.checklists[parseInt(idx)];
+    const lst = arr[parseInt(idx)];
     lst.name = name; lst.emoji = emoji; lst.numbered = numbered; lst.columns = columns;
   } else {
-    state.domestique.checklists.push({ id: 'cl'+Date.now(), name, emoji, numbered, columns, items: [], sections: [] });
+    arr.push({ id: 'cl'+Date.now(), name, emoji, numbered, columns, items: [], sections: [] });
   }
-  saveState(); renderChecklists(); closeNewListModal();
+  saveState(); _clRerenderCtx(ctx); closeNewListModal();
 }
-function addCLItem(li, pathJSON) {
-  const key = _clDomKey(pathJSON);
-  const inp = document.getElementById(`clInput_${li}_${key}`);
+function addCLItem(ctx, li, pathJSON) {
+  const key = `${_ctxKey(ctx)}_${li}_${_clDomKey(pathJSON)}`;
+  const inp = document.getElementById(`clInput_${key}`);
   if (!inp) return;
   const text = inp.value.trim();
   if (!text) return;
-  const node = _clNode(li, JSON.parse(pathJSON));
+  const node = _clNode(ctx, li, JSON.parse(pathJSON));
   if (!node) return;
   if (!node.items) node.items = [];
   node.items.push({ id:'ci'+Date.now(), text, done:false });
-  saveState(); renderChecklists();
-  const newInp = document.getElementById(`clInput_${li}_${key}`);
+  saveState(); _clRerenderCtx(ctx);
+  const newInp = document.getElementById(`clInput_${key}`);
   if (newInp) newInp.focus();
 }
-function editCLItemInline(li, pathJSON, ii) {
-  const row = document.getElementById(`clrow_${li}_${_clDomKey(pathJSON)}_${ii}`);
+function editCLItemInline(ctx, li, pathJSON, ii) {
+  const row = document.getElementById(`clrow_${_ctxKey(ctx)}_${li}_${_clDomKey(pathJSON)}_${ii}`);
   if (!row) return;
-  const node = _clNode(li, JSON.parse(pathJSON));
+  const node = _clNode(ctx, li, JSON.parse(pathJSON));
   if (!node) return;
   const item = node.items[ii];
   const span = row.querySelector('span');
@@ -20182,28 +20015,29 @@ function editCLItemInline(li, pathJSON, ii) {
   const save = () => {
     const val = inp.value.trim();
     if (val) { item.text = val; saveState(); }
-    renderChecklists();
+    _clRerenderCtx(ctx);
   };
-  inp.onkeydown = e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') renderChecklists(); };
+  inp.onkeydown = e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') _clRerenderCtx(ctx); };
   inp.onblur = save;
   span.replaceWith(inp);
   // Cacher les boutons pendant l'édition
   row.querySelectorAll('button').forEach(b => b.style.display = 'none');
   inp.focus(); inp.select();
 }
-function toggleCLItem(li, pathJSON, ii) {
-  const node = _clNode(li, JSON.parse(pathJSON));
+function toggleCLItem(ctx, li, pathJSON, ii) {
+  const node = _clNode(ctx, li, JSON.parse(pathJSON));
   if (!node) return;
   node.items[ii].done = !node.items[ii].done;
-  saveState(); renderChecklists();
+  saveState(); _clRerenderCtx(ctx);
 }
-function deleteCLItem(li, pathJSON, ii) {
-  const node = _clNode(li, JSON.parse(pathJSON));
+function deleteCLItem(ctx, li, pathJSON, ii) {
+  const node = _clNode(ctx, li, JSON.parse(pathJSON));
   if (!node) return;
   node.items.splice(ii, 1);
-  saveState(); renderChecklists();
+  saveState(); _clRerenderCtx(ctx);
 }
-function addCLSection(li, parentPathJSON) {
+function addCLSection(ctx, li, parentPathJSON) {
+  document.getElementById('newSectionCtx').value = ctx;
   document.getElementById('newSectionModalTitle').textContent = '📂 Nouvelle sous-liste';
   document.getElementById('newSectionSaveBtn').textContent = 'Créer';
   document.getElementById('newSectionListIdx').value = li;
@@ -20213,15 +20047,16 @@ function addCLSection(li, parentPathJSON) {
   document.getElementById('newSectionEmoji').value = '📂';
   document.getElementById('newSectionEmojiPreview').textContent = '📂';
   document.getElementById('newSectionNumbered').checked = false;
-  _setModalCols('newSectionColsPicker', 1);
+  document.getElementById('newSectionTwoCol').checked = false;
   renderEmojiPicker('newSectionEmojiPicker','newSectionEmoji','newSectionEmojiPreview','📂');
   document.getElementById('newSectionModal').classList.add('open');
   setTimeout(() => document.getElementById('newSectionName').focus(), 50);
 }
-function editCLSection(li, pathJSON) {
-  const sec = _clNode(li, JSON.parse(pathJSON));
+function editCLSection(ctx, li, pathJSON) {
+  const sec = _clNode(ctx, li, JSON.parse(pathJSON));
   if (!sec) return;
   const em = sec.emoji || '📂';
+  document.getElementById('newSectionCtx').value = ctx;
   document.getElementById('newSectionModalTitle').textContent = '✏️ Modifier la sous-liste';
   document.getElementById('newSectionSaveBtn').textContent = 'Enregistrer';
   document.getElementById('newSectionListIdx').value = li;
@@ -20231,7 +20066,7 @@ function editCLSection(li, pathJSON) {
   document.getElementById('newSectionEmoji').value = em;
   document.getElementById('newSectionEmojiPreview').textContent = em;
   document.getElementById('newSectionNumbered').checked = !!sec.numbered;
-  _setModalCols('newSectionColsPicker', sec.columns || 1);
+  document.getElementById('newSectionTwoCol').checked = sec.columns === 2;
   renderEmojiPicker('newSectionEmojiPicker','newSectionEmoji','newSectionEmojiPreview', em);
   document.getElementById('newSectionModal').classList.add('open');
   setTimeout(() => document.getElementById('newSectionName').focus(), 50);
@@ -20240,65 +20075,68 @@ function closeNewSectionModal() { document.getElementById('newSectionModal').cla
 function saveNewSection() {
   const name = document.getElementById('newSectionName').value.trim();
   if (!name) return;
+  const ctx = document.getElementById('newSectionCtx').value || 'cl';
   const emoji = document.getElementById('newSectionEmoji').value || '📂';
   const numbered = document.getElementById('newSectionNumbered').checked;
-  const columns = _getModalCols('newSectionColsPicker');
+  const columns = document.getElementById('newSectionTwoCol').checked ? 2 : 1;
   const li = parseInt(document.getElementById('newSectionListIdx').value);
   const mode = document.getElementById('newSectionMode').value;
   const pathJSON = document.getElementById('newSectionPath').value || '[]';
   if (mode === 'edit') {
-    const sec = _clNode(li, JSON.parse(pathJSON));
+    const sec = _clNode(ctx, li, JSON.parse(pathJSON));
     if (sec) { sec.name = name; sec.emoji = emoji; sec.numbered = numbered; sec.columns = columns; }
   } else {
-    const parent = _clNode(li, JSON.parse(pathJSON));
+    const parent = _clNode(ctx, li, JSON.parse(pathJSON));
     if (parent) {
       if (!parent.sections) parent.sections = [];
       parent.sections.push({ id:'cs'+Date.now(), name, emoji, numbered, columns, items:[], sections:[] });
     }
   }
-  saveState(); renderChecklists(); closeNewSectionModal();
+  saveState(); _clRerenderCtx(ctx); closeNewSectionModal();
 }
-function deleteCLSection(li, pathJSON) {
+function deleteCLSection(ctx, li, pathJSON) {
   const path = JSON.parse(pathJSON);
   const idx = path[path.length-1];
-  const parent = _clNode(li, path.slice(0,-1));
+  const parent = _clNode(ctx, li, path.slice(0,-1));
   if (!parent || !parent.sections || !parent.sections[idx]) return;
   const sec = parent.sections[idx];
   _showConfirm(`Supprimer la sous-liste « ${sec.name} » ?`, () => {
     parent.sections.splice(idx, 1);
-    saveState(); renderChecklists();
+    saveState(); _clRerenderCtx(ctx);
   });
 }
-function deleteChecklist(li) {
-  const lst = state.domestique.checklists[li];
+function deleteChecklist(ctx, li) {
+  const arr = _clArray(ctx);
+  const lst = arr[li];
+  if (!lst) return;
   _showConfirm(`Supprimer la liste « ${lst.name} » ?`, () => {
-    state.domestique.checklists.splice(li, 1);
-    saveState(); renderChecklists();
+    arr.splice(li, 1);
+    saveState(); _clRerenderCtx(ctx);
   });
 }
-function moveCLSection(li, pathJSON, dir) {
+function moveCLSection(ctx, li, pathJSON, dir) {
   const path = JSON.parse(pathJSON);
   const idx = path[path.length-1];
-  const parent = _clNode(li, path.slice(0,-1));
+  const parent = _clNode(ctx, li, path.slice(0,-1));
   if (!parent || !parent.sections) return;
   const sections = parent.sections;
   const newIdx = idx + dir;
   if (newIdx < 0 || newIdx >= sections.length) return;
   const [moved] = sections.splice(idx, 1);
   sections.splice(newIdx, 0, moved);
-  saveState(); renderChecklists();
+  saveState(); _clRerenderCtx(ctx);
 }
 /* Drag & drop sections — réordonne uniquement entre sous-listes d'un même parent */
 let _clDragSrc = null;
 function _clClearDropIndicators() {
   document.querySelectorAll('._cl-drop-zone').forEach(el => {
     el.style.background = 'transparent';
-    el.style.height = '10px';
+    el.style.height = '8px';
     el.style.border = 'none';
   });
 }
-function _clDragStart(e, li, pathJSON) {
-  _clDragSrc = { li, path: JSON.parse(pathJSON) };
+function _clDragStart(e, ctx, li, pathJSON) {
+  _clDragSrc = { ctx, li, path: JSON.parse(pathJSON) };
   e.dataTransfer.effectAllowed = 'move';
   setTimeout(() => {
     document.querySelectorAll('._cl-drop-zone').forEach(el => {
@@ -20323,16 +20161,16 @@ function _clZoneLeave(e) {
     e.currentTarget.style.background = 'transparent';
   }
 }
-function _clZoneDrop(e, li, parentPathJSON, insertAt) {
+function _clZoneDrop(e, ctx, li, parentPathJSON, insertAt) {
   e.preventDefault();
   _clClearDropIndicators();
-  if (!_clDragSrc || _clDragSrc.li !== li) { _clDragSrc = null; return; }
+  if (!_clDragSrc || _clDragSrc.ctx !== ctx || _clDragSrc.li !== li) { _clDragSrc = null; return; }
   const srcPath = _clDragSrc.path;
   const srcParentPathJSON = JSON.stringify(srcPath.slice(0,-1));
   _clDragSrc = null;
   // On ne réordonne qu'entre sous-listes du même parent (même niveau)
   if (srcParentPathJSON !== parentPathJSON) return;
-  const parent = _clNode(li, JSON.parse(parentPathJSON));
+  const parent = _clNode(ctx, li, JSON.parse(parentPathJSON));
   if (!parent || !parent.sections) return;
   const sections = parent.sections;
   const fromIdx = srcPath[srcPath.length-1];
@@ -20340,7 +20178,7 @@ function _clZoneDrop(e, li, parentPathJSON, insertAt) {
   const [moved] = sections.splice(fromIdx, 1);
   if (fromIdx < target) target--;
   sections.splice(target, 0, moved);
-  saveState(); renderChecklists();
+  saveState(); _clRerenderCtx(ctx);
 }
 
 /* ========= CUISINE — RECETTES ========= */
