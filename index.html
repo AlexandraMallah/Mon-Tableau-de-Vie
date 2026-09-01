@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1121</title>
+<title>Mon Tableau de Vie 🌿 · v1122</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -126,8 +126,22 @@
   header.top .date { color: var(--ink-soft); margin-top: 3px; font-size: 14px; text-transform: capitalize; }
   .header-actions {
     display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-    padding-bottom: 14px;
-    border-bottom: 1.5px solid var(--line);
+    margin-top: 14px;
+    margin-bottom: 14px;
+    /* Sticky sur desktop, même traitement que nav.tabs */
+    position: sticky;
+    top: 10px;
+    z-index: 101;
+    background: var(--nav-bg);
+    color: var(--nav-ink);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 10px 14px;
+    border-radius: 18px;
+    box-shadow: 0 4px 20px rgba(120, 100, 160, 0.12), 0 0 0 1px rgba(180,160,220,0.15);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
   }
   .sync-row { display: flex; gap: 8px; align-items: center; }
   .btn-icon {
@@ -155,9 +169,9 @@
   nav.tabs {
     display: flex; gap: 8px;
     overflow-x: auto;
-    /* Sticky sur desktop avec coins arrondis */
+    /* Sticky sur desktop avec coins arrondis, juste sous .header-actions (elle aussi sticky) */
     position: sticky;
-    top: 10px;
+    top: 80px;
     z-index: 100;
     background: var(--nav-bg);
     color: var(--nav-ink);
@@ -1436,8 +1450,15 @@
     header.top .date { font-size: 13px; }
     .header-actions {
       gap: 5px;
-      padding-bottom: 10px;
-      border-bottom-width: 1px;
+      /* Pas de sticky sur mobile : trop de boutons, prendrait trop de hauteur collée */
+      position: relative;
+      top: auto;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: none;
+      padding: 0;
+      margin-top: 10px;
     }
     .header-actions .btn-icon { padding: 7px 10px; font-size: 11px; }
     #settingsBtn, #rechargerBtn { display: none; }
@@ -1807,20 +1828,22 @@
       <h1 id="greeting">Bonjour ✨</h1>
       <p class="date" id="todayDate"></p>
     </div>
-    <div class="header-actions">
-      <button class="btn-icon" id="editModeBtn" onclick="toggleEditMode()" title="Activer le mode édition pour modifier l'application">✏️ Éditer</button>
-      <button class="btn-icon" id="settingsBtn" onclick="openSettings()">⚙ Personnaliser</button>
-      <button class="btn-icon" onclick="openGestionModal()" style="background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
-      <button class="btn-icon" onclick="cloudDiag()" title="Diagnostic sync" style="background:var(--lavender-soft);">🔍</button>
-      <button class="btn-icon" onclick="openShortcutsEditor()" title="Gérer les raccourcis" style="background:var(--lavender-soft);">⚡</button>
-      <div id="google_translate_element" style="display:none;"></div>
-      <button class="btn-icon" id="syncSignInBtn" onclick="signInWithGoogle()" style="background:linear-gradient(135deg,#e8f0fe,#d2e3fc);color:#1a73e8;font-weight:600;">☁️ Connexion</button>
-      <div class="sync-row">
-        <div id="syncUserAvatar" style="display:none;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:var(--shadow);font-size:13px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
-        <span id="syncStatusPill" style="font-size:13px;padding:10px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:none;"></span>
-      </div>
-    </div>
   </header>
+
+  <!-- Sortie du <header> : nécessaire pour que le sticky ait assez de place pour "coller" -->
+  <div class="header-actions">
+    <button class="btn-icon" id="editModeBtn" onclick="toggleEditMode()" title="Activer le mode édition pour modifier l'application">✏️ Éditer</button>
+    <button class="btn-icon" id="settingsBtn" onclick="openSettings()">⚙ Personnaliser</button>
+    <button class="btn-icon" onclick="openGestionModal()" style="background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
+    <button class="btn-icon" onclick="cloudDiag()" title="Diagnostic sync" style="background:var(--lavender-soft);">🔍</button>
+    <button class="btn-icon" onclick="openShortcutsEditor()" title="Gérer les raccourcis" style="background:var(--lavender-soft);">⚡</button>
+    <div id="google_translate_element" style="display:none;"></div>
+    <button class="btn-icon" id="syncSignInBtn" onclick="signInWithGoogle()" style="background:linear-gradient(135deg,#e8f0fe,#d2e3fc);color:#1a73e8;font-weight:600;">☁️ Connexion</button>
+    <div class="sync-row">
+      <div id="syncUserAvatar" style="display:none;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:var(--shadow);font-size:13px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
+      <span id="syncStatusPill" style="font-size:13px;padding:10px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:none;"></span>
+    </div>
+  </div>
 
   <!-- Barre de raccourcis -->
   <div id="shortcutsBar" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0;margin-bottom:4px;min-height:0;"></div>
