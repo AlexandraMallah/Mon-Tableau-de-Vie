@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1130</title>
+<title>Mon Tableau de Vie 🌿 · v1131</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6152,6 +6152,9 @@ function setupTabs() {
       const view = t.dataset.view;
       const viewEl = document.querySelector(`.view[data-view="${view}"]`);
       viewEl.classList.add("active");
+      // Remonter en haut de page : sinon, quand la vue quittée était plus longue que
+      // la nouvelle, le scroll reste bloqué en bas puis "saute" en repassant dessus.
+      window.scrollTo(0, 0);
       // Activer le premier sous-onglet si aucun n'est actif
       const activeSubTab = viewEl.querySelector(".sub-tab.active");
       if (!activeSubTab) {
@@ -6175,6 +6178,7 @@ function setupTabs() {
       parent.querySelectorAll(".sub-view").forEach(v => v.classList.remove("active"));
       t.classList.add("active");
       parent.querySelector(`.sub-view[data-sub="${t.dataset.sub}"]`).classList.add("active");
+      window.scrollTo(0, 0);
       if (t.dataset.sub === "notes") renderWorkNotes();
       if (t.dataset.sub === "administratif") { admRender(); }
     });
@@ -7530,6 +7534,7 @@ function renderWorkProjectTabs() {
       workSection.querySelectorAll(".sub-view").forEach(x => x.classList.remove("active"));
       const v = workSection.querySelector(`.sub-view[data-sub="${t.dataset.sub}"]`);
       if (v) v.classList.add("active");
+      window.scrollTo(0, 0);
     });
   });
 
@@ -7564,6 +7569,7 @@ function _workProjTabClick(btn, sub) {
   workSection.querySelectorAll(".sub-view").forEach(x => x.classList.remove("active"));
   const v = workSection.querySelector(`.sub-view[data-sub="${sub}"]`);
   if (v) v.classList.add("active");
+  window.scrollTo(0, 0);
 }
 
 function _toggleTaskFromProjTab(taskId, done) {
@@ -19447,6 +19453,7 @@ function _persoProjTabClick(btn, sub) {
   domesticSection.querySelectorAll(".sub-view").forEach(x => x.classList.remove("active"));
   const v = domesticSection.querySelector(`.sub-view[data-sub="${sub}"]`);
   if (v) v.classList.add("active");
+  window.scrollTo(0, 0);
 }
 
 function _renderPersoNotesList(pp) {
