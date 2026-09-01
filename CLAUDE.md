@@ -48,7 +48,7 @@ Alexandra Mallah, postdoctorante en géographie (UPHF), française. Ce dashboard
 - **URL live** : https://alexandramallah.github.io/Mon-Tableau-de-Vie/
 - **Repo GitHub** : https://github.com/AlexandraMllh/Mon-Tableau-de-Vie
 - **Fichier de travail** : `/Users/alexandramallah/Documents/Mon-Tableau-de-Vie/index.html`
-- **Version actuelle** : v433 (dans le `<title>`)
+- **Version actuelle** : voir le `<title>` — incrémentée automatiquement à chaque commit (hook pre-commit)
 - **Taille** : ~12000 lignes
 
 ---
@@ -241,10 +241,56 @@ Style pastel féminin, doux. Arrondis généreux (12-16px). Pas de couleurs cria
 - `navDay(delta)` — change `_selectedDayKey`
 - Impossible d'aller dans le futur
 
+### Navigation semaine dans Activités
+- `let _actWeekOffset = 0` — 0 = semaine courante, -1 = semaine précédente, etc.
+- `navActWeek(delta)` — change `_actWeekOffset`, appelle `renderActivities()`
+- `currentWeekDates(offset)` — retourne les 7 jours (lun→dim) de la semaine ciblée
+- Boutons ◀ ▶ + label de la semaine au-dessus de la liste d'activités
+- Le bouton ▶ est `disabled` quand on est sur la semaine courante
+
+### Navigation mois dans la carte Pas (Santé)
+- `let _stepsMonthOffset = 0` — 0 = mois courant, -1 = mois précédent, etc.
+- `navStepsMonth(delta)` — change `_stepsMonthOffset`, met à jour label + chart + stats
+- `_stepsMonthDates()` — retourne tous les jours du mois ciblé
+- `_renderStepsMonthLabel()` — met à jour `#stepsMonthLabel`
+- `renderStepsStats()` — utilise `_stepsMonthDates()` pour les stats (moyenne, meilleur jour, etc.)
+- Boutons ◀ stepsMonthLabel ▶ affichés au-dessus du graphique Pas dans Santé
+- **Indépendant** de `_healthMonthOffset` (navigation calories)
+
+### Détail kcal dépensées (Aujourd'hui)
+- Sous la carte habitude `h-cal-dep`, 3 petites pastilles : 🛋️ Repos / 🚶 Pas / 🏃 Sport
+- `_getKcalBreakdown(steps)` calcule les 3 valeurs :
+  - `bmr` : Mifflin-St Jeor (cherche le poids dans l'historique si pas dispo aujourd'hui)
+  - `stepKcal` : foulée (taille × 0.00415) × distance × 1.036 kcal/kg/km
+  - `sportKcal` : MET × poids × heures (via `_calcSportKcal`)
+- S'affiche seulement si hauteur ET poids sont connus ; `null` sinon
+
+### Bouton "Tout" dans Mes habitudes (Santé)
+- `_habitNb = 0` = mode "Tout" (par défaut 30)
+- `setHabitNb(0)` active le mode Tout
+- `_habitAllDays()` — scanne `state.history` pour trouver le 1er jour avec habitudes enregistrées → calcule le nombre de jours réels depuis ce jour
+- Le footer affiche "← début" au lieu de "← il y a Xj"
+- Bouton `#habitBtnAll` mis en gras quand actif (comme les boutons 30/60/90)
+
+### Balance énergétique — grisage après 5 jours sans repas
+- `renderEnergyBalance()` compte `consecutiveNoFood` : jours consécutifs (en partant d'aujourd'hui) sans `foodLog` dans l'historique
+- Si `consecutiveNoFood >= 5` → `foodStale = true`
+- **Dépensées/j** reste toujours visible et calculée normalement
+- **Ingérées/j** et **Déficit/j** : opacity réduite + texte grisé si `foodStale`
+
 ### Cache GitHub Pages
 - Script en `<head>` qui ajoute `?_cb=TIMESTAMP` à l'URL sur `github.io`
 - Force le CDN à toujours servir la version fraîche
 - Plus besoin de Cmd+Shift+R
+
+---
+
+## Thèmes CSS
+
+**Seuls 2 thèmes restent** : 🌸 Smooth (défaut) et 💼 Sérieux.
+Le thème Minimal a été **entièrement supprimé** (CSS, boutons JS, toutes les variables).
+- ⚠️ Ne jamais réintroduire de références à `_hbM`, `_isM`, `t-minimal`, ou au thème minimal
+- Si tu cherches un thème 3e → il n'existe pas, c'était Minimal, il a été supprimé
 
 ---
 
@@ -268,7 +314,7 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 
 ---
 
-## Fonctionnalités ajoutées récemment (v150→v199)
+## Fonctionnalités ajoutées récemment (v1000→v1112)
 
 ### Finances
 - **🏠 Charge fixe** : `tx.fixedCharge = true` — exclue de la jauge budget, du donut dépenses, du graphique flux 6 mois
@@ -312,6 +358,16 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 - `apple-touch-icon` dans `<head>` pour iOS (pas le manifest)
 - Nommer les nouveaux fichiers icône avec un nouveau suffixe à chaque changement (ex: v3, v4…) pour forcer le re-téléchargement
 
+### Nouvelles fonctionnalités (v1000→v1112)
+- **Détail kcal** : 3 pastilles 🛋️ Repos / 🚶 Pas / 🏃 Sport sous la carte `h-cal-dep` dans Aujourd'hui (`_getKcalBreakdown`)
+- **Navigation semaine Activités** : boutons ◀ ▶ + label semaine au-dessus de la liste (`_actWeekOffset`, `navActWeek`, `currentWeekDates`)
+- **Navigation mois Pas (Santé)** : boutons ◀ ▶ + label mois, indépendant de `_healthMonthOffset` (`_stepsMonthOffset`, `navStepsMonth`, `_stepsMonthDates`, `_renderStepsMonthLabel`)
+- **Bouton "Tout" habitudes** : scanne l'historique réel via `_habitAllDays()` ; `_habitNb=0` active ce mode
+- **Balance énergétique grisée** : si 5+ jours consécutifs sans `foodLog`, Ingérées+Déficit sont grisés, Dépensées reste visible
+- **Fix poids composition corporelle** : `fillBodyCompForm` appelé à chaque `renderHealth()` (plus de disparition du champ)
+- **Fix emoji modal émotion** : `_pickEmSuggest(i)` met à jour emoji ET label (plus d'apostrophe qui casse l'`onclick`)
+- **Thème Minimal supprimé** : variables `_hbM` et `_isM` entièrement retirées, 2 thèmes restants : 🌸 Smooth et 💼 Sérieux
+
 ## Fonctionnalités en attente / à faire
 
 - **Bodytrax importer** : importer les métriques corporelles depuis export Samsung Health ou Bodytrax CSV
@@ -329,6 +385,10 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 | Cache GitHub Pages | Script timestamp `?_cb=` en head |
 | Couché/Réveil ordre | Couché (bedtimeInput) GAUCHE, Réveil (wakeTimeInput) DROITE |
 | Bouton "Recharger" dangereux | Supprimé du header (existait dans une version précédente) |
+| Apostrophe dans `onclick` inline | Utiliser `_pickEmSuggest(i)` avec index plutôt qu'interpolation de string (ex: "Mal à l'aise") |
+| `ReferenceError: _hbM is not defined` | Après suppression du thème Minimal, vérifier TOUTES les occurrences de `_hbM` et `_isM` (barColor, couleurs projet, pill calendar) |
+| Poids composition corporelle disparu | `fillBodyCompForm` appelé à chaque `renderHealth()` pas seulement au premier bind |
+| `renderStepsStats` dupliquée | Remplacer l'ancienne par un commentaire, garder uniquement celle qui utilise `_stepsMonthDates()` |
 | `location.reload()` ne marche pas en PWA Samsung | Utiliser `window.location.href = '/Mon-Tableau-de-Vie/?_r=' + Date.now()` |
 | Icône PWA pas mise à jour | iOS lit `apple-touch-icon` dans `<head>`, pas le manifest. Renommer le fichier icône à chaque changement. |
 | Notes perdues au rechargement SW | `_noteFlushToLocalStorage()` + `pagehide` listener |
