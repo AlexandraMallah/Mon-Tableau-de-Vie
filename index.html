@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1126</title>
+<title>Mon Tableau de Vie 🌿 · v1127</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2203,7 +2203,8 @@
       <h2 id="newSectionModalTitle" style="margin:0 0 6px;">📂 Nouvelle sous-liste</h2>
       <p class="modal-hint">Crée une sous-catégorie à l'intérieur d'une liste existante (ex : "Trousse de toilette" dans la liste "Valise"). Pour supprimer, glisse vers la gauche ou clique sur la sous-liste en mode édition.</p>
       <input type="hidden" id="newSectionListIdx" value="" />
-      <input type="hidden" id="newSectionIdx" value="" />
+      <input type="hidden" id="newSectionMode" value="" />
+      <input type="hidden" id="newSectionPath" value="" />
       <label>Nom</label>
       <input type="text" id="newSectionName" placeholder="ex : Vêtements, Trousse de toilette…" maxlength="60"
         onkeydown="if(event.key==='Enter')saveNewSection()" />
@@ -19900,13 +19901,28 @@ function _deleteFreeNote(id) {
   });
 }
 
-/* ========= LISTES / CHECKLISTS ========= */
-function _clAllItems(lst) {
-  // Retourne tous les items : items directs + items de toutes les sections
-  const direct = lst.items || [];
-  const sectItems = (lst.sections || []).flatMap(s => s.items || []);
-  return [...direct, ...sectItems];
+/* ========= LISTES / CHECKLISTS (emboîtement récursif, profondeur illimitée) =========
+   Chaque liste et chaque sous-liste partagent la même forme { items:[], sections:[] } —
+   une sous-liste peut donc elle-même contenir des sous-listes, etc. On adresse un nœud
+   par un chemin (tableau d'index depuis la liste), sérialisé en JSON pour les onclick. */
+function _clNode(li, path) {
+  let node = state.domestique.checklists[li];
+  for (const idx of path) {
+    if (!node) return null;
+    node = (node.sections || [])[idx];
+  }
+  return node || null;
 }
+function _clDomKey(pathJSON) {
+  const path = JSON.parse(pathJSON);
+  return path.length ? path.join('-') : 'root';
+}
+function _clAllItems(node) {
+  const direct = node.items || [];
+  const nested = (node.sections || []).flatMap(s => _clAllItems(s));
+  return [...direct, ...nested];
+}
+const _CL_DEPTH_BORDER = ['var(--lavender)', 'var(--mint)', 'var(--peach)', 'var(--pink)'];
 function renderChecklists() {
   const el = document.getElementById('checklistsContainer');
   if (!el) return;
@@ -19915,26 +19931,63 @@ function renderChecklists() {
     el.innerHTML = '<p style="color:var(--ink-soft);font-size:13px;margin:0;">Aucune liste — clique sur "+ Nouvelle liste" pour commencer.</p>';
     return;
   }
-  const itemRow = (it, li, si, ii) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:3px 0;" id="clrow_${li}_${si}_${ii}">
-      <input type="checkbox" ${it.done?'checked':''} onchange="toggleCLItem(${li},${si},${ii})"
+  const itemRow = (it, li, pathJSON, ii) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:3px 0;" id="clrow_${li}_${_clDomKey(pathJSON)}_${ii}">
+      <input type="checkbox" ${it.done?'checked':''} onchange="toggleCLItem(${li},'${pathJSON}',${ii})"
         style="width:17px;height:17px;cursor:pointer;accent-color:var(--mint);flex-shrink:0;" />
       <span style="${it.done?'text-decoration:line-through;color:var(--ink-soft);':''}font-size:14px;flex:1;cursor:default;">${escapeHtml(it.text)}</span>
-      <button onclick="editCLItemInline(${li},${si},${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:12px;padding:0 3px;" title="Modifier">✏️</button>
-      <button onclick="deleteCLItem(${li},${si},${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;padding:0 3px;" title="Supprimer">✕</button>
+      <button onclick="editCLItemInline(${li},'${pathJSON}',${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:12px;padding:0 3px;" title="Modifier">✏️</button>
+      <button onclick="deleteCLItem(${li},'${pathJSON}',${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;padding:0 3px;" title="Supprimer">✕</button>
     </div>`;
-  const addRow = (li, si) => `
+  const addRow = (li, pathJSON) => `
     <div style="display:flex;gap:6px;margin-top:6px;">
-      <input type="text" id="clInput_${li}_${si}" placeholder="Ajouter un élément…" maxlength="100"
+      <input type="text" id="clInput_${li}_${_clDomKey(pathJSON)}" placeholder="Ajouter un élément…" maxlength="100"
         style="flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;"
-        onkeydown="if(event.key==='Enter')addCLItem(${li},${si})" />
-      <button onclick="addCLItem(${li},${si})" class="btn-primary" style="padding:7px 14px;">+</button>
+        onkeydown="if(event.key==='Enter')addCLItem(${li},'${pathJSON}')" />
+      <button onclick="addCLItem(${li},'${pathJSON}')" class="btn-primary" style="padding:7px 14px;">+</button>
     </div>`;
+  // Rend récursivement le corps d'un nœud (items + sous-listes) — pour la liste (depth 0)
+  // comme pour chaque sous-liste imbriquée (depth 1, 2, 3…), sans limite de profondeur.
+  const renderBody = (li, node, path, depth) => {
+    const pathJSON = JSON.stringify(path);
+    const items = node.items || [];
+    const sections = node.sections || [];
+    let html = items.map((it,ii) => itemRow(it, li, pathJSON, ii)).join('');
+    html += addRow(li, pathJSON);
+    if (sections.length) {
+      const dz = (insertAt) => `<div class="_cl-drop-zone" ondragover="_clZoneOver(event)" ondragleave="_clZoneLeave(event)" ondrop="_clZoneDrop(event,${li},'${pathJSON}',${insertAt})" style="height:10px;border-radius:4px;background:transparent;transition:background 0.15s;flex-shrink:0;"></div>`;
+      const secCard = (sec, si) => {
+        const childPath = [...path, si];
+        const childPathJSON = JSON.stringify(childPath);
+        const allSecItems = _clAllItems(sec);
+        const borderColor = _CL_DEPTH_BORDER[depth % _CL_DEPTH_BORDER.length];
+        return `<div class="_cl-sec" style="flex:1 1 240px;min-width:0;background:${allSecItems.length>0&&allSecItems.every(i=>i.done)?'#e8f7ee':'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;border-left:3px solid ${borderColor};">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span draggable="true" ondragstart="_clDragStart(event,${li},'${childPathJSON}')" ondragend="_clDragEnd(event)" style="font-size:15px;color:var(--ink-softer);cursor:grab;padding:0 2px;user-select:none;" title="Glisser pour déplacer">⠿</span>
+            <span style="font-size:16px;">${sec.emoji||'📂'}</span>
+            <span style="font-weight:700;font-size:14px;flex:1;">${escapeHtml(sec.name)}</span>
+            <span style="font-size:11px;color:var(--ink-soft);">${allSecItems.filter(i=>i.done).length}/${allSecItems.length}</span>
+            <button onclick="moveCLSection(${li},'${childPathJSON}',-1)" ${si===0?'disabled':''} style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;opacity:${si===0?'0.3':'1'};" title="Monter">▲</button>
+            <button onclick="moveCLSection(${li},'${childPathJSON}',1)" ${si===sections.length-1?'disabled':''} style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;opacity:${si===sections.length-1?'0.3':'1'};" title="Descendre">▼</button>
+            <button onclick="editCLSection(${li},'${childPathJSON}')" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;" title="Modifier">✏️</button>
+            <button onclick="deleteCLSection(${li},'${childPathJSON}')" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:13px;padding:0 2px;" title="Supprimer">🗑️</button>
+          </div>
+          ${renderBody(li, sec, childPath, depth+1)}
+        </div>`;
+      };
+      html += `<div style="display:flex;flex-direction:column;margin-top:14px;">` + dz(0);
+      for (let r=0; r<Math.ceil(sections.length/2); r++) {
+        const i0=r*2, i1=r*2+1;
+        html += `<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:stretch;">` + secCard(sections[i0],i0) + (i1<sections.length?secCard(sections[i1],i1):'') + `</div>` + dz((r+1)*2);
+      }
+      html += `</div>`;
+    }
+    html += `<button onclick="addCLSection(${li},'${pathJSON}')" style="margin-top:12px;background:none;border:1.5px dashed var(--line);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;width:100%;">+ Ajouter une sous-liste</button>`;
+    return html;
+  };
   el.innerHTML = lists.map((lst, li) => {
     const allItems = _clAllItems(lst);
     const doneCount = allItems.filter(i=>i.done).length;
-    const sections = lst.sections || [];
-    const directItems = lst.items || [];
     return `<div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
         <span style="font-size:18px;">${lst.emoji||'🗂️'}</span>
@@ -19943,33 +19996,7 @@ function renderChecklists() {
         <button onclick="editChecklist(${li})" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-soft);padding:0 4px;" title="Modifier">✏️</button>
         <button onclick="deleteChecklist(${li})" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-soft);padding:0 4px;" title="Supprimer">🗑️</button>
       </div>
-      ${directItems.map((it,ii) => itemRow(it, li, -1, ii)).join('')}
-      ${addRow(li, -1)}
-      ${(()=>{
-        if (!sections.length) return '';
-        const dz = (insertAt) => `<div class="_cl-drop-zone" ondragover="_clZoneOver(event)" ondragleave="_clZoneLeave(event)" ondrop="_clZoneDrop(event,${li},${insertAt})" style="height:10px;border-radius:4px;background:transparent;transition:background 0.15s;flex-shrink:0;"></div>`;
-        const secCard = (sec, si) => `<div class="_cl-sec" style="flex:1 1 240px;min-width:0;background:${(sec.items||[]).length>0&&(sec.items||[]).every(i=>i.done)?'#e8f7ee':'var(--bg-1)'};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;transition:background 0.3s;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-            <span draggable="true" ondragstart="_clDragStart(event,${li},${si})" ondragend="_clDragEnd(event)" style="font-size:15px;color:var(--ink-softer);cursor:grab;padding:0 2px;user-select:none;" title="Glisser pour déplacer">⠿</span>
-            <span style="font-size:16px;">${sec.emoji||'📂'}</span>
-            <span style="font-weight:700;font-size:14px;flex:1;">${escapeHtml(sec.name)}</span>
-            <span style="font-size:11px;color:var(--ink-soft);">${(sec.items||[]).filter(i=>i.done).length}/${(sec.items||[]).length}</span>
-            <button onclick="moveCLSection(${li},${si},-1)" ${si===0?'disabled':''} style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;opacity:${si===0?'0.3':'1'};" title="Monter">▲</button>
-            <button onclick="moveCLSection(${li},${si},1)" ${si===sections.length-1?'disabled':''} style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;opacity:${si===sections.length-1?'0.3':'1'};" title="Descendre">▼</button>
-            <button onclick="editCLSection(${li},${si})" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 2px;" title="Modifier">✏️</button>
-            <button onclick="deleteCLSection(${li},${si})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:13px;padding:0 2px;" title="Supprimer">🗑️</button>
-          </div>
-          <div>${(sec.items||[]).map((it,ii)=>itemRow(it,li,si,ii)).join('')}</div>
-          ${addRow(li,si)}
-        </div>`;
-        let html = `<div style="display:flex;flex-direction:column;margin-top:14px;">` + dz(0);
-        for (let r=0; r<Math.ceil(sections.length/2); r++) {
-          const i0=r*2, i1=r*2+1;
-          html += `<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:stretch;">` + secCard(sections[i0],i0) + (i1<sections.length?secCard(sections[i1],i1):'') + `</div>` + dz((r+1)*2);
-        }
-        return html + `</div>`;
-      })()}
-      <button onclick="addCLSection(${li})" style="margin-top:12px;background:none;border:1.5px dashed var(--line);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;width:100%;">+ Ajouter une sous-liste</button>
+      ${renderBody(li, lst, [], 0)}
     </div>`;
   }).join('');
 }
@@ -20055,28 +20082,26 @@ function saveNewList() {
   }
   saveState(); renderChecklists(); closeNewListModal();
 }
-function addCLItem(li, si) {
-  const inp = document.getElementById(`clInput_${li}_${si}`);
+function addCLItem(li, pathJSON) {
+  const key = _clDomKey(pathJSON);
+  const inp = document.getElementById(`clInput_${li}_${key}`);
   if (!inp) return;
   const text = inp.value.trim();
   if (!text) return;
-  const lst = state.domestique.checklists[li];
-  if (si === -1) {
-    if (!lst.items) lst.items = [];
-    lst.items.push({ id:'ci'+Date.now(), text, done:false });
-  } else {
-    if (!lst.sections[si].items) lst.sections[si].items = [];
-    lst.sections[si].items.push({ id:'ci'+Date.now(), text, done:false });
-  }
+  const node = _clNode(li, JSON.parse(pathJSON));
+  if (!node) return;
+  if (!node.items) node.items = [];
+  node.items.push({ id:'ci'+Date.now(), text, done:false });
   saveState(); renderChecklists();
-  const newInp = document.getElementById(`clInput_${li}_${si}`);
+  const newInp = document.getElementById(`clInput_${li}_${key}`);
   if (newInp) newInp.focus();
 }
-function editCLItemInline(li, si, ii) {
-  const row = document.getElementById(`clrow_${li}_${si}_${ii}`);
+function editCLItemInline(li, pathJSON, ii) {
+  const row = document.getElementById(`clrow_${li}_${_clDomKey(pathJSON)}_${ii}`);
   if (!row) return;
-  const lst = state.domestique.checklists[li];
-  const item = si === -1 ? lst.items[ii] : lst.sections[si].items[ii];
+  const node = _clNode(li, JSON.parse(pathJSON));
+  if (!node) return;
+  const item = node.items[ii];
   const span = row.querySelector('span');
   if (!span) return;
   const inp = document.createElement('input');
@@ -20095,23 +20120,24 @@ function editCLItemInline(li, si, ii) {
   row.querySelectorAll('button').forEach(b => b.style.display = 'none');
   inp.focus(); inp.select();
 }
-function toggleCLItem(li, si, ii) {
-  const lst = state.domestique.checklists[li];
-  const item = si === -1 ? lst.items[ii] : lst.sections[si].items[ii];
-  item.done = !item.done;
+function toggleCLItem(li, pathJSON, ii) {
+  const node = _clNode(li, JSON.parse(pathJSON));
+  if (!node) return;
+  node.items[ii].done = !node.items[ii].done;
   saveState(); renderChecklists();
 }
-function deleteCLItem(li, si, ii) {
-  const lst = state.domestique.checklists[li];
-  if (si === -1) lst.items.splice(ii, 1);
-  else lst.sections[si].items.splice(ii, 1);
+function deleteCLItem(li, pathJSON, ii) {
+  const node = _clNode(li, JSON.parse(pathJSON));
+  if (!node) return;
+  node.items.splice(ii, 1);
   saveState(); renderChecklists();
 }
-function addCLSection(li) {
+function addCLSection(li, parentPathJSON) {
   document.getElementById('newSectionModalTitle').textContent = '📂 Nouvelle sous-liste';
   document.getElementById('newSectionSaveBtn').textContent = 'Créer';
   document.getElementById('newSectionListIdx').value = li;
-  document.getElementById('newSectionIdx').value = '';
+  document.getElementById('newSectionMode').value = 'create';
+  document.getElementById('newSectionPath').value = parentPathJSON;
   document.getElementById('newSectionName').value = '';
   document.getElementById('newSectionEmoji').value = '📂';
   document.getElementById('newSectionEmojiPreview').textContent = '📂';
@@ -20119,13 +20145,15 @@ function addCLSection(li) {
   document.getElementById('newSectionModal').classList.add('open');
   setTimeout(() => document.getElementById('newSectionName').focus(), 50);
 }
-function editCLSection(li, si) {
-  const sec = state.domestique.checklists[li].sections[si];
+function editCLSection(li, pathJSON) {
+  const sec = _clNode(li, JSON.parse(pathJSON));
+  if (!sec) return;
   const em = sec.emoji || '📂';
   document.getElementById('newSectionModalTitle').textContent = '✏️ Modifier la sous-liste';
   document.getElementById('newSectionSaveBtn').textContent = 'Enregistrer';
   document.getElementById('newSectionListIdx').value = li;
-  document.getElementById('newSectionIdx').value = si;
+  document.getElementById('newSectionMode').value = 'edit';
+  document.getElementById('newSectionPath').value = pathJSON;
   document.getElementById('newSectionName').value = sec.name;
   document.getElementById('newSectionEmoji').value = em;
   document.getElementById('newSectionEmojiPreview').textContent = em;
@@ -20139,21 +20167,28 @@ function saveNewSection() {
   if (!name) return;
   const emoji = document.getElementById('newSectionEmoji').value || '📂';
   const li = parseInt(document.getElementById('newSectionListIdx').value);
-  const siRaw = document.getElementById('newSectionIdx').value;
-  const lst = state.domestique.checklists[li];
-  if (siRaw !== '') {
-    lst.sections[parseInt(siRaw)].name = name;
-    lst.sections[parseInt(siRaw)].emoji = emoji;
+  const mode = document.getElementById('newSectionMode').value;
+  const pathJSON = document.getElementById('newSectionPath').value || '[]';
+  if (mode === 'edit') {
+    const sec = _clNode(li, JSON.parse(pathJSON));
+    if (sec) { sec.name = name; sec.emoji = emoji; }
   } else {
-    if (!lst.sections) lst.sections = [];
-    lst.sections.push({ id:'cs'+Date.now(), name, emoji, items:[] });
+    const parent = _clNode(li, JSON.parse(pathJSON));
+    if (parent) {
+      if (!parent.sections) parent.sections = [];
+      parent.sections.push({ id:'cs'+Date.now(), name, emoji, items:[], sections:[] });
+    }
   }
   saveState(); renderChecklists(); closeNewSectionModal();
 }
-function deleteCLSection(li, si) {
-  const lst = state.domestique.checklists[li];
-  _showConfirm(`Supprimer la sous-liste « ${lst.sections[si].name} » ?`, () => {
-    lst.sections.splice(si, 1);
+function deleteCLSection(li, pathJSON) {
+  const path = JSON.parse(pathJSON);
+  const idx = path[path.length-1];
+  const parent = _clNode(li, path.slice(0,-1));
+  if (!parent || !parent.sections || !parent.sections[idx]) return;
+  const sec = parent.sections[idx];
+  _showConfirm(`Supprimer la sous-liste « ${sec.name} » ?`, () => {
+    parent.sections.splice(idx, 1);
     saveState(); renderChecklists();
   });
 }
@@ -20164,15 +20199,19 @@ function deleteChecklist(li) {
     saveState(); renderChecklists();
   });
 }
-function moveCLSection(li, si, dir) {
-  const sections = state.domestique.checklists[li].sections;
-  const newSi = si + dir;
-  if (newSi < 0 || newSi >= sections.length) return;
-  const [moved] = sections.splice(si, 1);
-  sections.splice(newSi, 0, moved);
+function moveCLSection(li, pathJSON, dir) {
+  const path = JSON.parse(pathJSON);
+  const idx = path[path.length-1];
+  const parent = _clNode(li, path.slice(0,-1));
+  if (!parent || !parent.sections) return;
+  const sections = parent.sections;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= sections.length) return;
+  const [moved] = sections.splice(idx, 1);
+  sections.splice(newIdx, 0, moved);
   saveState(); renderChecklists();
 }
-/* Drag & drop sections */
+/* Drag & drop sections — réordonne uniquement entre sous-listes d'un même parent */
 let _clDragSrc = null;
 function _clClearDropIndicators() {
   document.querySelectorAll('._cl-drop-zone').forEach(el => {
@@ -20181,22 +20220,15 @@ function _clClearDropIndicators() {
     el.style.border = 'none';
   });
 }
-function _clDragStart(e, li, si) {
-  _clDragSrc = { li, si };
+function _clDragStart(e, li, pathJSON) {
+  _clDragSrc = { li, path: JSON.parse(pathJSON) };
   e.dataTransfer.effectAllowed = 'move';
   setTimeout(() => {
-    const zones = document.querySelectorAll('._cl-drop-zone');
-    console.log('[DnD] dragstart li='+li+' si='+si+' zones trouvées:', zones.length);
-    zones.forEach((el,i) => {
-      const r = el.getBoundingClientRect();
-      console.log('[DnD] zone'+i+' top='+Math.round(r.top)+' height='+Math.round(r.height));
+    document.querySelectorAll('._cl-drop-zone').forEach(el => {
       el.style.height = '24px';
       el.style.border = '2px dashed #c9b6f0';
     });
   }, 0);
-}
-function _clZoneOver_orig(e) {
-  console.log('[DnD] zoneOver sur', e.currentTarget.getBoundingClientRect());
 }
 function _clDragEnd(e) {
   _clClearDropIndicators();
@@ -20214,24 +20246,25 @@ function _clZoneLeave(e) {
     e.currentTarget.style.background = 'transparent';
   }
 }
-function _clZoneDrop(e, li, insertAt) {
+function _clZoneDrop(e, li, parentPathJSON, insertAt) {
   e.preventDefault();
   _clClearDropIndicators();
   if (!_clDragSrc || _clDragSrc.li !== li) { _clDragSrc = null; return; }
-  const sections = state.domestique.checklists[li].sections;
-  const fromSi = _clDragSrc.si;
+  const srcPath = _clDragSrc.path;
+  const srcParentPathJSON = JSON.stringify(srcPath.slice(0,-1));
   _clDragSrc = null;
+  // On ne réordonne qu'entre sous-listes du même parent (même niveau)
+  if (srcParentPathJSON !== parentPathJSON) return;
+  const parent = _clNode(li, JSON.parse(parentPathJSON));
+  if (!parent || !parent.sections) return;
+  const sections = parent.sections;
+  const fromIdx = srcPath[srcPath.length-1];
   let target = Math.min(insertAt, sections.length);
-  const [moved] = sections.splice(fromSi, 1);
-  if (fromSi < target) target--;
+  const [moved] = sections.splice(fromIdx, 1);
+  if (fromIdx < target) target--;
   sections.splice(target, 0, moved);
   saveState(); renderChecklists();
 }
-
-// compat ancienne structure (items directs sans sections)
-function addChecklistItem(li) { addCLItem(li, -1); }
-function toggleChecklistItem(li, ii) { toggleCLItem(li, -1, ii); }
-function deleteChecklistItem(li, ii) { deleteCLItem(li, -1, ii); }
 
 /* ========= CUISINE — RECETTES ========= */
 let _recipeCategoryFilter = "";
@@ -24732,7 +24765,7 @@ const HELP_TEXTS = {
         <li><strong>◀ ▶</strong> — Navigue dans les jours passés pour compléter ou consulter une journée manquée.</li>
       </ul>
       <div style="background:var(--lavender-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
-        💡 <strong>Astuce :</strong> En mode édition (✏️ en haut), tu peux ajouter, modifier ou supprimer des habitudes, et personnaliser la routine skincare.
+        💡 <strong>Astuce :</strong> En mode édition (✏️ en haut), tu peux ajouter, modifier ou supprimer des habitudes, et personnaliser les routines du matin et du soir (skincare, médicaments, etc).
       </div>`
   },
   work: {
