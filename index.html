@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1116</title>
+<title>Mon Tableau de Vie 🌿 · v1117</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11908,12 +11908,11 @@ function _syncFeatureSections() {
   const skincareCard = document.getElementById("healthSkincareCard");
   if (pillCard) pillCard.style.display = f.pill ? "" : "none";
   if (skincareCard) skincareCard.style.gridColumn = f.pill ? "" : "1 / -1";
-  // Composition corporelle / suivi poids (désactivé par défaut — profil + graphique + stats + saisie)
+  // Composition corporelle / suivi poids (désactivé par défaut — graphique + stats + saisie détaillée)
+  // Le profil (taille/âge/sexe/poids) reste toujours visible, il sert au calcul kcal auto.
   const bcOn = f.bodyComp === true;
   const bcSec = document.getElementById("bodyCompSection");
   if (bcSec) bcSec.style.display = bcOn ? "" : "none";
-  const bodyProfileRow = document.getElementById("bodyProfileRow");
-  if (bodyProfileRow) bodyProfileRow.style.display = bcOn ? "" : "none";
   const bodyCompBtn = document.getElementById("featureBodyCompBtn");
   if (bodyCompBtn) { bodyCompBtn.style.background = bcOn ? "var(--lavender-soft)" : "white"; bodyCompBtn.style.borderColor = bcOn ? "var(--lavender)" : "var(--line)"; }
   // Suivi calorique (graphique + balance)
@@ -11930,10 +11929,7 @@ function _syncFeatureSections() {
   if (ebBtn) { ebBtn.style.background = ebOn ? "var(--lavender-soft)" : "white"; ebBtn.style.borderColor = ebOn ? "var(--lavender)" : "var(--line)"; }
   // Nav mois partagée (pilote bodyComp/kcal/balance) : inutile si les 3 sont masquées
   const navRow = document.getElementById("healthMonthNavRow");
-  if (navRow) navRow.style.display = (bcOn || calOn || ebOn) ? "" : "none";
-  // Carte "Composition corporelle" entière : cachée si tout est off et qu'on n'édite pas
-  const compCard = document.getElementById("healthCompCard");
-  if (compCard) compCard.style.display = (!bcOn && !calOn && !ebOn && !document.body.classList.contains("edit-mode")) ? "none" : "";
+  if (navRow) navRow.style.display = (bcOn || calOn || ebOn) ? "flex" : "none";
   // Rafraîchir la liste des habitudes immédiatement (grisé/actif)
   if (typeof renderHabits === "function") renderHabits();
 }
