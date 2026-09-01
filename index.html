@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1119</title>
+<title>Mon Tableau de Vie 🌿 · v1120</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5382,7 +5382,7 @@ const TYPE_COLORS = ["#c9b6f0", "#f7c9a3", "#b4d4f1", "#aee0c8", "#efb8c8", "#f5
 
 const DEFAULT_STATE = {
   name: "",
-  features: { pill: false, cycle: false, pas: true, calories: true },
+  features: { pill: false, cycle: false, pas: true, calories: false },
   habits: [
     { id: "h-pas", name: "9000 pas", type: "numeric", target: 9000, unit: "pas" },
   ],
@@ -5814,16 +5814,20 @@ function migrate(s) {
   if (s.features.pill === undefined) s.features.pill = false;
   if (s.features.cycle === undefined) s.features.cycle = false;
   if (s.features.pas === undefined) s.features.pas = true;
-  if (s.features.calories === undefined) s.features.calories = true;
+  if (s.features.calories === undefined) s.features.calories = false;
   if (s.features.bodyComp === undefined) s.features.bodyComp = false;
-  if (s.features.energyBalance === undefined) s.features.energyBalance = true;
-  // Migration (une seule fois) : le suivi détaillé (graphique poids/masse grasse/maigre)
-  // est désormais désactivé par défaut — si jamais une donnée de poids/masse n'a été
-  // saisie, on le repasse à false (le profil taille/âge/sexe reste toujours visible, non concerné)
-  if (!s._bodyCompDefaultReset2) {
-    s._bodyCompDefaultReset2 = true;
+  if (s.features.energyBalance === undefined) s.features.energyBalance = false;
+  // Migration (une seule fois) : Suivi poids / Suivi calorique / Balance énergétique
+  // sont désormais désactivés par défaut dans Composition corporelle — si jamais
+  // utilisés (aucune donnée réelle saisie), on les repasse à false. Le profil
+  // taille/âge/sexe/poids reste toujours visible, non concerné.
+  if (!s._bodyCompDefaultReset3) {
+    s._bodyCompDefaultReset3 = true;
     const hasWeightData = Object.values(s.history || {}).some(d => d && (d.weight != null || d.bodyFat != null || d.muscleMass != null));
+    const hasFoodData = Object.values(s.history || {}).some(d => d && Array.isArray(d.foodLog) && d.foodLog.length > 0);
     if (s.features.bodyComp === true && !hasWeightData) s.features.bodyComp = false;
+    if (s.features.calories === true && !hasFoodData) s.features.calories = false;
+    if (s.features.energyBalance === true && !hasFoodData) s.features.energyBalance = false;
   }
   // Migration : s'assurer que h-cal-dep existe dans les habitudes (target 2000 kcal)
   if (!Array.isArray(s.habits)) s.habits = [];
