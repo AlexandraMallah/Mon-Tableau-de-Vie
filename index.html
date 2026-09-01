@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1112</title>
+<title>Mon Tableau de Vie 🌿 · v1113</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1811,9 +1811,6 @@
     </div>
     <div class="header-actions">
       <button class="btn-icon" id="editModeBtn" onclick="toggleEditMode()" title="Activer le mode édition pour modifier l'application">✏️ Éditer</button>
-      <button class="btn-icon" onclick="openPatchModal()" style="background:linear-gradient(135deg,var(--lavender-soft),var(--pink-soft));font-weight:600;">📥 Mise à jour</button>
-      <button class="btn-icon" id="exportBtn" onclick="exportData()">↗ Exporter</button>
-      <button class="btn-icon" id="importBtn" onclick="importData()">↙ Importer</button>
       <button class="btn-icon" id="settingsBtn" onclick="openSettings()">⚙ Personnaliser</button>
       <button class="btn-icon" onclick="openGestionModal()" style="background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
       <button class="btn-icon" onclick="cloudDiag()" title="Diagnostic sync" style="background:var(--lavender-soft);">🔍</button>
@@ -3737,61 +3734,21 @@
 <div class="modal-bg" id="settingsModal">
   <div class="modal" style="max-width:560px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-      <h2 style="margin:0;">⚙️ Réglages</h2>
+      <h2 style="margin:0;">⚙️ Personnaliser</h2>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button id="settingsTabProfil"   onclick="switchSettingsTab('profil')"   style="padding:6px 14px;border-radius:20px;border:1px solid var(--lavender);background:var(--lavender-soft);font-family:inherit;font-size:13px;cursor:pointer;font-weight:600;color:var(--ink);">👤 Profil</button>
-        <button id="settingsTabFinances" onclick="switchSettingsTab('finances')" style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">💰 Finances</button>
-        <button id="settingsTabDonnees"    onclick="switchSettingsTab('donnees')"    style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">💾 Données</button>
-        <button id="settingsTabApparence" onclick="switchSettingsTab('apparence')" style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">🎨 Apparence</button>
+        <button id="settingsTabApparence" onclick="switchSettingsTab('apparence')" style="padding:6px 14px;border-radius:20px;border:1px solid var(--lavender);background:var(--lavender-soft);font-family:inherit;font-size:13px;cursor:pointer;font-weight:600;color:var(--ink);">🎨 Apparence</button>
+        <button id="settingsTabDonnees"   onclick="switchSettingsTab('donnees')"   style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">💾 Données</button>
       </div>
     </div>
 
-    <!-- Onglet Profil -->
-    <div id="settingsPanelProfil">
-      <p class="modal-hint" style="margin:0 0 14px;">Personnalise ton prénom affiché, tes habitudes, activités et types de candidatures. Les éléments peuvent être réordonnés ou supprimés individuellement.</p>
-      <label>Ton prénom</label>
+    <!-- Prénom — toujours visible -->
+    <div style="margin-bottom:18px;">
+      <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Ton prénom</label>
       <input type="text" id="nameInput" placeholder="Alexandra" />
-
-      <div class="section-title" style="margin-top:16px;">Habitudes quotidiennes</div>
-      <div id="habitEditList"></div>
-      <input type="text" id="newHabitInput" placeholder="Nouvelle habitude (Entrée pour ajouter)" />
-
-      <div class="section-title" style="margin-top:16px;">Activités</div>
-      <div id="activityEditList"></div>
-      <div style="display:flex;gap:8px;">
-        <input type="text" id="newActivityEmoji" placeholder="🏃" style="width:70px;text-align:center;" />
-        <input type="text" id="newActivityName" placeholder="Nouvelle activité (Entrée pour ajouter)" />
-      </div>
-
-      <div class="section-title" style="margin-top:16px;">Types de candidatures</div>
-      <div id="candTypeEditList"></div>
-      <input type="text" id="newCandTypeInput" placeholder="Nouveau type (Entrée pour ajouter)" />
-    </div>
-
-    <!-- Onglet Finances -->
-    <div id="settingsPanelFinances" style="display:none;">
-      <div style="background:#f3ecff;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#6b4d99;">
-        💡 Pour modifier le nom, l'emoji ou le solde de départ d'un compte, clique sur le <strong>✏️</strong> qui apparaît sur chaque carte en <strong>mode édition</strong>.
-      </div>
-
-      <div class="section-title">📂 Catégories</div>
-      <div style="font-size:12px;color:var(--ink-soft);margin:-4px 0 10px;">Personnalise les listes déroulantes du formulaire de transaction.</div>
-
-      <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:var(--ink);">− Dépenses</div>
-      <div id="catEditList"></div>
-      <input type="text" id="newCatInput" placeholder="Nouvelle catégorie (Entrée pour ajouter)" style="margin-bottom:12px;" />
-
-      <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:var(--ink);">+ Revenus</div>
-      <div id="incomeCatEditList"></div>
-      <input type="text" id="newIncomeCatInput" placeholder="Nouvelle catégorie (Entrée pour ajouter)" style="margin-bottom:12px;" />
-
-      <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:var(--ink);">💰 Épargne</div>
-      <div id="savingsCatEditList"></div>
-      <input type="text" id="newSavingsCatInput" placeholder="Nouveau compte épargne (Entrée pour ajouter)" />
     </div>
 
     <!-- Onglet Apparence -->
-    <div id="settingsPanelApparence" style="display:none;">
+    <div id="settingsPanelApparence">
       <div class="section-title">🎨 Thème visuel</div>
       <p style="font-size:13px;color:var(--ink-soft);margin:-4px 0 16px;">Choisis l'ambiance de ton tableau de bord.</p>
       <div style="display:flex;flex-direction:column;gap:12px;">
@@ -23945,7 +23902,7 @@ document.getElementById("newEventName")?.addEventListener("keydown", e => {
 
 /* ========= SETTINGS MODAL ========= */
 function switchSettingsTab(tab) {
-  ["profil","finances","donnees","apparence"].forEach(t => {
+  ["donnees","apparence"].forEach(t => {
     const key = t.charAt(0).toUpperCase() + t.slice(1);
     const panel = document.getElementById("settingsPanel" + key);
     const btn   = document.getElementById("settingsTab"   + key);
@@ -23983,11 +23940,7 @@ function applyTheme(id, persist = true) {
 }
 function openSettings(tab) {
   document.getElementById("nameInput").value = state.name || "";
-  // comptes gérés directement via ✏️ sur les cartes (openAccountEdit)
-  renderSettingsLists();
-  ["newHabitInput", "newActivityName", "newActivityEmoji", "newCatInput", "newIncomeCatInput", "newSavingsCatInput", "newCandTypeInput"]
-    .forEach(i => document.getElementById(i).value = "");
-  switchSettingsTab(tab || "profil");
+  switchSettingsTab(tab || "apparence");
   // Rafraîchir les checkmarks de thème
   const curTheme = state.uiTheme || "smooth";
   ["smooth","serieux"].forEach(t => {
@@ -24172,50 +24125,11 @@ function renameSavingsCategory(newName, oldName) {
 function removeCandType(c) { state.candidatureTypes = state.candidatureTypes.filter(x => x !== c); renderSettingsLists(); }
 function saveSettings() {
   state.name = document.getElementById("nameInput").value.trim();
-  if (!state.accounts) state.accounts = { courantStart: 0, epargneStart: 0 };
-  const nh = document.getElementById("newHabitInput").value.trim();
-  if (nh) state.habits.push({ id: "h" + Date.now(), name: nh });
-  const naName = document.getElementById("newActivityName").value.trim();
-  const naEmoji = document.getElementById("newActivityEmoji").value.trim() || "✨";
-  if (naName) state.activities.push({ id: "a" + Date.now(), name: naName, emoji: naEmoji, hormones: autoHormones(naName) });
-  const nc = document.getElementById("newCatInput").value.trim();
-  if (nc && !state.categories.includes(nc)) state.categories.push(nc);
-  const nic = document.getElementById("newIncomeCatInput").value.trim();
-  if (nic && !state.incomeCategories.includes(nic)) state.incomeCategories.push(nic);
-  const nsc = document.getElementById("newSavingsCatInput").value.trim();
-  if (nsc && !state.savingsCategories.includes(nsc)) state.savingsCategories.push(nsc);
-  const nct = document.getElementById("newCandTypeInput").value.trim();
-  if (nct && !state.candidatureTypes.includes(nct)) state.candidatureTypes.push(nct);
   saveState();
   closeSettings();
   renderAll();
 }
 document.getElementById("settingsModal").addEventListener("click", e => { if (e.target.id === "settingsModal") closeSettings(); });
-function setupEnterAdd(inputId, onAdd) {
-  document.getElementById(inputId).addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (e.target.value.trim()) { onAdd(e.target.value.trim()); e.target.value = ""; renderSettingsLists(); }
-    }
-  });
-}
-setupEnterAdd("newHabitInput", v => state.habits.push({ id: "h" + Date.now(), name: v }));
-setupEnterAdd("newCatInput", v => { if (!state.categories.includes(v)) state.categories.push(v); });
-setupEnterAdd("newIncomeCatInput", v => { if (!state.incomeCategories.includes(v)) state.incomeCategories.push(v); });
-setupEnterAdd("newSavingsCatInput", v => { if (!state.savingsCategories.includes(v)) state.savingsCategories.push(v); });
-setupEnterAdd("newCandTypeInput", v => { if (!state.candidatureTypes.includes(v)) state.candidatureTypes.push(v); });
-document.getElementById("newActivityName").addEventListener("keydown", e => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    const v = e.target.value.trim();
-    if (v) {
-      const em = document.getElementById("newActivityEmoji").value.trim() || "✨";
-      state.activities.push({ id: "a" + Date.now(), name: v, emoji: em, hormones: autoHormones(v) });
-      e.target.value = ""; document.getElementById("newActivityEmoji").value = "";
-      renderSettingsLists();
-    }
-  }
-});
 
 /* Modal backdrop close */
 // taskEditModal et manualEventModal exclus : leurs selects/date pickers génèrent
