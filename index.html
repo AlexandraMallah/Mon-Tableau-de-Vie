@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1124</title>
+<title>Mon Tableau de Vie 🌿 · v1125</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1345,6 +1345,32 @@
     overscroll-behavior: contain;
   }
   .modal h2 { margin: 0 0 18px; }
+  /* ===== Sélecteur d'emoji unifié (listes, projets, activités, plantes, routines, suivi santé…) ===== */
+  .emoji-picker-grid {
+    max-height: 260px; overflow-y: auto;
+    padding: 10px; background: var(--bg-1); border-radius: 10px; border: 1px solid var(--line);
+  }
+  .emoji-picker-group-label {
+    font-size: 11px; font-weight: 700; color: var(--ink-softer); text-transform: uppercase;
+    letter-spacing: .04em; margin: 10px 0 5px; grid-column: 1 / -1;
+  }
+  .emoji-picker-group-label:first-child { margin-top: 0; }
+  .emoji-picker-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
+  .emoji-picker-btn {
+    font-size: 20px; line-height: 1; background: transparent; border: 2px solid transparent;
+    border-radius: 8px; padding: 3px 5px; cursor: pointer; font-family: inherit; transition: background .1s;
+  }
+  .emoji-picker-btn:hover { background: var(--bg-2); }
+  .emoji-picker-btn.active { background: var(--lavender-soft); border-color: var(--lavender); }
+  .emoji-picker-custom-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+  .emoji-picker-custom-input {
+    width: 56px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 8px;
+    font-size: 18px; text-align: center; font-family: inherit; background: var(--card); color: var(--ink);
+  }
+  .emoji-picker-preview {
+    font-size: 26px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+    border-radius: 10px; background: var(--bg-1); border: 1px solid var(--line); margin-bottom: 8px;
+  }
   .modal-hint { font-size:12px;color:var(--ink-soft);margin:-10px 0 14px;line-height:1.5;text-align:left; }
   .modal label { font-size: 13px; color: var(--ink-soft); display: block; margin-bottom: 6px; margin-top: 12px; }
   .modal input[type="text"], .modal input[type="number"], .modal input[type="date"], .modal input[type="url"],
@@ -2179,9 +2205,9 @@
       <input type="text" id="newSectionName" placeholder="ex : Vêtements, Trousse de toilette…" maxlength="60"
         onkeydown="if(event.key==='Enter')saveNewSection()" />
       <label style="margin-top:12px;">Emoji</label>
-      <div style="font-size:22px;margin-bottom:4px;" id="newSectionEmojiPreview">📂</div>
+      <div class="emoji-picker-preview" id="newSectionEmojiPreview">📂</div>
       <input type="hidden" id="newSectionEmoji" value="📂" />
-      <div id="newSectionEmojiPicker" style="display:flex;flex-wrap:wrap;gap:6px;max-height:180px;overflow-y:auto;padding:8px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);"></div>
+      <div class="emoji-picker-grid" id="newSectionEmojiPicker"></div>
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closeNewSectionModal()">Annuler</button>
@@ -2200,9 +2226,9 @@
       <input type="text" id="newListName" placeholder="ex : Valise, Courses, Checklist départ…" maxlength="60"
         onkeydown="if(event.key==='Enter')saveNewList()" />
       <label style="margin-top:12px;">Emoji</label>
-      <div style="font-size:22px;margin-bottom:4px;" id="newListEmojiPreview">🗂️</div>
+      <div class="emoji-picker-preview" id="newListEmojiPreview">🗂️</div>
       <input type="hidden" id="newListEmoji" value="🗂️" />
-      <div id="newListEmojiPicker" style="display:flex;flex-wrap:wrap;gap:6px;max-height:180px;overflow-y:auto;padding:8px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);"></div>
+      <div class="emoji-picker-grid" id="newListEmojiPicker"></div>
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closeNewListModal()">Annuler</button>
@@ -2258,11 +2284,9 @@
       <p class="modal-hint">Crée un espace d'organisation pour un projet de vie : mariage, anniversaire, déménagement, vacances… Tu peux y ajouter des notes libres, des listes à cocher, un budget et une date cible.</p>
       <input type="hidden" id="persoProjectModalId" />
       <label>Emoji</label>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-        <div id="persoProjectEmojiPreview" style="font-size:26px;cursor:pointer;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--bg-1);border:1px solid var(--line);">🎉</div>
-        <div id="persoProjectEmojiPicker" style="display:flex;flex-wrap:wrap;gap:5px;flex:1;max-height:90px;overflow-y:auto;padding:6px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);"></div>
-      </div>
+      <div class="emoji-picker-preview" id="persoProjectEmojiPreview">🎉</div>
       <input type="hidden" id="persoProjectEmoji" value="🎉" />
+      <div class="emoji-picker-grid" id="persoProjectEmojiPicker"></div>
       <label>Nom du projet</label>
       <input type="text" id="persoProjectName" placeholder="Ex : Organisation mariage, Anniversaire, Déménagement…" />
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px;">
@@ -3950,29 +3974,9 @@
     <!-- Sélecteur emoji -->
     <div style="margin-bottom:14px;">
       <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;font-weight:600;">Emoji</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;" id="plantEmojiPicker">
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌿')" title="🌿">🌿</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🪴')" title="🪴">🪴</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌵')" title="🌵">🌵</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌺')" title="🌺">🌺</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌸')" title="🌸">🌸</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌻')" title="🌻">🌻</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌹')" title="🌹">🌹</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌷')" title="🌷">🌷</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🪻')" title="🪻">🪻</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌾')" title="🌾">🌾</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🍀')" title="🍀">🍀</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌱')" title="🌱">🌱</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🍃')" title="🍃">🍃</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🎋')" title="🎋">🎋</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌴')" title="🌴">🌴</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🌳')" title="🌳">🌳</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🍄')" title="🍄">🍄</span>
-        <span style="font-size:24px;cursor:pointer;padding:4px 6px;border-radius:8px;border:2px solid transparent;" onclick="selectPlantEmoji('🪨')" title="🪨">🪨</span>
-        <input type="text" id="plantFormEmojiCustom" placeholder="autre…" maxlength="4" style="width:56px;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font-size:18px;text-align:center;font-family:inherit;" oninput="selectPlantEmoji(this.value)" />
-      </div>
-      <div style="font-size:20px;text-align:center;padding:6px;background:#faf8fd;border-radius:8px;">Sélectionné : <span id="plantFormEmojiPreview">🪴</span></div>
+      <div class="emoji-picker-preview" id="plantFormEmojiPreview">🪴</div>
       <input type="hidden" id="plantFormEmoji" value="🪴" />
+      <div class="emoji-picker-grid" id="plantEmojiPicker"></div>
     </div>
     <div style="display:flex;flex-direction:column;gap:12px;">
       <div>
@@ -4297,12 +4301,13 @@
     <div id="actModalLoisirFields">
       <label style="font-size:12px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:8px;">NOM &amp; EMOJI</label>
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
-        <div id="actModalEmojiPreview" style="font-size:32px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;border:2px solid var(--mint);border-radius:12px;background:var(--mint-soft);flex-shrink:0;">✨</div>
+        <div class="emoji-picker-preview" id="actModalEmojiPreview" style="margin-bottom:0;flex-shrink:0;">✨</div>
+        <input type="hidden" id="actModalEmoji" value="✨" />
         <input type="text" id="actModalName" placeholder="Nom de l'activité…" maxlength="40"
           onkeydown="if(event.key==='Enter')_saveActivityModal()"
           style="flex:1;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);" />
       </div>
-      <div id="actEmojiGrid" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px;"></div>
+      <div class="emoji-picker-grid" id="actEmojiGrid" style="margin-bottom:16px;"></div>
     </div>
 
     <!-- Objectif + boutons sur une seule ligne -->
@@ -4334,15 +4339,9 @@
     </div>
 
     <!-- Emoji + nom -->
-    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;">
-      <div>
-        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Emoji</div>
-        <input type="text" id="symModalEmoji" maxlength="4" placeholder="💊"
-          style="width:56px;padding:10px 6px;border:1.5px solid var(--line);border-radius:12px;font-size:24px;text-align:center;font-family:inherit;background:var(--bg-1);cursor:pointer;box-sizing:border-box;" />
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;max-width:200px;">
-          <span id="symEmojiSuggestions" style="display:contents;"></span>
-        </div>
-      </div>
+    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;">
+      <div class="emoji-picker-preview" id="symModalEmojiPreview" style="margin-bottom:0;">💊</div>
+      <input type="hidden" id="symModalEmoji" value="💊" />
       <div style="flex:1;">
         <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom du suivi</div>
         <input type="text" id="symModalName" placeholder="ex : Migraine, Allergie, Tension…" maxlength="40"
@@ -4352,6 +4351,7 @@
           style="width:100%;padding:8px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;" />
       </div>
     </div>
+    <div class="emoji-picker-grid" id="symEmojiGrid" style="margin-bottom:14px;"></div>
 
     <!-- Presets suivi santé -->
     <div style="margin-bottom:14px;">
@@ -4429,19 +4429,15 @@
     <div style="height:1px;background:var(--line);margin-bottom:14px;"></div>
     <!-- Emoji + nom -->
     <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px;">
-      <div>
-        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Emoji</div>
-        <div id="routineItemEmoji" style="width:46px;height:46px;border:2px solid var(--lavender);border-radius:12px;background:var(--bg-1);font-size:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('routineItemEmojiPicker').style.display=document.getElementById('routineItemEmojiPicker').style.display==='none'?'flex':'none'">☀️</div>
-        <div id="routineItemEmojiPicker" style="display:none;flex-wrap:wrap;gap:4px;margin-top:6px;max-width:220px;">
-          <span id="routineItemEmojiGrid" style="display:contents;"></span>
-        </div>
-      </div>
+      <div class="emoji-picker-preview" id="routineItemEmoji" style="margin-bottom:0;">☀️</div>
+      <input type="hidden" id="routineItemEmojiValue" value="☀️" />
       <div style="flex:1;">
         <div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">Nom de l'élément</div>
         <input type="text" id="routineItemName" placeholder="ex : Flossing, Méditation…" maxlength="40"
           style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;" />
       </div>
     </div>
+    <div class="emoji-picker-grid" id="routineItemEmojiGrid" style="margin-bottom:16px;"></div>
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button onclick="_closeRoutineItemModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
       <button onclick="_saveRoutineItemModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
@@ -4522,11 +4518,9 @@
     <p class="modal-hint">Crée un projet de travail : il apparaîtra comme sous-onglet dans Travail, comme section dans tes tâches, et comme catégorie dans le suivi du temps. Pour supprimer, ouvre-le et clique sur <strong>Supprimer</strong>.</p>
     <input type="hidden" id="projectModalId" />
     <label>Emoji</label>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-      <div id="projectModalEmojiPreview" style="font-size:26px;cursor:pointer;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--bg-1);border:1px solid var(--line);">📁</div>
-      <div id="projectModalEmojiPicker" style="display:flex;flex-wrap:wrap;gap:5px;flex:1;max-height:100px;overflow-y:auto;padding:6px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);"></div>
-    </div>
+    <div class="emoji-picker-preview" id="projectModalEmojiPreview">📁</div>
     <input type="hidden" id="projectModalEmoji" value="📁" />
+    <div class="emoji-picker-grid" id="projectModalEmojiPicker"></div>
     <label>Nom du projet</label>
     <input type="text" id="projectModalName" placeholder="Ex : Article de recherche, Candidatures, Cours…" />
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px;">
@@ -5147,11 +5141,9 @@
     <div style="border-top:1px solid var(--line);padding-top:14px;">
       <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;font-weight:600;">Nouveau projet</div>
       <div style="margin-bottom:8px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-          <span id="newTimeCatEmojiPreview" style="font-size:26px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--bg-1);border:1px solid var(--line);cursor:default;">📁</span>
-          <div id="newTimeCatEmojiGrid" style="display:flex;flex-wrap:wrap;gap:4px;flex:1;padding:6px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);"></div>
-        </div>
+        <span class="emoji-picker-preview" id="newTimeCatEmojiPreview">📁</span>
         <input type="hidden" id="newTimeCatEmoji" value="📁" />
+        <div class="emoji-picker-grid" id="newTimeCatEmojiGrid"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input type="text" id="newTimeCatLabel" placeholder="Nom du projet" style="flex:1;min-width:120px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" onkeydown="if(event.key==='Enter')_createTimeCat()" />
@@ -8406,15 +8398,7 @@ function openTimeCatsModal() {
   const prev = document.getElementById("newTimeCatEmojiPreview"); if (prev) prev.textContent = "📁";
   document.getElementById("newTimeCatLabel").value = "";
   document.getElementById("newTimeCatColor").value = "#6aaed6";
-  // Remplir la grille d'emojis
-  var grid = document.getElementById("newTimeCatEmojiGrid");
-  if (grid && !grid.dataset.filled) {
-    var emojis = ["📁","📂","📌","🎯","✍️","📝","📖","📚","🔬","🧪","🎓","📊","📈","🗂️","💡","🏛️","🌍","🔭","🖊️","📐","🧑‍🏫","💬","📣","🏆","🤝","🌱","⚡","🔗","🧭","🗺️","📋","🎤","🖥️","📡","🔑","🎨","🧩","💎","🚀","🌟","🎪","🏗️","🔧","📮","🗓️","📩","🧠","🏅","💼","🌈","🔐","🎭","🧬","📸","🎵","🌺","🛠️","🔍","💻","🏠","🌿"];
-    grid.innerHTML = emojis.map(function(e) {
-      return '<span onclick="_pickTimeCatEmoji(\'' + e + '\')" style="font-size:20px;padding:4px;border-radius:6px;cursor:pointer;transition:background 0.1s;line-height:1;" onmouseover="this.style.background=\'var(--lavender-soft)\'" onmouseout="this.style.background=\'transparent\'">' + e + '</span>';
-    }).join("");
-    grid.dataset.filled = "1";
-  }
+  renderEmojiPicker('newTimeCatEmojiGrid','newTimeCatEmoji','newTimeCatEmojiPreview','📁');
   document.getElementById("timeCatsModal").classList.add("open");
   setTimeout(() => document.getElementById("newTimeCatLabel").focus(), 80);
 }
@@ -8505,12 +8489,6 @@ function _deleteTimeCatByIdx(idx) {
     }
   });
 }
-function _pickTimeCatEmoji(e) {
-  const hidden = document.getElementById("newTimeCatEmoji");
-  const preview = document.getElementById("newTimeCatEmojiPreview");
-  if (hidden) hidden.value = e;
-  if (preview) preview.textContent = e;
-}
 function _createTimeCat() {
   var emoji = (document.getElementById("newTimeCatEmoji").value.trim() || "📁");
   var label = document.getElementById("newTimeCatLabel").value.trim();
@@ -8522,6 +8500,7 @@ function _createTimeCat() {
   state.work.postdocProjects.push({ id: "p" + Date.now(), name: label, emoji, color, bg, progress: 0, checklist: [], links: [], ficheNotesList: [] });
   document.getElementById("newTimeCatEmoji").value = "📁";
   const _eprev = document.getElementById("newTimeCatEmojiPreview"); if (_eprev) _eprev.textContent = "📁";
+  renderEmojiPicker('newTimeCatEmojiGrid','newTimeCatEmoji','newTimeCatEmojiPreview','📁');
   document.getElementById("newTimeCatLabel").value = "";
   saveState(); _renderTimeCatsList(); renderTimeCatsGrid();
   renderWorkProjectTabs(); updateProjectSelect(); renderCustomSectionChips();
@@ -8775,7 +8754,6 @@ function updateProjectSelect() {
   sel.innerHTML = html;
   sel.value = cur;
 }
-const _PROJECT_EMOJIS = ["📁","📂","📌","🎯","✍️","📝","📖","📚","🔬","🧪","🎓","📊","📈","🗂️","💡","🏛️","🌍","🔭","🖊️","📐","🧑‍🏫","💬","📣","🏆","🤝","🌱","⚡","🔗","🧭","🗺️","📋","🎤","🖥️","📡","🏗️","🔑"];
 const _PROJECT_COLORS = [
   { color: "#b8a5e8", bg: "#f0ebff" },
   { color: "#7fc2b0", bg: "#e8f7f3" },
@@ -8792,37 +8770,25 @@ function _projectNameSuggest(el) {
   document.getElementById("projectModalName").value = el.textContent;
   document.getElementById("projectModalName").focus();
 }
-function _initProjectEmojiPicker() {
-  const picker = document.getElementById("projectModalEmojiPicker");
-  if (!picker || picker.children.length) return;
-  picker.innerHTML = _PROJECT_EMOJIS.map(e =>
-    `<span onclick="_pickProjectEmoji('${e}')" style="cursor:pointer;font-size:18px;padding:3px;border-radius:6px;transition:background 0.1s;" onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background=''">${e}</span>`
-  ).join("");
-}
-function _pickProjectEmoji(e) {
-  document.getElementById("projectModalEmoji").value = e;
-  document.getElementById("projectModalEmojiPreview").textContent = e;
-}
 function openProjectModal(id) {
   const isEdit = !!id;
   document.getElementById("projectModalTitle").textContent = isEdit ? "Modifier projet" : "Nouveau projet";
   document.getElementById("projectModalId").value = id || "";
   document.getElementById("projectModalDelete").style.display = isEdit ? "" : "none";
   const defaultEmoji = "📁";
+  let em = defaultEmoji;
   if (isEdit) {
     const p = state.work.postdocProjects.find(x => x.id === id);
     document.getElementById("projectModalName").value = p.name;
     document.getElementById("projectModalNotes").value = p.notes || "";
-    const em = p.emoji || defaultEmoji;
-    document.getElementById("projectModalEmoji").value = em;
-    document.getElementById("projectModalEmojiPreview").textContent = em;
+    em = p.emoji || defaultEmoji;
   } else {
     document.getElementById("projectModalName").value = "";
     document.getElementById("projectModalNotes").value = "";
-    document.getElementById("projectModalEmoji").value = defaultEmoji;
-    document.getElementById("projectModalEmojiPreview").textContent = defaultEmoji;
   }
-  _initProjectEmojiPicker();
+  document.getElementById("projectModalEmoji").value = em;
+  document.getElementById("projectModalEmojiPreview").textContent = em;
+  renderEmojiPicker('projectModalEmojiPicker','projectModalEmoji','projectModalEmojiPreview', em);
   document.getElementById("projectModal").classList.add("open");
 }
 function closeProjectModal() { document.getElementById("projectModal").classList.remove("open"); }
@@ -10112,12 +10078,6 @@ function _selectSport(met, emoji, name) {
 }
 function _applyMetPreset() { /* remplacé par _selectSport */ }
 
-const _ACT_EMOJIS = [
-  "🎨","🖌️","✍️","📚","📖","🎵","🎸","🎹","🥁","🎻",
-  "🎭","🎬","🎤","🎮","🧩","🎲","📷","🎙️","🎧","📝",
-  "🍳","🧁","🌱","🪴","🌿","🐕","🐈","✈️","🚗","🛳️",
-  "💆","🧖","🛁","🍵","🌙","🛒","🧵","🧶","📺","🏖️",
-];
 let _actModalEmoji = "🏃";
 
 function _openActivityModal(id) {
@@ -10154,25 +10114,12 @@ function _openActivityModal(id) {
     }
   }
   _renderSportGrid(_selectedSportKey);
-  document.getElementById("actEmojiGrid").innerHTML = _ACT_EMOJIS.map(e =>
-    `<button onclick="_selectActEmoji('${e}')" data-actemojikey="${e}" style="
-      font-size:22px;padding:6px 8px;border-radius:10px;cursor:pointer;font-family:inherit;
-      border:2px solid ${e===_actModalEmoji?'var(--mint)':'var(--line)'};
-      background:${e===_actModalEmoji?'var(--mint-soft)':'white'};
-      transition:all 0.1s;">${e}</button>`
-  ).join("");
+  document.getElementById("actModalEmoji").value = _actModalEmoji;
+  renderEmojiPicker('actEmojiGrid','actModalEmoji','actModalEmojiPreview',_actModalEmoji,'_syncActModalEmoji');
   document.getElementById("activityModal").style.display = "flex";
   setTimeout(() => document.getElementById("actModalName").focus(), 80);
 }
-function _selectActEmoji(e) {
-  _actModalEmoji = e;
-  document.getElementById("actModalEmojiPreview").textContent = e;
-  document.querySelectorAll("[data-actemojikey]").forEach(btn => {
-    const sel = btn.dataset.actemojikey === e;
-    btn.style.borderColor = sel ? "var(--mint)" : "var(--line)";
-    btn.style.background  = sel ? "var(--mint-soft)" : "white";
-  });
-}
+function _syncActModalEmoji(e) { _actModalEmoji = e; }
 function _closeActivityModal() { document.getElementById("activityModal").style.display = "none"; }
 let _actModalSportName = "";
 function _saveActivityModal() {
@@ -11146,7 +11093,6 @@ const _ROUTINE_PRESETS = {
     { emoji:"🌙", label:"Coucher calme" },
   ]
 };
-const _ROUTINE_EMOJIS = ["🪥","☀️","🌙","🦷","🧴","💊","🤸","🧘","✍️","📖","🥤","🧹","🧠","🚶","🌿","🛁","🙏","💆","🎵","🫁","🍵","📵","🌸","💪","🍎","😴","🧖","🌊","🕯️","🎨","🪴","🐾","⏰","🧃","🫖","🧊","🪑","🎧"];
 let _routineItemKey = null, _routineItemEditId = null;
 function _addRoutineItem(key) { _openRoutineItemModal(key, null); }
 function _editRoutineItem(key, id) { _openRoutineItemModal(key, id); }
@@ -11156,20 +11102,18 @@ function _openRoutineItemModal(key, editId) {
   const meta = ROUTINES_META[key] || {};
   document.getElementById("routineItemModalTitle").textContent = (editId ? "✏️ Modifier" : (key==="matin"?"☀️":"🌙") + " Ajouter à") + " " + (meta.label || "la routine");
   document.getElementById("routineItemName").value = "";
-  document.getElementById("routineItemEmoji").textContent = key === "matin" ? "☀️" : "🌙";
-  document.getElementById("routineItemEmojiPicker").style.display = "";
+  let emoji = key === "matin" ? "☀️" : "🌙";
   // Si édition, pré-remplir
   if (editId) {
     const item = (getRoutines()[key] || []).find(s => s.id === editId);
-    if (item) { document.getElementById("routineItemName").value = item.label; document.getElementById("routineItemEmoji").textContent = item.emoji || "☀️"; }
+    if (item) { document.getElementById("routineItemName").value = item.label; emoji = item.emoji || emoji; }
     document.getElementById("routineItemPresets").style.display = "none";
   } else {
     document.getElementById("routineItemPresets").style.display = "";
   }
-  // Emoji grid
-  document.getElementById("routineItemEmojiGrid").innerHTML = _ROUTINE_EMOJIS.map(e =>
-    `<span onclick="document.getElementById('routineItemEmoji').textContent='${e}';document.getElementById('routineItemEmojiPicker').style.display='none';" style="cursor:pointer;font-size:22px;padding:3px;border-radius:8px;" onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background=''">${e}</span>`
-  ).join("");
+  document.getElementById("routineItemEmoji").textContent = emoji;
+  document.getElementById("routineItemEmojiValue").value = emoji;
+  renderEmojiPicker('routineItemEmojiGrid','routineItemEmojiValue','routineItemEmoji', emoji);
   // Preset chips
   const chips = (_ROUTINE_PRESETS[key] || []);
   document.getElementById("routineItemPresetChips").innerHTML = chips.map(p =>
@@ -11179,14 +11123,14 @@ function _openRoutineItemModal(key, editId) {
   setTimeout(() => document.getElementById("routineItemName").focus(), 100);
 }
 function _applyRoutinePreset(emoji, label) {
-  document.getElementById("routineItemEmoji").textContent = emoji;
+  pickEmoji('routineItemEmojiGrid','routineItemEmojiValue','routineItemEmoji', emoji);
   document.getElementById("routineItemName").value = label;
 }
 function _closeRoutineItemModal() { document.getElementById("routineItemModal").classList.remove("open"); }
 function _saveRoutineItemModal() {
   const name = document.getElementById("routineItemName").value.trim();
   if (!name) { document.getElementById("routineItemName").focus(); return; }
-  const emoji = document.getElementById("routineItemEmoji").textContent || "☀️";
+  const emoji = document.getElementById("routineItemEmojiValue").value || "☀️";
   const key = _routineItemKey;
   if (_routineItemEditId) {
     const item = (getRoutines()[key] || []).find(s => s.id === _routineItemEditId);
@@ -12073,10 +12017,9 @@ function _setSymptomValue(id, v) {
   saveState(); renderCustomSymptoms(); renderCustomSymptomsSante();
 }
 let _symSelectedType = "scale";
-const _SYM_EMOJIS = ["💊","🩸","🤰","🧠","💉","🩹","🌡️","😴","🫁","🦷","🏃","💪","🤒","🤢","😵","❤️","🫀","🦴","👁️","👂","🤧","🤕","💆","🍃"];
 
 function _applySymPreset(emoji, name, subtitle, type, unit) {
-  document.getElementById("symModalEmoji").value = emoji;
+  pickEmoji('symEmojiGrid','symModalEmoji','symModalEmojiPreview', emoji);
   document.getElementById("symModalName").value = name;
   document.getElementById("symModalSubtitle").value = subtitle || "";
   document.getElementById("symModalUnit").value = unit || "";
@@ -12087,6 +12030,7 @@ function _addCustomSymptom() {
   _symSelectedType = "scale";
   document.querySelector("#symptomModal h3").textContent = "✨ Nouveau suivi santé";
   document.getElementById("symModalEmoji").value = "💊";
+  document.getElementById("symModalEmojiPreview").textContent = "💊";
   document.getElementById("symModalName").value = "";
   document.getElementById("symModalSubtitle").value = "";
   document.getElementById("symModalUnit").value = "";
@@ -12097,12 +12041,7 @@ function _addCustomSymptom() {
   });
   const scaleBtn = document.getElementById("symType-scale");
   if (scaleBtn) { scaleBtn.style.borderColor = "var(--lavender)"; scaleBtn.style.background = "var(--lavender-soft)"; }
-  const sugg = document.getElementById("symEmojiSuggestions");
-  if (sugg) {
-    sugg.innerHTML = _SYM_EMOJIS.map(e =>
-      `<span onclick="document.getElementById('symModalEmoji').value='${e}'" style="cursor:pointer;font-size:22px;padding:2px;" title="${e}">${e}</span>`
-    ).join("");
-  }
+  renderEmojiPicker('symEmojiGrid','symModalEmoji','symModalEmojiPreview','💊');
   document.getElementById("symptomModal").style.display = "flex";
 }
 function _closeSymptomModal() {
@@ -12153,15 +12092,14 @@ function _renameCustomSymptom(id) {
   const s = syms.find(x => x.id === id);
   if (!s) return;
   _editSymptomId = id;
-  document.getElementById("symModalEmoji").value = s.emoji || "💊";
+  const em = s.emoji || "💊";
+  document.getElementById("symModalEmoji").value = em;
+  document.getElementById("symModalEmojiPreview").textContent = em;
   document.getElementById("symModalName").value = s.name;
   document.getElementById("symModalSubtitle").value = s.subtitle || "";
   document.getElementById("symModalUnit").value = s.unit || "";
   _selectSymType(s.type || "scale");
-  const sugg = document.getElementById("symEmojiSuggestions");
-  if (sugg) sugg.innerHTML = _SYM_EMOJIS.map(e =>
-    `<span onclick="document.getElementById('symModalEmoji').value='${e}'" style="cursor:pointer;font-size:22px;padding:2px;" title="${e}">${e}</span>`
-  ).join("");
+  renderEmojiPicker('symEmojiGrid','symModalEmoji','symModalEmojiPreview', em);
   document.querySelector("#symptomModal h3").textContent = "✏️ Modifier le suivi";
   document.getElementById("symptomModal").style.display = "flex";
 }
@@ -19278,7 +19216,6 @@ function renderDomestique() { renderTodo(); renderChecklists(); renderDomesticTa
 // ============================================================
 // PROJETS PERSONNELS DOMESTIQUE
 // ============================================================
-const _PERSO_EMOJIS = ["🎉","💍","🎂","🎁","🏠","✈️","📦","🌸","🎊","🏡","🧳","🎓","🍽️","🎪","⛵","🏕️","🌍","🎭","🎨","🍾","🌺","💐","🎶","🎄","🌙","⭐","🦋","🌈"];
 const _PERSO_PALETTE = [
   {color:"#c9a0dc",bg:"#f5ecff"},{color:"#7fc2b0",bg:"#e8f7f3"},{color:"#e8a87c",bg:"#fff3eb"},
   {color:"#85b4de",bg:"#e8f2fb"},{color:"#d48fb0",bg:"#fce8f2"},{color:"#a8c882",bg:"#eef7e6"}
@@ -19288,41 +19225,29 @@ function _persoAutoColor() {
   const idx = (state.domestique.persoProjects||[]).length % _PERSO_PALETTE.length;
   return _PERSO_PALETTE[idx];
 }
-function _initPersoEmojiPicker() {
-  const p = document.getElementById("persoProjectEmojiPicker");
-  if (!p || p.children.length) return;
-  p.innerHTML = _PERSO_EMOJIS.map(e =>
-    `<span onclick="_pickPersoEmoji('${e}')" style="cursor:pointer;font-size:18px;padding:3px;border-radius:6px;" onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background='';">${e}</span>`
-  ).join("");
-}
-function _pickPersoEmoji(e) {
-  document.getElementById("persoProjectEmoji").value = e;
-  document.getElementById("persoProjectEmojiPreview").textContent = e;
-}
 function openPersoProjectModal(id) {
   const isEdit = !!id;
   document.getElementById("persoProjectModalTitle").textContent = isEdit ? "✏️ Modifier le projet" : "✨ Nouveau projet";
   document.getElementById("persoProjectModalId").value = id || "";
   document.getElementById("persoProjectDeleteBtn").style.display = isEdit ? "" : "none";
   document.querySelector("#persoProjectModal .primary").textContent = isEdit ? "Enregistrer" : "Créer";
-  const em = isEdit ? ((state.domestique.persoProjects||[]).find(p=>p.id===id)?.emoji || "🎉") : "🎉";
+  let em = "🎉";
   if (isEdit) {
     const pp = (state.domestique.persoProjects||[]).find(p=>p.id===id)||{};
     document.getElementById("persoProjectName").value = pp.name||"";
     document.getElementById("persoProjectDate").value = pp.date||"";
     document.getElementById("persoProjectBudget").value = pp.budget||"";
     document.getElementById("persoProjectDesc").value = pp.desc||"";
-    document.getElementById("persoProjectEmoji").value = pp.emoji||"🎉";
-    document.getElementById("persoProjectEmojiPreview").textContent = pp.emoji||"🎉";
+    em = pp.emoji || "🎉";
   } else {
     document.getElementById("persoProjectName").value = "";
     document.getElementById("persoProjectDate").value = "";
     document.getElementById("persoProjectBudget").value = "";
     document.getElementById("persoProjectDesc").value = "";
-    document.getElementById("persoProjectEmoji").value = "🎉";
-    document.getElementById("persoProjectEmojiPreview").textContent = "🎉";
   }
-  _initPersoEmojiPicker();
+  document.getElementById("persoProjectEmoji").value = em;
+  document.getElementById("persoProjectEmojiPreview").textContent = em;
+  renderEmojiPicker('persoProjectEmojiPicker','persoProjectEmoji','persoProjectEmojiPreview', em);
   document.getElementById("persoProjectModal").classList.add("open");
 }
 function closePersoProjectModal() { document.getElementById("persoProjectModal").classList.remove("open"); }
@@ -20045,44 +19970,48 @@ function renderChecklists() {
     </div>`;
   }).join('');
 }
-const _CL_EMOJIS = [
-  // Listes générales
-  '🗂️','📋','✅','📝','🗒️','📌','🔖','⭐','💡','🎯',
-  // Valise / voyage
-  '🧳','✈️','🗺️','🏖️','🏔️','🚂','🚗','🛳️','🏨','🗼',
-  // Vêtements
-  '👗','👕','👖','🧥','🧣','🧤','🧦','👙','👚','👔','👒','🎩','🧢','👟','👠','👡','👢','🩴','👛','👜','🩳','🩱','🥋','🎽','🩰',
-  // Toilette & soin
-  '🪥','🧴','🧼','🪞','💊','💉','🩹','🩺','🧻','🚿','🛁','🪒','✂️',
-  // Maquillage & beauté
-  '💄','💅','💋','🪮','💆','🧖','💐','🌸','✨','🌟',
-  // Affaires de bain
-  '🏊','🩱','🏄','🤿','☀️','🕶️','🧴','🌊',
-  // High-tech & chargeurs
-  '🔌','🔋','💻','📱','📷','🎧','🖥️','⌨️','🖱️','📡','🔦','🕯️',
-  // Livres & culture
-  '📚','📖','📰','🗞️','🎵','🎮','🎨','🖊️','📓',
-  // Nourriture & cuisine
-  '🍎','🥗','🧃','☕','🍫','🥜','🍱',
-  // Maison & divers
-  '🏠','🔑','🪴','🐾','🧸','🎁','🎀','💼','🗝️','🔒',
+/* Catalogue unique d'emojis, utilisé par TOUS les sélecteurs de l'app
+   (listes, projets, activités, plantes, routines, suivi santé…) pour
+   une expérience de sélection identique partout. */
+const MASTER_EMOJI_GROUPS = [
+  { group: "Listes & organisation", items: ['🗂️','📋','✅','📝','🗒️','📌','🔖','⭐','💡','🎯','📁','📂','🔗','🧭','🗓️','📩','📮'] },
+  { group: "Travail & recherche", items: ['💼','🔬','🧪','🎓','📊','📈','🏛️','🌍','🔭','🖊️','📐','🧑‍🏫','💬','📣','🏆','🤝','🚀','🧩','💎','🏗️','🔧','🧠','🏅','🔐','🧬','📸','🛠️','🔍','💻','🎤','🖥️','📡','🔑'] },
+  { group: "Fêtes & événements", items: ['🎉','💍','🎂','🎁','🎊','🏡','🍽️','🎪','⛵','🏕️','🍾','🎶','🎄','🦋','🌈'] },
+  { group: "Valise & voyage", items: ['🧳','✈️','🗺️','🏖️','🏔️','🚂','🚗','🛳️','🏨','🗼'] },
+  { group: "Vêtements", items: ['👗','👕','👖','🧥','🧣','🧤','🧦','👙','👚','👔','👒','🎩','🧢','👟','👠','👡','👢','🩴','👛','👜','🩳','🩱','🥋','🎽','🩰'] },
+  { group: "Toilette & soin", items: ['🪥','🧴','🧼','🪞','💊','💉','🩹','🩺','🧻','🚿','🛁','🪒','✂️','🦷'] },
+  { group: "Beauté & bien-être", items: ['💄','💅','💋','🪮','💆','🧖','💐','🌸','✨','🌟','🧘','🙏','🫁','🍵','📵','💪','😴','🧠','🚶'] },
+  { group: "Sport & plein air", items: ['🏊','🏄','🤿','☀️','🕶️','🌊','🤸','🚶','🎽'] },
+  { group: "High-tech", items: ['🔌','🔋','💻','📱','📷','🎧','🖥️','⌨️','🖱️','📡','🔦','🕯️','⏰'] },
+  { group: "Loisirs & culture", items: ['📚','📖','📰','🗞️','🎵','🎮','🎨','🖌️','🎸','🎹','🥁','🎻','🎭','🎬','🎤','🧩','🎲','🎙️','📺','🐕','🐈'] },
+  { group: "Nourriture & cuisine", items: ['🍎','🥗','🧃','☕','🍫','🥜','🍱','🍳','🧁','🥤','🍵','🫖'] },
+  { group: "Maison & divers", items: ['🏠','🔑','🪴','🐾','🧸','🎁','🎀','🗝️','🔒','🛒','🧵','🧶','🧹','🧊','🪑'] },
+  { group: "Plantes & nature", items: ['🌿','🌵','🌺','🌻','🌹','🌷','🪻','🌾','🍀','🌱','🍃','🎋','🌴','🌳','🍄','🪨'] },
 ];
-function _renderEmojiPicker(containerId, hiddenId, previewId, current) {
+const _CL_EMOJIS = MASTER_EMOJI_GROUPS.flatMap(g => g.items); // alias rétrocompat
+/* ===== Sélecteur d'emoji unifié — utilisé par tous les pickers de l'app ===== */
+function renderEmojiPicker(containerId, hiddenId, previewId, current, afterPickFn) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  container.innerHTML = _CL_EMOJIS.map(e =>
-    `<button type="button" onclick="_pickEmoji('${hiddenId}','${previewId}','${e}',this)"
-      style="font-size:22px;background:${e===current?'var(--lavender-soft,#ede8ff)':'transparent'};border:2px solid ${e===current?'var(--lavender)':'transparent'};border-radius:8px;padding:3px 5px;cursor:pointer;line-height:1;" title="${e}">${e}</button>`
-  ).join('');
+  const afterAttr = afterPickFn ? `,'${afterPickFn}'` : '';
+  container.innerHTML = MASTER_EMOJI_GROUPS.map(g => `
+      <div class="emoji-picker-group-label">${g.group}</div>
+      <div class="emoji-picker-row">
+        ${g.items.map(e => `<button type="button" class="emoji-picker-btn${e===current?' active':''}" onclick="pickEmoji('${containerId}','${hiddenId}','${previewId}','${e}'${afterAttr})" title="${e}">${e}</button>`).join('')}
+      </div>`).join('') + `
+      <div class="emoji-picker-custom-row">
+        <span style="font-size:12px;color:var(--ink-softer);">Autre :</span>
+        <input type="text" maxlength="4" placeholder="🙂" class="emoji-picker-custom-input" value="${MASTER_EMOJI_GROUPS.some(g=>g.items.includes(current)) ? '' : (current||'')}"
+          onchange="if(this.value.trim())pickEmoji('${containerId}','${hiddenId}','${previewId}',this.value.trim()${afterAttr})" />
+      </div>`;
 }
-function _pickEmoji(hiddenId, previewId, emoji, btn) {
-  document.getElementById(hiddenId).value = emoji;
-  document.getElementById(previewId).textContent = emoji;
-  btn.closest('div').querySelectorAll('button').forEach(b => {
-    b.style.background = 'transparent'; b.style.borderColor = 'transparent';
-  });
-  btn.style.background = 'var(--lavender-soft,#ede8ff)';
-  btn.style.borderColor = 'var(--lavender)';
+function pickEmoji(containerId, hiddenId, previewId, emoji, afterPickFn) {
+  const hidden = document.getElementById(hiddenId);
+  if (hidden) hidden.value = emoji;
+  const preview = document.getElementById(previewId);
+  if (preview) preview.textContent = emoji;
+  renderEmojiPicker(containerId, hiddenId, previewId, emoji, afterPickFn);
+  if (afterPickFn && typeof window[afterPickFn] === "function") window[afterPickFn](emoji);
 }
 function openNewListModal() {
   document.getElementById('newListModalTitle').textContent = '🗂️ Nouvelle liste';
@@ -20091,7 +20020,7 @@ function openNewListModal() {
   document.getElementById('newListName').value = '';
   document.getElementById('newListEmoji').value = '🗂️';
   document.getElementById('newListEmojiPreview').textContent = '🗂️';
-  _renderEmojiPicker('newListEmojiPicker','newListEmoji','newListEmojiPreview','🗂️');
+  renderEmojiPicker('newListEmojiPicker','newListEmoji','newListEmojiPreview','🗂️');
   document.getElementById('newListModal').classList.add('open');
   setTimeout(() => document.getElementById('newListName').focus(), 50);
 }
@@ -20104,7 +20033,7 @@ function editChecklist(li) {
   document.getElementById('newListName').value = lst.name;
   document.getElementById('newListEmoji').value = em;
   document.getElementById('newListEmojiPreview').textContent = em;
-  _renderEmojiPicker('newListEmojiPicker','newListEmoji','newListEmojiPreview', em);
+  renderEmojiPicker('newListEmojiPicker','newListEmoji','newListEmojiPreview', em);
   document.getElementById('newListModal').classList.add('open');
   setTimeout(() => document.getElementById('newListName').focus(), 50);
 }
@@ -20183,7 +20112,7 @@ function addCLSection(li) {
   document.getElementById('newSectionName').value = '';
   document.getElementById('newSectionEmoji').value = '📂';
   document.getElementById('newSectionEmojiPreview').textContent = '📂';
-  _renderEmojiPicker('newSectionEmojiPicker','newSectionEmoji','newSectionEmojiPreview','📂');
+  renderEmojiPicker('newSectionEmojiPicker','newSectionEmoji','newSectionEmojiPreview','📂');
   document.getElementById('newSectionModal').classList.add('open');
   setTimeout(() => document.getElementById('newSectionName').focus(), 50);
 }
@@ -20197,7 +20126,7 @@ function editCLSection(li, si) {
   document.getElementById('newSectionName').value = sec.name;
   document.getElementById('newSectionEmoji').value = em;
   document.getElementById('newSectionEmojiPreview').textContent = em;
-  _renderEmojiPicker('newSectionEmojiPicker','newSectionEmoji','newSectionEmojiPreview', em);
+  renderEmojiPicker('newSectionEmojiPicker','newSectionEmoji','newSectionEmojiPreview', em);
   document.getElementById('newSectionModal').classList.add('open');
   setTimeout(() => document.getElementById('newSectionName').focus(), 50);
 }
@@ -23687,28 +23616,15 @@ function openPlantForm(editId) {
   const emoji = p?.emoji || "🪴";
   document.getElementById("plantFormEmoji").value = emoji;
   document.getElementById("plantFormEmojiPreview").textContent = emoji;
-  document.getElementById("plantFormEmojiCustom").value = "";
   document.getElementById("plantFormName").value = p?.name || "";
   document.getElementById("plantFormFreq").value = String(p?.wateringDays || 7);
   document.getElementById("plantFormNotes").value = p?.notes || "";
-  _highlightPlantEmoji(emoji);
+  renderEmojiPicker('plantEmojiPicker','plantFormEmoji','plantFormEmojiPreview', emoji);
   document.getElementById("plantFormModal").classList.add("open");
 }
 function closePlantForm() {
   document.getElementById("plantFormModal").classList.remove("open");
   _plantFormEditId = null;
-}
-function selectPlantEmoji(e) {
-  if (!e) return;
-  document.getElementById("plantFormEmoji").value = e;
-  document.getElementById("plantFormEmojiPreview").textContent = e;
-  _highlightPlantEmoji(e);
-}
-function _highlightPlantEmoji(sel) {
-  document.querySelectorAll("#plantEmojiPicker span").forEach(s => {
-    s.style.border = s.title === sel ? "2px solid var(--lavender)" : "2px solid transparent";
-    s.style.background = s.title === sel ? "#f3ecff" : "";
-  });
 }
 function savePlantForm() {
   const name = document.getElementById("plantFormName").value.trim();
