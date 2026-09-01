@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1131</title>
+<title>Mon Tableau de Vie 🌿 · v1132</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1350,16 +1350,14 @@
   .modal h2 { margin: 0 0 18px; }
   /* ===== Sélecteur d'emoji unifié (listes, projets, activités, plantes, routines, suivi santé…) ===== */
   .emoji-picker-grid {
-    /* Pas de scroll : les catégories sont des onglets, une seule visible à la fois. */
+    /* Toutes les catégories affichées à la suite ; le scroll est celui de la modale entière. */
     padding: 10px; background: var(--bg-1); border-radius: 10px; border: 1px solid var(--line);
   }
-  .emoji-picker-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
-  .emoji-picker-tab {
-    font-size: 11px; padding: 5px 10px; border-radius: 999px; border: 1.5px solid var(--line);
-    background: var(--card); cursor: pointer; font-family: inherit; color: var(--ink); transition: all .1s;
+  .emoji-picker-group-label {
+    font-size: 11px; font-weight: 700; color: var(--ink-softer); text-transform: uppercase; letter-spacing: .04em;
+    margin: 10px 0 4px; padding-top: 6px; border-top: 1px dashed var(--line);
   }
-  .emoji-picker-tab:hover { border-color: var(--lavender); }
-  .emoji-picker-tab.active { border-color: var(--lavender); background: var(--lavender-soft); font-weight: 600; }
+  .emoji-picker-group-label:first-child { margin-top: 0; padding-top: 0; border-top: none; }
   .emoji-picker-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
   .emoji-picker-btn {
     font-size: 20px; line-height: 1; background: transparent; border: 2px solid transparent;
@@ -19931,45 +19929,30 @@ const MASTER_EMOJI_GROUPS = [
 ];
 const _CL_EMOJIS = MASTER_EMOJI_GROUPS.flatMap(g => g.items); // alias rétrocompat
 /* ===== Sélecteur d'emoji unifié — utilisé par tous les pickers de l'app =====
-   Onglets par catégorie : aucun défilement interne, tout tient dans la modale.
-   Un seul groupe visible à la fois ; on mémorise l'onglet actif par picker. */
-let _emojiPickerActiveGroup = {};
-function _clGroupIdxForEmoji(emoji) {
-  const i = MASTER_EMOJI_GROUPS.findIndex(g => g.items.includes(emoji));
-  return i >= 0 ? i : 0;
-}
+   Toutes les catégories s'affichent à la suite (avec juste un intitulé, non cliquable,
+   pour les distinguer) ; on parcourt tout par le scroll normal de la modale. */
 function renderEmojiPicker(containerId, hiddenId, previewId, current, afterPickFn) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  if (_emojiPickerActiveGroup[containerId] === undefined) {
-    _emojiPickerActiveGroup[containerId] = _clGroupIdxForEmoji(current);
-  }
-  const activeIdx = _emojiPickerActiveGroup[containerId];
   const afterAttr = afterPickFn ? `,'${afterPickFn}'` : '';
-  const tabs = `<div class="emoji-picker-tabs">${MASTER_EMOJI_GROUPS.map((g,i) =>
-    `<button type="button" class="emoji-picker-tab${i===activeIdx?' active':''}" onclick="_setEmojiPickerGroup('${containerId}',${i},'${hiddenId}','${previewId}','${current}'${afterAttr})">${g.group}</button>`
-  ).join('')}</div>`;
-  const g = MASTER_EMOJI_GROUPS[activeIdx];
-  const row = `<div class="emoji-picker-row">${g.items.map(e =>
-    `<button type="button" class="emoji-picker-btn${e===current?' active':''}" onclick="pickEmoji('${containerId}','${hiddenId}','${previewId}','${e}'${afterAttr})" title="${e}">${e}</button>`
-  ).join('')}</div>`;
+  const groups = MASTER_EMOJI_GROUPS.map(g => `
+    <div class="emoji-picker-group-label">${g.group}</div>
+    <div class="emoji-picker-row">${g.items.map(e =>
+      `<button type="button" class="emoji-picker-btn${e===current?' active':''}" onclick="pickEmoji('${containerId}','${hiddenId}','${previewId}','${e}'${afterAttr})" title="${e}">${e}</button>`
+    ).join('')}</div>`
+  ).join('');
   const customRow = `<div class="emoji-picker-custom-row">
       <span style="font-size:12px;color:var(--ink-softer);">Autre :</span>
       <input type="text" maxlength="4" placeholder="🙂" class="emoji-picker-custom-input" value="${MASTER_EMOJI_GROUPS.some(gr=>gr.items.includes(current)) ? '' : (current||'')}"
         onchange="if(this.value.trim())pickEmoji('${containerId}','${hiddenId}','${previewId}',this.value.trim()${afterAttr})" />
     </div>`;
-  container.innerHTML = tabs + row + customRow;
-}
-function _setEmojiPickerGroup(containerId, idx, hiddenId, previewId, current, afterPickFn) {
-  _emojiPickerActiveGroup[containerId] = idx;
-  renderEmojiPicker(containerId, hiddenId, previewId, current, afterPickFn);
+  container.innerHTML = groups + customRow;
 }
 function pickEmoji(containerId, hiddenId, previewId, emoji, afterPickFn) {
   const hidden = document.getElementById(hiddenId);
   if (hidden) hidden.value = emoji;
   const preview = document.getElementById(previewId);
   if (preview) preview.textContent = emoji;
-  _emojiPickerActiveGroup[containerId] = _clGroupIdxForEmoji(emoji);
   renderEmojiPicker(containerId, hiddenId, previewId, emoji, afterPickFn);
   if (afterPickFn && typeof window[afterPickFn] === "function") window[afterPickFn](emoji);
 }
