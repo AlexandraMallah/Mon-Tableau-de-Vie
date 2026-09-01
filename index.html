@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1129</title>
+<title>Mon Tableau de Vie 🌿 · v1130</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7494,6 +7494,10 @@ function renderWorkProjectTabs() {
 
   const projects = state.work.postdocProjects || [];
 
+  // Mémoriser l'onglet actif avant reconstruction, pour le restaurer après
+  // (sinon un onglet projet actif est détruit par le rebuild et rien ne s'affiche)
+  const activeSub = workSection.querySelector(".sub-tab.active")?.dataset.sub;
+
   // Nettoyer les vues dynamiques précédentes
   viewsEl.innerHTML = "";
 
@@ -7539,6 +7543,17 @@ function renderWorkProjectTabs() {
     if (activeTab === "links") _renderProjFicheLinks(p.id);
     if (activeTab === "suivi") _renderProjFicheSuivi(p.id);
   });
+
+  // Restaurer l'onglet qui était actif avant reconstruction (s'il existe toujours),
+  // sinon retomber sur le premier onglet — jamais aucun onglet actif.
+  workSection.querySelectorAll(".sub-tab").forEach(x => x.classList.remove("active"));
+  workSection.querySelectorAll(".sub-view").forEach(x => x.classList.remove("active"));
+  let target = activeSub && workSection.querySelector(`.sub-tab[data-sub="${activeSub}"]`) ? activeSub : null;
+  if (!target) target = workSection.querySelector(".sub-tab")?.dataset.sub;
+  if (target) {
+    workSection.querySelector(`.sub-tab[data-sub="${target}"]`)?.classList.add("active");
+    workSection.querySelector(`.sub-view[data-sub="${target}"]`)?.classList.add("active");
+  }
 }
 
 function _workProjTabClick(btn, sub) {
@@ -19328,6 +19343,10 @@ function renderPersoProjects() {
   const domesticSection = document.querySelector('section.view[data-view="domestic"]');
   if (!domesticSection) return;
 
+  // Mémoriser l'onglet actif avant reconstruction, pour le restaurer après
+  // (sinon un onglet projet actif est détruit par le rebuild et rien ne s'affiche)
+  const activeSub = domesticSection.querySelector(".sub-tab.active")?.dataset.sub;
+
   // Nettoyer les anciennes vues
   viewsEl.innerHTML = "";
 
@@ -19396,6 +19415,17 @@ function renderPersoProjects() {
       + '</div>';
     viewsEl.appendChild(viewDiv);
   });
+
+  // Restaurer l'onglet qui était actif avant reconstruction (s'il existe toujours),
+  // sinon retomber sur le premier onglet — jamais aucun onglet actif.
+  domesticSection.querySelectorAll(".sub-tab").forEach(x => x.classList.remove("active"));
+  domesticSection.querySelectorAll(".sub-view").forEach(x => x.classList.remove("active"));
+  let target = activeSub && domesticSection.querySelector(`.sub-tab[data-sub="${activeSub}"]`) ? activeSub : null;
+  if (!target) target = domesticSection.querySelector(".sub-tab")?.dataset.sub;
+  if (target) {
+    domesticSection.querySelector(`.sub-tab[data-sub="${target}"]`)?.classList.add("active");
+    domesticSection.querySelector(`.sub-view[data-sub="${target}"]`)?.classList.add("active");
+  }
 }
 
 function _refreshPersoLists(ppId) {
