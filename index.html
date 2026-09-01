@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1123</title>
+<title>Mon Tableau de Vie 🌿 · v1124</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -124,19 +124,18 @@
   }
   header.top h1 { margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.3px; }
   header.top .date { color: var(--ink-soft); margin-top: 3px; font-size: 14px; text-transform: capitalize; }
-  /* Regroupe header-actions + barre de raccourcis + nav.tabs sous UN SEUL sticky :
-     évite de devoir caler des `top` en dur entre plusieurs éléments sticky
-     empilés (hauteurs variables → décalage/saut visible au scroll). */
+  /* Regroupe header-actions + barre de raccourcis + nav.tabs sous UN SEUL sticky,
+     avec UN SEUL fond opaque continu : évite (a) de devoir caler des `top` en dur
+     entre plusieurs éléments sticky empilés (hauteurs variables → décalage visible
+     au scroll), et (b) tout fond transparent entre deux rangées où le contenu qui
+     défile en dessous se voyait par transparence (effet de scintillement au scroll). */
   .sticky-header-group {
     position: sticky;
     top: 10px;
-    z-index: 101;
-  }
-  .header-actions {
-    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    /* Doit rester SOUS toutes les modales (la plus basse est .modal-bg à z-index:100) */
+    z-index: 50;
     margin-top: 14px;
     margin-bottom: 14px;
-    /* Même traitement visuel que nav.tabs */
     background: var(--nav-bg);
     color: var(--nav-ink);
     backdrop-filter: blur(10px);
@@ -144,6 +143,9 @@
     padding: 10px 14px;
     border-radius: 18px;
     box-shadow: 0 4px 20px rgba(120, 100, 160, 0.12), 0 0 0 1px rgba(180,160,220,0.15);
+  }
+  .header-actions {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
   }
   .sync-row { display: flex; gap: 8px; align-items: center; }
   .btn-icon {
@@ -171,16 +173,8 @@
   nav.tabs {
     display: flex; gap: 8px;
     overflow-x: auto;
-    /* Le sticky est géré par le parent .sticky-header-group, coins arrondis ici */
-    background: var(--nav-bg);
-    color: var(--nav-ink);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 10px 14px;
     margin-top: 4px;
-    margin-bottom: 14px;
-    border-radius: 18px;
-    box-shadow: 0 4px 20px rgba(120, 100, 160, 0.12), 0 0 0 1px rgba(180,160,220,0.15);
+    /* Fond/sticky gérés par le parent .sticky-header-group */
   }
   nav.tabs::-webkit-scrollbar { height: 0; }
   .tab {
@@ -605,7 +599,7 @@
   .work-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
   .tasks-layout { display: grid; grid-template-columns: 1fr 234px; gap: 22px; align-items: start; }
   @media (max-width: 860px) { .tasks-layout { grid-template-columns: 1fr; } }
-  .tasks-right-col { position: sticky; top: 64px; display: flex; flex-direction: column; gap: 14px; }
+  .tasks-right-col { position: sticky; top: var(--sticky-stack-bottom, 74px); display: flex; flex-direction: column; gap: 14px; }
   .deadline-cal-wrap { background: var(--bg-1); border-radius: 16px; padding: 14px; }
   .claude-card { background: var(--lavender-soft); border: 1px solid var(--lavender); border-radius: 16px; padding: 14px; }
   .deadline-cal-title { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
@@ -1444,16 +1438,18 @@
     header.top { gap: 10px; }
     header.top h1 { font-size: 24px; }
     header.top .date { font-size: 13px; }
-    /* Pas de sticky sur mobile : le groupe entier prendrait trop de hauteur collée */
-    .sticky-header-group { position: relative; top: auto; }
+    /* Pas de sticky sur mobile : le groupe entier prendrait trop de hauteur collée.
+       On enlève aussi son fond/ombre : chaque rangée redevient un bloc plat normal. */
+    .sticky-header-group {
+      position: relative; top: auto;
+      background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none;
+      box-shadow: none; padding: 0; border-radius: 0;
+      margin-top: 0; margin-bottom: 0;
+    }
     .header-actions {
       gap: 5px;
-      background: transparent;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      box-shadow: none;
-      padding: 0;
       margin-top: 10px;
+      margin-bottom: 0;
     }
     .header-actions .btn-icon { padding: 7px 10px; font-size: 11px; }
     #settingsBtn, #rechargerBtn { display: none; }
@@ -1468,13 +1464,6 @@
       overflow-x: unset;
       gap: 6px;
       margin-bottom: 10px;
-      /* Pas de sticky sur mobile : trop haute pour rester collée */
-      position: relative;
-      background: transparent;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      box-shadow: none;
-      padding: 0;
     }
     /* Cacher le bouton Aide de la nav desktop dans la grille mobile */
     #helpNavBtn { display: none; }
@@ -3448,7 +3437,7 @@
         </div>
         <!-- RIGHT — articles récurrents -->
         <div>
-          <div class="card" style="position:sticky;top:14px;">
+          <div class="card" style="position:sticky;top:var(--sticky-stack-bottom, 74px);">
             <h2>🔁 Achats récurrents</h2>
             <p style="color:var(--ink-soft);font-size:12px;margin:-8px 0 12px;">Détectés automatiquement (achetés ≥ 3 fois sur les dernières semaines). Clique pour les ajouter à ton dernier événement.</p>
             <div id="recurringItemsList"></div>
@@ -5279,6 +5268,23 @@
 /* Empêche les modales de se fermer quand on sélectionne du texte (drag qui finit hors du modal) */
 let _modalMouseDownTarget = null;
 document.addEventListener('mousedown', e => { _modalMouseDownTarget = e.target; }, true);
+
+/* Mesure la hauteur réelle de .sticky-header-group (variable selon les raccourcis actifs,
+   le mode édition, la largeur d'écran…) pour que les autres éléments sticky de la page
+   (sidebars "Achats récurrents", "Tâches"…) se calent juste en dessous sans jamais se
+   chevaucher — plutôt que d'utiliser un top codé en dur qui se désynchronise. */
+(function() {
+  const grp = document.querySelector('.sticky-header-group');
+  if (!grp) return;
+  const update = () => {
+    const isSticky = getComputedStyle(grp).position === 'sticky';
+    const bottom = isSticky ? (grp.getBoundingClientRect().height + 24) : 14;
+    document.documentElement.style.setProperty('--sticky-stack-bottom', bottom + 'px');
+  };
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(update).observe(grp);
+  window.addEventListener('resize', update);
+  update();
+})();
 /* ===== ANALYSE ÉMOTIONNELLE DU JOURNAL ===== */
 const JOURNAL_EMOTIONS = [
   { id: "joie", label: "Joie", emoji: "😊", color: "#16a34a", bg: "#dcfce7", colorS: "#3d6b5c", bgS: "#dbe6e0",
