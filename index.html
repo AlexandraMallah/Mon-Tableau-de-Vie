@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1132</title>
+<title>Mon Tableau de Vie 🌿 · v1133</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7406,7 +7406,7 @@ function renderProjectFiche(p) {
   const col = p.color || "#b8a5e8";
   const activeTab = _projFicheActiveTab[p.id] || (p.id === "p-seed-candidatures" ? "suivi" : "tasks");
   const hasSuivi = ["p-seed-candidatures","p-seed-valo","p-seed-enseignement"].includes(p.id);
-  const suiviLabel = p.id === "p-seed-candidatures" ? "📊 Candidatures" :
+  const suiviLabel = p.id === "p-seed-candidatures" ? "📊 Suivi" :
                      p.id === "p-seed-valo"         ? "📊 Publications" :
                      p.id === "p-seed-enseignement" ? "📊 Cours" : "";
   const tabs = [
@@ -10886,12 +10886,19 @@ function saveBodyComp() {
   }
 }
 function fillBodyCompForm(dateKey) {
+  const wIn = document.getElementById("weightInput");
+  const wcIn = document.getElementById("weightBodyCompInput");
+  const fIn = document.getElementById("bodyFatInput");
+  const mIn = document.getElementById("muscleMassInput");
+  // Ne pas écraser une saisie en cours : sinon un rafraîchissement en arrière-plan
+  // (sync cloud, etc.) efface le poids pendant qu'on est en train de le taper.
+  if ([wIn, wcIn, fIn, mIn].includes(document.activeElement)) return;
   const entry = state.history[dateKey || todayKey()];
   const w = entry?.weight || "";
-  document.getElementById("weightInput").value = w;
-  if (document.getElementById("weightBodyCompInput")) document.getElementById("weightBodyCompInput").value = w;
-  document.getElementById("bodyFatInput").value = entry?.bodyFat || "";
-  document.getElementById("muscleMassInput").value = entry?.muscleMass || "";
+  if (wIn) wIn.value = w;
+  if (wcIn) wcIn.value = w;
+  if (fIn) fIn.value = entry?.bodyFat || "";
+  if (mIn) mIn.value = entry?.muscleMass || "";
 }
 let currentBodyMetric = "weight";
 function switchBodyMetric(metric) {
