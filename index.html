@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1133</title>
+<title>Mon Tableau de Vie 🌿 · v1134</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -8440,7 +8440,9 @@ function openTimeCatsModal() {
   document.getElementById("newTimeCatColor").value = "#6aaed6";
   renderEmojiPicker('newTimeCatEmojiGrid','newTimeCatEmoji','newTimeCatEmojiPreview','📁');
   document.getElementById("timeCatsModal").classList.add("open");
-  setTimeout(() => document.getElementById("newTimeCatLabel").focus(), 80);
+  // preventScroll : sinon le focus fait défiler la modale tout en bas (sous le
+  // sélecteur d'émojis, très long) et masque entièrement les émojis à choisir.
+  setTimeout(() => document.getElementById("newTimeCatLabel").focus({ preventScroll: true }), 80);
 }
 function closeTimeCatsModal() { document.getElementById("timeCatsModal").classList.remove("open"); }
 function _renderTimeCatsList() {
