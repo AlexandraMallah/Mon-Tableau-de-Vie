@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1134</title>
+<title>Mon Tableau de Vie 🌿 · v1135</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1373,6 +1373,9 @@
   .emoji-picker-preview {
     font-size: 26px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
     border-radius: 10px; background: var(--bg-1); border: 1px solid var(--line); margin-bottom: 8px;
+    /* Reste visible en haut de la modale pendant qu'on défile la grille (très longue) :
+       confirme visuellement quel émoji est sélectionné sans devoir remonter tout en haut. */
+    position: sticky; top: -1px; z-index: 5; box-shadow: 0 4px 6px -2px rgba(0,0,0,0.06);
   }
   /* Rendu multi-colonnes des items d'une liste/sous-liste (desktop uniquement) */
   .cl-items-cols { column-gap: 20px; }
