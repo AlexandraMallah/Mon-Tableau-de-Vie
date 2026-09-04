@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1138</title>
+<title>Mon Tableau de Vie 🌿 · v1139</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3649,7 +3649,10 @@
     <div class="card" style="margin-bottom:18px;">
       <div class="card-row">
         <h2>🏛️ Piliers de vie</h2>
-        <span style="color:var(--ink-soft);font-size:13px;">Score global : <strong id="pillarsGlobal" style="font-size:18px;color:var(--ink);">—</strong></span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="edit-only" onclick="addNewPillar()" style="padding:5px 12px;border-radius:20px;border:1.5px dashed var(--line);background:white;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;">+ Nouveau pilier</button>
+          <span style="color:var(--ink-soft);font-size:13px;">Score global : <strong id="pillarsGlobal" style="font-size:18px;color:var(--ink);">—</strong></span>
+        </div>
       </div>
       <p style="color:var(--ink-soft);font-size:12px;margin:-8px 0 14px;">Calculé automatiquement sur les <strong>7 derniers jours</strong> à partir de ce que tu remplis dans toutes les sections. Aucune saisie manuelle requise.</p>
       <div class="pillars-overview-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
@@ -7996,7 +7999,7 @@ function admRenderConges() {
     if (FERIES.has(ds)) return { type:"fe" };
     for (var k = 0; k < periodes.length; k++) {
       var pp = periodes[k];
-      if (ds >= pp.debut && ds <= pp.fin) {
+      if (pp.debut && pp.fin && ds >= pp.debut && ds <= pp.fin) {
         return { type:"cg", catId: pp.type, statut: pp.statut };
       }
     }
@@ -17126,7 +17129,7 @@ const PILLAR_DEFS = [
     ]
   },
   {
-    id: "travail", name: "Travail & recherche", emoji: "💼", color: "#b4d4f1", bg: "var(--sky-soft)",
+    id: "travail", name: "Travail", emoji: "💼", color: "#b4d4f1", bg: "var(--sky-soft)",
     metrics: [
       { type: "tasks-done", target: 5, label: "Tâches finies/sem" },
       { type: "worktime-sum", target: 40, label: "Heures travaillées (obj. 40h)" },
@@ -17158,6 +17161,34 @@ const PILLAR_DEFS = [
     ]
   },
 ];
+
+const MAX_PILLARS = 6;
+// Piliers réellement affichés = piliers intégrés (non supprimés, avec nom/emoji éventuellement
+// personnalisés) + piliers créés par l'utilisateur — jamais plus de MAX_PILLARS au total.
+function getAllPillars() {
+  const overrides = state.pillarOverrides || {};
+  const deleted = state.deletedPillarIds || [];
+  const applyOverride = p => {
+    const ov = overrides[p.id] || {};
+    return { ...p, name: ov.name || p.name, emoji: ov.emoji || p.emoji };
+  };
+  const builtIn = PILLAR_DEFS.filter(p => !deleted.includes(p.id)).map(applyOverride);
+  const custom = (state.customPillars || []).map(applyOverride);
+  return [...builtIn, ...custom];
+}
+function isCustomPillar(id) { return (state.customPillars || []).some(p => p.id === id); }
+function addNewPillar() {
+  if (getAllPillars().length >= MAX_PILLARS) {
+    showToast(`⚠️ Maximum ${MAX_PILLARS} piliers en même temps — supprime-en un pour en ajouter un nouveau.`);
+    return;
+  }
+  if (!state.customPillars) state.customPillars = [];
+  const id = "custom-" + Date.now();
+  state.customPillars.push({ id, name: "Nouveau pilier", emoji: "⭐", color: "#c9b6f0", bg: "var(--lavender-soft)", metrics: [] });
+  saveState();
+  renderPillars();
+  openPillarConfig(id);
+}
 
 // Catalogue de toutes les métriques disponibles dans l'app (pour les ajouter aux piliers)
 const BASE_METRIC_CATALOGUE = [
@@ -17199,7 +17230,7 @@ function _buildMetricCatId(m) {
 
 function _pillarAllMetricIds(pillarId) {
   // Retourne tous les _catId déjà présents (base + extra)
-  const p = PILLAR_DEFS.find(x => x.id === pillarId); if (!p) return new Set();
+  const p = getAllPillars().find(x => x.id === pillarId); if (!p) return new Set();
   const extra = ((state.pillarOverrides||{})[pillarId]||{}).extraMetrics || [];
   const baseIds = new Set(p.metrics.map(_buildMetricCatId));
   extra.forEach(m => baseIds.add(_buildMetricCatId(m)));
@@ -17537,11 +17568,17 @@ function computeMetricDetails(m) {
 }
 
 function showPillarDetail(pillarId, idx) {
-  const pillar = PILLAR_DEFS.find(p => p.id === pillarId);
+  const pillar = getAllPillars().find(p => p.id === pillarId);
   if (!pillar) return;
-  const mdef = pillar.metrics[idx];
+  // idx couvre les métriques de base PUIS les métriques ajoutées (actives), dans cet ordre —
+  // même logique que computePillarScore() pour rester synchronisé avec les indices affichés.
+  const overrides = (state.pillarOverrides || {})[pillarId] || {};
+  const extraMetrics = (overrides.extraMetrics || []).filter(m => m._disabled !== true);
+  let mdef, ov;
+  if (idx < pillar.metrics.length) { mdef = pillar.metrics[idx]; ov = overrides[idx] || {}; }
+  else { mdef = extraMetrics[idx - pillar.metrics.length]; ov = {}; }
   if (!mdef) return;
-  const computed = computeMetric(mdef);
+  const computed = computeMetric(mdef, ov);
   const lines = computeMetricDetails(mdef);
   document.getElementById("pillarDetailTitle").textContent = `${pillar.emoji} ${pillar.name}`;
   document.getElementById("pillarDetailBody").innerHTML =
@@ -17556,11 +17593,26 @@ function closePillarDetail() { document.getElementById("pillarDetailModal").clas
 
 let _pillarConfigId = null;
 function openPillarConfig(pillarId) {
-  const p = PILLAR_DEFS.find(x => x.id === pillarId);
+  const p = getAllPillars().find(x => x.id === pillarId);
   if (!p) return;
   _pillarConfigId = pillarId;
   const overrides = (state.pillarOverrides || {})[pillarId] || {};
   document.getElementById("pillarConfigTitle").textContent = `⚙️ ${p.emoji} ${p.name}`;
+  const canDelete = getAllPillars().length > 1;
+  const nameEmojiHtml = `
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px;">Titre</label>
+      <input type="text" id="pillarConfigName" value="${escapeHtml(p.name)}" maxlength="30" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);margin-bottom:10px;" />
+      <label style="font-size:12px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px;">Emoji</label>
+      <div class="emoji-picker-preview" id="pillarConfigEmojiPreview">${escapeHtml(p.emoji)}</div>
+      <input type="hidden" id="pillarConfigEmoji" value="${escapeHtml(p.emoji)}" />
+      <div class="emoji-picker-grid" id="pillarConfigEmojiPicker"></div>
+    </div>
+    <div style="margin:14px 0;padding-bottom:14px;border-bottom:1.5px dashed var(--line);">
+      ${canDelete
+        ? `<a href="#" onclick="event.preventDefault();deletePillarFromConfig();" style="font-size:12px;color:#c75b4d;text-decoration:underline;cursor:pointer;">🗑️ Supprimer ce pilier</a>`
+        : `<span style="font-size:12px;color:var(--ink-softer);font-style:italic;">Il doit rester au moins un pilier.</span>`}
+    </div>`;
   const typeLabels = {
     "habit-avg": "Objectif / jour",
     "wellbeing-avg": "Objectif (sur 5)",
@@ -17638,15 +17690,45 @@ function openPillarConfig(pillarId) {
       </div>`).join("")}
   </div>` : `<div style="margin-top:14px;font-size:12px;color:var(--ink-softer);font-style:italic;text-align:center;">Tous les indicateurs disponibles sont déjà présents dans ce pilier.</div>`;
 
-  document.getElementById("pillarConfigBody").innerHTML = baseHtml + extraHtml + catHtml;
+  document.getElementById("pillarConfigBody").innerHTML = nameEmojiHtml + baseHtml + extraHtml + catHtml;
+  renderEmojiPicker('pillarConfigEmojiPicker','pillarConfigEmoji','pillarConfigEmojiPreview', p.emoji);
   document.getElementById("pillarConfigModal").classList.add("open");
 }
 function closePillarConfig() { document.getElementById("pillarConfigModal").classList.remove("open"); }
+function deletePillarFromConfig() {
+  if (getAllPillars().length <= 1) return;
+  const p = getAllPillars().find(x => x.id === _pillarConfigId);
+  if (!p) return;
+  _showConfirm(`Supprimer le pilier « ${escapeHtml(p.name)} » ?`, () => {
+    if (isCustomPillar(_pillarConfigId)) {
+      state.customPillars = (state.customPillars || []).filter(x => x.id !== _pillarConfigId);
+    } else {
+      if (!state.deletedPillarIds) state.deletedPillarIds = [];
+      state.deletedPillarIds.push(_pillarConfigId);
+    }
+    if (state.pillarOverrides) delete state.pillarOverrides[_pillarConfigId];
+    saveState();
+    closePillarConfig();
+    renderPillars();
+  });
+}
 function savePillarConfig() {
-  const p = PILLAR_DEFS.find(x => x.id === _pillarConfigId);
+  const p = getAllPillars().find(x => x.id === _pillarConfigId);
   if (!p) return;
   if (!state.pillarOverrides) state.pillarOverrides = {};
   if (!state.pillarOverrides[_pillarConfigId]) state.pillarOverrides[_pillarConfigId] = {};
+  // Titre / émoji
+  const nameEl = document.getElementById("pillarConfigName");
+  const emojiEl = document.getElementById("pillarConfigEmoji");
+  const newName = nameEl?.value.trim();
+  const newEmoji = emojiEl?.value.trim();
+  if (isCustomPillar(_pillarConfigId)) {
+    const cp = state.customPillars.find(x => x.id === _pillarConfigId);
+    if (cp) { if (newName) cp.name = newName; if (newEmoji) cp.emoji = newEmoji; }
+  } else {
+    if (newName && newName !== PILLAR_DEFS.find(x => x.id === _pillarConfigId)?.name) state.pillarOverrides[_pillarConfigId].name = newName;
+    if (newEmoji && newEmoji !== PILLAR_DEFS.find(x => x.id === _pillarConfigId)?.emoji) state.pillarOverrides[_pillarConfigId].emoji = newEmoji;
+  }
   p.metrics.forEach((m, i) => {
     const tgtEl = document.getElementById(`pco_tgt_${i}`);
     const enEl  = document.getElementById(`pco_en_${i}`);
@@ -17670,19 +17752,26 @@ function savePillarConfig() {
   renderPillars();
 }
 
-function _isOnVacationThisWeek() {
+// Retourne la période de congé (state.admin.congesPeriodes) qui couvre un jour ouvré
+// de la semaine en cours, ou null s'il n'y en a aucune — utile pour afficher précisément
+// quelle période déclarée suspend le pilier Travail (au lieu d'un simple oui/non opaque).
+function _currentVacationPeriod() {
   const now = new Date();
   const dayOfWeek = now.getDay();
   const monday = new Date(now); monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
-  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
-  // Vérifie si au moins un jour ouvré de la semaine est en congé selon state.admin.congesPeriodes
+  const periodes = (state.admin && state.admin.congesPeriodes) || [];
   for (let i = 0; i <= 6; i++) {
     const d = new Date(monday); d.setDate(monday.getDate() + i);
     const dow = d.getDay();
     if (dow === 0 || dow === 6) continue; // week-ends exclus
-    if (_isDayConge(todayKey(d))) return true;
+    const dk = todayKey(d);
+    const match = periodes.find(p => p.debut && p.fin && dk >= p.debut && dk <= p.fin);
+    if (match) return match;
   }
-  return false;
+  return null;
+}
+function _isOnVacationThisWeek() {
+  return _currentVacationPeriod() !== null;
 }
 function computePillarScore(pillar) {
   const overrides = (state.pillarOverrides || {})[pillar.id] || {};
@@ -17699,6 +17788,13 @@ function metricClass(score) {
   return "low";
 }
 let pillarsRadarChart;
+function _goToConges() {
+  document.querySelector('.tab[data-view="work"]')?.click();
+  setTimeout(() => {
+    document.querySelector('.sub-tab[data-sub="administratif"]')?.click();
+    setTimeout(() => { if (typeof admSwitchTab === "function") admSwitchTab('conges'); }, 50);
+  }, 50);
+}
 function renderPillars() {
   const cardsEl = document.getElementById("pillarsCards");
   const globalEl = document.getElementById("pillarsGlobal");
@@ -17707,7 +17803,7 @@ function renderPillars() {
   if (!cardsEl || !globalEl || !radarCanvas) return;
 
   const onVacation = _isOnVacationThisWeek();
-  const computed = PILLAR_DEFS.map((p, idx) => ({ ...p, ...computePillarScore(p), _tc: _pillarColor(idx) || p.color }));
+  const computed = getAllPillars().map((p, idx) => ({ ...p, ...computePillarScore(p), _tc: _pillarColor(idx) || p.color }));
   const activeComputed = computed.filter(p => !(p.id === "travail" && onVacation));
   const globalScore = Math.round(activeComputed.reduce((s, p) => s + p.score, 0) / (activeComputed.length || 1));
   globalEl.textContent = globalScore + " / 100";
@@ -17719,13 +17815,15 @@ function renderPillars() {
       ? `<button class="edit-only" onclick="openPillarConfig('${p.id}')" title="Configurer les objectifs" style="position:absolute;top:8px;right:8px;padding:3px 8px;border-radius:8px;border:1px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink-soft);">⚙️</button>`
       : "";
     if (isWorkOnVacation) {
+      const vp = _currentVacationPeriod();
+      const vpLabel = vp ? new Date(vp.debut+"T00:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"}) + " – " + new Date(vp.fin+"T00:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"}) : "";
       return `
         <div class="pillar-card" style="position:relative;opacity:0.55;filter:grayscale(0.6);">
           ${editBtn}
           <div class="pillar-emoji" style="background:#f0eef5;">🏖️</div>
           <div class="pillar-info">
             <div class="pillar-name">${p.name}</div>
-            <div style="font-size:12px;color:var(--ink-soft);margin-top:4px;font-style:italic;">En vacances — indicateurs suspendus</div>
+            <div style="font-size:12px;color:var(--ink-soft);margin-top:4px;font-style:italic;">En congé${vpLabel ? " (" + vpLabel + ")" : ""} — indicateurs suspendus <a href="#" onclick="event.preventDefault();_goToConges();" style="font-style:normal;text-decoration:underline;">Modifier</a></div>
           </div>
           <div class="pillar-score" style="color:var(--ink-softer);font-size:13px;">—</div>
         </div>`;
@@ -18856,7 +18954,9 @@ function _isDayConge(dk) {
   // Les heures saisies pendant les congés restent comptées dans le total
   // mais le jour n'est pas ajouté au dénominateur (rattrapage = booste la moyenne).
   const periodes = (state.admin && state.admin.congesPeriodes) || [];
-  return periodes.some(p => dk >= p.debut && dk <= p.fin);
+  // p.debut/p.fin doivent être des dates valides non vides — sinon une période mal
+  // renseignée (ex : fin sans début) matcherait n'importe quelle date par erreur.
+  return periodes.some(p => p.debut && p.fin && dk >= p.debut && dk <= p.fin);
 }
 function renderTimeStatsWeek() {
   const dates = _currentWeekDates(_timeWeekOffset);
