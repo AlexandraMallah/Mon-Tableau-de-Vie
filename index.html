@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1135</title>
+<title>Mon Tableau de Vie 🌿 · v1136</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1360,11 +1360,20 @@
   .emoji-picker-group-label:first-child { margin-top: 0; padding-top: 0; border-top: none; }
   .emoji-picker-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
   .emoji-picker-btn {
-    font-size: 20px; line-height: 1; background: transparent; border: 2px solid transparent;
+    position: relative; font-size: 20px; line-height: 1; background: transparent; border: 2px solid transparent;
     border-radius: 8px; padding: 3px 5px; cursor: pointer; font-family: inherit; transition: background .1s;
   }
   .emoji-picker-btn:hover { background: var(--bg-2); }
   .emoji-picker-btn.active { background: var(--lavender-soft); border-color: var(--lavender); }
+  /* Pastille ✓ bien visible sur l'émoji sélectionné, directement sous le curseur au clic
+     (confirmation immédiate, indépendante du scroll — l'aperçu en haut peut être hors champ). */
+  .emoji-picker-btn.active::after {
+    content: "✓"; position: absolute; bottom: -3px; right: -3px; width: 13px; height: 13px;
+    border-radius: 50%; background: var(--lavender); color: #fff; font-size: 9px; font-weight: 700;
+    line-height: 1; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--card);
+  }
+  @keyframes emojiPickPop { 0% { transform: scale(1); } 45% { transform: scale(1.4); } 100% { transform: scale(1); } }
+  .emoji-picker-btn.just-picked { animation: emojiPickPop .3s ease; }
   .emoji-picker-custom-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
   .emoji-picker-custom-input {
     width: 56px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 8px;
@@ -19966,6 +19975,14 @@ function pickEmoji(containerId, hiddenId, previewId, emoji, afterPickFn) {
   const preview = document.getElementById(previewId);
   if (preview) preview.textContent = emoji;
   renderEmojiPicker(containerId, hiddenId, previewId, emoji, afterPickFn);
+  // Confirmation visuelle juste au clic (pastille ✓ + petite animation), indépendante
+  // du scroll — l'aperçu épinglé en haut peut être discret sur un écran très défilé.
+  const container = document.getElementById(containerId);
+  const picked = container?.querySelector('.emoji-picker-btn.active');
+  if (picked) {
+    picked.classList.add('just-picked');
+    setTimeout(() => picked.classList.remove('just-picked'), 320);
+  }
   if (afterPickFn && typeof window[afterPickFn] === "function") window[afterPickFn](emoji);
 }
 function openNewListModal(ctx) {
