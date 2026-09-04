@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1136</title>
+<title>Mon Tableau de Vie 🌿 · v1137</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13575,27 +13575,31 @@ function renderExternalSummary() {
   const total = txs.reduce((s, tx) => s + tx.amount, 0);
   if (totalEl) totalEl.textContent = total.toFixed(2) + " € ce mois";
 
-  // Solde courant par compte = solde de départ − toutes les dépenses (pas juste ce mois)
-  const allExtTxs = state.transactions.filter(tx =>
-    (tx.type === "external" && tx.category !== "↩ Retour hors compte") ||
-    (tx.type === "expense" && (tx.fromSavingsAccount||"").startsWith("ext:"))
-  );
-  const spentByAcc = {};
-  allExtTxs.forEach(tx => {
-    const id = tx.type === "expense" ? tx.fromSavingsAccount.slice(4) : (tx.externalAccountId || "ext-default");
-    spentByAcc[id] = (spentByAcc[id] || 0) + tx.amount;
+  // Cumul des dépenses du mois en cours, par compte (indépendant du filtre d'onglet actif)
+  const spentThisMonthByAcc = {};
+  state.transactions.forEach(tx => {
+    const d = new Date(tx.date);
+    if (d < start || d >= end) return;
+    if (tx.type === "external" && tx.category !== "↩ Retour hors compte") {
+      const id = tx.externalAccountId || "ext-default";
+      spentThisMonthByAcc[id] = (spentThisMonthByAcc[id] || 0) + tx.amount;
+    } else if (tx.type === "expense" && (tx.fromSavingsAccount||"").startsWith("ext:")) {
+      const id = tx.fromSavingsAccount.slice(4);
+      spentThisMonthByAcc[id] = (spentThisMonthByAcc[id] || 0) + tx.amount;
+    }
   });
 
-  // Barres de solde par compte
+  // Barres par compte : cumul du mois, avec budget mensuel optionnel (a.balance) en comparaison
   const balanceRows = accounts.map(a => {
-    const soldeDepart = a.balance || 0;
-    const spent = spentByAcc[a.id] || 0;
-    const solde = soldeDepart - spent;
-    const color = solde >= 0 ? "var(--lavender)" : "#f08080";
+    const spentMonth = spentThisMonthByAcc[a.id] || 0;
+    const budget = a.balance || 0;
+    const right = budget > 0
+      ? `<span style="font-size:13px;font-weight:700;color:${spentMonth > budget ? "#f08080" : "var(--ink)"};">${spentMonth.toFixed(2)} € <span style="font-weight:400;color:var(--ink-soft);">/ ${budget.toFixed(2)} €</span></span>`
+      : `<span style="font-size:13px;font-weight:700;color:var(--ink);">${spentMonth.toFixed(2)} €</span>`;
     return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);">
       <span style="font-size:18px;">${a.emoji}</span>
       <span style="flex:1;font-size:13px;font-weight:600;color:var(--ink);">${escapeHtml(a.name)}</span>
-      <span style="font-size:13px;font-weight:700;color:${color};">${solde >= 0 ? "" : "−"}${Math.abs(solde).toFixed(2)} €</span>
+      ${right}
     </div>`;
   }).join("");
 
@@ -14376,7 +14380,8 @@ function openSecondaryAccountsManager() {
     nameInp.style.cssText = "flex:1;min-width:60px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);"; nameInp.className = "aaName";
     const typeInp = document.createElement("input"); typeInp.type = "hidden"; typeInp.value = "external"; typeInp.className = "aaType";
     const balInp = document.createElement("input"); balInp.type = "number"; balInp.step = "0.01";
-    balInp.value = (a.balance || 0).toFixed(2); balInp.placeholder = "Solde départ";
+    balInp.value = (a.balance || 0).toFixed(2); balInp.placeholder = "Budget mensuel";
+    balInp.title = "Budget mensuel (optionnel) — laisse à 0 pour ne suivre que le cumul du mois";
     balInp.style.cssText = "width:80px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink);"; balInp.className = "aaBal";
     const delBtn = document.createElement("button"); delBtn.textContent = "🗑"; delBtn.type = "button";
     delBtn.title = "Supprimer"; delBtn.style.cssText = "flex-shrink:0;width:28px;height:28px;border:none;background:none;color:#d44;font-size:15px;cursor:pointer;border-radius:6px;";
@@ -14389,7 +14394,7 @@ function openSecondaryAccountsManager() {
   document.getElementById("helpTitle").textContent = "Comptes secondaires";
   document.getElementById("helpSubtitle").textContent = "Compte joint, compte n°2, compte n°3…";
   const bodyEl = document.getElementById("helpBody");
-  bodyEl.innerHTML = `<p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">Solde de départ = ce qu'il y a sur le compte. Les dépenses prélevées sur ce compte le font baisser automatiquement.</p>`;
+  bodyEl.innerHTML = `<p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">Chaque compte affiche le cumul des dépenses du mois en cours. Renseigne un budget mensuel (optionnel) pour voir aussi le dépassement éventuel.</p>`;
   bodyEl.appendChild(listEl);
   // Formulaire ajout
   const addRow = document.createElement("div");
@@ -14413,7 +14418,7 @@ function openSecondaryAccountsManager() {
     eb.onclick = () => _openEmojiPopup(eb, null, v => { ei.value=v; eb.textContent=v; });
     const ni = document.createElement("input"); ni.value=name; ni.placeholder="Nom"; ni.style.cssText="flex:1;min-width:60px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);"; ni.className="aaName";
     const ti = document.createElement("input"); ti.type="hidden"; ti.value="external"; ti.className="aaType";
-    const bi = document.createElement("input"); bi.type="number"; bi.step="0.01"; bi.value="0.00"; bi.placeholder="Solde départ"; bi.style.cssText="width:80px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink);"; bi.className="aaBal";
+    const bi = document.createElement("input"); bi.type="number"; bi.step="0.01"; bi.value="0.00"; bi.placeholder="Budget mensuel"; bi.style.cssText="width:80px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink);"; bi.className="aaBal";
     const db = document.createElement("button"); db.textContent="🗑"; db.type="button"; db.style.cssText="flex-shrink:0;width:28px;height:28px;border:none;background:none;color:#d44;font-size:15px;cursor:pointer;border-radius:6px;";
     db.onclick = () => _delAllAccDom(a2, row2);
     row2.append(eb,ei,ni,ti,bi,db); row2._accData=a2; listEl.appendChild(row2);
