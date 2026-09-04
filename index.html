@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1140</title>
+<title>Mon Tableau de Vie 🌿 · v1141</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17782,23 +17782,15 @@ function savePillarConfig() {
   renderPillars();
 }
 
-// Retourne la période de congé (state.admin.congesPeriodes) qui couvre un jour ouvré
-// de la semaine en cours, ou null s'il n'y en a aucune — utile pour afficher précisément
-// quelle période déclarée suspend le pilier Travail (au lieu d'un simple oui/non opaque).
+// Retourne la période de congé (state.admin.congesPeriodes) qui couvre AUJOURD'HUI,
+// ou null sinon — utile pour afficher précisément quelle période déclarée suspend le
+// pilier Travail (au lieu d'un simple oui/non opaque). Ne regarde que le jour présent :
+// une fois de retour au travail, le pilier redevient actif même si un autre jour de la
+// semaine était en congé (auparavant toute la semaine restait suspendue jusqu'au dimanche).
 function _currentVacationPeriod() {
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const monday = new Date(now); monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
   const periodes = (state.admin && state.admin.congesPeriodes) || [];
-  for (let i = 0; i <= 6; i++) {
-    const d = new Date(monday); d.setDate(monday.getDate() + i);
-    const dow = d.getDay();
-    if (dow === 0 || dow === 6) continue; // week-ends exclus
-    const dk = todayKey(d);
-    const match = periodes.find(p => p.debut && p.fin && dk >= p.debut && dk <= p.fin);
-    if (match) return match;
-  }
-  return null;
+  const dk = todayKey();
+  return periodes.find(p => p.debut && p.fin && dk >= p.debut && dk <= p.fin) || null;
 }
 function _isOnVacationThisWeek() {
   return _currentVacationPeriod() !== null;
