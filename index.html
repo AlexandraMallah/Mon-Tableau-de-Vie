@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1141</title>
+<title>Mon Tableau de Vie 🌿 · v1142</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3184,7 +3184,7 @@
       <div class="card-row" style="margin-bottom:14px;">
         <h2 style="margin:0;">🎯 Budget de vie</h2>
         <div style="display:flex;align-items:center;gap:8px;">
-          <button onclick="openHelp('money')" title="Aide sur les finances" class="help-btn sub-help-btn">✦<span class="help-label"> Aide</span></button>
+          <button onclick="openHelp('money-budget')" title="Aide sur le Budget de vie" class="help-btn sub-help-btn">✦<span class="help-label"> Aide</span></button>
           <span id="budgetMonthLabel" style="font-size:12px;color:var(--ink-soft);">Ce mois</span>
           <button onclick="_budgetNavMonth(-1)" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 2px;">◀</button>
           <button onclick="_budgetNavMonth(1)" id="budgetNavNext" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 2px;">▶</button>
@@ -5176,7 +5176,8 @@
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input type="text" id="newTimeCatLabel" placeholder="Nom du projet" style="flex:1;min-width:120px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" onkeydown="if(event.key==='Enter')_createTimeCat()" />
-        <input type="color" id="newTimeCatColor" value="#6aaed6" style="width:38px;height:38px;padding:2px;border:1px solid var(--line);border-radius:10px;cursor:pointer;" title="Couleur" />
+        <input type="hidden" id="newTimeCatColor" value="" />
+        <div id="newTimeCatColorPicker" style="display:flex;gap:5px;align-items:center;" title="Couleur (palette pastel de l'app)"></div>
         <button onclick="_createTimeCat()" style="padding:8px 16px;border-radius:10px;border:none;background:var(--lavender);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Ajouter</button>
       </div>
     </div>
@@ -8464,7 +8465,9 @@ function openTimeCatsModal() {
   document.getElementById("newTimeCatEmoji").value = "📁";
   const prev = document.getElementById("newTimeCatEmojiPreview"); if (prev) prev.textContent = "📁";
   document.getElementById("newTimeCatLabel").value = "";
-  document.getElementById("newTimeCatColor").value = "#6aaed6";
+  const _initColor = _projectAutoColor().color;
+  document.getElementById("newTimeCatColor").value = _initColor;
+  _renderColorSwatches('newTimeCatColorPicker','newTimeCatColor',_initColor);
   renderEmojiPicker('newTimeCatEmojiGrid','newTimeCatEmoji','newTimeCatEmojiPreview','📁');
   document.getElementById("timeCatsModal").classList.add("open");
   // preventScroll : sinon le focus fait défiler la modale tout en bas (sous le
@@ -8561,9 +8564,10 @@ function _deleteTimeCatByIdx(idx) {
 function _createTimeCat() {
   var emoji = (document.getElementById("newTimeCatEmoji").value.trim() || "📁");
   var label = document.getElementById("newTimeCatLabel").value.trim();
-  var color = document.getElementById("newTimeCatColor").value || "#6aaed6";
+  var color = document.getElementById("newTimeCatColor").value || _projectAutoColor().color;
   if (!label) { showToast("✏️ Nom obligatoire."); return; }
-  var bg = color + "22";
+  var matched = _PROJECT_COLORS.find(function(c) { return c.color === color; });
+  var bg = matched ? matched.bg : color + "22";
   // Ajouter comme vrai projet → onglets Travail + liste tâches + suivi Temps
   if (!state.work.postdocProjects) state.work.postdocProjects = [];
   state.work.postdocProjects.push({ id: "p" + Date.now(), name: label, emoji, color, bg, progress: 0, checklist: [], links: [], ficheNotesList: [] });
@@ -8571,6 +8575,9 @@ function _createTimeCat() {
   const _eprev = document.getElementById("newTimeCatEmojiPreview"); if (_eprev) _eprev.textContent = "📁";
   renderEmojiPicker('newTimeCatEmojiGrid','newTimeCatEmoji','newTimeCatEmojiPreview','📁');
   document.getElementById("newTimeCatLabel").value = "";
+  const _nextColor = _projectAutoColor().color;
+  document.getElementById("newTimeCatColor").value = _nextColor;
+  _renderColorSwatches('newTimeCatColorPicker','newTimeCatColor',_nextColor);
   saveState(); _renderTimeCatsList(); renderTimeCatsGrid();
   renderWorkProjectTabs(); updateProjectSelect(); renderCustomSectionChips();
 }
@@ -8834,6 +8841,19 @@ const _PROJECT_COLORS = [
 function _projectAutoColor() {
   const idx = state.work.postdocProjects.length % _PROJECT_COLORS.length;
   return _PROJECT_COLORS[idx];
+}
+// Palette de couleurs pastel cliquables (remplace le sélecteur de couleur natif, qui
+// permet n'importe quelle teinte saturée et ne correspond pas à la charte graphique).
+function _renderColorSwatches(containerId, hiddenId, current) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = _PROJECT_COLORS.map(c =>
+    `<button type="button" onclick="_pickProjectColor('${containerId}','${hiddenId}','${c.color}')" title="${c.color}" style="width:22px;height:22px;border-radius:50%;border:2px solid ${c.color===current?'var(--ink)':'transparent'};background:${c.color};cursor:pointer;padding:0;flex-shrink:0;"></button>`
+  ).join('');
+}
+function _pickProjectColor(containerId, hiddenId, color) {
+  document.getElementById(hiddenId).value = color;
+  _renderColorSwatches(containerId, hiddenId, color);
 }
 function _projectNameSuggest(el) {
   document.getElementById("projectModalName").value = el.textContent;
@@ -24959,6 +24979,19 @@ const HELP_TEXTS = {
         <p style="margin:0 0 8px;font-size:13px;">Elle te permet donc de <strong>visualiser toutes les dépenses réalisées sur un autre compte</strong>, mois par mois, sans les mélanger avec ton budget principal.</p>
         <p style="margin:0;font-size:13px;">Tu peux créer plusieurs comptes via le bouton ⚙️ Gérer (ex : "Compte joint", "Revolut", "PayPal") — chacun aura son propre suivi.</p>
       </div>`
+  },
+  "money-budget": {
+    icon: "🎯", title: "Budget de vie",
+    subtitle: "Jauge de dépenses courantes du mois",
+    body: `
+      <p>Le <strong>Budget de vie</strong> est ta jauge mensuelle de dépenses courantes. Il compare ce que tu dépenses au quotidien à un rythme idéal (budget total ÷ jours du mois).</p>
+      <ul style="padding-left:18px;margin:10px 0;font-size:13px;">
+        <li>🟢 Vert — tu dépenses moins vite que prévu</li>
+        <li>🟠 Orange — tu dépenses un peu plus vite que l'idéal</li>
+        <li>🔴 Rouge — tu as dépassé le budget du mois</li>
+      </ul>
+      <p style="margin:8px 0 0;font-size:13px;color:var(--ink-soft);">Le montant du budget se définit dans <strong>⚙️ Personnaliser</strong> (bouton en haut à droite) → onglet <strong>Finances</strong>. Les dépenses cochées <strong>« Charge fixe »</strong> (loyer, assurance…) ou <strong>« Frais pro »</strong> dans le formulaire « Nouvelle transaction » sont automatiquement exclues du calcul — elles n'influencent pas la jauge.</p>
+      <p style="margin:10px 0 0;font-size:13px;">Utilise ◀ ▶ pour naviguer entre les mois passés.</p>`
   },
   domestic: {
     icon: "🏠", title: "Domestique",
