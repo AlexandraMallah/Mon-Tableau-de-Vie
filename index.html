@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1142</title>
+<title>Mon Tableau de Vie 🌿 · v1143</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2867,8 +2867,8 @@
             <option value="n">Neutre</option>
           </select>
           <span style="font-size:12px;color:var(--ink-soft);margin-left:6px;">Poids</span>
-          <input type="number" id="weightInput" placeholder="kg" step="0.1" min="30" max="200"
-            oninput="document.getElementById('weightBodyCompInput').value=this.value"
+          <input type="text" inputmode="decimal" id="weightInput" placeholder="kg"
+            oninput="this.value=this.value.replace(',','.');document.getElementById('weightBodyCompInput').value=this.value"
             onchange="_autoSaveWeight(this.value)"
             style="width:60px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
           <span style="font-size:12px;color:var(--ink-soft);">kg</span>
@@ -2877,12 +2877,12 @@
         <div id="bodyCompSection">
           <div style="background:#faf8fd;padding:8px 10px;border-radius:12px;margin-bottom:12px;">
             <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-              <input type="number" id="weightBodyCompInput" placeholder="Poids kg" step="0.1" min="30" max="200"
-                oninput="document.getElementById('weightInput').value=this.value"
+              <input type="text" inputmode="decimal" id="weightBodyCompInput" placeholder="Poids kg"
+                oninput="this.value=this.value.replace(',','.');document.getElementById('weightInput').value=this.value"
                 onchange="_autoSaveWeight(this.value)"
                 style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
-              <input type="number" id="bodyFatInput" placeholder="Grasse kg" step="0.1" max="40" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
-              <input type="number" id="muscleMassInput" placeholder="Maigre kg" step="0.1" max="60" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
+              <input type="text" inputmode="decimal" id="bodyFatInput" placeholder="Grasse kg" oninput="this.value=this.value.replace(',','.')" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
+              <input type="text" inputmode="decimal" id="muscleMassInput" placeholder="Maigre kg" oninput="this.value=this.value.replace(',','.')" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
               <input type="date" id="bodyCompDate" style="flex:1;min-width:110px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);" />
               <button class="btn-icon" onclick="saveBodyComp()" style="white-space:nowrap;">Enregistrer</button>
             </div>
@@ -15821,8 +15821,15 @@ function renderSavings() {
 
   // Répartition par compte
   const breakdown = state.accounts.savingsBreakdown || {};
-  // Source de vérité unique : savingsCategories
-  const cats = (state.savingsCategories || []).filter(Boolean);
+  // Source de vérité unique : savingsCategories — mais si un compte a été retiré de cette
+  // liste (ex: suppression accidentelle) alors qu'il a encore un solde ou des transactions,
+  // on le réintègre automatiquement pour ne jamais perdre la visibilité sur de l'argent réel.
+  if (!state.savingsCategories) state.savingsCategories = [];
+  const savingsTxCats = new Set(state.transactions.filter(t => t.type === "savings" || t.type === "savings-out").map(t => t.category).filter(Boolean));
+  const orphanedCats = [...new Set([...Object.keys(breakdown), ...savingsTxCats])]
+    .filter(c => c && !state.savingsCategories.includes(c));
+  if (orphanedCats.length) { state.savingsCategories.push(...orphanedCats); saveState(); }
+  const cats = state.savingsCategories.filter(Boolean);
 
   // Solde par compte = solde de départ configuré + mouvements transactions
   // epargneStart est alloué au premier compte ou à "LEP" par défaut
@@ -16117,6 +16124,9 @@ function renderSavingsChart() {
           const text = pct + "% rev.";
           ctx.font = "bold 10px system-ui, sans-serif";
           const textW = ctx.measureText(text).width;
+          // Barre trop étroite (mobile, beaucoup de barres) : le label déborderait sur
+          // les barres voisines et se superposerait au texte adjacent — on le masque.
+          if (textW + 10 > (bar.width || 0)) return;
           ctx.fillStyle = "rgba(255,255,255,0.22)";
           ctx.beginPath();
           ctx.roundRect(centerX - textW / 2 - 4, centerY - 8, textW + 8, 16, 4);
