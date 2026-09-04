@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1139</title>
+<title>Mon Tableau de Vie 🌿 · v1140</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3026,7 +3026,15 @@
 
     <!-- 🩺 Suivi symptômes perso -->
     <div class="card" id="customSymptomsSanteCard" style="margin-top:18px;display:none;">
-      <h2 style="margin:0 0 14px;">🩺 Suivi symptômes — 30 jours</h2>
+      <div class="card-row" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+        <h2 style="margin:0;flex:1;" id="customSymptomsSanteTitle">🩺 Suivi symptômes — 30 jours</h2>
+        <div style="display:flex;gap:4px;">
+          <button onclick="setSymptomNb(30)"  id="symBtn30"  class="btn-soft" style="font-size:11px;padding:4px 8px;font-weight:700;">30j</button>
+          <button onclick="setSymptomNb(60)"  id="symBtn60"  class="btn-soft" style="font-size:11px;padding:4px 8px;">60j</button>
+          <button onclick="setSymptomNb(90)"  id="symBtn90"  class="btn-soft" style="font-size:11px;padding:4px 8px;">90j</button>
+          <button onclick="setSymptomNb(0)"   id="symBtnAll" class="btn-soft" style="font-size:11px;padding:4px 8px;">Tout</button>
+        </div>
+      </div>
       <div id="customSymptomsSanteGrid"></div>
     </div>
 
@@ -12497,6 +12505,25 @@ function setSkincareNb(n) {
   renderSkincare();
 }
 let _symSanteCharts = {};
+let _symptomNb = 30;
+function setSymptomNb(n) {
+  _symptomNb = n;
+  [30,60,90].forEach(v => { const b = document.getElementById("symBtn"+v); if(b) b.style.fontWeight = v===n ? "700" : "400"; });
+  const bAll = document.getElementById("symBtnAll"); if(bAll) bAll.style.fontWeight = n===0 ? "700" : "400";
+  renderCustomSymptomsSante();
+}
+function _symptomAllDays() {
+  // Trouve le premier jour de l'historique qui a des données de symptômes perso
+  const ids = new Set((state.customSymptoms || []).filter(s => s && s.id).map(s => s.id));
+  const keys = Object.keys(state.history || {}).filter(dk => {
+    const day = state.history[dk];
+    return day && [...ids].some(id => day[id] !== undefined && day[id] !== null);
+  }).sort();
+  if (!keys.length) return 90;
+  const first = new Date(keys[0]); first.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0,0,0,0);
+  return Math.max(1, Math.round((today - first) / 86400000) + 1);
+}
 function renderCustomSymptomsSante() {
   const card = document.getElementById("customSymptomsSanteCard");
   const grid = document.getElementById("customSymptomsSanteGrid");
@@ -12504,8 +12531,11 @@ function renderCustomSymptomsSante() {
   const syms = (state.customSymptoms || []).filter(s => s && s.id);
   if (!syms.length) { card.style.display = "none"; return; }
   card.style.display = "";
+  const nb = _symptomNb === 0 ? _symptomAllDays() : _symptomNb;
+  const titleEl = document.getElementById("customSymptomsSanteTitle");
+  if (titleEl) titleEl.textContent = `🩺 Suivi symptômes — ${_symptomNb === 0 ? "tout (" + nb + "j)" : nb + " jours"}`;
   const levelColors = ["#aee0c8","#d4edbc","#ffe0a0","#ffb880","#ff9090"];
-  const dates30 = lastDates(30);
+  const dates30 = lastDates(nb);
   const todayK = todayKey();
   // Détruire anciens charts pour éviter fuite mémoire
   Object.values(_symSanteCharts).forEach(c => { try { c.destroy(); } catch(_) {} });
