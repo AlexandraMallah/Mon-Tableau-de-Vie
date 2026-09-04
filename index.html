@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1137</title>
+<title>Mon Tableau de Vie 🌿 · v1138</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2483,7 +2483,7 @@
               <div id="deadlineCalendar"></div>
             </div>
             <div class="claude-card">
-              <div style="font-size:13px;font-weight:700;color:var(--ink-soft);margin-bottom:8px;display:flex;align-items:center;gap:5px;">🤖 Pour Claude <span id="claudeTaskCount" style="font-weight:400;color:var(--ink-softer);"></span></div>
+              <div style="font-size:13px;font-weight:700;color:var(--ink-soft);margin-bottom:8px;display:flex;align-items:center;gap:5px;">🤖 Tâche IA <span id="claudeTaskCount" style="font-weight:400;color:var(--ink-softer);"></span></div>
               <div id="claudeTasksList"></div>
             </div>
           </div>
@@ -4838,6 +4838,10 @@
     </div>
     <label>Nom</label>
     <input type="text" id="taskEditName" placeholder="Nom de la tâche" />
+    <label style="margin-top:2px;display:flex;align-items:center;gap:8px;cursor:pointer;">
+      <input type="checkbox" id="taskEditForAI" style="width:16px;height:16px;cursor:pointer;margin:0;" />
+      🤖 Tâche IA <span style="font-weight:400;color:var(--ink-softer);font-size:12px;">(à réaliser par une IA plutôt que par toi)</span>
+    </label>
     <div class="grid-2">
       <div>
         <label>Priorité</label>
@@ -4868,7 +4872,7 @@
     <div class="add-milestone-row">
       <input type="text" id="newMilestoneInput" placeholder="Nom du jalon…" style="flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;" onkeydown="if(event.key==='Enter')addMilestone()" />
       <input type="number" id="newMilestoneWeight" min="0" max="100" step="1" placeholder="%" title="Poids de ce jalon (ex: 30 pour 30%)" style="width:68px;flex-shrink:0;padding:7px 8px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;text-align:center;" />
-      <label title="À transmettre à Claude" style="display:flex;align-items:center;gap:3px;font-size:14px;flex-shrink:0;cursor:pointer;"><input type="checkbox" id="newMilestoneClaude" style="cursor:pointer;width:15px;height:15px;" />🤖</label>
+      <label title="Jalon pour une IA" style="display:flex;align-items:center;gap:3px;font-size:14px;flex-shrink:0;cursor:pointer;"><input type="checkbox" id="newMilestoneClaude" style="cursor:pointer;width:15px;height:15px;" />🤖</label>
       <button onclick="addMilestone()">+ Ajouter</button>
     </div>
     <div class="actions" style="margin-top:16px;">
@@ -8958,12 +8962,14 @@ function renderTasks() {
     const kindBadge = isEvent
       ? `<span class="task-kind-badge is-event" title="${t.calEventId ? "Lié à un événement du calendrier" : "Événement prévu"}">📅 ${t.calEventId ? "Lié au cal." : "Événement"}</span>`
       : "";
+    const aiBadge = t.forAI ? `<span title="Tâche IA" style="font-size:12px;">🤖</span>` : "";
     return `
       <div class="task-row prio-${t.priority} ${t.done ? "done" : ""} ${isEvent ? "is-event" : ""}">
         <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
         <div class="task-body">
           <div class="task-meta">
             ${kindBadge}
+            ${aiBadge}
             <span class="task-name">${escapeHtml(t.name)}</span>
             ${pctBadge}
             ${tagHtml}
@@ -8979,13 +8985,14 @@ function renderTasks() {
   renderClaudeTasks();
   updateWorkTabBadges();
 }
-// Section « 🤖 Pour Claude » : liste les jalons cochés « Pour Claude » et non faits, toutes tâches confondues
+// Section « 🤖 Tâche IA » : liste les tâches et jalons marqués « pour une IA » et non faits, toutes tâches confondues
 function renderClaudeTasks() {
   const el = document.getElementById("claudeTasksList");
   if (!el) return;
   const tasks = (state.work && state.work.postdocTasks) || [];
   const items = [];
   tasks.forEach(t => {
+    if (t.forAI && !t.done) items.push({ taskId: t.id, taskTitle: null, i: null, name: t.name || "Tâche" });
     (t.milestones || []).forEach((m, i) => {
       if (m.forClaude && !m.done) items.push({ taskId: t.id, taskTitle: t.name || "Tâche", i, name: m.name || "Jalon" });
     });
@@ -8993,18 +9000,32 @@ function renderClaudeTasks() {
   const countEl = document.getElementById("claudeTaskCount");
   if (countEl) countEl.textContent = items.length ? `(${items.length})` : "";
   if (!items.length) {
-    el.innerHTML = `<div style="font-size:11px;color:var(--ink-softer);line-height:1.4;">Coche 🤖 sur un jalon (dans le détail d'une tâche) pour qu'il apparaisse ici.</div>`;
+    el.innerHTML = `<div style="font-size:11px;color:var(--ink-softer);line-height:1.4;">Coche 🤖 Tâche IA sur une tâche, ou sur un jalon (dans le détail d'une tâche), pour qu'il apparaisse ici.</div>`;
     return;
   }
   el.innerHTML = items.map(it => `
     <div style="display:flex;align-items:flex-start;gap:6px;padding:6px 0;border-bottom:1px solid var(--line);">
-      <input type="checkbox" onclick="completeClaudeMilestone('${it.taskId}',${it.i})" title="Marquer comme fait" style="margin-top:2px;cursor:pointer;flex-shrink:0;width:15px;height:15px;" />
+      <input type="checkbox" onclick="${it.i===null ? `completeClaudeTask('${it.taskId}')` : `completeClaudeMilestone('${it.taskId}',${it.i})`}" title="Marquer comme fait" style="margin-top:2px;cursor:pointer;flex-shrink:0;width:15px;height:15px;" />
       <div style="min-width:0;flex:1;">
         <div style="font-size:12px;color:var(--ink);line-height:1.3;">${escapeHtml(it.name)}</div>
-        <div style="font-size:10px;color:var(--ink-softer);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(it.taskTitle)}</div>
+        ${it.taskTitle ? `<div style="font-size:10px;color:var(--ink-softer);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(it.taskTitle)}</div>` : ""}
       </div>
-      <button onclick="unflagClaudeMilestone('${it.taskId}',${it.i})" title="Retirer de la liste" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;flex-shrink:0;padding:0 2px;">✕</button>
+      <button onclick="${it.i===null ? `unflagClaudeTask('${it.taskId}')` : `unflagClaudeMilestone('${it.taskId}',${it.i})`}" title="Retirer de la liste" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;flex-shrink:0;padding:0 2px;">✕</button>
     </div>`).join("");
+}
+function completeClaudeTask(taskId) {
+  const t = (state.work && state.work.postdocTasks || []).find(x => x.id === taskId);
+  if (!t) return;
+  t.done = true;
+  saveState();
+  renderTasks();
+}
+function unflagClaudeTask(taskId) {
+  const t = (state.work && state.work.postdocTasks || []).find(x => x.id === taskId);
+  if (!t) return;
+  t.forAI = false;
+  saveState();
+  renderTasks();
 }
 function completeClaudeMilestone(taskId, i) {
   const t = (state.work && state.work.postdocTasks || []).find(x => x.id === taskId);
@@ -9300,7 +9321,7 @@ function renderMilestones(milestones) {
         placeholder="%"
         title="Poids de ce jalon"
         onchange="updateMilestoneWeight(${i}, this.value)" />
-      <button class="milestone-del" style="flex-shrink:0;${m.forClaude ? "opacity:1;" : "opacity:0.3;"}" title="${m.forClaude ? "Retirer de « Pour Claude »" : "Marquer « Pour Claude »"}" onclick="toggleMilestoneClaude(${i})">🤖</button>
+      <button class="milestone-del" style="flex-shrink:0;${m.forClaude ? "opacity:1;" : "opacity:0.3;"}" title="${m.forClaude ? "Retirer de « Tâche IA »" : "Marquer « Tâche IA »"}" onclick="toggleMilestoneClaude(${i})">🤖</button>
       <button class="milestone-del" style="flex-shrink:0;" onclick="deleteMilestone(${i})">✕</button>
     </div>`).join("");
   const totalHtml = hasAnyWeight
@@ -9424,6 +9445,7 @@ function openTaskEditModal(id) {
   if (!t) return;
   document.getElementById("taskEditId").value = id;
   document.getElementById("taskEditName").value = t.name || "";
+  document.getElementById("taskEditForAI").checked = !!t.forAI;
   document.getElementById("taskEditPriority").value = t.priority || "medium";
   document.getElementById("taskEditDeadline").value = t.deadline || "";
   const pSel = document.getElementById("taskEditProject");
@@ -9454,6 +9476,7 @@ function saveTaskEdit() {
   const t = state.work.postdocTasks.find(x => x.id === id);
   if (!t) return;
   t.name      = document.getElementById("taskEditName").value.trim() || t.name;
+  t.forAI     = document.getElementById("taskEditForAI").checked;
   t.priority  = document.getElementById("taskEditPriority").value;
   t.projectId = document.getElementById("taskEditProject").value;
   t.deadline  = document.getElementById("taskEditDeadline").value || "";
