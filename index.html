@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1151</title>
+<title>Mon Tableau de Vie 🌿 · v1152</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1514,7 +1514,7 @@
       margin-bottom: 0;
     }
     .header-actions .btn-icon { padding: 7px 10px; font-size: 11px; }
-    #settingsBtn, #rechargerBtn { display: none; }
+    #rechargerBtn { display: none; }
     /* Alexandra + Synchronisé sur leur propre ligne */
     .sync-row { flex-basis: 100%; }
 
@@ -1886,11 +1886,22 @@
       <button class="btn-icon" onclick="openGestionModal()" style="background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
       <button class="btn-icon" onclick="cloudDiag()" title="Diagnostic sync" style="background:var(--lavender-soft);">🔍</button>
       <button class="btn-icon" onclick="openShortcutsEditor()" title="Gérer les raccourcis" style="background:var(--lavender-soft);">⚡</button>
+      <!-- Thème visuel -->
+      <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);">
+        <button id="themeBtnSmooth"  onclick="applyTheme('smooth')"  title="Smooth"  style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">🌸</button>
+        <button id="themeBtnSerieux" onclick="applyTheme('serieux')" title="Sérieux" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">💼</button>
+      </div>
+      <!-- Traduction -->
+      <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);">
+        <button id="langFRBar" onclick="_setLang('fr')" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">FR</button>
+        <button id="langENBar" onclick="_setLang('en')" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">EN</button>
+        <button id="langESBar" onclick="_setLang('es')" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">ES</button>
+      </div>
       <div id="google_translate_element" style="display:none;"></div>
       <button class="btn-icon" id="syncSignInBtn" onclick="signInWithGoogle()" style="background:linear-gradient(135deg,#e8f0fe,#d2e3fc);color:#1a73e8;font-weight:600;">☁️ Connexion</button>
       <div class="sync-row">
         <div id="syncUserAvatar" style="display:none;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:var(--shadow);font-size:13px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
-        <span id="syncStatusPill" style="font-size:13px;padding:10px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:none;"></span>
+        <span id="syncStatusPill" onclick="_fbUser ? showSyncMenu() : signInWithGoogle()" title="Voir l'état de la synchronisation" style="font-size:13px;padding:10px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:none;cursor:pointer;"></span>
       </div>
     </div>
 
@@ -3194,7 +3205,7 @@
     </div>
     <div class="card" id="externalCard" style="margin-bottom:18px;display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
-        <h2 style="margin:0;white-space:nowrap;font-size:15px;" id="externalCardTitle">🧾 Comptes secondaires</h2>
+        <h2 style="margin:0;white-space:nowrap;font-size:15px;" id="externalCardTitle">🏦 Comptes tiers</h2>
         <div style="display:flex;gap:6px;align-items:center;">
           <span id="externalTotal" style="font-size:14px;font-weight:700;color:var(--ink-soft);white-space:nowrap;"></span>
           <button id="externalEditAccountsBtn" onclick="openSecondaryAccountsManager()" class="help-btn">✦ Gérer</button>
@@ -3206,7 +3217,7 @@
         <span id="externalMonthLabel" style="font-size:12px;color:var(--ink-soft);min-width:70px;text-align:center;"></span>
         <button id="externalNavNext" onclick="externalNav(1)" style="background:none;border:1px solid var(--line);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:14px;">▶</button>
       </div>
-      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">Ces dépenses ne passent pas par ton compte courant — elles n'impactent pas la jauge budget.</p>
+      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">💡 Argent qui ne sort pas de ton compte courant (un autre compte bancaire, une carte que tu utilises) — juste pour garder un œil dessus. N'impacte pas la jauge budget.</p>
       <div id="externalList"></div>
     </div>
     <div class="card" style="margin-bottom:18px;">
@@ -13609,8 +13620,10 @@ function renderExternalSummary() {
   if (titleEl) {
     if (accounts.length === 1) {
       titleEl.textContent = (accounts[0].emoji || "🧾") + " " + (accounts[0].name || "Autres comptes");
+      titleEl.title = accounts[0].note || "";
     } else {
-      titleEl.textContent = "🧾 Comptes secondaires";
+      titleEl.textContent = "🏦 Comptes tiers";
+      titleEl.title = "";
     }
   }
   // Onglets des comptes
@@ -13623,7 +13636,7 @@ function renderExternalSummary() {
       tabsEl.innerHTML = `<button onclick="setExternalAccountTab(null)" style="padding:4px 12px;border-radius:999px;border:1.5px solid ${allActive ? "var(--lavender)" : "var(--line)"};background:${allActive ? "var(--lavender-soft)" : "white"};font-size:12px;font-family:inherit;cursor:pointer;font-weight:${allActive ? "600" : "400"};color:var(--ink);">Tous</button>` +
         accounts.map(a => {
           const active = _externalAccountFilter === a.id;
-          return `<button onclick="setExternalAccountTab('${a.id}')" style="padding:4px 12px;border-radius:999px;border:1.5px solid ${active ? "var(--lavender)" : "var(--line)"};background:${active ? "var(--lavender-soft)" : "white"};font-size:12px;font-family:inherit;cursor:pointer;font-weight:${active ? "600" : "400"};color:var(--ink);">${a.emoji} ${escapeHtml(a.name)}</button>`;
+          return `<button onclick="setExternalAccountTab('${a.id}')" title="${escapeHtml(a.note || "")}" style="padding:4px 12px;border-radius:999px;border:1.5px solid ${active ? "var(--lavender)" : "var(--line)"};background:${active ? "var(--lavender-soft)" : "white"};font-size:12px;font-family:inherit;cursor:pointer;font-weight:${active ? "600" : "400"};color:var(--ink);">${a.emoji} ${escapeHtml(a.name)}</button>`;
         }).join("");
     }
   }
@@ -14471,10 +14484,14 @@ function openSecondaryAccountsManager() {
     balInp.value = (a.balance || 0).toFixed(2); balInp.placeholder = "Budget mensuel";
     balInp.title = "Budget mensuel (optionnel) — laisse à 0 pour ne suivre que le cumul du mois";
     balInp.style.cssText = "width:80px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink);"; balInp.className = "aaBal";
+    const noteInp = document.createElement("input"); noteInp.value = a.note || ""; noteInp.placeholder = "Note (optionnel)";
+    noteInp.title = "Petite note pour te rappeler à quoi sert ce compte";
+    noteInp.style.cssText = "flex-basis:100%;margin-top:6px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink-soft);"; noteInp.className = "aaNote";
     const delBtn = document.createElement("button"); delBtn.textContent = "🗑"; delBtn.type = "button";
     delBtn.title = "Supprimer"; delBtn.style.cssText = "flex-shrink:0;width:28px;height:28px;border:none;background:none;color:#d44;font-size:15px;cursor:pointer;border-radius:6px;";
     delBtn.onclick = () => _delAllAccDom({type:"external", name:a.name, extId:a.id}, row);
-    row.append(emojiBtn, emojiInp, nameInp, typeInp, balInp, delBtn);
+    row.style.flexWrap = "wrap";
+    row.append(emojiBtn, emojiInp, nameInp, typeInp, balInp, delBtn, noteInp);
     row._accData = {type:"external", name:a.name, extId:a.id, balance:a.balance||0};
     listEl.appendChild(row);
   });
@@ -14493,14 +14510,17 @@ function openSecondaryAccountsManager() {
   newEmojiBtn.onclick = () => _openEmojiPopup(newEmojiBtn, null, v => { newEmojiInp.value = v; newEmojiBtn.textContent = v; });
   const newNameInp = document.createElement("input"); newNameInp.id = "newSecName"; newNameInp.placeholder = "Nom du compte…";
   newNameInp.style.cssText = "flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);";
+  const newNoteInp = document.createElement("input"); newNoteInp.id = "newSecNote"; newNoteInp.placeholder = "Note (optionnel)…";
+  newNoteInp.style.cssText = "flex-basis:100%;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;color:var(--ink-soft);";
   const addBtn = document.createElement("button"); addBtn.textContent = "Ajouter"; addBtn.type = "button";
   addBtn.style.cssText = "padding:7px 12px;border-radius:8px;border:none;background:var(--lavender-soft);color:#6b4d99;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;";
   addBtn.onclick = () => {
     const name = newNameInp.value.trim(); if (!name) { showToast("⚠️ Entre un nom."); return; }
     const emoji = newEmojiInp.value || "🧾";
+    const note = newNoteInp.value.trim();
     const a2 = {type:"external", name, emoji, extId:"ext-"+Date.now(), balance:0};
     const row2 = document.createElement("div");
-    row2.style.cssText = "display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line);";
+    row2.style.cssText = "display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;";
     const eb = document.createElement("button"); eb.type="button"; eb.textContent=emoji; eb.style.cssText="width:36px;height:36px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;";
     const ei = document.createElement("input"); ei.type="hidden"; ei.value=emoji; ei.className="aaEmoji";
     eb.onclick = () => _openEmojiPopup(eb, null, v => { ei.value=v; eb.textContent=v; });
@@ -14509,14 +14529,15 @@ function openSecondaryAccountsManager() {
     const bi = document.createElement("input"); bi.type="number"; bi.step="0.01"; bi.value="0.00"; bi.placeholder="Budget mensuel"; bi.style.cssText="width:80px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink);"; bi.className="aaBal";
     const db = document.createElement("button"); db.textContent="🗑"; db.type="button"; db.style.cssText="flex-shrink:0;width:28px;height:28px;border:none;background:none;color:#d44;font-size:15px;cursor:pointer;border-radius:6px;";
     db.onclick = () => _delAllAccDom(a2, row2);
-    row2.append(eb,ei,ni,ti,bi,db); row2._accData=a2; listEl.appendChild(row2);
+    const noi = document.createElement("input"); noi.value=note; noi.placeholder="Note (optionnel)"; noi.style.cssText="flex-basis:100%;margin-top:6px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink-soft);"; noi.className="aaNote";
+    row2.append(eb,ei,ni,ti,bi,db,noi); row2._accData=a2; listEl.appendChild(row2);
     // Ajouter immédiatement à state pour mise à jour de la liste déroulante
     if (!Array.isArray(state.externalAccounts)) state.externalAccounts = [];
-    state.externalAccounts.push({ id: a2.extId, name, emoji, balance: 0 });
+    state.externalAccounts.push({ id: a2.extId, name, emoji, balance: 0, note });
     _refreshPreleveSur();
-    newNameInp.value=""; newEmojiInp.value="🧾"; newEmojiBtn.textContent="🧾"; newNameInp.focus();
+    newNameInp.value=""; newEmojiInp.value="🧾"; newEmojiBtn.textContent="🧾"; newNoteInp.value=""; newNameInp.focus();
   };
-  addRow.append(newEmojiBtn, newEmojiInp, newNameInp, addBtn);
+  addRow.append(newEmojiBtn, newEmojiInp, newNameInp, addBtn, newNoteInp);
   bodyEl.appendChild(addRow);
   const saveRow = document.createElement("div"); saveRow.style.cssText="margin-top:12px;display:flex;justify-content:flex-end;";
   const saveBtn = document.createElement("button"); saveBtn.textContent="Enregistrer ✓";
@@ -14668,6 +14689,7 @@ function _saveAllAccounts() {
     const emoji = row.querySelector(".aaEmoji")?.value || "🏦";
     const type = row.querySelector(".aaType")?.value || "savings";
     const bal = parseFloat(row.querySelector(".aaBal")?.value) || 0;
+    const note = row.querySelector(".aaNote")?.value.trim() || "";
     const origData = row._accData; // set during render
     if (type === "savings") {
       const oldName = origData?.type === "savings" ? origData.name : null;
@@ -14682,8 +14704,8 @@ function _saveAllAccounts() {
     } else {
       const extId = origData?.extId || ("ext-" + Date.now() + Math.random());
       const existing = (state.externalAccounts || []).find(a => a.id === extId);
-      if (existing) { existing.name = name; existing.emoji = emoji; existing.balance = bal; newExtAccs.push(existing); }
-      else newExtAccs.push({ id: extId, name, emoji, balance: bal });
+      if (existing) { existing.name = name; existing.emoji = emoji; existing.balance = bal; existing.note = note; newExtAccs.push(existing); }
+      else newExtAccs.push({ id: extId, name, emoji, balance: bal, note });
     }
   });
   state.savingsCategories = newSavCats;
@@ -26481,12 +26503,14 @@ function googleTranslateElementInit() {
 }
 function _setLang(lang) {
   ['FR','EN','ES'].forEach(l => {
-    const btn = document.getElementById('lang' + l);
-    if (!btn) return;
-    const active = l.toLowerCase() === lang;
-    btn.style.background = active ? 'var(--lavender)' : 'none';
-    btn.style.color = active ? 'white' : 'var(--ink-soft)';
-    btn.style.fontWeight = active ? '700' : '600';
+    ['lang' + l, 'lang' + l + 'Bar'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      const active = l.toLowerCase() === lang;
+      btn.style.background = active ? 'var(--lavender)' : 'none';
+      btn.style.color = active ? 'white' : 'var(--ink-soft)';
+      btn.style.fontWeight = active ? '700' : '600';
+    });
   });
   if (lang === 'fr') {
     const hadTrans = document.cookie.includes('googtrans');
