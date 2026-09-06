@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1154</title>
+<title>Mon Tableau de Vie 🌿 · v1155</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15163,6 +15163,7 @@ function addTransaction() {
   const extAccEl = document.getElementById("txExternalAccount");
   const externalAccountId = txType === "external" ? (extAccEl?.value || "ext-default") : "";
   state.transactions.unshift({ id: "tx" + Date.now(), date, type: txType, amount, category: txType === "cash-withdrawal" ? (cashSrcAccount === "__checking__" ? "Compte courant" : cashSrcAccount) : category, note, reimbursable, mission, fixedCharge, exceptional, postdocMission, directSavingsAccount, fromSavingsAccount, cashSrcAccount, externalAccountId });
+  if (txType === "income" && category === "Salaire (postdoc)") _resetMoneyNav();
   // Si prélevé sur les espèces (dépense), déduire du cashBalance
   if (fromSavingsAccount === "__cash__" && (txType === "expense" || txType === "external")) {
     if (!state.accounts.cashLog) state.accounts.cashLog = [];
@@ -15200,8 +15201,17 @@ function addTransaction() {
   if (postdocMission) { try { admRender(); } catch(e) {} } // rafraîchit le tableau missions
   renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
+// Remet à zéro la navigation par période (budget, catégories, comptes tiers, patrimoine) :
+// ces offsets sont relatifs à "la dernière période", qui peut se décaler quand une transaction
+// "Salaire (postdoc)" (ancre des périodes, voir _salaryPeriods) est ajoutée ou supprimée —
+// sans ce reset, l'offset pointerait vers une période différente de celle qu'on regardait.
+function _resetMoneyNav() {
+  _budgetMonthOffset = 0; _moneyCatMonthOffset = 0; _externalMonthOffset = 0; _patrimoineOffset = 0;
+}
 function deleteTx(id, silent) {
+  const removed = state.transactions.find(t => t.id === id);
   state.transactions = state.transactions.filter(t => t.id !== id);
+  if (removed && removed.type === "income" && removed.category === "Salaire (postdoc)") _resetMoneyNav();
   if (!silent) { saveState(); renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
 }
 function deleteVirement(virId) {
@@ -15334,11 +15344,14 @@ function saveTxFromModal() {
   const orig = new Date(tx.date);
   const [y, m, d] = dateStr.split("-").map(Number);
   orig.setFullYear(y); orig.setMonth(m - 1); orig.setDate(d);
+  const wasSalaryPostdoc = tx.type === "income" && tx.category === "Salaire (postdoc)";
   tx.type = txModalType;
   tx.amount = amount;
   tx.category = category;
   tx.note = note;
   tx.date = orig.toISOString();
+  const isSalaryPostdoc = tx.type === "income" && tx.category === "Salaire (postdoc)";
+  if (wasSalaryPostdoc || isSalaryPostdoc) _resetMoneyNav();
   const modalReimb = document.getElementById("txModalReimbursable");
   tx.reimbursable = modalReimb?.checked && (txModalType === "expense" || txModalType === "external") ? true : false;
   tx.mission = tx.reimbursable ? (document.getElementById("txModalMission")?.value.trim() || "") : "";
