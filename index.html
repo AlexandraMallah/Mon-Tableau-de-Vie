@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1146</title>
+<title>Mon Tableau de Vie 🌿 · v1147</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17269,6 +17269,13 @@ function getAllPillars() {
 }
 function isCustomPillar(id) { return (state.customPillars || []).some(p => p.id === id); }
 function addNewPillar() {
+  // S'il existe des piliers par défaut désactivés, proposer de les réactiver (avec leur
+  // configuration d'origine intacte) plutôt que de forcer à tout recréer depuis zéro.
+  const deactivated = PILLAR_DEFS.filter(p => (state.deletedPillarIds || []).includes(p.id));
+  if (deactivated.length) { _openPillarChooser(deactivated); return; }
+  _createBlankPillar();
+}
+function _createBlankPillar() {
   if (getAllPillars().length >= MAX_PILLARS) {
     showToast(`⚠️ Maximum ${MAX_PILLARS} piliers en même temps — supprime-en un pour en ajouter un nouveau.`);
     return;
@@ -17279,6 +17286,38 @@ function addNewPillar() {
   saveState();
   renderPillars();
   openPillarConfig(id);
+}
+function reactivatePillar(id) {
+  if (getAllPillars().length >= MAX_PILLARS) {
+    showToast(`⚠️ Maximum ${MAX_PILLARS} piliers en même temps — désactive/supprime-en un d'abord.`);
+    return;
+  }
+  state.deletedPillarIds = (state.deletedPillarIds || []).filter(x => x !== id);
+  saveState();
+  closePillarConfig();
+  renderPillars();
+  showToast("✅ Pilier réactivé avec sa configuration d'origine.");
+}
+function _openPillarChooser(deactivated) {
+  document.getElementById("pillarConfigTitle").textContent = "➕ Ajouter un pilier";
+  const canAddMore = getAllPillars().length < MAX_PILLARS;
+  const disabledAttr = canAddMore ? "" : "disabled";
+  const disabledStyle = canAddMore ? "" : "opacity:.4;cursor:not-allowed;";
+  const rows = deactivated.map(p => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);">
+      <span style="font-size:20px;">${p.emoji}</span>
+      <span style="flex:1;font-size:14px;font-weight:600;color:var(--ink);">${escapeHtml(p.name)}</span>
+      <button onclick="reactivatePillar('${p.id}')" ${disabledAttr} style="padding:6px 14px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:600;cursor:pointer;font-family:inherit;font-size:13px;${disabledStyle}">Réactiver</button>
+    </div>`).join('');
+  document.getElementById("pillarConfigBody").innerHTML = `
+    <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px;">Ces piliers ont été désactivés mais gardent leur configuration d'origine (indicateurs et objectifs). Tu peux en réactiver un, ou créer un pilier entièrement personnalisé.</p>
+    ${rows}
+    <button onclick="_createBlankPillar()" ${disabledAttr} style="width:100%;margin-top:14px;padding:10px;border-radius:10px;border:1.5px dashed var(--line);background:var(--bg-1);font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);${disabledStyle}">✨ Créer un pilier entièrement personnalisé</button>
+    ${canAddMore ? "" : `<p style="font-size:12px;color:#c75b4d;margin-top:10px;">⚠️ Maximum ${MAX_PILLARS} piliers en même temps.</p>`}
+  `;
+  const actionsRow = document.querySelector("#pillarConfigModal .actions");
+  if (actionsRow) actionsRow.style.display = "none";
+  document.getElementById("pillarConfigModal").classList.add("open");
 }
 
 // Catalogue de toutes les métriques disponibles dans l'app (pour les ajouter aux piliers)
@@ -17689,7 +17728,10 @@ function openPillarConfig(pillarId) {
   _pillarConfigId = pillarId;
   const overrides = (state.pillarOverrides || {})[pillarId] || {};
   document.getElementById("pillarConfigTitle").textContent = `⚙️ ${p.emoji} ${p.name}`;
+  const actionsRow = document.querySelector("#pillarConfigModal .actions");
+  if (actionsRow) actionsRow.style.display = "";
   const canDelete = getAllPillars().length > 1;
+  const isCustom = isCustomPillar(pillarId);
   const nameEmojiHtml = `
     <div style="margin-bottom:10px;">
       <label style="font-size:12px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px;">Titre</label>
@@ -17701,7 +17743,9 @@ function openPillarConfig(pillarId) {
     </div>
     <div style="margin:14px 0;padding-bottom:14px;border-bottom:1.5px dashed var(--line);">
       ${canDelete
-        ? `<a href="#" onclick="event.preventDefault();deletePillarFromConfig();" style="font-size:12px;color:#c75b4d;text-decoration:underline;cursor:pointer;">🗑️ Supprimer ce pilier</a>`
+        ? (isCustom
+            ? `<a href="#" onclick="event.preventDefault();deletePillarFromConfig();" style="font-size:12px;color:#c75b4d;text-decoration:underline;cursor:pointer;">🗑️ Supprimer ce pilier</a>`
+            : `<a href="#" onclick="event.preventDefault();deletePillarFromConfig();" style="font-size:12px;color:#c75b4d;text-decoration:underline;cursor:pointer;">⏸️ Désactiver ce pilier</a> <span style="font-size:11px;color:var(--ink-softer);">— sa configuration reste enregistrée, tu pourras le réactiver via "+ Nouveau pilier"</span>`)
         : `<span style="font-size:12px;color:var(--ink-softer);font-style:italic;">Il doit rester au moins un pilier.</span>`}
     </div>`;
   const typeLabels = {
@@ -17790,18 +17834,25 @@ function deletePillarFromConfig() {
   if (getAllPillars().length <= 1) return;
   const p = getAllPillars().find(x => x.id === _pillarConfigId);
   if (!p) return;
-  _showConfirm(`Supprimer le pilier « ${escapeHtml(p.name)} » ?`, () => {
-    if (isCustomPillar(_pillarConfigId)) {
+  const isCustom = isCustomPillar(_pillarConfigId);
+  const msg = isCustom
+    ? `Supprimer le pilier « ${escapeHtml(p.name)} » ?`
+    : `Désactiver le pilier « ${escapeHtml(p.name)} » ?<br><small style="opacity:.75;">Sa configuration (indicateurs, objectifs) reste enregistrée — tu pourras le réactiver plus tard via "+ Nouveau pilier", tel quel.</small>`;
+  _showConfirm(msg, () => {
+    if (isCustom) {
+      // Pilier personnalisé : suppression définitive, il n'y a pas de config par défaut à préserver.
       state.customPillars = (state.customPillars || []).filter(x => x.id !== _pillarConfigId);
+      if (state.pillarOverrides) delete state.pillarOverrides[_pillarConfigId];
     } else {
+      // Pilier intégré : désactivation seulement — on garde pillarOverrides intact pour
+      // retrouver la configuration exacte (indicateurs, objectifs, nom/emoji) à la réactivation.
       if (!state.deletedPillarIds) state.deletedPillarIds = [];
       state.deletedPillarIds.push(_pillarConfigId);
     }
-    if (state.pillarOverrides) delete state.pillarOverrides[_pillarConfigId];
     saveState();
     closePillarConfig();
     renderPillars();
-  });
+  }, { okLabel: isCustom ? "Supprimer" : "Désactiver", icon: isCustom ? "🗑️" : "⏸️" });
 }
 function savePillarConfig() {
   const p = getAllPillars().find(x => x.id === _pillarConfigId);
