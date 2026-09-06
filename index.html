@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1148</title>
+<title>Mon Tableau de Vie 🌿 · v1149</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3346,7 +3346,10 @@
     <div class="card" id="subsCard" style="margin-top:18px;">
       <div class="card-row">
         <h2>🔁 Abonnements & paiements récurrents <span class="count" id="subCount"></span></h2>
-        <button class="btn-primary" onclick="openSubModal()">+ Ajouter</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button onclick="openHelp('money-subs')" title="Aide sur les abonnements" class="help-btn sub-help-btn">✦<span class="help-label"> Aide</span></button>
+          <button class="btn-primary" onclick="openSubModal()">+ Ajouter</button>
+        </div>
       </div>
       <div class="sub-total-banner">
         <span>Total équivalent mensuel</span>
@@ -25091,6 +25094,17 @@ const HELP_TEXTS = {
       </ul>
       <p style="margin:8px 0 0;font-size:13px;color:var(--ink-soft);">Le montant du budget se définit dans <strong>⚙️ Personnaliser</strong> (bouton en haut à droite) → onglet <strong>Finances</strong>. Les dépenses cochées <strong>« Charge fixe »</strong> (loyer, assurance…) ou <strong>« Frais pro »</strong> dans le formulaire « Nouvelle transaction » sont automatiquement exclues du calcul — elles n'influencent pas la jauge.</p>
       <p style="margin:10px 0 0;font-size:13px;">Utilise ◀ ▶ pour naviguer entre les mois passés.</p>`
+  },
+  "money-subs": {
+    icon: "🔁", title: "Abonnements & paiements récurrents",
+    subtitle: "Vue d'ensemble de tes charges fixes",
+    body: `
+      <p>Cette section sert à avoir une idée claire de ce que tes <strong>dépenses fixes</strong> te coûtent au total chaque mois : électricité, Netflix, Spotify, mais aussi assurance habitation, mutuelle, assurance voiture, salle de sport, Navigo…</p>
+      <div style="background:var(--butter-soft);border-radius:12px;padding:14px 16px;margin-top:10px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:6px;">⚠️ Ce n'est pas automatique</div>
+        <p style="margin:0;font-size:13px;">Il n'y a <strong>aucune connexion bancaire</strong> ici — rien n'est prélevé ni déduit tout seul à la date indiquée. Tu dois ajouter et mettre à jour chaque abonnement toi-même avec « + Ajouter ».</p>
+      </div>
+      <p style="margin:10px 0 0;font-size:13px;">En échange, l'app additionne tout et te donne un seul chiffre : le <strong>total équivalent mensuel</strong> de toutes ces charges récurrentes cumulées — pratique pour voir d'un coup d'œil combien elles pèsent dans ton budget, même celles annuelles (assurance, etc.) ramenées à un coût par mois.</p>`
   },
   domestic: {
     icon: "🏠", title: "Domestique",
