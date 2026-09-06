@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1147</title>
+<title>Mon Tableau de Vie 🌿 · v1148</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15740,8 +15740,14 @@ function renderBalanceEvolutionChart() {
     let bal = base;
     for (const t of txSorted) {
       if ((t.date || "").slice(0, 10) > dk) break; // inclut les transactions DU jour
-      if (t.type === "income")       bal += t.amount;
-      else if (t.type === "expense") bal -= t.amount;
+      // Les espèces ne font pas partie du patrimoine (= courant + épargne uniquement) :
+      // un revenu versé en espèces ne l'augmente pas, une dépense payée en espèces ne
+      // le diminue pas (l'argent en est déjà sorti au moment du retrait) — en revanche
+      // un retrait d'espèces (quelle que soit la source) fait bien sortir de l'argent
+      // du patrimoine suivi.
+      if (t.type === "income" && t.directSavingsAccount !== "__cash__") bal += t.amount;
+      else if (t.type === "expense" && t.fromSavingsAccount !== "__cash__") bal -= t.amount;
+      else if (t.type === "cash-withdrawal") bal -= t.amount;
       // savings / savings-out : transferts entre courant et épargne → patrimoine inchangé
     }
     return bal;
@@ -16276,7 +16282,7 @@ function renderMoneyCatChart() {
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const depTotal = entries.reduce((s,[,v]) => s+v, 0);
   const depEl = document.getElementById("catChartDepTotal");
-  if (depEl) depEl.textContent = depTotal > 0 ? "— " + depTotal.toFixed(0) + " €" : "";
+  if (depEl) depEl.textContent = depTotal > 0 ? ": " +depTotal.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>ce mois"); return; }
@@ -16337,7 +16343,7 @@ function renderMoneyCatChartNoFixed() {
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
   const el = document.getElementById("catChartNoFixTotal");
-  if (el) el.textContent = total > 0 ? "— " + total.toFixed(0) + " €" : "";
+  if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatNoFixLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>hors charges fixes"); return; }
@@ -16762,7 +16768,7 @@ function renderMoneyIncomeCatChart() {
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const incTotal = entries.reduce((s,[,v]) => s+v, 0);
   const incEl = document.getElementById("catChartIncTotal");
-  if (incEl) incEl.textContent = incTotal > 0 ? "— " + incTotal.toFixed(0) + " €" : "";
+  if (incEl) incEl.textContent = incTotal > 0 ? ": " +incTotal.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyIncomeLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucun revenu<br>ce mois"); return; }
@@ -16802,7 +16808,7 @@ function renderMoneyCatAllChart() {
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
   const el = document.getElementById("catAllChartDepTotal");
-  if (el) el.textContent = total > 0 ? "— " + total.toFixed(0) + " €" : "";
+  if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatAllLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense"); return; }
@@ -16848,7 +16854,7 @@ function renderMoneyCatAllNoFixChart() {
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
   const el = document.getElementById("catAllChartNoFixTotal");
-  if (el) el.textContent = total > 0 ? "— " + total.toFixed(0) + " €" : "";
+  if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatAllNoFixLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>hors charges fixes"); return; }
@@ -16895,7 +16901,7 @@ function renderMoneyIncomeAllChart() {
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
   const el = document.getElementById("catAllChartIncTotal");
-  if (el) el.textContent = total > 0 ? "— " + total.toFixed(0) + " €" : "";
+  if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyIncomeAllLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucun revenu"); return; }
