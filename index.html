@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1145</title>
+<title>Mon Tableau de Vie 🌿 · v1146</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13511,6 +13511,7 @@ function setTxType(t) {
   if (directWrap) directWrap.style.display = t === "income" ? "flex" : "none";
   if (directSel && t === "income") {
     directSel.innerHTML = `<option value="">— Compte courant (défaut)</option>` +
+      `<option value="__cash__">💵 Espèces en poche</option>` +
       (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
   }
   if (directSel && t !== "income") directSel.value = "";
@@ -14367,10 +14368,12 @@ function balanceCourant() {
 function balanceEpargne() {
   const breakdown = state.accounts?.savingsBreakdown || {};
   const startTotal = Object.values(breakdown).reduce((s, v) => s + v, 0) + (state.accounts?.epargneStart || 0);
-  const directIncome = state.transactions.filter(t => t.type === "income" && t.directSavingsAccount).reduce((s, t) => s + t.amount, 0);
+  // __cash__ n'est pas un compte épargne : exclu du calcul (sinon un revenu ou une
+  // dépense en espèces fausserait le total épargne).
+  const directIncome = state.transactions.filter(t => t.type === "income" && t.directSavingsAccount && t.directSavingsAccount !== "__cash__").reduce((s, t) => s + t.amount, 0);
   const savings    = state.transactions.filter(t => t.type === "savings").reduce((s, t) => s + t.amount, 0);
   const savingsOut = state.transactions.filter(t => t.type === "savings-out").reduce((s, t) => s + t.amount, 0);
-  const fromSavExp = state.transactions.filter(t => t.fromSavingsAccount && (t.type === "expense" || t.type === "external")).reduce((s, t) => s + t.amount, 0);
+  const fromSavExp = state.transactions.filter(t => t.fromSavingsAccount && t.fromSavingsAccount !== "__cash__" && (t.type === "expense" || t.type === "external")).reduce((s, t) => s + t.amount, 0);
   return startTotal + savings + directIncome - savingsOut - fromSavExp;
 }
 function renderAccounts() {
@@ -15140,6 +15143,12 @@ function addTransaction() {
     state.accounts.cashLog.push({ date: new Date().toISOString().slice(0, 10), amount, dir: "out", note: note || category });
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) - amount;
   }
+  // Revenu versé directement en espèces (reçu en main propre) : ajouter au cashBalance
+  if (directSavingsAccount === "__cash__" && txType === "income") {
+    if (!state.accounts.cashLog) state.accounts.cashLog = [];
+    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0, 10), amount, dir: "in", note: note || category });
+    state.accounts.cashBalance = (state.accounts.cashBalance || 0) + amount;
+  }
   // Retrait espèces : ajouter au cashBalance, retirer du compte source
   if (txType === "cash-withdrawal") {
     if (!state.accounts.cashLog) state.accounts.cashLog = [];
@@ -15253,6 +15262,7 @@ function setTxModalType(t, presetCategory) {
   const directSel = document.getElementById("txModalDirectSavings");
   if (directSel && t === "income") {
     directSel.innerHTML = `<option value="">— Compte courant (défaut)</option>` +
+      `<option value="__cash__">💵 Espèces en poche</option>` +
       (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
   }
   const fromWrap = document.getElementById("txModalFromSavingsWrap");
@@ -15311,7 +15321,9 @@ function saveTxFromModal() {
   const modalExc = document.getElementById("txModalExceptional");
   tx.exceptional = modalExc?.checked && (txModalType === "expense" || txModalType === "external") ? true : false;
   const directSav = document.getElementById("txModalDirectSavings");
-  tx.directSavingsAccount = (txModalType === "income" && directSav?.value) ? directSav.value : "";
+  const oldDirectSav = tx.directSavingsAccount || "";
+  const newDirectSav = (txModalType === "income" && directSav?.value) ? directSav.value : "";
+  tx.directSavingsAccount = newDirectSav;
   const fromSav = document.getElementById("txModalFromSavings");
   const oldFromSav = tx.fromSavingsAccount || "";
   const newFromSav = ((txModalType === "expense" || txModalType === "external") && fromSav?.value) ? fromSav.value : "";
@@ -15335,6 +15347,17 @@ function saveTxFromModal() {
   } else if (oldFromSav === "__cash__" && newFromSav === "__cash__" && tx.amount !== amount) {
     // Montant modifié, compte espèces inchangé — ajuster la différence
     const diff = tx.amount - amount;
+    state.accounts.cashBalance = (state.accounts.cashBalance || 0) + diff;
+  }
+  // Idem pour un revenu versé directement en espèces
+  if (oldDirectSav === "__cash__" && newDirectSav !== "__cash__") {
+    state.accounts.cashBalance = (state.accounts.cashBalance || 0) - tx.amount;
+    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount: tx.amount, dir: "out", note: "Correction édition — " + (tx.note || tx.category) });
+  } else if (oldDirectSav !== "__cash__" && newDirectSav === "__cash__") {
+    state.accounts.cashBalance = (state.accounts.cashBalance || 0) + amount;
+    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount, dir: "in", note: note || category });
+  } else if (oldDirectSav === "__cash__" && newDirectSav === "__cash__" && tx.amount !== amount) {
+    const diff = amount - tx.amount;
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) + diff;
   }
   saveState();
@@ -16195,7 +16218,7 @@ function _showSavingsDetail({ start, end, label }) {
   if (!panel) return;
   const txs = state.transactions.filter(t => {
     const d = new Date(t.date);
-    return d >= start && d < end && (t.type === "savings" || t.type === "savings-out" || (t.type === "income" && t.directSavingsAccount));
+    return d >= start && d < end && (t.type === "savings" || t.type === "savings-out" || (t.type === "income" && t.directSavingsAccount && t.directSavingsAccount !== "__cash__"));
   }).sort((a, b) => new Date(b.date) - new Date(a.date));
   const monthLabel = label.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   const rows = txs.map(t => {
