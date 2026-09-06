@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1143</title>
+<title>Mon Tableau de Vie 🌿 · v1144</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14394,6 +14394,12 @@ function renderAccounts() {
     `Solde de départ : ${startC.toFixed(2)} € · Variation : ${(c - startC >= 0 ? "+" : "")}${(c - startC).toFixed(2)} €<br>${editLinks("courant")}`;
   document.getElementById("accountEpargneDetail").innerHTML =
     `Solde de départ : ${startE.toFixed(2)} € · Cumulé épargné : ${(e - startE >= 0 ? "+" : "")}${(e - startE).toFixed(2)} €<br>${editLinks("epargne")}`;
+  const cashSub = document.getElementById("cashSubLabel");
+  if (cashSub) {
+    cashSub.innerHTML =
+      `<a href="#" onclick="event.preventDefault();promptAddCash()" style="color:#b8860b;text-decoration:underline;cursor:pointer;font-weight:600;margin-right:10px;">➕ Ajouter</a>
+       <a href="#" onclick="event.preventDefault();setCashBalance()" style="color:#b8860b;text-decoration:underline;cursor:pointer;font-weight:600;">📍 Corriger le solde</a>`;
+  }
 }
 let _accountEditType = null;
 function openAccountEdit(type) {
@@ -14902,17 +14908,19 @@ function cashWithdrawal() {
   document.getElementById("cashNoteInput").value = "";
   saveState(); renderMoney(); renderAccounts();
 }
-function addCash(dir) {
-  const amt = parseFloat(document.getElementById("cashAmountInput").value);
-  if (!amt || amt <= 0) { showToast("💰 Entre un montant valide."); return; }
-  const note = document.getElementById("cashNoteInput").value.trim();
-  if (!state.accounts.cashLog) state.accounts.cashLog = [];
-  const date = new Date().toISOString().slice(0,10);
-  state.accounts.cashLog.push({ date, amount: amt, dir: dir === 1 ? "in" : "out", note });
-  state.accounts.cashBalance = (state.accounts.cashBalance || 0) + dir * amt;
-  document.getElementById("cashAmountInput").value = "";
-  document.getElementById("cashNoteInput").value = "";
-  saveState(); renderCash();
+// Ajoute du liquide reçu hors circuit suivi (cadeau, remboursement en main propre…) —
+// contrairement à "💵 Retrait espèces" (Nouvelle transaction), ça ne vient d'aucun compte suivi.
+function promptAddCash() {
+  _showPrompt("Ajouter du liquide (€)", "", v => {
+    const n = parseFloat(String(v).replace(",", "."));
+    if (isNaN(n) || n <= 0) { showToast("⚠️ Montant invalide."); return; }
+    if (!state.accounts.cashLog) state.accounts.cashLog = [];
+    const date = new Date().toISOString().slice(0,10);
+    state.accounts.cashLog.push({ date, amount: n, dir: "in", note: "Ajout manuel" });
+    state.accounts.cashBalance = (state.accounts.cashBalance || 0) + n;
+    saveState(); renderCash(); renderAccounts();
+    showToast(`💵 +${n.toFixed(2)} € ajoutés aux espèces`);
+  }, "number");
 }
 function setCashBalance() {
   _showPrompt("Espèces en poche actuellement (€)", (state.accounts.cashBalance || 0).toFixed(2), v => {
