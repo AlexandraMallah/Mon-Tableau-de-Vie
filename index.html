@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1156</title>
+<title>Mon Tableau de Vie 🌿 · v1157</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3087,7 +3087,7 @@
 
     </div>
     <div class="money-summary" id="moneySummary"></div>
-    <p style="font-size:11px;color:var(--ink-soft);margin:-10px 0 18px;">💡 "Solde" = revenus − dépenses <strong>depuis le début de la période</strong> affichée juste au-dessus (pas ton solde de compte ni ton épargne). La période démarre à ton dernier salaire enregistré sous la catégorie <strong>"Salaire (postdoc)"</strong> — si tu n'en ajoutes pas un chaque mois, la période s'allonge et ce chiffre grossit d'autant.</p>
+    <p id="moneySummaryCaption" style="font-size:11px;color:var(--ink-soft);margin:-10px 0 18px;"></p>
     <div class="card" style="margin-bottom:18px;">
       <!-- Panneau de gestion des catégories — visible uniquement en mode édition -->
       <div class="edit-only block" style="margin-bottom:14px;padding:14px;background:var(--butter-soft);border-radius:14px;border:1.5px dashed #f5c842;">
@@ -3106,6 +3106,7 @@
           <div>
             <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;">💰 Revenus</div>
             <div id="financeIncomeCatList" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;"></div>
+            <p style="font-size:11px;color:var(--ink-soft);margin:0 0 6px;">⭐ = salaire principal : redémarre le mois financier (Budget de vie, catégories…) à chaque fois que tu enregistres un revenu de cette catégorie. Clique l'étoile pour l'activer/désactiver.</p>
             <div style="display:flex;gap:6px;">
               <input type="text" id="newFinanceIncomeCatInput" placeholder="Nouvelle catégorie…" maxlength="40"
                 style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);"
@@ -3138,13 +3139,13 @@
             ✨ Dépense exceptionnelle lissée (cours, matériel…)
           </label>
           <div id="txDirectSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
-            🏦 Versé sur :
+            🏦 Compte crédité :
             <select id="txDirectSavings" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
               <option value="">— Compte courant (défaut)</option>
             </select>
           </div>
           <div id="txFromSavingsWrap" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
-            🏦 Prélevé sur :
+            🏦 Compte débité :
             <select id="txFromSavings" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
               <option value="">— Compte courant (défaut)</option>
             </select>
@@ -4804,13 +4805,13 @@
         💼 Frais pro — remboursé par le boulot
       </label>
       <div id="txModalDirectSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
-        🏦 Versé directement sur :
+        🏦 Compte crédité :
         <select id="txModalDirectSavings" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
           <option value="">— Compte courant (défaut)</option>
         </select>
       </div>
       <div id="txModalFromSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
-        🏦 Prélevé sur :
+        🏦 Compte débité :
         <select id="txModalFromSavings" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
           <option value="">— Compte courant (défaut)</option>
         </select>
@@ -5454,6 +5455,7 @@ const DEFAULT_STATE = {
   activities: [],
   categories: ["Alimentation", "Logement", "Transport", "Loisirs", "Santé", "Autre"],
   incomeCategories: ["Salaire", "Prime", "Remboursement", "Autre revenu"],
+  mainSalaryCategory: null,
   savingsCategories: [],
   candidatureTypes: [],
   contactRoles: ["Mentor", "Collaborateur", "Jury", "Rencontré en conf", "Famille", "Ami"],
@@ -5495,6 +5497,13 @@ function migrate(s) {
   s.activities = s.activities || DEFAULT_STATE.activities;
   s.categories = s.categories || DEFAULT_STATE.categories;
   s.incomeCategories = s.incomeCategories || DEFAULT_STATE.incomeCategories;
+  // Migration : la catégorie "salaire principal" (qui ancre le mois financier, voir _salaryPeriods)
+  // était codée en dur sur "Salaire (postdoc)" — on la fige explicitement pour ne rien changer
+  // au comportement existant tant que la personne ne choisit pas elle-même une autre catégorie.
+  if (s.mainSalaryCategory === undefined) {
+    const hasPostdocSalary = (s.transactions || []).some(t => t.type === "income" && t.category === "Salaire (postdoc)");
+    s.mainSalaryCategory = hasPostdocSalary ? "Salaire (postdoc)" : null;
+  }
   s.savingsCategories = s.savingsCategories || DEFAULT_STATE.savingsCategories;
   s.candidatureTypes = s.candidatureTypes || DEFAULT_STATE.candidatureTypes;
   s.contactRoles = s.contactRoles || DEFAULT_STATE.contactRoles;
@@ -13480,10 +13489,12 @@ function confirmRenamecat() {
   if (_renameCatList.includes(newName)) { showToast("⚠️ Cette catégorie existe déjà."); return; }
   _renameCatList[_renameCatIdx] = newName;
   state.transactions.forEach(t => { if (t.category === oldName) t.category = newName; });
+  if (state.mainSalaryCategory === oldName) state.mainSalaryCategory = newName;
   saveState();
   closeRenameCatModal();
   populateTxCategories();
   renderTxList();
+  if (typeof _renderFinanceCatLists === "function") _renderFinanceCatLists();
 }
 function closeRenameCatModal() {
   document.getElementById('renameCatModal').classList.remove('open');
@@ -15066,15 +15077,17 @@ function moneyCatMonthNav(delta) {
   renderMoneyIncomeCatChart();
   _updateMoneyCatTitle();
 }
-// Source de vérité unique : toutes les périodes financières basées sur les timestamps exacts du Salaire (postdoc).
+// Source de vérité unique : toutes les périodes financières basées sur les timestamps exacts des
+// revenus catégorisés state.mainSalaryCategory (choisi dans Gérer les catégories, étoile ⭐).
+// Sans catégorie choisie : périodes calendaires (26 du mois) par défaut.
 // Chaque période = [dateArrivéeSalaire, dateArrivéeSalaireSuivant[.
 // La période en cours se termine à "maintenant" (pas de fin connue).
 function _salaryPeriods() {
   const now = new Date();
-  const salaires = (state.transactions || [])
-    .filter(tx => tx.type === 'income' && tx.category === 'Salaire (postdoc)')
+  const salaires = state.mainSalaryCategory ? (state.transactions || [])
+    .filter(tx => tx.type === 'income' && tx.category === state.mainSalaryCategory)
     .map(tx => new Date(tx.date))
-    .sort((a, b) => a - b);
+    .sort((a, b) => a - b) : [];
   const periods = [];
   // Périodes réelles basées sur les salaires — frontière = début du jour du salaire
   for (let i = 0; i < salaires.length; i++) {
@@ -15125,6 +15138,12 @@ function renderMoneySummary() {
     <div class="money-stat income"><div class="label">Revenus — ${period}</div><div class="value">+${income.toFixed(2)} €</div></div>
     <div class="money-stat expense"><div class="label">Dépenses — ${period}</div><div class="value">−${expense.toFixed(2)} €</div></div>
     <div class="money-stat balance"><div class="label">Solde — ${period}</div><div class="value">${balance >= 0 ? "+" : ""}${balance.toFixed(2)} €</div></div>`;
+  const captionEl = document.getElementById("moneySummaryCaption");
+  if (captionEl) {
+    captionEl.innerHTML = state.mainSalaryCategory
+      ? `💡 "Solde" = revenus − dépenses <strong>depuis le début de la période</strong> affichée juste au-dessus (pas ton solde de compte ni ton épargne). La période démarre à ton dernier revenu catégorisé <strong>"${escapeHtml(state.mainSalaryCategory)}"</strong> (⭐ salaire principal, dans Gérer les catégories) — si tu n'en ajoutes pas un chaque mois, la période s'allonge et ce chiffre grossit d'autant.`
+      : `💡 "Solde" = revenus − dépenses <strong>depuis le début de la période</strong> affichée juste au-dessus (pas ton solde de compte ni ton épargne). Aucun "salaire principal" n'est défini : la période suit le mois calendaire (26 du mois). Tu peux en choisir un dans <strong>Gérer les catégories</strong> (icône ⭐ sur une catégorie de revenu).`;
+  }
 }
 function initTxDate() {
   const el = document.getElementById("txDate");
@@ -15163,7 +15182,7 @@ function addTransaction() {
   const extAccEl = document.getElementById("txExternalAccount");
   const externalAccountId = txType === "external" ? (extAccEl?.value || "ext-default") : "";
   state.transactions.unshift({ id: "tx" + Date.now(), date, type: txType, amount, category: txType === "cash-withdrawal" ? (cashSrcAccount === "__checking__" ? "Compte courant" : cashSrcAccount) : category, note, reimbursable, mission, fixedCharge, exceptional, postdocMission, directSavingsAccount, fromSavingsAccount, cashSrcAccount, externalAccountId });
-  if (txType === "income" && category === "Salaire (postdoc)") _resetMoneyNav();
+  if (txType === "income" && state.mainSalaryCategory && category === state.mainSalaryCategory) _resetMoneyNav();
   // Si prélevé sur les espèces (dépense), déduire du cashBalance
   if (fromSavingsAccount === "__cash__" && (txType === "expense" || txType === "external")) {
     if (!state.accounts.cashLog) state.accounts.cashLog = [];
@@ -15203,7 +15222,7 @@ function addTransaction() {
 }
 // Remet à zéro la navigation par période (budget, catégories, comptes tiers, patrimoine) :
 // ces offsets sont relatifs à "la dernière période", qui peut se décaler quand une transaction
-// "Salaire (postdoc)" (ancre des périodes, voir _salaryPeriods) est ajoutée ou supprimée —
+// state.mainSalaryCategory (ancre des périodes, voir _salaryPeriods) est ajoutée ou supprimée —
 // sans ce reset, l'offset pointerait vers une période différente de celle qu'on regardait.
 function _resetMoneyNav() {
   _budgetMonthOffset = 0; _moneyCatMonthOffset = 0; _externalMonthOffset = 0; _patrimoineOffset = 0;
@@ -15211,7 +15230,7 @@ function _resetMoneyNav() {
 function deleteTx(id, silent) {
   const removed = state.transactions.find(t => t.id === id);
   state.transactions = state.transactions.filter(t => t.id !== id);
-  if (removed && removed.type === "income" && removed.category === "Salaire (postdoc)") _resetMoneyNav();
+  if (removed && removed.type === "income" && state.mainSalaryCategory && removed.category === state.mainSalaryCategory) _resetMoneyNav();
   if (!silent) { saveState(); renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
 }
 function deleteVirement(virId) {
@@ -15344,13 +15363,13 @@ function saveTxFromModal() {
   const orig = new Date(tx.date);
   const [y, m, d] = dateStr.split("-").map(Number);
   orig.setFullYear(y); orig.setMonth(m - 1); orig.setDate(d);
-  const wasSalaryPostdoc = tx.type === "income" && tx.category === "Salaire (postdoc)";
+  const wasSalaryPostdoc = tx.type === "income" && state.mainSalaryCategory && tx.category === state.mainSalaryCategory;
   tx.type = txModalType;
   tx.amount = amount;
   tx.category = category;
   tx.note = note;
   tx.date = orig.toISOString();
-  const isSalaryPostdoc = tx.type === "income" && tx.category === "Salaire (postdoc)";
+  const isSalaryPostdoc = tx.type === "income" && state.mainSalaryCategory && tx.category === state.mainSalaryCategory;
   if (wasSalaryPostdoc || isSalaryPostdoc) _resetMoneyNav();
   const modalReimb = document.getElementById("txModalReimbursable");
   tx.reimbursable = modalReimb?.checked && (txModalType === "expense" || txModalType === "external") ? true : false;
@@ -24183,7 +24202,7 @@ function renderSettingsLists() {
 function removeHabit(id) { state.habits = state.habits.filter(h => h.id !== id); renderSettingsLists(); }
 function removeActivity(id) { state.activities = state.activities.filter(a => a.id !== id); renderSettingsLists(); }
 function removeCategory(c) { state.categories = state.categories.filter(x => x !== c); renderSettingsLists(); }
-function removeIncomeCategory(c) { state.incomeCategories = state.incomeCategories.filter(x => x !== c); renderSettingsLists(); }
+function removeIncomeCategory(c) { state.incomeCategories = state.incomeCategories.filter(x => x !== c); if (state.mainSalaryCategory === c) state.mainSalaryCategory = null; renderSettingsLists(); }
 function removeSavingsCategory(c) { state.savingsCategories = state.savingsCategories.filter(x => x !== c); renderSettingsLists(); }
 function renameCategory(newName, oldName) {
   const idx = state.categories.indexOf(oldName);
@@ -24195,6 +24214,7 @@ function renameIncomeCategory(newName, oldName) {
   const idx = state.incomeCategories.indexOf(oldName);
   if (idx >= 0) state.incomeCategories[idx] = newName;
   state.transactions.forEach(t => { if (t.category === oldName && t.type === "income") t.category = newName; });
+  if (state.mainSalaryCategory === oldName) state.mainSalaryCategory = newName;
   saveState(); renderSettingsLists();
 }
 function renameSavingsCategory(newName, oldName) {
@@ -24999,11 +25019,18 @@ function _renderFinanceCatLists() {
   }).join("");
   if (el2) el2.innerHTML = (state.incomeCategories || []).map(c => {
     const ce = escapeHtml(c).replace(/'/g,"&#39;");
-    return `<span title="Double-clic pour renommer" ondblclick="_renameCatDirect(state.incomeCategories,'${ce}')" style="display:inline-flex;align-items:center;gap:4px;background:var(--mint-soft);border-radius:20px;padding:3px 10px;font-size:12px;cursor:default;">
+    const isMain = state.mainSalaryCategory === c;
+    return `<span title="Double-clic pour renommer" ondblclick="_renameCatDirect(state.incomeCategories,'${ce}')" style="display:inline-flex;align-items:center;gap:4px;background:${isMain ? "var(--lavender-soft)" : "var(--mint-soft)"};border-radius:20px;padding:3px 10px;font-size:12px;cursor:default;">
+      <span onclick="_toggleMainSalaryCategory('${ce}')" title="${isMain ? "Salaire principal — clique pour retirer" : "Marquer comme salaire principal (remet le mois à zéro)"}" style="cursor:pointer;font-size:12px;">${isMain ? "⭐" : "☆"}</span>
       ${escapeHtml(c)}
       <span onclick="_removeFinanceIncomeCat('${ce}')" style="cursor:pointer;color:var(--ink-softer);font-size:10px;">✕</span>
     </span>`;
   }).join("");
+}
+function _toggleMainSalaryCategory(c) {
+  state.mainSalaryCategory = (state.mainSalaryCategory === c) ? null : c;
+  saveState(); _renderFinanceCatLists(); renderMoney();
+  showToast(state.mainSalaryCategory ? `⭐ "${c}" redémarre maintenant le mois financier` : "☆ Retour au mois calendaire (26 du mois)");
 }
 function _addFinanceCat() {
   const inp = document.getElementById("newFinanceCatInput");
@@ -25029,6 +25056,7 @@ function _addFinanceIncomeCat() {
 }
 function _removeFinanceIncomeCat(c) {
   state.incomeCategories = (state.incomeCategories || []).filter(x => x !== c);
+  if (state.mainSalaryCategory === c) state.mainSalaryCategory = null;
   saveState(); _renderFinanceCatLists(); renderMoney();
 }
 
