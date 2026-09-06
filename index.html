@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1149</title>
+<title>Mon Tableau de Vie 🌿 · v1150</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25671,6 +25671,19 @@ function _hasTodayData(t) {
     t.pillTaken === true ||
     Object.values(t.habits || {}).some(v => v);
 }
+// Mémorise, par compte, que cet appareil/navigateur a déjà réussi une synchro complète
+// une fois. Sert de garde-fou : voir le commentaire dans _fbLoad() ci-dessous.
+const CLOUD_SYNCED_KEY = "tableauDeVie_v3_syncedUids";
+function _hasEverSyncedCloud(uid) {
+  try { return JSON.parse(localStorage.getItem(CLOUD_SYNCED_KEY) || "[]").includes(uid); }
+  catch(e) { return false; }
+}
+function _markCloudSynced(uid) {
+  try {
+    const list = JSON.parse(localStorage.getItem(CLOUD_SYNCED_KEY) || "[]");
+    if (!list.includes(uid)) { list.push(uid); localStorage.setItem(CLOUD_SYNCED_KEY, JSON.stringify(list)); }
+  } catch(e) {}
+}
 async function _fbLoad() {
   try {
     _fbSetStatus("syncing");
@@ -25693,7 +25706,14 @@ async function _fbLoad() {
     if (remote) {
       const localTs  = state.lastModified || 0;
       const remoteTs = remote.lastModified || 0;
-      if (remoteTs > localTs) {
+      // Sur la toute première synchro de cet appareil pour ce compte, on ne pousse JAMAIS
+      // le local par-dessus un cloud déjà existant, même si l'horodatage local paraît plus
+      // récent — un appareil tout juste ouvert peut avoir un lastModified "à l'instant" (une
+      // sauvegarde locale anodine avant même la connexion) qui bat artificiellement celui du
+      // cloud, ce qui écraserait les vraies données de tous les autres appareils synchronisés
+      // (c'est exactement ce qui est arrivé une fois — voir mémoire du 2026-09-06).
+      const firstSyncEver = !_hasEverSyncedCloud(_fbUser.uid);
+      if (remoteTs > localTs || firstSyncEver) {
         state = _mergeFromCloud(remote);
         window._lastLocalSave = 0; // protéger le lastModified cloud contre saveState post-render
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
@@ -25709,6 +25729,7 @@ async function _fbLoad() {
       await _fbSaveNow();
       showToast("☁️ Données envoyées vers le cloud ✅");
     }
+    _markCloudSynced(_fbUser.uid);
     // Restauration belly/endo : si des valeurs existent dans l'historique mais les définitions ont été supprimées
     if (_fbUser) {
       if (!state.customSymptoms) state.customSymptoms = [];
