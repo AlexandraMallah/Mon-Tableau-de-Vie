@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1150</title>
+<title>Mon Tableau de Vie 🌿 · v1151</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25617,10 +25617,15 @@ function _mergeFromCloud(remote) {
   const merged = migrate({ ...DEFAULT_STATE, ...remote });
   merged.calEvents = state.calEvents || []; // le cloud ne contient pas le calendrier → garder le local
   if ((!merged.shortcuts || !merged.shortcuts.length) && state.shortcuts?.length) merged.shortcuts = state.shortcuts;
-  // Protéger les données travail : si le local est plus riche que le cloud, le garder
-  const localWorkSize  = JSON.stringify(state.work  || {}).length;
-  const remoteWorkSize = JSON.stringify(merged.work || {}).length;
-  if (localWorkSize > remoteWorkSize * 1.2) merged.work = state.work;
+  // Protège chaque grande section : si le local est nettement plus riche que ce qui arrive
+  // du cloud, on garde le local plutôt que d'écraser (filet de sécurité en plus du correctif
+  // de premier-sync — voir incident du 2026-09-06 : ce filet n'existait que pour "work",
+  // ce qui est exactement ce qui l'avait épargné pendant que tout le reste était effacé).
+  ["work", "transactions", "history", "domestique"].forEach(key => {
+    const localSize  = JSON.stringify(state[key]  || (key === "transactions" ? [] : {})).length;
+    const remoteSize = JSON.stringify(merged[key] || (key === "transactions" ? [] : {})).length;
+    if (localSize > remoteSize * 1.2) merged[key] = state[key];
+  });
 
   // Protéger les données du jour en cours contre l'écrasement par le cloud.
   // Cas typique : l'utilisatrice saisit des données → debounce 800ms pas encore parti →
