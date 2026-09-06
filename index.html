@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1155</title>
+<title>Mon Tableau de Vie 🌿 · v1156</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16564,7 +16564,17 @@ function renderBudgetGauge() {
       <span>Jour <strong>${daysElapsed}</strong>/${totalDays} · <strong>${daysLeft}</strong> jours restants</span>
       <span>Idéal : ${dailyIdeal.toFixed(0)} €/j · Rythme actuel : <strong style="color:${dailyActual > dailyIdeal * 1.1 ? "#f59e0b" : "var(--ink)"};">${dailyActual.toFixed(0)} €/j</strong></span>
     </div>
-    ${(fixedTotal > 0 || exceptionalTotal > 0) ? `<div style="margin-top:8px;font-size:12px;color:var(--ink-softer);border-top:1px solid var(--line);padding-top:8px;">${fixedTotal > 0 ? `🏠 Charges fixes : <strong>${fixedTotal.toFixed(0)} €</strong>` : ""}${fixedTotal > 0 && exceptionalTotal > 0 ? " · " : ""}${exceptionalTotal > 0 ? `✨ Dépenses lissées : <strong>${exceptionalTotal.toFixed(0)} €</strong>` : ""} · Total réel ce mois : ${spentRaw.toFixed(0)} €</div>` : ""}`;
+    ${(fixedTotal > 0 || exceptionalTotal > 0) ? `<div style="margin-top:8px;font-size:12px;color:var(--ink-softer);border-top:1px solid var(--line);padding-top:8px;">${fixedTotal > 0 ? `🏠 Charges fixes : <strong>${fixedTotal.toFixed(0)} €</strong>` : ""}${fixedTotal > 0 && exceptionalTotal > 0 ? " · " : ""}${exceptionalTotal > 0 ? `✨ Dépenses lissées : <strong>${exceptionalTotal.toFixed(0)} €</strong>` : ""} · Total réel ce mois : ${spentRaw.toFixed(0)} €</div>` : ""}
+    ${isCurrent ? `<details style="margin-top:8px;font-size:12px;color:var(--ink-softer);border-top:1px solid var(--line);padding-top:8px;">
+      <summary style="cursor:pointer;">Comment ce chiffre est calculé ?</summary>
+      <div style="margin-top:6px;line-height:1.7;">
+        Dépensé ce mois (hors charges fixes/lissées) : <strong>${spent.toFixed(2)} €</strong><br>
+        + Solde compte courant actuel : <strong>${balanceCourant().toFixed(2)} €</strong><br>
+        + Espèces en poche : <strong>${(state.accounts?.cashBalance || 0).toFixed(2)} €</strong><br>
+        = Budget total : <strong>${budget.toFixed(2)} €</strong><br>
+        <span style="color:var(--ink-soft);">Le "budget" n'est pas un montant fixe : il reflète ton solde réel, donc il bouge à chaque revenu ou dépense sur le compte courant — pas seulement ceux de ce mois.</span>
+      </div>
+    </details>` : ""}`;
 }
 function renderBudgetFeedback() {
   const el = document.getElementById("budgetFeedback");
