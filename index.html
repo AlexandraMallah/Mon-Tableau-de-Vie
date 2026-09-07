@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1172</title>
+<title>Mon Tableau de Vie 🌿 · v1173</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -148,13 +148,13 @@
     will-change: transform;
   }
   .header-actions {
-    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    display: flex; gap: 5px; align-items: center; flex-wrap: wrap;
   }
-  .sync-row { display: flex; gap: 8px; align-items: center; }
+  .sync-row { display: flex; gap: 5px; align-items: center; }
   .btn-icon {
     background: var(--card); border: 1px solid var(--line); color: var(--ink);
-    padding: 10px 14px; border-radius: 14px; cursor: pointer;
-    font-size: 13px; box-shadow: var(--shadow); transition: all 0.2s;
+    padding: 7px 10px; border-radius: 14px; cursor: pointer;
+    font-size: 12px; box-shadow: var(--shadow); transition: all 0.2s;
     font-family: inherit;
   }
   .btn-icon:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
@@ -1921,9 +1921,9 @@
       <div id="google_translate_element" style="display:none;"></div>
       <button class="btn-icon" id="syncSignInBtn" onclick="signInWithGoogle()" style="background:linear-gradient(135deg,#e8f0fe,#d2e3fc);color:#1a73e8;font-weight:600;">☁️ Connexion</button>
       <div class="sync-row">
-        <div id="syncUserAvatar" style="display:none;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:var(--shadow);font-size:13px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
-        <span id="syncStatusPill" onclick="_fbUser ? showSyncMenu() : signInWithGoogle()" title="Voir l'état de la synchronisation" style="font-size:13px;padding:10px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:none;cursor:pointer;"></span>
-        <span id="cloudSizeBadge" onclick="openCloudSizeAlert()" style="display:none;font-size:13px;padding:10px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--ink-soft);box-shadow:var(--shadow);cursor:pointer;font-weight:600;">📦 Stockage cloud</span>
+        <div id="syncUserAvatar" style="display:none;align-items:center;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 10px;cursor:pointer;box-shadow:var(--shadow);font-size:12px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
+        <span id="syncStatusPill" onclick="_fbUser ? showSyncMenu() : signInWithGoogle()" title="Voir l'état de la synchronisation" style="font-size:12px;padding:7px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:none;cursor:pointer;"></span>
+        <span id="cloudSizeBadge" onclick="openCloudSizeAlert()" style="display:none;font-size:12px;padding:7px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--ink-soft);box-shadow:var(--shadow);cursor:pointer;font-weight:600;">📦 Stockage cloud</span>
       </div>
     </div>
 
