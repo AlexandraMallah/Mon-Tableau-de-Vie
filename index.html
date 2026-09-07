@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1157</title>
+<title>Mon Tableau de Vie 🌿 · v1158</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1867,6 +1867,26 @@
 <link rel="apple-touch-icon" href="icon-192-v3.png" />
 </head>
 <body>
+
+<div id="authGate" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#fdf6f0,#f3ecff);display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;">
+  <div style="max-width:380px;width:100%;text-align:center;">
+    <div style="font-size:48px;margin-bottom:8px;">🌿</div>
+    <h1 style="font-size:22px;margin:0 0 6px;color:#4a4458;font-family:inherit;">Mon Tableau de Vie</h1>
+    <p style="font-size:14px;color:#8a8499;margin:0 0 28px;">Connecte-toi pour retrouver tes données sur tous tes appareils.</p>
+    <button onclick="signInWithGoogle()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#e8f0fe,#d2e3fc);color:#1a73e8;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(26,115,232,.15);">☁️ Se connecter avec Google</button>
+    <a href="#" onclick="event.preventDefault();_skipAuthGate()" style="display:inline-block;margin-top:18px;font-size:12px;color:#a89fc4;text-decoration:underline;cursor:pointer;">Continuer sans compte</a>
+  </div>
+</div>
+<script>
+(function() {
+  try {
+    const skip = localStorage.getItem("tableauDeVie_v3_skipAuthGate") === "1";
+    const everSynced = JSON.parse(localStorage.getItem("tableauDeVie_v3_syncedUids") || "[]").length > 0;
+    const everLoggedIn = !!localStorage.getItem("_lastLoginUid") || everSynced;
+    if (skip || everLoggedIn) document.getElementById("authGate").style.display = "none";
+  } catch(e) {}
+})();
+</script>
 
 <div class="container">
   <header class="top">
@@ -25939,6 +25959,11 @@ document.addEventListener("visibilitychange", () => {
 });
 window.addEventListener("pagehide", _fbFlushPending);
 
+function _skipAuthGate() {
+  try { localStorage.setItem("tableauDeVie_v3_skipAuthGate", "1"); } catch(e) {}
+  const gate = document.getElementById("authGate");
+  if (gate) gate.style.display = "none";
+}
 function signInWithGoogle() {
   if (!_fbAuth) {
     showToast("⚠️ Firebase non chargé — recharge avec ⌘+R");
@@ -26093,7 +26118,10 @@ function cloudSignOut() {
 // ——— Init (lancé au démarrage si la config est remplie) ———
 (function initFirebase() {
   if (!FB_CONFIG.apiKey) {
-    // Pas de config → affiche juste le bouton "Connexion" grisé
+    // Pas de config → affiche juste le bouton "Connexion" grisé, et laisse passer
+    // (pas de gate bloquant si l'authentification elle-même n'est pas disponible)
+    const gate = document.getElementById("authGate");
+    if (gate) gate.style.display = "none";
     return;
   }
   try {
@@ -26109,13 +26137,19 @@ function cloudSignOut() {
     _fbAuth.onAuthStateChanged(user => {
       _fbUser = user;
       _fbUpdateUI(user);
+      const gate = document.getElementById("authGate");
       if (user) {
+        if (gate) gate.style.display = "none";
         _fbLoad();
       } else {
         if (_fbUnsub) { _fbUnsub(); _fbUnsub = null; }
         const btn = document.getElementById("syncSignInBtn");
         if (btn) btn.style.display = "";
         _fbSetStatus("off");
+        // Pas connecté·e : montre le gate, sauf si "Continuer sans compte" a déjà été choisi
+        let skip = false;
+        try { skip = localStorage.getItem("tableauDeVie_v3_skipAuthGate") === "1"; } catch(e) {}
+        if (gate && !skip) gate.style.display = "flex";
       }
     });
   } catch(e) {
