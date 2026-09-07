@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1173</title>
+<title>Mon Tableau de Vie 🌿 · v1174</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25991,7 +25991,7 @@ const FB_CONFIG = {
 let _fbDb = null, _fbAuth = null, _fbUser = null;
 let _fbSaveTimer = null, _fbUnsub = null;
 let _fbListenTimer = null, _fbLoadTime = 0;
-let _snapCache = { state: null, work: null, biblio: null };
+let _snapCache = { state: null, work: null, biblio: null, transactions: null, domestique: null };
 
 function _fbDocRef(name = "state") {
   return _fbDb.collection("users").doc(_fbUser.uid).collection("dashboard").doc(name);
@@ -26071,6 +26071,8 @@ function _coreForCloud() {
   const s = JSON.parse(JSON.stringify(state));
   delete s.calEvents;
   delete s.work;
+  delete s.transactions;
+  delete s.domestique;
   return s;
 }
 function _workForCloud() {
@@ -26085,10 +26087,17 @@ function _biblioForCloud() {
     biblioProjects: JSON.parse(JSON.stringify(state.work?.biblioProjects || [])),
   };
 }
+function _transactionsForCloud() {
+  return { transactions: JSON.parse(JSON.stringify(state.transactions || [])), lastModified: state.lastModified };
+}
+function _domestiqueForCloud() {
+  return { domestique: JSON.parse(JSON.stringify(state.domestique || {})), lastModified: state.lastModified };
+}
 
-// Assemble les 3 docs en un seul objet state complet.
-// stateData peut contenir .work (ancien format, doc unique) — on le garde en fallback.
-function _assembleRemote(stateData, workData, biblioData) {
+// Assemble les 5 docs en un seul objet state complet.
+// stateData peut contenir .work/.transactions/.domestique (ancien format, doc unique) — gardés en fallback
+// tant que les docs séparés n'existent pas encore côté cloud (migration progressive, sans perte).
+function _assembleRemote(stateData, workData, biblioData, transactionsData, domestiqueData) {
   if (!stateData) return null;
   const assembled = { ...stateData };
   // work : priorité au doc "work" séparé, sinon fallback sur ce qui était dans le doc "state" (ancien format)
@@ -26096,6 +26105,8 @@ function _assembleRemote(stateData, workData, biblioData) {
   assembled.work = { ...workBase };
   if (biblioData?.biblio)        assembled.work.biblio = biblioData.biblio;
   if (biblioData?.biblioProjects) assembled.work.biblioProjects = biblioData.biblioProjects;
+  assembled.transactions = transactionsData?.transactions ?? stateData.transactions ?? [];
+  assembled.domestique    = domestiqueData?.domestique    ?? stateData.domestique    ?? {};
   return assembled;
 }
 // Fusionne une version venue du cloud SANS perdre les données locales que le cloud ne stocke pas.
@@ -26178,21 +26189,27 @@ function _markCloudSynced(uid) {
 async function _fbLoad() {
   try {
     _fbSetStatus("syncing");
-    const [stateSnap, workSnap, biblioSnap] = await Promise.all([
+    const [stateSnap, workSnap, biblioSnap, transactionsSnap, domestiqueSnap] = await Promise.all([
       _fbDocRef("state").get(),
       _fbDocRef("work").get(),
       _fbDocRef("biblio").get(),
+      _fbDocRef("transactions").get(),
+      _fbDocRef("domestique").get(),
     ]);
 
     // Mettre en cache pour que le listener ne re-applique pas immédiatement
-    if (stateSnap.exists)  _snapCache.state  = stateSnap.data();
-    if (workSnap.exists)   _snapCache.work   = workSnap.data();
-    if (biblioSnap.exists) _snapCache.biblio = biblioSnap.data();
+    if (stateSnap.exists)        _snapCache.state        = stateSnap.data();
+    if (workSnap.exists)         _snapCache.work         = workSnap.data();
+    if (biblioSnap.exists)       _snapCache.biblio       = biblioSnap.data();
+    if (transactionsSnap.exists) _snapCache.transactions = transactionsSnap.data();
+    if (domestiqueSnap.exists)   _snapCache.domestique   = domestiqueSnap.data();
 
-    const stateData  = stateSnap.exists  ? _readCloudState(stateSnap.data())  : null;
-    const workData   = workSnap.exists   ? _readCloudState(workSnap.data())   : null;
-    const biblioData = biblioSnap.exists ? (_readCloudState(biblioSnap.data()) || biblioSnap.data()) : null;
-    const remote = _assembleRemote(stateData, workData, biblioData);
+    const stateData        = stateSnap.exists        ? _readCloudState(stateSnap.data())        : null;
+    const workData         = workSnap.exists         ? _readCloudState(workSnap.data())         : null;
+    const biblioData       = biblioSnap.exists       ? (_readCloudState(biblioSnap.data()) || biblioSnap.data()) : null;
+    const transactionsData = transactionsSnap.exists ? _readCloudState(transactionsSnap.data()) : null;
+    const domestiqueData   = domestiqueSnap.exists   ? _readCloudState(domestiqueSnap.data())   : null;
+    const remote = _assembleRemote(stateData, workData, biblioData, transactionsData, domestiqueData);
 
     if (remote) {
       const localTs  = state.lastModified || 0;
@@ -26256,7 +26273,7 @@ async function _fbLoad() {
 
 function _fbListen() {
   if (_fbUnsub) { _fbUnsub(); _fbUnsub = null; }
-  const unsubs = ["state", "work", "biblio"].map(name =>
+  const unsubs = _CLOUD_DOC_NAMES.map(name =>
     _fbDocRef(name).onSnapshot(snap => {
       if (!snap.exists || snap.metadata.hasPendingWrites) { _fbSetStatus("ok"); return; }
       _snapCache[name] = snap.data();
@@ -26277,10 +26294,12 @@ function _applyRemoteSnaps() {
   const secsSince = (Date.now() - (window._lastLocalSave||0)) / 1000;
   if (secsSince < 6) { _fbSetStatus("ok"); return; }
 
-  const stateData  = _snapCache.state  ? _readCloudState(_snapCache.state)  : null;
-  const workData   = _snapCache.work   ? _readCloudState(_snapCache.work)   : null;
-  const biblioData = _snapCache.biblio ? (_readCloudState(_snapCache.biblio) || _snapCache.biblio) : null;
-  const remote = _assembleRemote(stateData, workData, biblioData);
+  const stateData        = _snapCache.state        ? _readCloudState(_snapCache.state)        : null;
+  const workData         = _snapCache.work         ? _readCloudState(_snapCache.work)         : null;
+  const biblioData       = _snapCache.biblio       ? (_readCloudState(_snapCache.biblio) || _snapCache.biblio) : null;
+  const transactionsData = _snapCache.transactions ? _readCloudState(_snapCache.transactions) : null;
+  const domestiqueData   = _snapCache.domestique   ? _readCloudState(_snapCache.domestique)   : null;
+  const remote = _assembleRemote(stateData, workData, biblioData, transactionsData, domestiqueData);
   if (!remote) { _fbSetStatus("ok"); return; }
 
   const remoteTs = remote.lastModified || 0;
@@ -26301,14 +26320,17 @@ function _applyRemoteSnaps() {
 }
 
 const _CLOUD_SIZE_WARN_KO = 700; // ~70% de la limite Firestore (1024 Ko/document) — anticiper avant le blocage à 950
-const _CLOUD_DOC_NAMES = ["state", "work", "biblio"];
+const _CLOUD_DOC_NAMES = ["state", "work", "biblio", "transactions", "domestique"];
 function _computeCloudSizes() {
-  const corePayload   = _makePayload(_coreForCloud());
-  const workPayload   = _makePayload(_workForCloud());
-  const biblioPayload = _makePayload(_biblioForCloud());
-  const sizes = [corePayload, workPayload, biblioPayload].map(p => Math.round(JSON.stringify(p).length / 1024));
+  const corePayload         = _makePayload(_coreForCloud());
+  const workPayload         = _makePayload(_workForCloud());
+  const biblioPayload       = _makePayload(_biblioForCloud());
+  const transactionsPayload = _makePayload(_transactionsForCloud());
+  const domestiquePayload   = _makePayload(_domestiqueForCloud());
+  const payloads = [corePayload, workPayload, biblioPayload, transactionsPayload, domestiquePayload];
+  const sizes = payloads.map(p => Math.round(JSON.stringify(p).length / 1024));
   const maxKo = Math.max(...sizes);
-  return { corePayload, workPayload, biblioPayload, sizes, maxKo, maxDocName: _CLOUD_DOC_NAMES[sizes.indexOf(maxKo)] };
+  return { corePayload, workPayload, biblioPayload, transactionsPayload, domestiquePayload, sizes, maxKo, maxDocName: _CLOUD_DOC_NAMES[sizes.indexOf(maxKo)] };
 }
 // Badge permanent (header, dès qu'on est connecté) : change de couleur selon l'état, pour être
 // visible en permanence plutôt que de n'apparaître qu'au moment critique.
@@ -26392,19 +26414,18 @@ function _openHeaderSupportContact() {
 async function _fbSaveNow() {
   if (!_fbUser || !_fbDb) return;
   try {
-    const { corePayload, workPayload, biblioPayload, sizes, maxKo, maxDocName } = _computeCloudSizes();
+    const { corePayload, workPayload, biblioPayload, transactionsPayload, domestiquePayload, sizes, maxKo, maxDocName } = _computeCloudSizes();
     _updateCloudSizeBadge(sizes, maxDocName);
-    if (maxKo > 950) {
-      showToast(`⚠️ Document trop volumineux pour le cloud (${maxKo} Ko) — export manuel recommandé`, 6000);
-      _fbSetStatus("error");
-      return;
+    const payloadsByName = { state: corePayload, work: workPayload, biblio: biblioPayload, transactions: transactionsPayload, domestique: domestiquePayload };
+    // Un seul document trop lourd ne doit plus bloquer la sauvegarde des 4 autres — c'est tout
+    // l'intérêt d'avoir plusieurs petits documents plutôt qu'un gros : le problème reste localisé.
+    const oversized = _CLOUD_DOC_NAMES.filter((name, i) => sizes[i] > 950);
+    if (oversized.length) {
+      showToast(`⚠️ Document${oversized.length > 1 ? "s" : ""} trop volumineux pour le cloud : ${oversized.join(", ")} (${maxKo} Ko) — le reste se synchronise quand même`, 6000);
     }
-    await Promise.all([
-      _fbDocRef("state").set(corePayload),
-      _fbDocRef("work").set(workPayload),
-      _fbDocRef("biblio").set(biblioPayload),
-    ]);
-    _fbSetStatus("ok");
+    const toSave = _CLOUD_DOC_NAMES.filter(name => !oversized.includes(name));
+    await Promise.all(toSave.map(name => _fbDocRef(name).set(payloadsByName[name])));
+    _fbSetStatus(oversized.length ? "error" : "ok");
   } catch(e) {
     console.warn("[Firebase] save error", e);
     _fbSetStatus("error");
@@ -26505,10 +26526,8 @@ async function cloudDiag() {
     const user = firebase.auth().currentUser;
     if (!user) { alert("❌ Non connecté à Firebase"); return; }
     const uid = user.uid;
-    const [sSnap, wSnap] = await Promise.all([
-      _fbDocRef("state").get(),
-      _fbDocRef("work").get(),
-    ]);
+    const snaps = await Promise.all(_CLOUD_DOC_NAMES.map(name => _fbDocRef(name).get()));
+    const sSnap = snaps[0];
     const sData = sSnap.exists ? _readCloudState(sSnap.data()) : null;
     const remoteTs = sData?.lastModified || 0;
     const localTs = state.lastModified || 0;
@@ -26516,13 +26535,12 @@ async function cloudDiag() {
       "👤 " + user.email,
       "🔑 UID: " + uid.slice(0,8) + "…",
       "",
-      "☁️ Firebase dashboard/state: " + (sSnap.exists ? "✅ existe" : "❌ vide"),
-      "☁️ Firebase dashboard/work: " + (wSnap.exists ? "✅ existe" : "❌ vide"),
+      ..._CLOUD_DOC_NAMES.map((name, i) => "☁️ Firebase dashboard/" + name + ": " + (snaps[i].exists ? "✅ existe" : "❌ vide")),
       "",
       "🕐 lastModified cloud: " + (remoteTs ? new Date(remoteTs).toLocaleString("fr-FR") : "—"),
       "🕐 lastModified local: " + (localTs ? new Date(localTs).toLocaleString("fr-FR") : "—"),
       "",
-      "📦 Taille cloud state: " + (sSnap.exists ? JSON.stringify(sSnap.data()).length + " cars" : "—"),
+      ..._CLOUD_DOC_NAMES.map((name, i) => "📦 Taille cloud " + name + ": " + (snaps[i].exists ? JSON.stringify(snaps[i].data()).length + " cars" : "—")),
       "📦 Données locales: " + JSON.stringify(state).length + " cars",
       "",
       "🌐 Version app: " + (document.title.match(/v(\d+)/)?.[0] || "?"),
@@ -26537,15 +26555,19 @@ async function cloudPull() {
   _showConfirm("⬇️ Récupérer les données du cloud et REMPLACER celles de cet appareil ?<br><small style='opacity:0.7'>💡 Fais d'abord un export si tu as un doute.</small>", async () => {
   try {
     _fbSetStatus("syncing");
-    const [stateSnap, workSnap, biblioSnap] = await Promise.all([
+    const [stateSnap, workSnap, biblioSnap, transactionsSnap, domestiqueSnap] = await Promise.all([
       _fbDocRef("state").get(),
       _fbDocRef("work").get(),
       _fbDocRef("biblio").get(),
+      _fbDocRef("transactions").get(),
+      _fbDocRef("domestique").get(),
     ]);
-    const stateData  = stateSnap.exists  ? _readCloudState(stateSnap.data())  : null;
-    const workData   = workSnap.exists   ? _readCloudState(workSnap.data())   : null;
-    const biblioData = biblioSnap.exists ? (_readCloudState(biblioSnap.data()) || biblioSnap.data()) : null;
-    const remote = _assembleRemote(stateData, workData, biblioData);
+    const stateData        = stateSnap.exists        ? _readCloudState(stateSnap.data())        : null;
+    const workData         = workSnap.exists         ? _readCloudState(workSnap.data())         : null;
+    const biblioData       = biblioSnap.exists       ? (_readCloudState(biblioSnap.data()) || biblioSnap.data()) : null;
+    const transactionsData = transactionsSnap.exists ? _readCloudState(transactionsSnap.data()) : null;
+    const domestiqueData   = domestiqueSnap.exists   ? _readCloudState(domestiqueSnap.data())   : null;
+    const remote = _assembleRemote(stateData, workData, biblioData, transactionsData, domestiqueData);
     if (!remote) { showToast("☁️ Aucune donnée dans le cloud pour l'instant."); _fbSetStatus("ok"); return; }
     // Remplacement total — on garde seulement le calendrier Google local
     const calEvents = state.calEvents || [];
