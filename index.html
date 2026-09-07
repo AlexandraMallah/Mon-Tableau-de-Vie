@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1179</title>
+<title>Mon Tableau de Vie 🌿 · v1180</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2439,6 +2439,31 @@
   </div>
 
   <!-- Modal alerte taille stockage cloud -->
+  <div class="modal-bg" id="pillConfigModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closePillConfigModal()">
+    <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <h2 style="margin:0 0 4px;">💊 Réglages pilule</h2>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 16px;">Pour afficher le jour de plaquette et distinguer les jours de pause.</p>
+      <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Type de plaquette</label>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+        <label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--bg-1);cursor:pointer;font-size:13px;">
+          <input type="radio" name="pillConfigType" value="21-7" /> 21 jours actifs + 7 de pause
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--bg-1);cursor:pointer;font-size:13px;">
+          <input type="radio" name="pillConfigType" value="24-4" /> 24 jours actifs + 4 de pause
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--bg-1);cursor:pointer;font-size:13px;">
+          <input type="radio" name="pillConfigType" value="28-0" /> En continu (pas de pause)
+        </label>
+      </div>
+      <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Premier jour de la plaquette en cours</label>
+      <input type="date" id="pillConfigStart" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;color:var(--ink);margin-bottom:16px;" />
+      <div class="actions">
+        <button class="secondary" onclick="closePillConfigModal()">Annuler</button>
+        <button class="primary" onclick="savePillConfig()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-bg" id="cloudSizeAlertModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeCloudSizeAlert()">
     <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
       <h2 id="cloudSizeAlertTitle" style="margin:0 0 10px;">⚠️ Stockage cloud presque plein</h2>
@@ -3059,7 +3084,8 @@
       <div class="card" id="healthPillCard">
         <div class="card-row" style="margin-bottom:14px;">
           <div>
-            <h2 style="margin:0 0 6px;">💊 Suivi pilule — <span id="pillNbLabel">90</span> jours</h2>
+            <h2 style="margin:0 0 6px;">💊 Suivi pilule — <span id="pillNbLabel">90</span> jours <button onclick="openPillConfigModal()" title="Réglages pilule" class="help-btn" style="font-size:11px;padding:3px 8px;vertical-align:middle;">⚙️</button></h2>
+            <div id="pillPackInfo" style="font-size:12px;color:var(--ink-soft);margin-bottom:6px;display:none;"></div>
             <div style="display:flex;gap:4px;">
               <button onclick="setPillNb(30)" id="pillBtn30" class="btn-soft" style="font-size:11px;padding:4px 8px;">30j</button>
               <button onclick="setPillNb(60)" id="pillBtn60" class="btn-soft" style="font-size:11px;padding:4px 8px;">60j</button>
@@ -3086,11 +3112,13 @@
         <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;color:var(--ink-softer);flex-wrap:wrap;">
           <span id="pillLabelLeft" style="font-size:11px;color:var(--ink-softer);">← il y a 90 jours</span><span style="flex:1;"></span><span style="font-size:11px;color:var(--ink-softer);">aujourd'hui →</span>
         </div>
-        <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--ink-softer);">
+        <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--ink-softer);flex-wrap:wrap;">
           <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#c9b6f0;display:inline-block;"></span>Prise</span>
           <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#ece6f5;display:inline-block;"></span>Oubliée</span>
+          <span id="pillLegendPause" style="display:none;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#e8e2d8;display:inline-block;"></span>Pause</span>
           <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#7c5cbf;display:inline-block;"></span>Aujourd'hui</span>
         </div>
+        <div id="pillInsight" style="font-size:12px;color:var(--ink-soft);background:var(--bg-1);border-radius:10px;padding:8px 12px;margin-top:10px;display:none;"></div>
       </div>
     </div>
 
@@ -11488,7 +11516,65 @@ function _deleteRoutineItem(key, id) {
 function togglePill() {
   const d = getToday();
   d.pillTaken = !d.pillTaken;
+  if (d.pillTaken) d.pillTakenAt = new Date().toTimeString().slice(0,5);
   saveState();
+  renderPill();
+  renderPillSante();
+}
+
+function _pillCfg() {
+  const h = state.health || {};
+  if (!h.pillPackStart) return null;
+  return {
+    start: h.pillPackStart,
+    activeDays: h.pillActiveDays || 21,
+    pauseDays: h.pillPauseDays != null ? h.pillPauseDays : 7
+  };
+}
+
+function _pillDayInfo(date) {
+  const cfg = _pillCfg();
+  if (!cfg) return null;
+  const start = new Date(cfg.start + "T00:00:00");
+  const d = typeof date === "string" ? new Date(date + "T00:00:00") : new Date(date);
+  d.setHours(0,0,0,0);
+  const cycleLen = cfg.activeDays + cfg.pauseDays;
+  if (cycleLen <= 0) return null;
+  let diff = Math.floor((d - start) / 86400000);
+  if (diff < 0) return null;
+  const posInCycle = diff % cycleLen;
+  if (posInCycle < cfg.activeDays) {
+    return { phase: "active", packDay: posInCycle + 1, activeDays: cfg.activeDays, pauseDays: cfg.pauseDays };
+  }
+  return { phase: "pause", packDay: posInCycle - cfg.activeDays + 1, activeDays: cfg.activeDays, pauseDays: cfg.pauseDays };
+}
+
+function _isPillPauseDay(date) {
+  const info = _pillDayInfo(date);
+  return !!info && info.phase === "pause";
+}
+
+function openPillConfigModal() {
+  const h = state.health || {};
+  const type = h.pillPauseDays === 0 ? "28-0" : h.pillActiveDays === 24 ? "24-4" : "21-7";
+  document.querySelectorAll('input[name="pillConfigType"]').forEach(r => r.checked = (r.value === type));
+  const startInp = document.getElementById("pillConfigStart");
+  if (startInp) startInp.value = h.pillPackStart || todayKey(new Date());
+  document.getElementById("pillConfigModal").classList.add("open");
+}
+function closePillConfigModal() {
+  document.getElementById("pillConfigModal").classList.remove("open");
+}
+function savePillConfig() {
+  const type = (document.querySelector('input[name="pillConfigType"]:checked') || {}).value || "21-7";
+  const [active, pause] = type.split("-").map(Number);
+  const startInp = document.getElementById("pillConfigStart");
+  if (!state.health) state.health = {};
+  state.health.pillActiveDays = active;
+  state.health.pillPauseDays = pause;
+  state.health.pillPackStart = startInp && startInp.value ? startInp.value : todayKey(new Date());
+  saveState();
+  closePillConfigModal();
   renderPill();
   renderPillSante();
 }
@@ -12270,24 +12356,53 @@ function renderPill() {
   const sl    = document.getElementById("pillStreakLabel");
   if (!btn) return;
 
-  if (taken) {
+  const dayInfo = _pillDayInfo(new Date());
+  const isPause = dayInfo && dayInfo.phase === "pause";
+  const hourLate = new Date().getHours() >= 20;
+  const linkSpan = c => `<span style="font-size:11px;color:${c};cursor:pointer;" onclick="event.stopPropagation();_goToHealth('healthPillCard')" title="Voir dans Santé">↗</span>`;
+
+  if (isPause) {
+    btn.style.borderColor  = "var(--line)";
+    btn.style.background   = "var(--bg-1)";
+    check.style.opacity    = "0.15";
+    check.style.color      = "var(--ink-soft)";
+    label.innerHTML        = `Jour de pause (${dayInfo.packDay}/${dayInfo.pauseDays}) ${linkSpan("var(--ink-softer)")}`;
+    label.style.color      = "var(--ink-soft)";
+  } else if (taken) {
     btn.style.borderColor  = "#7c5cbf";
     btn.style.background   = "#f3eeff";
     check.style.opacity    = "1";
     check.style.color      = "#7c5cbf";
-    label.innerHTML        = `Pilule prise ✓ <span style="font-size:11px;color:#9b7fd4;cursor:pointer;" onclick="event.stopPropagation();_goToHealth('healthPillCard')" title="Voir dans Santé">↗</span>`;
+    label.innerHTML        = `Pilule prise ✓ <span style="font-size:11px;color:#9b7fd4;">${d.pillTakenAt || ""}</span> ${linkSpan("#9b7fd4")}`;
     label.style.color      = "#7c5cbf";
+  } else if (hourLate) {
+    btn.style.borderColor  = "#d99a2b";
+    btn.style.background   = "#fff8e8";
+    check.style.opacity    = "0.4";
+    check.style.color      = "#d99a2b";
+    label.innerHTML        = `Pilule pas encore prise ⏰ ${linkSpan("#d99a2b")}`;
+    label.style.color      = "#a3720f";
   } else {
     btn.style.borderColor  = "var(--line)";
     btn.style.background   = "white";
     check.style.opacity    = "0.2";
     check.style.color      = "var(--ink-soft)";
-    label.innerHTML        = `Pilule du jour <span style="font-size:11px;color:var(--ink-softer);cursor:pointer;" onclick="event.stopPropagation();_goToHealth('healthPillCard')" title="Voir dans Santé">↗</span>`;
+    label.innerHTML        = `Pilule du jour ${linkSpan("var(--ink-softer)")}`;
     label.style.color      = "var(--ink)";
+  }
+  if (dayInfo && dayInfo.phase === "active") {
+    const remaining = dayInfo.activeDays - dayInfo.packDay;
+    if (remaining <= 2 && remaining >= 0) {
+      label.innerHTML += ` <span style="font-size:11px;color:#b8860b;font-weight:700;">· plaquette bientôt finie</span>`;
+    }
   }
   // Streak dans "Aujourd'hui"
   const streak = _pillStreak();
-  if (sl) sl.textContent = streak > 1 ? `🔥 ${streak} jours de suite` : taken ? "C'est bon pour aujourd'hui !" : "Pense à la prendre 💜";
+  if (sl) {
+    if (isPause) sl.textContent = "Pause, pas de prise aujourd'hui";
+    else if (dayInfo) sl.textContent = `${streak > 1 ? `🔥 ${streak} j` : taken ? "C'est bon !" : "Pense à la prendre 💜"} · jour ${dayInfo.packDay}/${dayInfo.activeDays}`;
+    else sl.textContent = streak > 1 ? `🔥 ${streak} jours de suite` : taken ? "C'est bon pour aujourd'hui !" : "Pense à la prendre 💜";
+  }
 }
 
 const CYCLE_LABELS = ["Aucun flux","Très léger","Léger","Modéré","Abondant","Très abondant"];
@@ -12636,6 +12751,7 @@ function _pillStreak() {
     const d = new Date(today); d.setDate(d.getDate() - i);
     const dk = todayKey(d);
     if (state.history[dk]?.pillTaken) streak++;
+    else if (_isPillPauseDay(d)) continue;
     else break;
   }
   return streak;
@@ -12646,6 +12762,7 @@ function _pillBestStreak() {
   let best = 0, cur = 0;
   for (const dk of days) {
     if (state.history[dk]?.pillTaken) { cur++; best = Math.max(best, cur); }
+    else if (_isPillPauseDay(dk)) { /* jour de pause : n'interrompt pas la série */ }
     else cur = 0;
   }
   return best;
@@ -12693,6 +12810,26 @@ function renderPillSante() {
 
   const today = new Date(); today.setHours(0,0,0,0);
   const todayK = todayKey(today);
+  const cfg = _pillCfg();
+
+  // Bandeau d'infos plaquette + badge
+  const infoEl = document.getElementById("pillPackInfo");
+  const legendPause = document.getElementById("pillLegendPause");
+  if (legendPause) legendPause.style.display = cfg ? "inline-flex" : "none";
+  if (infoEl) {
+    const dayInfo = cfg ? _pillDayInfo(today) : null;
+    if (dayInfo && dayInfo.phase === "active") {
+      const remaining = dayInfo.activeDays - dayInfo.packDay;
+      infoEl.style.display = "block";
+      infoEl.innerHTML = `Jour ${dayInfo.packDay}/${dayInfo.activeDays} de la plaquette` + (remaining <= 2 ? ` · <strong style="color:#b8860b;">plaquette bientôt finie</strong>` : "");
+    } else if (dayInfo && dayInfo.phase === "pause") {
+      infoEl.style.display = "block";
+      infoEl.innerHTML = `Pause : jour ${dayInfo.packDay}/${dayInfo.pauseDays}`;
+    } else {
+      infoEl.style.display = "none";
+      infoEl.innerHTML = "";
+    }
+  }
 
   // Calendrier variable
   const days = [];
@@ -12704,6 +12841,7 @@ function renderPillSante() {
   const CYCLE_DOT = ["","#ffb3c1","#e8485a","#c01030","#880010","#3a0008"];
   calEl.innerHTML = days.map(dk => {
     const taken = !!state.history[dk]?.pillTaken;
+    const pause = _isPillPauseDay(dk);
     const flow = state.history[dk]?.cycleFlow || 0;
     const isToday = dk === todayK;
     const [yy, mm, dd] = dk.split("-").map(Number);
@@ -12713,12 +12851,13 @@ function renderPillSante() {
     let tipParts = [];
     if (isToday) tipParts.push("Aujourd'hui · " + label);
     else tipParts.push(label);
-    tipParts.push(taken ? "💊 prise" : "💊 oubliée");
+    tipParts.push(pause ? "⏸ pause" : taken ? "💊 prise" : "💊 oubliée");
     if (flow) tipParts.push("🩸 " + flowLabel);
     const title = tipParts.join(" · ");
     const _isS = document.body.classList.contains("t-serieux");
       let bg;
     if (isToday) bg = taken ? (_isS?"#6b9ec4":"#7c5cbf") : (_isS?"#a4cce0":"#b4d4f1");
+    else if (pause) bg = _isS?"#d8d0c0":"#e8e2d8";
     else if (taken) bg = _isS?"#8ab4d4":"#c9b6f0";
     else bg = _isS?"#d4e8f4":"#ece6f5";
     const opacity = taken || isToday || flow ? "1" : "0.5";
@@ -12732,10 +12871,36 @@ function renderPillSante() {
   if (streakEl) streakEl.textContent = streak + " j";
   if (bestEl)   bestEl.textContent = best + " j";
 
-  // % sur la période affichée
-  const takenInPeriod = days.filter(dk => !!state.history[dk]?.pillTaken).length;
-  const pct = days.length ? Math.round(takenInPeriod / days.length * 100) : 0;
+  // % sur la période affichée (jours de pause exclus du calcul)
+  const trackedDays = days.filter(dk => !_isPillPauseDay(dk));
+  const takenInPeriod = trackedDays.filter(dk => !!state.history[dk]?.pillTaken).length;
+  const pct = trackedDays.length ? Math.round(takenInPeriod / trackedDays.length * 100) : 0;
   if (pctEl) pctEl.textContent = pct + "%";
+
+  // Petit insight humeur/énergie selon prise/oubli (si assez de données)
+  const insightEl = document.getElementById("pillInsight");
+  if (insightEl) {
+    let moodTaken = [], moodMissed = [];
+    trackedDays.forEach(dk => {
+      const h = state.history[dk];
+      if (!h || h.mood == null) return;
+      (h.pillTaken ? moodTaken : moodMissed).push(h.mood);
+    });
+    const avg = arr => arr.reduce((a,b)=>a+b,0) / arr.length;
+    if (moodTaken.length >= 5 && moodMissed.length >= 3) {
+      const diff = avg(moodTaken) - avg(moodMissed);
+      if (Math.abs(diff) >= 0.4) {
+        insightEl.style.display = "block";
+        insightEl.textContent = diff > 0
+          ? `💡 Ton humeur moyenne est plus haute les jours où tu prends ta pilule (${avg(moodTaken).toFixed(1)}/5 vs ${avg(moodMissed).toFixed(1)}/5 les jours oubliés).`
+          : `💡 Ton humeur moyenne est plus basse les jours où tu prends ta pilule (${avg(moodTaken).toFixed(1)}/5 vs ${avg(moodMissed).toFixed(1)}/5 les jours oubliés).`;
+      } else {
+        insightEl.style.display = "none";
+      }
+    } else {
+      insightEl.style.display = "none";
+    }
+  }
 }
 
 // ── Suivi habitudes dans Santé ──────────────────────────────────────
