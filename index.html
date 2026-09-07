@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1168</title>
+<title>Mon Tableau de Vie 🌿 · v1169</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1922,7 +1922,7 @@
       <div class="sync-row">
         <div id="syncUserAvatar" style="display:none;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:var(--shadow);font-size:13px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
         <span id="syncStatusPill" onclick="_fbUser ? showSyncMenu() : signInWithGoogle()" title="Voir l'état de la synchronisation" style="font-size:13px;padding:10px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:none;cursor:pointer;"></span>
-        <span id="cloudSizeBadge" onclick="openCloudSizeAlert()" style="display:none;font-size:13px;padding:10px 14px;border-radius:999px;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;box-shadow:var(--shadow);cursor:pointer;font-weight:600;">📦 Stockage cloud</span>
+        <span id="cloudSizeBadge" onclick="openCloudSizeAlert()" style="display:none;font-size:13px;padding:10px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--ink-soft);box-shadow:var(--shadow);cursor:pointer;font-weight:600;">📦 Stockage cloud</span>
       </div>
     </div>
 
@@ -2428,6 +2428,7 @@
         <button class="secondary" onclick="cloudPush()" style="text-align:left;padding:12px 14px;">⬆️ <strong>Envoyer vers le cloud</strong><br><span style="font-size:12px;color:var(--ink-soft);">Remplace les données du cloud par celles de CET appareil.</span></button>
         <button class="secondary" onclick="cloudSignOut()" style="text-align:left;padding:12px 14px;color:#c75b4d;">🚪 <strong>Se déconnecter</strong><br><span style="font-size:12px;color:var(--ink-soft);">Tes données locales restent intactes.</span></button>
         <button class="secondary" onclick="cloudDiag()" style="text-align:left;padding:12px 14px;color:#8a7aaa;">🔍 <strong>Diagnostic sync</strong><br><span style="font-size:12px;color:var(--ink-soft);">Affiche l'état de la connexion Firebase (debug).</span></button>
+        <a id="contactSupportBtn" href="#" onclick="_prepContactSupport()" style="text-align:left;padding:12px 14px;text-decoration:none;color:var(--ink);border-radius:10px;border:1px solid var(--line);display:block;">📧 <strong>Contacter le support</strong><br><span style="font-size:12px;color:var(--ink-soft);">Ouvre ton app mail pour écrire directement à la gestionnaire de l'app.</span></a>
       </div>
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
@@ -26308,18 +26309,33 @@ function _computeCloudSizes() {
   const maxKo = Math.max(...sizes);
   return { corePayload, workPayload, biblioPayload, sizes, maxKo, maxDocName: _CLOUD_DOC_NAMES[sizes.indexOf(maxKo)] };
 }
-// Badge persistant (header) : reste affiché tant que le document n'est pas repassé sous le seuil —
-// contrairement à un toast, ne peut pas être manqué si on n'est pas devant l'écran au bon moment.
+// Badge permanent (header, dès qu'on est connecté) : change de couleur selon l'état, pour être
+// visible en permanence plutôt que de n'apparaître qu'au moment critique.
+let _sizeAlertPopupShownThisSession = false;
 function _updateCloudSizeBadge(maxKo, maxDocName) {
   const badge = document.getElementById("cloudSizeBadge");
   if (!badge) return;
-  if (maxKo > _CLOUD_SIZE_WARN_KO) {
-    badge.style.display = "";
-    badge.dataset.maxKo = maxKo;
-    badge.dataset.maxDocName = maxDocName;
-    badge.title = maxKo > 950 ? "Stockage cloud bloqué — clique pour prévenir" : "Stockage cloud presque plein — clique pour plus d'infos";
+  if (!_fbUser) { badge.style.display = "none"; return; }
+  badge.dataset.maxKo = maxKo;
+  badge.dataset.maxDocName = maxDocName;
+  badge.style.display = "inline-flex";
+  if (maxKo > 950) {
+    badge.textContent = "🚨 Stockage cloud";
+    badge.style.background = "#fee2e2"; badge.style.borderColor = "#dc2626"; badge.style.color = "#991b1b";
+    badge.title = "Stockage cloud bloqué — clique pour prévenir";
+  } else if (maxKo > _CLOUD_SIZE_WARN_KO) {
+    badge.textContent = "⚠️ Stockage cloud";
+    badge.style.background = "#fef3c7"; badge.style.borderColor = "#f59e0b"; badge.style.color = "#92400e";
+    badge.title = "Stockage cloud presque plein — clique pour plus d'infos";
   } else {
-    badge.style.display = "none";
+    badge.textContent = "📦 Stockage cloud";
+    badge.style.background = "var(--card)"; badge.style.borderColor = "var(--line)"; badge.style.color = "var(--ink-soft)";
+    badge.title = "Stockage cloud OK — clique pour plus d'infos";
+  }
+  // Pop-up automatique une fois par session (pas à chaque re-rendu) si on approche/dépasse la limite
+  if (maxKo > _CLOUD_SIZE_WARN_KO && !_sizeAlertPopupShownThisSession) {
+    _sizeAlertPopupShownThisSession = true;
+    openCloudSizeAlert();
   }
 }
 function openCloudSizeAlert() {
@@ -26327,20 +26343,32 @@ function openCloudSizeAlert() {
   const maxKo = Number(badge?.dataset.maxKo || 0);
   const maxDocName = badge?.dataset.maxDocName || "state";
   const blocked = maxKo > 950;
-  document.getElementById("cloudSizeAlertTitle").textContent = blocked ? "🚨 Stockage cloud plein" : "⚠️ Stockage cloud presque plein";
+  const warn = maxKo > _CLOUD_SIZE_WARN_KO;
+  document.getElementById("cloudSizeAlertTitle").textContent = blocked ? "🚨 Stockage cloud plein" : warn ? "⚠️ Stockage cloud presque plein" : "📦 Stockage cloud";
   document.getElementById("cloudSizeAlertBody").innerHTML = blocked
     ? `Le document <strong>"${maxDocName}"</strong> (${maxKo} Ko) a dépassé la limite : la sauvegarde vers le cloud est <strong>bloquée</strong>. Tes données restent en sécurité sur cet appareil, mais elles ne se synchronisent plus tant que ce n'est pas réglé.`
-    : `Le document <strong>"${maxDocName}"</strong> est à <strong>${maxKo} Ko</strong> sur ~1000 Ko maximum. Si ça continue de grossir sans intervention, la sauvegarde vers le cloud finira par se bloquer.`;
+    : warn
+    ? `Le document <strong>"${maxDocName}"</strong> est à <strong>${maxKo} Ko</strong> sur ~1000 Ko maximum. Si ça continue de grossir sans intervention, la sauvegarde vers le cloud finira par se bloquer.`
+    : `Tout va bien : le document le plus volumineux ("${maxDocName}") est à <strong>${maxKo} Ko</strong> sur ~1000 Ko maximum.`;
   const mailBtn = document.getElementById("cloudSizeAlertMailBtn");
   if (mailBtn) {
     const who = _fbUser?.email || "un compte non identifié";
     const subject = encodeURIComponent(`Mon Tableau de Vie — stockage cloud ${blocked ? "bloqué" : "presque plein"}`);
     const body = encodeURIComponent(`Bonjour,\n\nMon compte (${who}) a un document cloud "${maxDocName}" à ${maxKo} Ko sur ~1000 Ko max${blocked ? " — la sauvegarde est actuellement bloquée." : "."}\n\nPeux-tu regarder ça ?\n\nMerci !`);
     mailBtn.href = `mailto:${OWNER_EMAIL}?subject=${subject}&body=${body}`;
+    mailBtn.style.display = warn ? "" : "none";
   }
   document.getElementById("cloudSizeAlertModal").classList.add("open");
 }
 function closeCloudSizeAlert() { document.getElementById("cloudSizeAlertModal").classList.remove("open"); }
+// Bouton générique "Contacter le support" — mail vierge (sujet pré-rempli, corps laissé libre)
+function _prepContactSupport() {
+  const btn = document.getElementById("contactSupportBtn");
+  if (!btn) return;
+  const who = _fbUser?.email || "compte non connecté";
+  const subject = encodeURIComponent(`Mon Tableau de Vie — question / support (${who})`);
+  btn.href = `mailto:${OWNER_EMAIL}?subject=${subject}`;
+}
 async function _fbSaveNow() {
   if (!_fbUser || !_fbDb) return;
   try {
@@ -26576,6 +26604,7 @@ function cloudSignOut() {
         const btn = document.getElementById("syncSignInBtn");
         if (btn) btn.style.display = "";
         _fbSetStatus("off");
+        _updateCloudSizeBadge(0, "");
         // Pas connecté·e : montre le gate, sauf si "Continuer sans compte" a déjà été choisi
         let skip = false;
         try { skip = localStorage.getItem("tableauDeVie_v3_skipAuthGate") === "1"; } catch(e) {}
