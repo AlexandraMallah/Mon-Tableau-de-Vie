@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1158</title>
+<title>Mon Tableau de Vie 🌿 · v1159</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3832,6 +3832,20 @@
   </div>
 </div>
 
+<div class="modal-bg" id="genderPromptModal" style="z-index:600;">
+  <div class="modal" style="max-width:360px;text-align:center;">
+    <div style="font-size:32px;margin-bottom:6px;">🌿</div>
+    <h2 style="margin:0 0 6px;font-size:17px;">Tu te genres comment ?</h2>
+    <p style="font-size:13px;color:var(--ink-soft);margin:0 0 18px;">Pour adapter l'accord des émotions par défaut (ex. "Contente"/"Content"/"Content·e"). Modifiable à tout moment dans Personnaliser.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button onclick="_answerGenderPrompt('f')" style="padding:10px;border-radius:10px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">Elle</button>
+      <button onclick="_answerGenderPrompt('m')" style="padding:10px;border-radius:10px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">Il</button>
+      <button onclick="_answerGenderPrompt('x')" style="padding:10px;border-radius:10px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">Iel</button>
+    </div>
+    <a href="#" onclick="event.preventDefault();_answerGenderPrompt('f')" style="display:inline-block;margin-top:14px;font-size:12px;color:var(--ink-softer);text-decoration:underline;cursor:pointer;">Passer pour l'instant</a>
+  </div>
+</div>
+
 <div class="modal-bg" id="settingsModal">
   <div class="modal" style="max-width:560px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
@@ -3846,6 +3860,17 @@
     <div style="margin-bottom:18px;">
       <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Ton prénom</label>
       <input type="text" id="nameInput" placeholder="Alexandra" />
+    </div>
+
+    <!-- Genre — toujours visible : adapte l'accord des émotions (contente/content/content·e…) -->
+    <div style="margin-bottom:18px;">
+      <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Tu te genres comment ?</label>
+      <p style="font-size:12px;color:var(--ink-soft);margin:-2px 0 8px;">Adapte l'accord des émotions par défaut (ex. "Contente"/"Content"/"Content·e").</p>
+      <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);width:fit-content;">
+        <button id="genderF" onclick="_setGender('f')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">Elle</button>
+        <button id="genderM" onclick="_setGender('m')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Il</button>
+        <button id="genderX" onclick="_setGender('x')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Iel</button>
+      </div>
     </div>
 
     <!-- Onglet Apparence -->
@@ -5476,6 +5501,7 @@ const DEFAULT_STATE = {
   categories: ["Alimentation", "Logement", "Transport", "Loisirs", "Santé", "Autre"],
   incomeCategories: ["Salaire", "Prime", "Remboursement", "Autre revenu"],
   mainSalaryCategory: null,
+  gender: null, // "f" (elle), "m" (il), "x" (iel) — null = pas encore choisi
   savingsCategories: [],
   candidatureTypes: [],
   contactRoles: ["Mentor", "Collaborateur", "Jury", "Rencontré en conf", "Famille", "Ami"],
@@ -6365,8 +6391,29 @@ const EMOTIONS_DEFAULT = [
   { id: "colere",     label: "En colère",  emoji: "😡" },
   { id: "triste",     label: "Triste",     emoji: "😢" },
 ];
-function _getEmotions() { return state.emotions && state.emotions.length ? state.emotions : EMOTIONS_DEFAULT; }
-const _EM_EMOJIS = [
+// Accord de genre des émotions par défaut (f = elle, m = il, x = iel/inclusif).
+// Les émotions personnalisées (ajoutées/renommées par la personne) gardent leur texte tel quel.
+const EMOTIONS_GENDER = {
+  contente:  { m: "Content",   x: "Content·e" },
+  excitee:   { m: "Excité",    x: "Excité·e" },
+  motivee:   { m: "Motivé",    x: "Motivé·e" },
+  confiante: { m: "Confiant",  x: "Confiant·e" },
+  calme:     { m: "Serein",    x: "Serein·e" },
+  fatiguee:  { m: "Fatigué",   x: "Fatigué·e" },
+  anxieuse:  { m: "Anxieux",   x: "Anxieux·se" },
+  stressee:  { m: "Stressé",   x: "Stressé·e" },
+};
+function _genderLabel(id, fallback) {
+  const g = EMOTIONS_GENDER[id];
+  if (!g) return fallback;
+  const gender = state.gender || "f";
+  return g[gender] || fallback;
+}
+function _getEmotions() {
+  const list = (state.emotions && state.emotions.length) ? state.emotions : EMOTIONS_DEFAULT;
+  return list.map(e => EMOTIONS_GENDER[e.id] ? { ...e, label: _genderLabel(e.id, e.label) } : e);
+}
+const _EM_EMOJIS_BASE = [
   ["😊","Contente"],["🎉","Excitée"],["🔥","Motivée"],["💪","Confiante"],["🌿","Sereine"],["🥰","Amoureuse"],
   ["😌","Paisible"],["✨","Légère"],["🎶","Joyeuse"],["💡","Inspirée"],["🤩","Émerveillée"],["🌸","Épanouie"],
   ["🥹","Émue"],["😇","Apaisée"],["🌟","Rayonnante"],["🫶","Reconnaissante"],["😄","Enthousiaste"],
@@ -6374,11 +6421,34 @@ const _EM_EMOJIS = [
   ["💔","Blessée"],["😰","Anxieuse"],["😶","Vide"],["😔","Mélancolique"],["🫥","Absente"],["😑","Neutre"],
   ["😒","Lasse"],["🫠","Débordée"],["😕","Perplexe"],["🥺","Vulnérable"],["😬","Mal à l'aise"],["🤯","Dépassée"]
 ];
+// m/x pour chaque libellé féminin de _EM_EMOJIS_BASE — absent = invariable (garde le même mot)
+const _EM_GENDER_MAP = {
+  "Contente": {m:"Content", x:"Content·e"}, "Excitée": {m:"Excité", x:"Excité·e"},
+  "Motivée": {m:"Motivé", x:"Motivé·e"}, "Confiante": {m:"Confiant", x:"Confiant·e"},
+  "Sereine": {m:"Serein", x:"Serein·e"}, "Amoureuse": {m:"Amoureux", x:"Amoureux·se"},
+  "Légère": {m:"Léger", x:"Léger·ère"}, "Joyeuse": {m:"Joyeux", x:"Joyeux·se"},
+  "Inspirée": {m:"Inspiré", x:"Inspiré·e"}, "Émerveillée": {m:"Émerveillé", x:"Émerveillé·e"},
+  "Épanouie": {m:"Épanoui", x:"Épanoui·e"}, "Émue": {m:"Ému", x:"Ému·e"},
+  "Apaisée": {m:"Apaisé", x:"Apaisé·e"}, "Rayonnante": {m:"Rayonnant", x:"Rayonnant·e"},
+  "Reconnaissante": {m:"Reconnaissant", x:"Reconnaissant·e"}, "Irritée": {m:"Irrité", x:"Irrité·e"},
+  "Stressée": {m:"Stressé", x:"Stressé·e"}, "Fatiguée": {m:"Fatigué", x:"Fatigué·e"},
+  "Blessée": {m:"Blessé", x:"Blessé·e"}, "Anxieuse": {m:"Anxieux", x:"Anxieux·se"},
+  "Absente": {m:"Absent", x:"Absent·e"}, "Lasse": {m:"Las", x:"Las·se"},
+  "Débordée": {m:"Débordé", x:"Débordé·e"}, "Dépassée": {m:"Dépassé", x:"Dépassé·e"},
+};
+function _genderizeSuggest(femLabel) {
+  const g = _EM_GENDER_MAP[femLabel];
+  if (!g) return femLabel;
+  const gender = state.gender || "f";
+  return g[gender] || femLabel;
+}
+// Recalculée à chaque accès pour refléter le genre choisi à cet instant (peut changer en cours de session)
+function _emEmojis() { return _EM_EMOJIS_BASE.map(([em, lbl]) => [em, _genderizeSuggest(lbl)]); }
 function _addEmotion() {
   document.getElementById("emModalEmoji").value = "😊";
   document.getElementById("emModalLabel").value = "";
   const grid = document.getElementById("emEmojiGrid");
-  if (grid) grid.innerHTML = _EM_EMOJIS.map(([em,lbl], i) =>
+  if (grid) grid.innerHTML = _emEmojis().map(([em,lbl], i) =>
     `<span onclick="_pickEmSuggest(${i})"
       title="${lbl.replace(/"/g,'&quot;')}" style="cursor:pointer;font-size:22px;padding:4px 6px;border-radius:8px;border:1.5px solid transparent;transition:background 0.15s;"
       onmouseover="this.style.background='var(--lavender-soft)'" onmouseout="this.style.background='transparent'">${em}</span>`
@@ -6387,7 +6457,7 @@ function _addEmotion() {
   setTimeout(() => document.getElementById("emModalLabel").focus(), 50);
 }
 function _pickEmSuggest(i) {
-  const [em, lbl] = _EM_EMOJIS[i];
+  const [em, lbl] = _emEmojis()[i];
   document.getElementById("emModalEmoji").value = em;
   document.getElementById("emModalLabel").value = lbl;
 }
@@ -24069,9 +24139,43 @@ function openSettings(tab) {
     if (chk)  chk.style.display  = t === curTheme ? "" : "none";
     if (card) card.style.borderColor = t === curTheme ? "var(--lavender)" : "var(--line)";
   });
+  _refreshGenderButtons();
   document.getElementById("settingsModal").classList.add("open");
 }
 function closeSettings() { document.getElementById("settingsModal").classList.remove("open"); }
+function _refreshGenderButtons() {
+  const cur = state.gender || "f";
+  ["f","m","x"].forEach(g => {
+    const btn = document.getElementById("gender" + g.toUpperCase());
+    if (!btn) return;
+    const active = g === cur;
+    btn.style.background = active ? "var(--lavender)" : "none";
+    btn.style.color = active ? "white" : "var(--ink-soft)";
+    btn.style.fontWeight = active ? "700" : "600";
+  });
+}
+function _setGender(g) {
+  state.gender = g;
+  saveState();
+  _refreshGenderButtons();
+  renderEmotionGrid();
+  if (typeof renderAll === "function") renderAll();
+}
+let _genderPromptShown = false;
+function _maybePromptGender() {
+  if (_genderPromptShown || state.gender != null) return;
+  _genderPromptShown = true;
+  const modal = document.getElementById("genderPromptModal");
+  if (modal) modal.classList.add("open");
+}
+function _answerGenderPrompt(g) {
+  state.gender = g;
+  saveState();
+  renderEmotionGrid();
+  if (typeof renderAll === "function") renderAll();
+  const modal = document.getElementById("genderPromptModal");
+  if (modal) modal.classList.remove("open");
+}
 
 /* ========= EXPORT / IMPORT DES DONNÉES ========= */
 // Exporte TOUT le localStorage au format {clé: valeur} (compatible avec les anciennes sauvegardes manuelles)
@@ -25645,6 +25749,7 @@ function _fbUpdateUI(user) {
       state.name = firstName; saveState(); if (typeof renderAll === "function") { document.getElementById("greeting").textContent = getGreeting(); }
     }
     av.innerHTML = imgHtml + `<span style="font-size:13px;color:var(--ink);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${firstName}</span>`;
+    _maybePromptGender();
   } else {
     btn.style.display = "";
     av.style.display  = "none";
