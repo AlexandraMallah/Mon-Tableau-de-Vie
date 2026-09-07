@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1184</title>
+<title>Mon Tableau de Vie 🌿 · v1185</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1519,6 +1519,12 @@
     /* Catégories de temps : une par ligne pleine largeur (au lieu d'une grille qui laisse
        des colonnes vides et tronque les noms) — le libellé prend la place, la case heures reste à droite. */
     #timeCatsGrid { grid-template-columns: 1fr !important; }
+    /* Titres de carte "emoji + texte" : quand le titre est trop long et passe à la ligne,
+       la ligne suivante s'aligne avec le texte au lieu de repasser sous l'émoji. */
+    .card h2:not([style*="text-align:center"]) {
+      padding-left: 1.4em;
+      text-indent: -1.4em;
+    }
     #rechargerBtn { display: none; }
     /* Alexandra + Synchronisé sur leur propre ligne */
     .sync-row { flex-basis: 100%; }
