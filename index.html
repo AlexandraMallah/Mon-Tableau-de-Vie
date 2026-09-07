@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1160</title>
+<title>Mon Tableau de Vie 🌿 · v1161</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6420,37 +6420,10 @@ const EMOTIONS_DEFAULT = [
   { id: "colere",     label: "En colère",  emoji: "😡" },
   { id: "triste",     label: "Triste",     emoji: "😢" },
 ];
-// Accord de genre des émotions par défaut (f = elle, m = il, x = iel/inclusif).
-// Les émotions personnalisées (ajoutées/renommées par la personne) gardent leur texte tel quel.
-const EMOTIONS_GENDER = {
-  contente:  { m: "Content",   x: "Content·e" },
-  excitee:   { m: "Excité",    x: "Excité·e" },
-  motivee:   { m: "Motivé",    x: "Motivé·e" },
-  confiante: { m: "Confiant",  x: "Confiant·e" },
-  calme:     { m: "Serein",    x: "Serein·e" },
-  fatiguee:  { m: "Fatigué",   x: "Fatigué·e" },
-  anxieuse:  { m: "Anxieux",   x: "Anxieux·se" },
-  stressee:  { m: "Stressé",   x: "Stressé·e" },
-};
-function _genderLabel(id, fallback) {
-  const g = EMOTIONS_GENDER[id];
-  if (!g) return fallback;
-  const gender = state.gender || "f";
-  return g[gender] || fallback;
-}
-function _getEmotions() {
-  const list = (state.emotions && state.emotions.length) ? state.emotions : EMOTIONS_DEFAULT;
-  return list.map(e => EMOTIONS_GENDER[e.id] ? { ...e, label: _genderLabel(e.id, e.label) } : e);
-}
-const _EM_EMOJIS_BASE = [
-  ["😊","Contente"],["🎉","Excitée"],["🔥","Motivée"],["💪","Confiante"],["🌿","Sereine"],["🥰","Amoureuse"],
-  ["😌","Paisible"],["✨","Légère"],["🎶","Joyeuse"],["💡","Inspirée"],["🤩","Émerveillée"],["🌸","Épanouie"],
-  ["🥹","Émue"],["😇","Apaisée"],["🌟","Rayonnante"],["🫶","Reconnaissante"],["😄","Enthousiaste"],
-  ["😢","Triste"],["😤","Irritée"],["😡","En colère"],["🌀","Stressée"],["😴","Fatiguée"],["🤒","Malade"],
-  ["💔","Blessée"],["😰","Anxieuse"],["😶","Vide"],["😔","Mélancolique"],["🫥","Absente"],["😑","Neutre"],
-  ["😒","Lasse"],["🫠","Débordée"],["😕","Perplexe"],["🥺","Vulnérable"],["😬","Mal à l'aise"],["🤯","Dépassée"]
-];
-// m/x pour chaque libellé féminin de _EM_EMOJIS_BASE — absent = invariable (garde le même mot)
+// Accord de genre des émotions (f = elle/défaut, m = il, x = iel/inclusif), par libellé féminin.
+// Table unique utilisée à la fois pour les émotions par défaut ET les personnalisées : dès qu'un
+// libellé stocké correspond à une entrée connue (même ajoutée à la main via le picker), il est
+// accordé dynamiquement. Un libellé totalement inédit (jamais suggéré) reste tel quel, invariable.
 const _EM_GENDER_MAP = {
   "Contente": {m:"Content", x:"Content·e"}, "Excitée": {m:"Excité", x:"Excité·e"},
   "Motivée": {m:"Motivé", x:"Motivé·e"}, "Confiante": {m:"Confiant", x:"Confiant·e"},
@@ -6464,6 +6437,7 @@ const _EM_GENDER_MAP = {
   "Blessée": {m:"Blessé", x:"Blessé·e"}, "Anxieuse": {m:"Anxieux", x:"Anxieux·se"},
   "Absente": {m:"Absent", x:"Absent·e"}, "Lasse": {m:"Las", x:"Las·se"},
   "Débordée": {m:"Débordé", x:"Débordé·e"}, "Dépassée": {m:"Dépassé", x:"Dépassé·e"},
+  "Heureuse": {m:"Heureux", x:"Heureux·se"},
 };
 function _genderizeSuggest(femLabel) {
   const g = _EM_GENDER_MAP[femLabel];
@@ -6471,6 +6445,19 @@ function _genderizeSuggest(femLabel) {
   const gender = state.gender || "f";
   return g[gender] || femLabel;
 }
+function _getEmotions() {
+  const list = (state.emotions && state.emotions.length) ? state.emotions : EMOTIONS_DEFAULT;
+  return list.map(e => _EM_GENDER_MAP[e.label] ? { ...e, label: _genderizeSuggest(e.label) } : e);
+}
+const _EM_EMOJIS_BASE = [
+  ["😊","Contente"],["🎉","Excitée"],["🔥","Motivée"],["💪","Confiante"],["🌿","Sereine"],["🥰","Amoureuse"],
+  ["😌","Paisible"],["✨","Légère"],["🎶","Joyeuse"],["💡","Inspirée"],["🤩","Émerveillée"],["🌸","Épanouie"],
+  ["🥹","Émue"],["😇","Apaisée"],["🌟","Rayonnante"],["🫶","Reconnaissante"],["😄","Enthousiaste"],
+  ["😢","Triste"],["😤","Irritée"],["😡","En colère"],["🌀","Stressée"],["😴","Fatiguée"],["🤒","Malade"],
+  ["💔","Blessée"],["😰","Anxieuse"],["😶","Vide"],["😔","Mélancolique"],["🫥","Absente"],["😑","Neutre"],
+  ["😒","Lasse"],["🫠","Débordée"],["😕","Perplexe"],["🥺","Vulnérable"],["😬","Mal à l'aise"],["🤯","Dépassée"],
+  ["🙂","Heureuse"]
+];
 // Recalculée à chaque accès pour refléter le genre choisi à cet instant (peut changer en cours de session)
 function _emEmojis() { return _EM_EMOJIS_BASE.map(([em, lbl]) => [em, _genderizeSuggest(lbl)]); }
 function _addEmotion() {
