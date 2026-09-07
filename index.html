@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1174</title>
+<title>Mon Tableau de Vie 🌿 · v1175</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -148,13 +148,13 @@
     will-change: transform;
   }
   .header-actions {
-    display: flex; gap: 5px; align-items: center; flex-wrap: wrap;
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
   }
-  .sync-row { display: flex; gap: 5px; align-items: center; }
+  .sync-row { display: flex; gap: 8px; align-items: center; }
   .btn-icon {
     background: var(--card); border: 1px solid var(--line); color: var(--ink);
-    padding: 7px 10px; border-radius: 14px; cursor: pointer;
-    font-size: 12px; box-shadow: var(--shadow); transition: all 0.2s;
+    padding: 9px 13px; border-radius: 14px; cursor: pointer;
+    font-size: 13px; box-shadow: var(--shadow); transition: all 0.2s;
     font-family: inherit;
   }
   .btn-icon:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
@@ -1905,7 +1905,7 @@
       <button class="btn-icon" id="settingsBtn" onclick="openSettings()">⚙ Personnaliser</button>
       <button class="btn-icon" id="gestionBtn" onclick="openGestionModal()" style="display:none;background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
       <button class="btn-icon" onclick="cloudDiag()" title="Diagnostic sync" style="background:var(--lavender-soft);">🔍</button>
-      <a href="#" onclick="event.preventDefault();_openHeaderSupportContact()" title="Contacter le support" class="btn-icon" style="text-decoration:none;">📧 Support</a>
+      <a href="#" onclick="event.preventDefault();openSupportContact()" title="Contacter le support" class="btn-icon" style="text-decoration:none;">📧 Support</a>
       <button class="btn-icon" onclick="openShortcutsEditor()" title="Gérer les raccourcis" style="background:var(--lavender-soft);">⚡</button>
       <!-- Thème visuel -->
       <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);">
@@ -1921,9 +1921,9 @@
       <div id="google_translate_element" style="display:none;"></div>
       <button class="btn-icon" id="syncSignInBtn" onclick="signInWithGoogle()" style="background:linear-gradient(135deg,#e8f0fe,#d2e3fc);color:#1a73e8;font-weight:600;">☁️ Connexion</button>
       <div class="sync-row">
-        <div id="syncUserAvatar" style="display:none;align-items:center;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 10px;cursor:pointer;box-shadow:var(--shadow);font-size:12px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
-        <span id="syncStatusPill" onclick="_fbUser ? showSyncMenu() : signInWithGoogle()" title="Voir l'état de la synchronisation" style="font-size:12px;padding:7px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:none;cursor:pointer;"></span>
-        <span id="cloudSizeBadge" onclick="openCloudSizeAlert()" style="display:none;font-size:12px;padding:7px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--ink-soft);box-shadow:var(--shadow);cursor:pointer;font-weight:600;">📦 Stockage cloud</span>
+        <div id="syncUserAvatar" style="display:none;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:9px 13px;cursor:pointer;box-shadow:var(--shadow);font-size:13px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
+        <span id="syncStatusPill" onclick="_fbUser ? showSyncMenu() : signInWithGoogle()" title="Voir l'état de la synchronisation" style="font-size:13px;padding:9px 13px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:none;cursor:pointer;"></span>
+        <span id="cloudSizeBadge" onclick="openCloudSizeAlert()" style="display:none;font-size:13px;padding:9px 13px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--ink-soft);box-shadow:var(--shadow);cursor:pointer;font-weight:600;">📦 Stockage cloud</span>
       </div>
     </div>
 
@@ -2429,7 +2429,7 @@
         <button class="secondary" onclick="cloudPush()" style="text-align:left;padding:12px 14px;">⬆️ <strong>Envoyer vers le cloud</strong><br><span style="font-size:12px;color:var(--ink-soft);">Remplace les données du cloud par celles de CET appareil.</span></button>
         <button class="secondary" onclick="cloudSignOut()" style="text-align:left;padding:12px 14px;color:#c75b4d;">🚪 <strong>Se déconnecter</strong><br><span style="font-size:12px;color:var(--ink-soft);">Tes données locales restent intactes.</span></button>
         <button class="secondary" onclick="cloudDiag()" style="text-align:left;padding:12px 14px;color:#8a7aaa;">🔍 <strong>Diagnostic sync</strong><br><span style="font-size:12px;color:var(--ink-soft);">Affiche l'état de la connexion Firebase (debug).</span></button>
-        <a id="contactSupportBtn" href="#" onclick="_prepContactSupport()" style="text-align:left;padding:12px 14px;text-decoration:none;color:var(--ink);border-radius:10px;border:1px solid var(--line);display:block;">📧 <strong>Contacter le support</strong><br><span style="font-size:12px;color:var(--ink-soft);">Ouvre ton app mail pour écrire directement à la gestionnaire de l'app.</span></a>
+        <a href="#" onclick="event.preventDefault();closeSyncMenu();openSupportContact()" style="text-align:left;padding:12px 14px;text-decoration:none;color:var(--ink);border-radius:10px;border:1px solid var(--line);display:block;">📧 <strong>Contacter le support</strong><br><span style="font-size:12px;color:var(--ink-soft);">Signaler un problème, une idée de fonctionnalité, ou toute autre remarque.</span></a>
       </div>
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
@@ -2442,11 +2442,24 @@
   <div class="modal-bg" id="cloudSizeAlertModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeCloudSizeAlert()">
     <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
       <h2 id="cloudSizeAlertTitle" style="margin:0 0 10px;">⚠️ Stockage cloud presque plein</h2>
-      <p id="cloudSizeAlertBody" style="font-size:13px;color:var(--ink-soft);margin:0 0 16px;line-height:1.6;"></p>
+      <p id="cloudSizeAlertBody" style="font-size:13px;color:var(--ink-soft);margin:0 0 16px;line-height:1.6;text-align:justify;"></p>
       <a id="cloudSizeAlertMailBtn" href="#" style="display:block;text-align:left;padding:12px 14px;border-radius:12px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);text-decoration:none;font-family:inherit;">📧 <strong>Prévenir la gestionnaire de l'app</strong><br><span style="font-size:12px;color:var(--ink-soft);">Ouvre ton app mail avec un message pré-rempli — précise ton compte et la taille actuelle.</span></a>
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closeCloudSizeAlert()">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal contact support (générique — problème, idée, amélioration...) -->
+  <div class="modal-bg" id="supportContactModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeSupportContact()">
+    <div class="modal" style="max-width:400px;" onclick="event.stopPropagation()">
+      <h2 style="margin:0 0 10px;">📧 Contacter le support</h2>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 16px;line-height:1.6;text-align:justify;">Cette fenêtre te permet d'écrire directement à la gestionnaire de l'app. Utilise-la pour signaler un problème, faire remonter une idée de nouvelle fonctionnalité, ou simplement nous aider à améliorer l'app — n'importe quelle question ou retour est bienvenu.</p>
+      <a id="supportContactMailBtn" href="#" style="display:block;text-align:left;padding:12px 14px;border-radius:12px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);text-decoration:none;font-family:inherit;">📧 <strong>Ouvrir mon app mail</strong><br><span style="font-size:12px;color:var(--ink-soft);">Un message pré-rempli s'ouvre — libre à toi de le compléter comme tu veux.</span></a>
+      <div class="actions" style="margin-top:16px;">
+        <div class="spacer"></div>
+        <button class="secondary" onclick="closeSupportContact()">Fermer</button>
       </div>
     </div>
   </div>
@@ -26374,7 +26387,12 @@ function openCloudSizeAlert() {
   const blocked = maxKo > 950;
   const warn = maxKo > _CLOUD_SIZE_WARN_KO;
   document.getElementById("cloudSizeAlertTitle").textContent = blocked ? "🚨 Stockage cloud plein" : warn ? "⚠️ Stockage cloud presque plein" : "📦 Stockage cloud";
-  const detailLines = _CLOUD_DOC_NAMES.map((name, i) => `<strong>${name}</strong> : ${sizes[i]} Ko`).join(" · ");
+  // "biblio" est un onglet masqué (fonctionnalité inactive pour les utilisateurs) — inutile de l'exposer ici
+  const detailLines = _CLOUD_DOC_NAMES
+    .map((name, i) => [name, sizes[i]])
+    .filter(([name]) => name !== "biblio")
+    .map(([name, ko]) => `<strong>${name}</strong> : ${ko} Ko`)
+    .join(" · ");
   const intro = `Cette fenêtre te permet de voir où en est le stockage de tes données dans le cloud : chaque catégorie (${detailLines}) a une limite d'environ 1000 Ko.`;
   const status = blocked
     ? `Le document <strong>"${maxDocName}"</strong> (${maxKo} Ko) a dépassé cette limite : la sauvegarde vers le cloud est <strong>bloquée</strong>. Tes données restent en sécurité sur cet appareil, mais elles ne se synchronisent plus tant que ce n'est pas réglé.`
@@ -26396,21 +26414,17 @@ function openCloudSizeAlert() {
   document.getElementById("cloudSizeAlertModal").classList.add("open");
 }
 function closeCloudSizeAlert() { document.getElementById("cloudSizeAlertModal").classList.remove("open"); }
-// Bouton générique "Contacter le support" — mail vierge (sujet pré-rempli, corps laissé libre)
-function _prepContactSupport() {
-  const btn = document.getElementById("contactSupportBtn");
-  if (!btn) return;
+// Bouton générique "Contacter le support" (header, en toutes circonstances, et menu de synchro) —
+// ouvre une petite fenêtre qui explique à quoi ça sert, avant un mail vierge (sujet pré-rempli,
+// corps laissé libre pour signaler un problème, une idée de fonctionnalité, ou toute remarque).
+function openSupportContact() {
   const who = _fbUser?.email || "compte non connecté";
   const subject = encodeURIComponent(`Mon Tableau de Vie — question / support (${who})`);
-  btn.href = `mailto:${OWNER_EMAIL}?subject=${subject}`;
+  const mailBtn = document.getElementById("supportContactMailBtn");
+  if (mailBtn) mailBtn.href = `mailto:${OWNER_EMAIL}?subject=${subject}`;
+  document.getElementById("supportContactModal").classList.add("open");
 }
-// Même chose, mais accessible depuis le header en toutes circonstances (connecté ou non, y compris
-// en mode "continuer sans compte") — pas besoin de passer par le menu de synchro.
-function _openHeaderSupportContact() {
-  const who = _fbUser?.email || "compte non connecté";
-  const subject = encodeURIComponent(`Mon Tableau de Vie — question / support (${who})`);
-  window.location.href = `mailto:${OWNER_EMAIL}?subject=${subject}`;
-}
+function closeSupportContact() { document.getElementById("supportContactModal").classList.remove("open"); }
 async function _fbSaveNow() {
   if (!_fbUser || !_fbDb) return;
   try {
