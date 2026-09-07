@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1162</title>
+<title>Mon Tableau de Vie 🌿 · v1163</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2002,6 +2002,7 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button onclick="_toggleFeature('pill')" id="featurePillBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">💊 Suivi pilule</button>
             <button onclick="_toggleFeature('cycle')" id="featureCycleBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🩸 Suivi règles</button>
+            <button onclick="_toggleCycleDetailed()" id="featureCycleDetailedBtn" title="Prédictions, phases du cycle, symptômes — s'appuie sur le suivi règles" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🌸 Suivi détaillé du cycle</button>
           </div>
         </div>
         <!-- 💊 Pilule (opt-in) -->
@@ -2096,6 +2097,23 @@
           <div id="journalMoodTodayBadges" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
         </div>
       </div>
+    </div>
+
+    <!-- 🌸 Suivi détaillé du cycle (opt-in, pleine largeur) -->
+    <div class="card" style="margin-top:14px;display:none;" id="cycleDetailedCard">
+      <div class="card-row" style="margin-bottom:10px;">
+        <h2 style="margin:0;cursor:pointer;" onclick="_goToHealth('healthCycleCard')" title="Voir dans Santé">🌸 Cycle menstruel <span style="font-size:11px;color:var(--ink-softer);">↗</span></h2>
+        <span id="cycleDayBadge" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:var(--lavender-soft);color:#6b4d99;white-space:nowrap;"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:6px;" id="cycleDropsBig"></div>
+        <span style="font-size:13px;color:var(--ink-soft);" id="cycleSubLabelBig">Aucun flux</span>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;">Symptômes du jour</div>
+        <div id="cycleSymptomChips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+      </div>
+      <div id="cyclePrediction" style="font-size:12px;color:var(--ink-soft);background:var(--bg-1);border-radius:10px;padding:10px 12px;line-height:1.6;"></div>
     </div>
 
     <!-- 🍽️ Journal alimentaire du jour -->
@@ -3039,6 +3057,25 @@
           <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#7c5cbf;display:inline-block;"></span>Aujourd'hui</span>
         </div>
       </div>
+    </div>
+
+    <!-- 🌸 Suivi détaillé du cycle -->
+    <div class="card" id="healthCycleCard" style="margin-top:18px;display:none;">
+      <div class="card-row" style="margin-bottom:10px;">
+        <h2 style="margin:0;">🌸 Cycle menstruel</h2>
+      </div>
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
+        <div class="stat" id="cycleStatAvgLength"></div>
+        <div class="stat" id="cycleStatAvgPeriod"></div>
+        <div class="stat" id="cycleStatCount"></div>
+      </div>
+      <div id="cyclePredictionSante" style="font-size:13px;color:var(--ink-soft);background:var(--bg-1);border-radius:10px;padding:10px 12px;line-height:1.6;margin-bottom:14px;"></div>
+      <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;">Historique (90 derniers jours)</div>
+      <div id="cycleHistoryStrip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;"></div>
+      <div style="display:flex;gap:12px;font-size:11px;color:var(--ink-softer);flex-wrap:wrap;margin-bottom:14px;">
+        <span>← il y a 90 jours</span><span style="flex:1;"></span><span>aujourd'hui →</span>
+      </div>
+      <div id="cycleSymptomFreq" style="font-size:12px;color:var(--ink-soft);"></div>
     </div>
 
     <!-- 📊 Suivi des habitudes -->
@@ -5522,7 +5559,7 @@ const TYPE_COLORS = ["#c9b6f0", "#f7c9a3", "#b4d4f1", "#aee0c8", "#efb8c8", "#f5
 
 const DEFAULT_STATE = {
   name: "",
-  features: { pill: false, cycle: false, pas: true, calories: false },
+  features: { pill: false, cycle: false, cycleDetailed: false, pas: true, calories: false },
   habits: [
     { id: "h-pas", name: "9000 pas", type: "numeric", target: 9000, unit: "pas" },
   ],
@@ -6313,7 +6350,7 @@ function onViewChange(view) {
   if (view === "today") maybeLoadWeather();
   if (view === "work") updateWorkTabBadges();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
-  if (view === "health") { _healthMonthOffset = 0; _stepsMonthOffset = 0; _renderHealthMonthLabel(); _renderStepsMonthLabel(); renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderStepsStats(); renderSkincare(); renderPillSante(); renderCustomSymptomsSante(); renderEnergyBalance(); renderHabitsTracking(); }
+  if (view === "health") { _healthMonthOffset = 0; _stepsMonthOffset = 0; _renderHealthMonthLabel(); _renderStepsMonthLabel(); renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderStepsStats(); renderSkincare(); renderPillSante(); renderCustomSymptomsSante(); renderEnergyBalance(); renderHabitsTracking(); renderHealthCycle(); }
   if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
@@ -7268,7 +7305,7 @@ function navToToday() {
   renderTodayNav();
   renderTodayView();
 }
-function renderTodayView() { renderTodayNav(); renderRings(); renderHabits(); renderWellbeing(); renderPill(); renderCycle(); renderTodoToday(); renderSkincare(); renderJournal(); renderFoodLog(); }
+function renderTodayView() { renderTodayNav(); renderRings(); renderHabits(); renderWellbeing(); renderPill(); renderCycle(); renderCycleDetailed(); renderTodoToday(); renderSkincare(); renderJournal(); renderFoodLog(); }
 
 /* ========= WORK :: POSTDOC PROJECTS ========= */
 // Filtres pour identifier les projets "majeurs" qui ont leur propre sous-onglet
@@ -12112,18 +12149,35 @@ function _toggleFeature(key) {
   saveState();
   _syncFeatureSections();
 }
+function _toggleCycleDetailed() {
+  if (!state.features) state.features = {};
+  state.features.cycleDetailed = !state.features.cycleDetailed;
+  // Le suivi détaillé s'appuie sur les données de flux — l'active automatiquement si besoin
+  if (state.features.cycleDetailed) state.features.cycle = true;
+  saveState();
+  _syncFeatureSections();
+  renderCycle();
+  renderCycleDetailed();
+  renderHealthCycle();
+}
 function _syncFeatureSections() {
   const f = state.features || {};
   const pillSec  = document.getElementById("pillSection");
   const cycleSec = document.getElementById("cycleSection");
   const pillBtn2  = document.getElementById("featurePillBtn");
   const cycleBtn2 = document.getElementById("featureCycleBtn");
+  const cycleDetBtn = document.getElementById("featureCycleDetailedBtn");
   const pasBtn    = document.getElementById("featurePasBtn");
   const calBtn    = document.getElementById("featureCalBtn");
   if (pillSec)  pillSec.style.display  = f.pill  ? "" : "none";
-  if (cycleSec) cycleSec.style.display = f.cycle ? "" : "none";
+  // Le petit widget flux inline ne s'affiche que si le suivi détaillé (carte pleine largeur) est éteint
+  if (cycleSec) cycleSec.style.display = (f.cycle && !f.cycleDetailed) ? "" : "none";
+  const cycleDetCard = document.getElementById("cycleDetailedCard");
+  if (cycleDetCard) cycleDetCard.style.display = f.cycleDetailed ? "" : "none";
+  const healthCycleCard = document.getElementById("healthCycleCard");
+  if (healthCycleCard) healthCycleCard.style.display = f.cycleDetailed ? "" : "none";
   function _featStyle(btn, on) { if (!btn) return; btn.style.background = on ? "var(--lavender-soft)" : "white"; btn.style.borderColor = on ? "var(--lavender)" : "var(--line)"; btn.style.color = on ? "var(--ink)" : "var(--ink-soft)"; }
-  _featStyle(pillBtn2, f.pill); _featStyle(cycleBtn2, f.cycle);
+  _featStyle(pillBtn2, f.pill); _featStyle(cycleBtn2, f.cycle); _featStyle(cycleDetBtn, f.cycleDetailed);
   _featStyle(pasBtn, f.pas !== false); _featStyle(calBtn, f.calories !== false);
   // Carte Pas dans Santé
   const stepsCard = document.getElementById("healthStepsCard");
@@ -12354,9 +12408,6 @@ function renderCycle() {
   _syncFeatureSections();
   const d = getToday();
   const sel = d.cycleFlow || 0;
-  const container = document.getElementById("cycleDrops");
-  const sub = document.getElementById("cycleSubLabel");
-  if (!container) return;
   let html = "";
   for (let i = 1; i <= 5; i++) {
     const filled = i <= sel && sel > 0;
@@ -12370,8 +12421,8 @@ function renderCycle() {
       </svg>
     </button>`;
   }
-  container.innerHTML = html;
-  if (sub) sub.textContent = CYCLE_LABELS[sel];
+  ["cycleDrops", "cycleDropsBig"].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = html; });
+  ["cycleSubLabel", "cycleSubLabelBig"].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = CYCLE_LABELS[sel]; });
 }
 
 function setCycleFlow(level) {
@@ -12379,6 +12430,155 @@ function setCycleFlow(level) {
   d.cycleFlow = (d.cycleFlow === level) ? 0 : level;
   saveState();
   renderCycle();
+  renderCycleDetailed();
+  renderHealthCycle();
+}
+
+/* ===== SUIVI DÉTAILLÉ DU CYCLE : symptômes, prédictions, historique ===== */
+const CYCLE_SYMPTOMS = [
+  { id: "cramps",  emoji: "😣", label: "Crampes" },
+  { id: "headache",emoji: "🤕", label: "Maux de tête" },
+  { id: "breast",  emoji: "💢", label: "Tension mammaire" },
+  { id: "fatigue", emoji: "😴", label: "Fatigue" },
+  { id: "mood",    emoji: "🎭", label: "Sautes d'humeur" },
+  { id: "acne",    emoji: "🔴", label: "Acné" },
+  { id: "bloating",emoji: "🎈", label: "Ballonnements" },
+];
+function toggleCycleSymptom(id) {
+  const d = getToday();
+  if (!d.cycleSymptoms) d.cycleSymptoms = [];
+  d.cycleSymptoms = d.cycleSymptoms.includes(id) ? d.cycleSymptoms.filter(x => x !== id) : [...d.cycleSymptoms, id];
+  saveState();
+  renderCycleDetailed();
+}
+// Analyse l'historique de flux : regroupe les jours de flux en règles, calcule cycles/durées/phase/prédiction.
+function _cycleStats() {
+  const flowDays = Object.entries(state.history || {})
+    .filter(([, d]) => d && d.cycleFlow > 0)
+    .map(([dk]) => dk)
+    .sort();
+  if (!flowDays.length) return null;
+  // Regroupe en périodes de règles : nouveau groupe si trou > 1 jour depuis le dernier jour de flux
+  const periods = [];
+  let cur = [flowDays[0]];
+  for (let i = 1; i < flowDays.length; i++) {
+    const prev = new Date(flowDays[i - 1]);
+    const now = new Date(flowDays[i]);
+    const gapDays = Math.round((now - prev) / 86400000);
+    if (gapDays <= 1) cur.push(flowDays[i]);
+    else { periods.push(cur); cur = [flowDays[i]]; }
+  }
+  periods.push(cur);
+  const periodStarts = periods.map(p => new Date(p[0]));
+  const periodLengths = periods.map(p => Math.round((new Date(p[p.length - 1]) - new Date(p[0])) / 86400000) + 1);
+  const cycleLengths = [];
+  for (let i = 1; i < periodStarts.length; i++) {
+    cycleLengths.push(Math.round((periodStarts[i] - periodStarts[i - 1]) / 86400000));
+  }
+  const avg = arr => arr.reduce((s, v) => s + v, 0) / arr.length;
+  const avgCycleLength  = cycleLengths.length ? Math.round(avg(cycleLengths)) : null;
+  const avgPeriodLength = Math.round(avg(periodLengths));
+  const stdev = cycleLengths.length >= 2
+    ? Math.sqrt(avg(cycleLengths.map(v => (v - avgCycleLength) ** 2)))
+    : null;
+  const uncertainty = stdev != null ? Math.max(2, Math.round(stdev)) : null;
+  const lastStart = periodStarts[periodStarts.length - 1];
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const currentCycleDay = Math.round((today - lastStart) / 86400000) + 1;
+  let predictedNextStart = null, fertileStart = null, fertileEnd = null;
+  if (avgCycleLength) {
+    predictedNextStart = new Date(lastStart); predictedNextStart.setDate(predictedNextStart.getDate() + avgCycleLength);
+    const ovulation = new Date(predictedNextStart); ovulation.setDate(ovulation.getDate() - 14);
+    fertileStart = new Date(ovulation); fertileStart.setDate(fertileStart.getDate() - 5);
+    fertileEnd = new Date(ovulation); fertileEnd.setDate(fertileEnd.getDate() + 1);
+  }
+  // Phase du cycle en cours (approximatif, basé sur les moyennes)
+  let phase = "Règles";
+  if (currentCycleDay > avgPeriodLength) {
+    if (avgCycleLength) {
+      const ovulationDay = avgCycleLength - 14;
+      if (currentCycleDay >= ovulationDay - 1 && currentCycleDay <= ovulationDay + 1) phase = "Ovulatoire";
+      else if (currentCycleDay > avgCycleLength - 14) phase = "Lutéale";
+      else phase = "Folliculaire";
+    } else phase = "Folliculaire";
+  }
+  return {
+    periodsCount: periods.length, cycleLengths, avgCycleLength, avgPeriodLength, uncertainty,
+    lastStart, currentCycleDay, phase, predictedNextStart, fertileStart, fertileEnd,
+  };
+}
+function _fmtCycleDate(d) { return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }); }
+function renderCycleDetailed() {
+  if (!state.features?.cycleDetailed) return;
+  const dayBadge = document.getElementById("cycleDayBadge");
+  const predEl = document.getElementById("cyclePrediction");
+  const chipsEl = document.getElementById("cycleSymptomChips");
+  if (!predEl) return;
+  const stats = _cycleStats();
+  if (dayBadge) dayBadge.textContent = stats ? `Jour ${stats.currentCycleDay} · ${stats.phase}` : "Pas encore de données";
+  const today = getToday();
+  const selectedSymptoms = today.cycleSymptoms || [];
+  if (chipsEl) {
+    chipsEl.innerHTML = CYCLE_SYMPTOMS.map(s => {
+      const on = selectedSymptoms.includes(s.id);
+      return `<button onclick="toggleCycleSymptom('${s.id}')" style="padding:5px 12px;border-radius:999px;border:1.5px solid ${on ? "var(--lavender)" : "var(--line)"};background:${on ? "var(--lavender-soft)" : "white"};font-size:12px;font-family:inherit;cursor:pointer;color:${on ? "var(--ink)" : "var(--ink-soft)"};font-weight:${on ? "600" : "400"};">${s.emoji} ${s.label}</button>`;
+    }).join("");
+  }
+  predEl.innerHTML = _cyclePredictionText(stats);
+}
+function _cyclePredictionText(stats) {
+  if (!stats) return "💡 Enregistre ton flux au fil des jours pour activer les prédictions.";
+  if (!stats.avgCycleLength) return `💡 1 cycle enregistré pour l'instant — encore un pour estimer la durée moyenne et prédire tes prochaines règles.`;
+  const parts = [];
+  parts.push(`🔮 Prochaines règles estimées : <strong>~${_fmtCycleDate(stats.predictedNextStart)}</strong> (± ${stats.uncertainty ?? 2} j)`);
+  if (stats.fertileStart) parts.push(`🌱 Fenêtre de fertilité estimée : ${_fmtCycleDate(stats.fertileStart)} → ${_fmtCycleDate(stats.fertileEnd)}`);
+  parts.push(`📊 Cycle moyen : ${stats.avgCycleLength} j · Règles : ~${stats.avgPeriodLength} j · ${stats.periodsCount} cycle${stats.periodsCount > 1 ? "s" : ""} enregistré${stats.periodsCount > 1 ? "s" : ""}`);
+  return parts.join("<br>");
+}
+function renderHealthCycle() {
+  const card = document.getElementById("healthCycleCard");
+  if (!card || !state.features?.cycleDetailed) return;
+  const stats = _cycleStats();
+  const avgLenEl = document.getElementById("cycleStatAvgLength");
+  const avgPerEl = document.getElementById("cycleStatAvgPeriod");
+  const countEl  = document.getElementById("cycleStatCount");
+  if (avgLenEl) avgLenEl.innerHTML = `<div class="stat-label">Cycle moyen</div><div class="stat-val">${stats?.avgCycleLength ?? "—"}<span class="stat-unit">j</span></div>`;
+  if (avgPerEl) avgPerEl.innerHTML = `<div class="stat-label">Règles</div><div class="stat-val">${stats?.avgPeriodLength ?? "—"}<span class="stat-unit">j</span></div>`;
+  if (countEl)  countEl.innerHTML  = `<div class="stat-label">Cycles suivis</div><div class="stat-val">${stats?.periodsCount ?? 0}</div>`;
+  const predEl = document.getElementById("cyclePredictionSante");
+  if (predEl) predEl.innerHTML = _cyclePredictionText(stats);
+  // Historique 90 jours
+  const stripEl = document.getElementById("cycleHistoryStrip");
+  if (stripEl) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const days = [];
+    for (let i = 89; i >= 0; i--) { const d = new Date(today); d.setDate(d.getDate() - i); days.push(todayKey(d)); }
+    stripEl.innerHTML = days.map(dk => {
+      const flow = state.history[dk]?.cycleFlow || 0;
+      const isToday = dk === todayKey(today);
+      const c = flow ? CYCLE_COLORS[flow] : null;
+      const bg = c ? c.fill : (isToday ? "var(--lavender-soft)" : "var(--bg-1)");
+      const border = isToday ? "2px solid var(--lavender)" : "1px solid var(--line)";
+      const [yy, mm, dd] = dk.split("-").map(Number);
+      const label = new Date(yy, mm - 1, dd).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+      const flowLabel = flow ? " · 🩸 " + CYCLE_LABELS[flow] : "";
+      return `<div data-tip="${label}${flowLabel}" onmouseenter="showHoverTip(event,this.dataset.tip)" onmousemove="moveHoverTip(event)" onmouseleave="hideHoverTip()" style="width:8px;height:18px;border-radius:3px;background:${bg};border:${border};cursor:default;"></div>`;
+    }).join("");
+  }
+  // Fréquence des symptômes (tous les jours où au moins un symptôme cycle a été coché)
+  const freqEl = document.getElementById("cycleSymptomFreq");
+  if (freqEl) {
+    const counts = {};
+    Object.values(state.history || {}).forEach(d => { (d?.cycleSymptoms || []).forEach(id => { counts[id] = (counts[id] || 0) + 1; }); });
+    const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    if (!entries.length) freqEl.innerHTML = "";
+    else {
+      const label = id => CYCLE_SYMPTOMS.find(s => s.id === id)?.label || id;
+      const emoji = id => CYCLE_SYMPTOMS.find(s => s.id === id)?.emoji || "";
+      freqEl.innerHTML = `<div style="font-weight:600;margin-bottom:6px;">Symptômes les plus fréquents</div>` +
+        entries.slice(0, 5).map(([id, n]) => `<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>${emoji(id)} ${label(id)}</span><span style="color:var(--ink-softer);">${n}×</span></div>`).join("");
+    }
+  }
 }
 
 function _pillStreak() {
