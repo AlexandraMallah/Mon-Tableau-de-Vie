@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1169</title>
+<title>Mon Tableau de Vie 🌿 · v1170</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26222,7 +26222,7 @@ async function _fbLoad() {
     _markCloudSynced(_fbUser.uid);
     // Vérifie tout de suite la taille (pas seulement après une sauvegarde) pour que le badge
     // apparaisse dès l'ouverture si le seuil est déjà dépassé, sans attendre une modification.
-    try { const _cs = _computeCloudSizes(); _updateCloudSizeBadge(_cs.maxKo, _cs.maxDocName); } catch(e) {}
+    try { const _cs = _computeCloudSizes(); _updateCloudSizeBadge(_cs.sizes, _cs.maxDocName); } catch(e) {}
     // Restauration belly/endo : si des valeurs existent dans l'historique mais les définitions ont été supprimées
     if (_fbUser) {
       if (!state.customSymptoms) state.customSymptoms = [];
@@ -26312,10 +26312,12 @@ function _computeCloudSizes() {
 // Badge permanent (header, dès qu'on est connecté) : change de couleur selon l'état, pour être
 // visible en permanence plutôt que de n'apparaître qu'au moment critique.
 let _sizeAlertPopupShownThisSession = false;
-function _updateCloudSizeBadge(maxKo, maxDocName) {
+function _updateCloudSizeBadge(sizes, maxDocName) {
   const badge = document.getElementById("cloudSizeBadge");
   if (!badge) return;
   if (!_fbUser) { badge.style.display = "none"; return; }
+  const maxKo = Math.max(...sizes);
+  badge.dataset.sizes = JSON.stringify(sizes);
   badge.dataset.maxKo = maxKo;
   badge.dataset.maxDocName = maxDocName;
   badge.style.display = "inline-flex";
@@ -26342,14 +26344,19 @@ function openCloudSizeAlert() {
   const badge = document.getElementById("cloudSizeBadge");
   const maxKo = Number(badge?.dataset.maxKo || 0);
   const maxDocName = badge?.dataset.maxDocName || "state";
+  let sizes = [0, 0, 0];
+  try { sizes = JSON.parse(badge?.dataset.sizes || "[0,0,0]"); } catch(e) {}
   const blocked = maxKo > 950;
   const warn = maxKo > _CLOUD_SIZE_WARN_KO;
   document.getElementById("cloudSizeAlertTitle").textContent = blocked ? "🚨 Stockage cloud plein" : warn ? "⚠️ Stockage cloud presque plein" : "📦 Stockage cloud";
-  document.getElementById("cloudSizeAlertBody").innerHTML = blocked
-    ? `Le document <strong>"${maxDocName}"</strong> (${maxKo} Ko) a dépassé la limite : la sauvegarde vers le cloud est <strong>bloquée</strong>. Tes données restent en sécurité sur cet appareil, mais elles ne se synchronisent plus tant que ce n'est pas réglé.`
+  const detailLines = _CLOUD_DOC_NAMES.map((name, i) => `<strong>${name}</strong> : ${sizes[i]} Ko`).join(" · ");
+  const intro = `Cette fenêtre te permet de voir où en est le stockage de tes données dans le cloud : chaque catégorie (${detailLines}) a une limite d'environ 1000 Ko.`;
+  const status = blocked
+    ? `Le document <strong>"${maxDocName}"</strong> (${maxKo} Ko) a dépassé cette limite : la sauvegarde vers le cloud est <strong>bloquée</strong>. Tes données restent en sécurité sur cet appareil, mais elles ne se synchronisent plus tant que ce n'est pas réglé.`
     : warn
-    ? `Le document <strong>"${maxDocName}"</strong> est à <strong>${maxKo} Ko</strong> sur ~1000 Ko maximum. Si ça continue de grossir sans intervention, la sauvegarde vers le cloud finira par se bloquer.`
-    : `Tout va bien : le document le plus volumineux ("${maxDocName}") est à <strong>${maxKo} Ko</strong> sur ~1000 Ko maximum.`;
+    ? `Le document <strong>"${maxDocName}"</strong> approche de cette limite (${maxKo} Ko). Si ça continue de grossir sans intervention, la sauvegarde vers le cloud finira par se bloquer.`
+    : `Pour le moment, tout va bien — aucun document n'approche de sa limite. Tant que c'est le cas, cette fenêtre n'est qu'un indicateur informatif ; si un jour un document approche sa limite, une alerte se déclenchera automatiquement pour te prévenir.`;
+  document.getElementById("cloudSizeAlertBody").innerHTML = `${intro}<br><br>${status}`;
   const mailBtn = document.getElementById("cloudSizeAlertMailBtn");
   if (mailBtn) {
     const who = _fbUser?.email || "un compte non identifié";
@@ -26372,8 +26379,8 @@ function _prepContactSupport() {
 async function _fbSaveNow() {
   if (!_fbUser || !_fbDb) return;
   try {
-    const { corePayload, workPayload, biblioPayload, maxKo, maxDocName } = _computeCloudSizes();
-    _updateCloudSizeBadge(maxKo, maxDocName);
+    const { corePayload, workPayload, biblioPayload, sizes, maxKo, maxDocName } = _computeCloudSizes();
+    _updateCloudSizeBadge(sizes, maxDocName);
     if (maxKo > 950) {
       showToast(`⚠️ Document trop volumineux pour le cloud (${maxKo} Ko) — export manuel recommandé`, 6000);
       _fbSetStatus("error");
@@ -26604,7 +26611,7 @@ function cloudSignOut() {
         const btn = document.getElementById("syncSignInBtn");
         if (btn) btn.style.display = "";
         _fbSetStatus("off");
-        _updateCloudSizeBadge(0, "");
+        _updateCloudSizeBadge([0, 0, 0], "");
         // Pas connecté·e : montre le gate, sauf si "Continuer sans compte" a déjà été choisi
         let skip = false;
         try { skip = localStorage.getItem("tableauDeVie_v3_skipAuthGate") === "1"; } catch(e) {}
