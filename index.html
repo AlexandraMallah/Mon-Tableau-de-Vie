@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1176</title>
+<title>Mon Tableau de Vie 🌿 · v1177</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2443,7 +2443,10 @@
     <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
       <h2 id="cloudSizeAlertTitle" style="margin:0 0 10px;">⚠️ Stockage cloud presque plein</h2>
       <p id="cloudSizeAlertBody" style="font-size:13px;color:var(--ink-soft);margin:0 0 16px;line-height:1.6;text-align:justify;"></p>
-      <a id="cloudSizeAlertMailBtn" href="#" style="display:block;text-align:left;padding:12px 14px;border-radius:12px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);text-decoration:none;font-family:inherit;">📧 <strong>Prévenir la gestionnaire de l'app</strong><br><span style="font-size:12px;color:var(--ink-soft);">Ouvre ton app mail avec un message pré-rempli — précise ton compte et la taille actuelle.</span></a>
+      <a id="cloudSizeAlertMailBtn" href="#" style="display:block;text-align:left;padding:10px 14px;border-radius:12px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);text-decoration:none;font-family:inherit;">
+        <div style="font-size:14px;font-weight:700;line-height:1.3;">📧 Prévenir la gestionnaire de l'app</div>
+        <div style="font-size:12px;color:var(--ink-soft);line-height:1.3;margin-top:2px;">Ouvre ton app mail avec un message pré-rempli — précise ton compte et la taille actuelle.</div>
+      </a>
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closeCloudSizeAlert()">Fermer</button>
@@ -2456,7 +2459,10 @@
     <div class="modal" style="max-width:400px;" onclick="event.stopPropagation()">
       <h2 style="margin:0 0 10px;">📧 Contacter le support</h2>
       <p style="font-size:13px;color:var(--ink-soft);margin:0 0 16px;line-height:1.6;text-align:justify;">Cette fenêtre te permet d'écrire directement à la gestionnaire de l'app. Utilise-la pour signaler un problème, faire remonter une idée de nouvelle fonctionnalité, ou simplement nous aider à améliorer l'app — n'importe quelle question ou retour est bienvenu.</p>
-      <a id="supportContactMailBtn" href="#" style="display:block;text-align:left;padding:12px 14px;border-radius:12px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);text-decoration:none;font-family:inherit;">📧 <strong>Ouvrir mon app mail</strong><br><span style="font-size:12px;color:var(--ink-soft);">Un message pré-rempli s'ouvre — libre à toi de le compléter comme tu veux.</span></a>
+      <a id="supportContactMailBtn" href="#" style="display:block;text-align:left;padding:10px 14px;border-radius:12px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);text-decoration:none;font-family:inherit;">
+        <div style="font-size:14px;font-weight:700;line-height:1.3;">📧 Ouvrir mon app mail</div>
+        <div style="font-size:12px;color:var(--ink-soft);line-height:1.3;margin-top:2px;">Un message pré-rempli s'ouvre — libre à toi de le compléter comme tu veux.</div>
+      </a>
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closeSupportContact()">Fermer</button>
