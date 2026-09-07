@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1161</title>
+<title>Mon Tableau de Vie 🌿 · v1162</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3840,9 +3840,9 @@
     <div style="text-align:left;margin-bottom:14px;">
       <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;">Tu te genres comment ?</div>
       <div id="gpGenderBtns" style="display:flex;gap:6px;">
-        <button onclick="_gpPick('gender','f')" data-gp-gender="f" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">Elle</button>
+        <button onclick="_gpPick('gender','f')" data-gp-gender="f" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Elle</button>
         <button onclick="_gpPick('gender','m')" data-gp-gender="m" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Il</button>
-        <button onclick="_gpPick('gender','x')" data-gp-gender="x" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Iel</button>
+        <button onclick="_gpPick('gender','x')" data-gp-gender="x" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">Iel</button>
       </div>
     </div>
 
@@ -3885,9 +3885,9 @@
       <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Tu te genres comment ?</label>
       <p style="font-size:12px;color:var(--ink-soft);margin:-2px 0 8px;">Adapte l'accord des émotions par défaut (ex. "Contente"/"Content"/"Content·e").</p>
       <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);width:fit-content;">
-        <button id="genderF" onclick="_setGender('f')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">Elle</button>
+        <button id="genderF" onclick="_setGender('f')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Elle</button>
         <button id="genderM" onclick="_setGender('m')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Il</button>
-        <button id="genderX" onclick="_setGender('x')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Iel</button>
+        <button id="genderX" onclick="_setGender('x')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">Iel</button>
       </div>
     </div>
 
@@ -6442,7 +6442,7 @@ const _EM_GENDER_MAP = {
 function _genderizeSuggest(femLabel) {
   const g = _EM_GENDER_MAP[femLabel];
   if (!g) return femLabel;
-  const gender = state.gender || "f";
+  const gender = state.gender || "x";
   return g[gender] || femLabel;
 }
 function _getEmotions() {
@@ -24162,7 +24162,7 @@ function openSettings(tab) {
 }
 function closeSettings() { document.getElementById("settingsModal").classList.remove("open"); }
 function _refreshGenderButtons() {
-  const cur = state.gender || "f";
+  const cur = state.gender || "x";
   ["f","m","x"].forEach(g => {
     const btn = document.getElementById("gender" + g.toUpperCase());
     if (!btn) return;
@@ -24225,7 +24225,7 @@ function _gpPick(kind, value) {
   });
 }
 function _confirmGenderPrompt(skip) {
-  state.gender = (skip || !_gpChoice.gender) ? "f" : _gpChoice.gender;
+  state.gender = (skip || !_gpChoice.gender) ? "x" : _gpChoice.gender;
   if (!skip && _gpChoice.sex) {
     if (!state.health) state.health = {};
     state.health.sex = _gpChoice.sex;
