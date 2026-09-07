@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1165</title>
+<title>Mon Tableau de Vie 🌿 · v1166</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3911,36 +3911,36 @@
       </div>
     </div>
 
-    <!-- Prénom — toujours visible -->
-    <div style="margin-bottom:18px;">
-      <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Ton prénom</label>
-      <input type="text" id="nameInput" placeholder="Alexandra" />
-    </div>
-
-    <!-- Genre — toujours visible : adapte l'accord des émotions (contente/content/content·e…) -->
-    <div style="margin-bottom:18px;">
-      <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Tu te genres comment ?</label>
-      <p style="font-size:12px;color:var(--ink-soft);margin:-2px 0 8px;">Adapte l'accord des émotions par défaut (ex. "Contente"/"Content"/"Content·e").</p>
-      <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);width:fit-content;">
-        <button id="genderF" onclick="_setGender('f')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Elle</button>
-        <button id="genderM" onclick="_setGender('m')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Il</button>
-        <button id="genderX" onclick="_setGender('x')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">Iel</button>
-      </div>
-    </div>
-
-    <!-- Sexe — toujours visible : sert au calcul kcal (BMR) et au suivi du cycle menstruel -->
-    <div style="margin-bottom:18px;">
-      <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Ton sexe</label>
-      <p style="font-size:12px;color:var(--ink-soft);margin:-2px 0 8px;">Sert au calcul des dépenses énergétiques (calories) et permet d'activer un suivi du cycle menstruel. Aussi visible dans Santé → Composition corporelle.</p>
-      <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);width:fit-content;">
-        <button id="sexF" onclick="_setSex('f')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Femme</button>
-        <button id="sexM" onclick="_setSex('m')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Homme</button>
-        <button id="sexN" onclick="_setSex('n')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Autre</button>
-      </div>
-    </div>
-
     <!-- Onglet Apparence -->
     <div id="settingsPanelApparence">
+      <!-- Prénom -->
+      <div style="margin-bottom:18px;">
+        <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Ton prénom</label>
+        <input type="text" id="nameInput" placeholder="Alexandra" />
+      </div>
+
+      <!-- Genre : adapte l'accord des émotions (contente/content/content·e…) -->
+      <div style="margin-bottom:18px;">
+        <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Tu te genres comment ?</label>
+        <p style="font-size:12px;color:var(--ink-soft);margin:-2px 0 8px;">Adapte l'accord des émotions par défaut (ex. "Contente"/"Content"/"Content·e").</p>
+        <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);width:fit-content;">
+          <button id="genderF" onclick="_setGender('f')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Elle</button>
+          <button id="genderM" onclick="_setGender('m')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Il</button>
+          <button id="genderX" onclick="_setGender('x')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">Iel</button>
+        </div>
+      </div>
+
+      <!-- Sexe : sert au calcul kcal (BMR) et au suivi du cycle menstruel -->
+      <div style="margin-bottom:18px;">
+        <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Ton sexe</label>
+        <p style="font-size:12px;color:var(--ink-soft);margin:-2px 0 8px;">Sert au calcul des dépenses énergétiques (calories) et permet d'activer un suivi du cycle menstruel. Aussi visible dans Santé → Composition corporelle.</p>
+        <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);width:fit-content;">
+          <button id="sexF" onclick="_setSex('f')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Femme</button>
+          <button id="sexM" onclick="_setSex('m')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Homme</button>
+          <button id="sexN" onclick="_setSex('n')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Autre</button>
+        </div>
+      </div>
+
       <div class="section-title">🎨 Thème visuel</div>
       <p style="font-size:13px;color:var(--ink-soft);margin:-4px 0 16px;">Choisis l'ambiance de ton tableau de bord.</p>
       <div style="display:flex;flex-direction:column;gap:12px;">
