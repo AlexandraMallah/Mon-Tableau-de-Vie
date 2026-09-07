@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1159</title>
+<title>Mon Tableau de Vie 🌿 · v1160</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3833,16 +3833,34 @@
 </div>
 
 <div class="modal-bg" id="genderPromptModal" style="z-index:600;">
-  <div class="modal" style="max-width:360px;text-align:center;">
+  <div class="modal" style="max-width:380px;text-align:center;">
     <div style="font-size:32px;margin-bottom:6px;">🌿</div>
-    <h2 style="margin:0 0 6px;font-size:17px;">Tu te genres comment ?</h2>
-    <p style="font-size:13px;color:var(--ink-soft);margin:0 0 18px;">Pour adapter l'accord des émotions par défaut (ex. "Contente"/"Content"/"Content·e"). Modifiable à tout moment dans Personnaliser.</p>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <button onclick="_answerGenderPrompt('f')" style="padding:10px;border-radius:10px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">Elle</button>
-      <button onclick="_answerGenderPrompt('m')" style="padding:10px;border-radius:10px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">Il</button>
-      <button onclick="_answerGenderPrompt('x')" style="padding:10px;border-radius:10px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">Iel</button>
+    <h2 style="margin:0 0 14px;font-size:17px;">Pour mieux te connaître</h2>
+
+    <div style="text-align:left;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;">Tu te genres comment ?</div>
+      <div id="gpGenderBtns" style="display:flex;gap:6px;">
+        <button onclick="_gpPick('gender','f')" data-gp-gender="f" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">Elle</button>
+        <button onclick="_gpPick('gender','m')" data-gp-gender="m" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Il</button>
+        <button onclick="_gpPick('gender','x')" data-gp-gender="x" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Iel</button>
+      </div>
     </div>
-    <a href="#" onclick="event.preventDefault();_answerGenderPrompt('f')" style="display:inline-block;margin-top:14px;font-size:12px;color:var(--ink-softer);text-decoration:underline;cursor:pointer;">Passer pour l'instant</a>
+
+    <div style="text-align:left;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;">Ton sexe ?</div>
+      <div id="gpSexBtns" style="display:flex;gap:6px;">
+        <button onclick="_gpPick('sex','f')" data-gp-sex="f" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Femme</button>
+        <button onclick="_gpPick('sex','m')" data-gp-sex="m" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Homme</button>
+        <button onclick="_gpPick('sex','n')" data-gp-sex="n" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Autre</button>
+      </div>
+    </div>
+
+    <div style="text-align:left;background:var(--bg-1);border-radius:10px;padding:10px 12px;margin-bottom:16px;">
+      <p style="font-size:11px;color:var(--ink-soft);margin:0;line-height:1.6;">💡 <strong>Le sexe</strong> sert au calcul des dépenses énergétiques (calories) et permet d'activer un suivi du cycle menstruel. <strong>Le genre</strong> permet à l'app de s'adresser à toi correctement. Les deux sont facultatifs et modifiables à tout moment dans <strong>Personnaliser</strong>.</p>
+    </div>
+
+    <button onclick="_confirmGenderPrompt()" style="width:100%;padding:11px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Continuer</button>
+    <a href="#" onclick="event.preventDefault();_confirmGenderPrompt(true)" style="display:inline-block;margin-top:12px;font-size:12px;color:var(--ink-softer);text-decoration:underline;cursor:pointer;">Passer pour l'instant</a>
   </div>
 </div>
 
@@ -3870,6 +3888,17 @@
         <button id="genderF" onclick="_setGender('f')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">Elle</button>
         <button id="genderM" onclick="_setGender('m')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Il</button>
         <button id="genderX" onclick="_setGender('x')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Iel</button>
+      </div>
+    </div>
+
+    <!-- Sexe — toujours visible : sert au calcul kcal (BMR) et au suivi du cycle menstruel -->
+    <div style="margin-bottom:18px;">
+      <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Ton sexe</label>
+      <p style="font-size:12px;color:var(--ink-soft);margin:-2px 0 8px;">Sert au calcul des dépenses énergétiques (calories) et permet d'activer un suivi du cycle menstruel. Aussi visible dans Santé → Composition corporelle.</p>
+      <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);width:fit-content;">
+        <button id="sexF" onclick="_setSex('f')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Femme</button>
+        <button id="sexM" onclick="_setSex('m')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Homme</button>
+        <button id="sexN" onclick="_setSex('n')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Autre</button>
       </div>
     </div>
 
@@ -6948,6 +6977,7 @@ function _saveBodyProfile() {
   if (a >= 10 && a <= 99) state.health.ageyears = a;
   if (s) state.health.sex = s;
   saveState();
+  _refreshSexButtons();
   showToast("✅ Profil mis à jour — calcul kcal recalculé");
   const steps = Number(getToday().habits?.['h-pas']) || 0;
   _autoCalcKcal(steps, false);
@@ -24140,6 +24170,7 @@ function openSettings(tab) {
     if (card) card.style.borderColor = t === curTheme ? "var(--lavender)" : "var(--line)";
   });
   _refreshGenderButtons();
+  _refreshSexButtons();
   document.getElementById("settingsModal").classList.add("open");
 }
 function closeSettings() { document.getElementById("settingsModal").classList.remove("open"); }
@@ -24161,17 +24192,61 @@ function _setGender(g) {
   renderEmotionGrid();
   if (typeof renderAll === "function") renderAll();
 }
+function _refreshSexButtons() {
+  const cur = state.health?.sex || "";
+  ["f","m","n"].forEach(s => {
+    const btn = document.getElementById("sex" + s.toUpperCase());
+    if (!btn) return;
+    const active = s === cur;
+    btn.style.background = active ? "var(--lavender)" : "none";
+    btn.style.color = active ? "white" : "var(--ink-soft)";
+    btn.style.fontWeight = active ? "700" : "600";
+  });
+}
+function _setSex(s) {
+  if (!state.health) state.health = {};
+  state.health.sex = s;
+  saveState();
+  const sInp = document.getElementById("bodySexInput");
+  if (sInp) sInp.value = s;
+  _refreshSexButtons();
+  const steps = Number(getToday().habits?.['h-pas']) || 0;
+  _autoCalcKcal(steps, false);
+}
 let _genderPromptShown = false;
+let _gpChoice = { gender: null, sex: null };
 function _maybePromptGender() {
   if (_genderPromptShown || state.gender != null) return;
   _genderPromptShown = true;
+  _gpChoice = { gender: null, sex: null };
+  document.querySelectorAll("#gpGenderBtns button, #gpSexBtns button").forEach(b => {
+    b.style.background = "none"; b.style.borderColor = "var(--line)"; b.style.color = "var(--ink-soft)"; b.style.fontWeight = "600";
+  });
   const modal = document.getElementById("genderPromptModal");
   if (modal) modal.classList.add("open");
 }
-function _answerGenderPrompt(g) {
-  state.gender = g;
+function _gpPick(kind, value) {
+  _gpChoice[kind] = value;
+  const group = kind === "gender" ? "gpGenderBtns" : "gpSexBtns";
+  const attr = kind === "gender" ? "data-gp-gender" : "data-gp-sex";
+  document.querySelectorAll(`#${group} button`).forEach(b => {
+    const active = b.getAttribute(attr) === value;
+    b.style.background = active ? "var(--lavender)" : "none";
+    b.style.borderColor = active ? "var(--lavender)" : "var(--line)";
+    b.style.color = active ? "white" : "var(--ink-soft)";
+    b.style.fontWeight = active ? "700" : "600";
+  });
+}
+function _confirmGenderPrompt(skip) {
+  state.gender = (skip || !_gpChoice.gender) ? "f" : _gpChoice.gender;
+  if (!skip && _gpChoice.sex) {
+    if (!state.health) state.health = {};
+    state.health.sex = _gpChoice.sex;
+  }
   saveState();
   renderEmotionGrid();
+  const sInp = document.getElementById("bodySexInput");
+  if (sInp && state.health?.sex) sInp.value = state.health.sex;
   if (typeof renderAll === "function") renderAll();
   const modal = document.getElementById("genderPromptModal");
   if (modal) modal.classList.remove("open");
