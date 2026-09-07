@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1180</title>
+<title>Mon Tableau de Vie 🌿 · v1181</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3082,9 +3082,12 @@
         <div id="skincare30Grid"></div>
       </div>
       <div class="card" id="healthPillCard">
-        <div class="card-row" style="margin-bottom:14px;">
+        <div class="card-row" style="margin-bottom:14px;align-items:flex-start;flex-wrap:wrap;gap:12px;">
           <div>
-            <h2 style="margin:0 0 6px;">💊 Suivi pilule — <span id="pillNbLabel">90</span> jours <button onclick="openPillConfigModal()" title="Réglages pilule" class="help-btn" style="font-size:11px;padding:3px 8px;vertical-align:middle;">⚙️</button></h2>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+              <h2 style="margin:0;">💊 Suivi pilule — <span id="pillNbLabel">90</span> jours</h2>
+              <button onclick="openPillConfigModal()" class="help-btn">⚙️ Réglages</button>
+            </div>
             <div id="pillPackInfo" style="font-size:12px;color:var(--ink-soft);margin-bottom:6px;display:none;"></div>
             <div style="display:flex;gap:4px;">
               <button onclick="setPillNb(30)" id="pillBtn30" class="btn-soft" style="font-size:11px;padding:4px 8px;">30j</button>
