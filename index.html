@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1167</title>
+<title>Mon Tableau de Vie 🌿 · v1168</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1922,6 +1922,7 @@
       <div class="sync-row">
         <div id="syncUserAvatar" style="display:none;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:var(--shadow);font-size:13px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
         <span id="syncStatusPill" onclick="_fbUser ? showSyncMenu() : signInWithGoogle()" title="Voir l'état de la synchronisation" style="font-size:13px;padding:10px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:none;cursor:pointer;"></span>
+        <span id="cloudSizeBadge" onclick="openCloudSizeAlert()" style="display:none;font-size:13px;padding:10px 14px;border-radius:999px;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;box-shadow:var(--shadow);cursor:pointer;font-weight:600;">📦 Stockage cloud</span>
       </div>
     </div>
 
@@ -2431,6 +2432,19 @@
       <div class="actions" style="margin-top:16px;">
         <div class="spacer"></div>
         <button class="secondary" onclick="closeSyncMenu()">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal alerte taille stockage cloud -->
+  <div class="modal-bg" id="cloudSizeAlertModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeCloudSizeAlert()">
+    <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
+      <h2 id="cloudSizeAlertTitle" style="margin:0 0 10px;">⚠️ Stockage cloud presque plein</h2>
+      <p id="cloudSizeAlertBody" style="font-size:13px;color:var(--ink-soft);margin:0 0 16px;line-height:1.6;"></p>
+      <a id="cloudSizeAlertMailBtn" href="#" style="display:block;text-align:left;padding:12px 14px;border-radius:12px;border:1.5px solid var(--lavender);background:var(--lavender-soft);color:var(--ink);text-decoration:none;font-family:inherit;">📧 <strong>Prévenir la gestionnaire de l'app</strong><br><span style="font-size:12px;color:var(--ink-soft);">Ouvre ton app mail avec un message pré-rempli — précise ton compte et la taille actuelle.</span></a>
+      <div class="actions" style="margin-top:16px;">
+        <div class="spacer"></div>
+        <button class="secondary" onclick="closeCloudSizeAlert()">Fermer</button>
       </div>
     </div>
   </div>
@@ -26205,6 +26219,9 @@ async function _fbLoad() {
       showToast("☁️ Données envoyées vers le cloud ✅");
     }
     _markCloudSynced(_fbUser.uid);
+    // Vérifie tout de suite la taille (pas seulement après une sauvegarde) pour que le badge
+    // apparaisse dès l'ouverture si le seuil est déjà dépassé, sans attendre une modification.
+    try { const _cs = _computeCloudSizes(); _updateCloudSizeBadge(_cs.maxKo, _cs.maxDocName); } catch(e) {}
     // Restauration belly/endo : si des valeurs existent dans l'historique mais les définitions ont été supprimées
     if (_fbUser) {
       if (!state.customSymptoms) state.customSymptoms = [];
@@ -26282,28 +26299,57 @@ function _applyRemoteSnaps() {
 }
 
 const _CLOUD_SIZE_WARN_KO = 700; // ~70% de la limite Firestore (1024 Ko/document) — anticiper avant le blocage à 950
+const _CLOUD_DOC_NAMES = ["state", "work", "biblio"];
+function _computeCloudSizes() {
+  const corePayload   = _makePayload(_coreForCloud());
+  const workPayload   = _makePayload(_workForCloud());
+  const biblioPayload = _makePayload(_biblioForCloud());
+  const sizes = [corePayload, workPayload, biblioPayload].map(p => Math.round(JSON.stringify(p).length / 1024));
+  const maxKo = Math.max(...sizes);
+  return { corePayload, workPayload, biblioPayload, sizes, maxKo, maxDocName: _CLOUD_DOC_NAMES[sizes.indexOf(maxKo)] };
+}
+// Badge persistant (header) : reste affiché tant que le document n'est pas repassé sous le seuil —
+// contrairement à un toast, ne peut pas être manqué si on n'est pas devant l'écran au bon moment.
+function _updateCloudSizeBadge(maxKo, maxDocName) {
+  const badge = document.getElementById("cloudSizeBadge");
+  if (!badge) return;
+  if (maxKo > _CLOUD_SIZE_WARN_KO) {
+    badge.style.display = "";
+    badge.dataset.maxKo = maxKo;
+    badge.dataset.maxDocName = maxDocName;
+    badge.title = maxKo > 950 ? "Stockage cloud bloqué — clique pour prévenir" : "Stockage cloud presque plein — clique pour plus d'infos";
+  } else {
+    badge.style.display = "none";
+  }
+}
+function openCloudSizeAlert() {
+  const badge = document.getElementById("cloudSizeBadge");
+  const maxKo = Number(badge?.dataset.maxKo || 0);
+  const maxDocName = badge?.dataset.maxDocName || "state";
+  const blocked = maxKo > 950;
+  document.getElementById("cloudSizeAlertTitle").textContent = blocked ? "🚨 Stockage cloud plein" : "⚠️ Stockage cloud presque plein";
+  document.getElementById("cloudSizeAlertBody").innerHTML = blocked
+    ? `Le document <strong>"${maxDocName}"</strong> (${maxKo} Ko) a dépassé la limite : la sauvegarde vers le cloud est <strong>bloquée</strong>. Tes données restent en sécurité sur cet appareil, mais elles ne se synchronisent plus tant que ce n'est pas réglé.`
+    : `Le document <strong>"${maxDocName}"</strong> est à <strong>${maxKo} Ko</strong> sur ~1000 Ko maximum. Si ça continue de grossir sans intervention, la sauvegarde vers le cloud finira par se bloquer.`;
+  const mailBtn = document.getElementById("cloudSizeAlertMailBtn");
+  if (mailBtn) {
+    const who = _fbUser?.email || "un compte non identifié";
+    const subject = encodeURIComponent(`Mon Tableau de Vie — stockage cloud ${blocked ? "bloqué" : "presque plein"}`);
+    const body = encodeURIComponent(`Bonjour,\n\nMon compte (${who}) a un document cloud "${maxDocName}" à ${maxKo} Ko sur ~1000 Ko max${blocked ? " — la sauvegarde est actuellement bloquée." : "."}\n\nPeux-tu regarder ça ?\n\nMerci !`);
+    mailBtn.href = `mailto:${OWNER_EMAIL}?subject=${subject}&body=${body}`;
+  }
+  document.getElementById("cloudSizeAlertModal").classList.add("open");
+}
+function closeCloudSizeAlert() { document.getElementById("cloudSizeAlertModal").classList.remove("open"); }
 async function _fbSaveNow() {
   if (!_fbUser || !_fbDb) return;
   try {
-    const corePayload   = _makePayload(_coreForCloud());
-    const workPayload   = _makePayload(_workForCloud());
-    const biblioPayload = _makePayload(_biblioForCloud());
-    const _docNames = ["state", "work", "biblio"];
-    const sizes = [corePayload, workPayload, biblioPayload].map(p => Math.round(JSON.stringify(p).length / 1024));
-    const maxKo = Math.max(...sizes);
-    const maxDocName = _docNames[sizes.indexOf(maxKo)];
+    const { corePayload, workPayload, biblioPayload, maxKo, maxDocName } = _computeCloudSizes();
+    _updateCloudSizeBadge(maxKo, maxDocName);
     if (maxKo > 950) {
       showToast(`⚠️ Document trop volumineux pour le cloud (${maxKo} Ko) — export manuel recommandé`, 6000);
       _fbSetStatus("error");
       return;
-    }
-    if (maxKo > _CLOUD_SIZE_WARN_KO) {
-      const warnKey = "tableauDeVie_v3_sizeWarnDay";
-      const todayStr = new Date().toISOString().slice(0, 10);
-      if (sessionStorage.getItem(warnKey) !== todayStr) {
-        sessionStorage.setItem(warnKey, todayStr);
-        showToast(`📦 Document cloud "${maxDocName}" à ${maxKo} Ko sur ~1000 Ko max — pense à en parler à Claude bientôt`, 7000);
-      }
     }
     await Promise.all([
       _fbDocRef("state").set(corePayload),
