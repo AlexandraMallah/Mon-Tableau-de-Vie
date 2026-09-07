@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1175</title>
+<title>Mon Tableau de Vie 🌿 · v1176</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7385,7 +7385,7 @@ function _renderProjFicheTasks(projId) {
   });
   const rows = sorted.length ? sorted.map(t => {
     const pct = taskProgress(t);
-    const progressColor = pct >= 100 ? '#4ade80' : `hsl(${Math.round(pct*1.2)},72%,52%)`;
+    const progressColor = _taskProgressColor(pct);
     const progressHtml = pct > 0 ? `<div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%;background:${progressColor};"></div></div>` : "";
     const pctBadge = pct > 0 && !t.done ? `<span class="task-pct-badge" style="color:${progressColor};background:${progressColor}22;">${pct}%</span>` : "";
     let dlText = "", dlClass = "";
@@ -9184,7 +9184,7 @@ function renderTasks() {
     const dlText = t.deadline ? `${isEvent ? "📅" : "⏰"} ${formatDeadline(t.deadline)}` : "";
     const tagHtml = project ? `<span class="task-project-tag">${escapeHtml(project.name)}</span>` : "";
     const pct = taskProgress(t);
-    const progressColor = pct >= 100 ? (document.body.classList.contains('t-serieux') ? '#3d8b78' : '#4ade80') : document.body.classList.contains('t-serieux') ? `hsl(${210 - Math.round(pct * 0.4)},60%,${40 + Math.round(pct * 0.08)}%)` : `hsl(${Math.round(pct * 1.2)}, 72%, 52%)`;
+    const progressColor = _taskProgressColor(pct);
     const progressHtml = pct > 0 ? `<div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%;background:${progressColor};"></div></div>` : "";
     const pctBadge = pct > 0 && !t.done ? `<span class="task-pct-badge" style="color:${progressColor};background:${progressColor}22;">${pct}%</span>` : "";
     const kindBadge = isEvent
@@ -9509,6 +9509,19 @@ function deleteTask(id) {
 
 /* ---- Édition de tâche ---- */
 /* ===== TASK PROGRESS & MILESTONES ===== */
+// Couleur de la barre de progression : rouge (0%) → vert (100%). En thème Sérieux, interpole entre
+// les teintes --red/--green du thème (terracotta → vert sauge) plutôt que les couleurs vives par défaut.
+function _taskProgressColor(pct) {
+  const isSerieux = document.body.classList.contains('t-serieux');
+  if (pct >= 100) return isSerieux ? '#3d8b78' : '#4ade80';
+  if (isSerieux) {
+    const from = [0xb3, 0x40, 0x40], to = [0x6a, 0x9e, 0x78]; // --red / --green du thème Sérieux
+    const t = Math.max(0, Math.min(1, pct / 100));
+    const [r, g, b] = from.map((c, i) => Math.round(c + (to[i] - c) * t));
+    return `rgb(${r},${g},${b})`;
+  }
+  return `hsl(${Math.round(pct * 1.2)},72%,52%)`;
+}
 function taskProgress(t) {
   if (t.done) return 100;
   if (t.milestones && t.milestones.length) {
@@ -9595,7 +9608,7 @@ function _getCurrentEditTask() {
   return state.work.postdocTasks.find(x => x.id === id);
 }
 function updateModalPreview(pct) {
-  const col = pct >= 100 ? (document.body.classList.contains('t-serieux') ? '#3d8b78' : '#4ade80') : document.body.classList.contains('t-serieux') ? `hsl(${210 - Math.round(pct * 0.4)},60%,${40 + Math.round(pct * 0.08)}%)` : `hsl(${Math.round(pct * 1.2)}, 72%, 52%)`;
+  const col = _taskProgressColor(pct);
   const bar = document.getElementById("taskEditPreviewBar");
   const val = document.getElementById("taskEditProgressVal");
   if (bar) { bar.style.width = pct + "%"; bar.style.background = pct > 0 ? col : "transparent"; }
