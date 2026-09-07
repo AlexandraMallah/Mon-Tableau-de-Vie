@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1166</title>
+<title>Mon Tableau de Vie 🌿 · v1167</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26281,18 +26281,29 @@ function _applyRemoteSnaps() {
   _fbSetStatus("ok");
 }
 
+const _CLOUD_SIZE_WARN_KO = 700; // ~70% de la limite Firestore (1024 Ko/document) — anticiper avant le blocage à 950
 async function _fbSaveNow() {
   if (!_fbUser || !_fbDb) return;
   try {
     const corePayload   = _makePayload(_coreForCloud());
     const workPayload   = _makePayload(_workForCloud());
     const biblioPayload = _makePayload(_biblioForCloud());
+    const _docNames = ["state", "work", "biblio"];
     const sizes = [corePayload, workPayload, biblioPayload].map(p => Math.round(JSON.stringify(p).length / 1024));
     const maxKo = Math.max(...sizes);
+    const maxDocName = _docNames[sizes.indexOf(maxKo)];
     if (maxKo > 950) {
       showToast(`⚠️ Document trop volumineux pour le cloud (${maxKo} Ko) — export manuel recommandé`, 6000);
       _fbSetStatus("error");
       return;
+    }
+    if (maxKo > _CLOUD_SIZE_WARN_KO) {
+      const warnKey = "tableauDeVie_v3_sizeWarnDay";
+      const todayStr = new Date().toISOString().slice(0, 10);
+      if (sessionStorage.getItem(warnKey) !== todayStr) {
+        sessionStorage.setItem(warnKey, todayStr);
+        showToast(`📦 Document cloud "${maxDocName}" à ${maxKo} Ko sur ~1000 Ko max — pense à en parler à Claude bientôt`, 7000);
+      }
     }
     await Promise.all([
       _fbDocRef("state").set(corePayload),
