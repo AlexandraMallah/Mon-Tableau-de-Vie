@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1163</title>
+<title>Mon Tableau de Vie 🌿 · v1164</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1903,7 +1903,7 @@
     <div class="header-actions">
       <button class="btn-icon" id="editModeBtn" onclick="toggleEditMode()" title="Activer le mode édition pour modifier l'application">✏️ Éditer</button>
       <button class="btn-icon" id="settingsBtn" onclick="openSettings()">⚙ Personnaliser</button>
-      <button class="btn-icon" onclick="openGestionModal()" style="background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
+      <button class="btn-icon" id="gestionBtn" onclick="openGestionModal()" style="display:none;background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
       <button class="btn-icon" onclick="cloudDiag()" title="Diagnostic sync" style="background:var(--lavender-soft);">🔍</button>
       <button class="btn-icon" onclick="openShortcutsEditor()" title="Gérer les raccourcis" style="background:var(--lavender-soft);">⚡</button>
       <!-- Thème visuel -->
@@ -25954,6 +25954,10 @@ function autoSyncCalIfNeeded() {
 setTimeout(autoSyncCalIfNeeded, 2000); // attends 2s après le chargement
 setInterval(() => { if (state.googleCal?.url) syncGoogleCal(true); }, 30 * 60 * 1000); // sync toutes les 30 min si page ouverte
 
+// Compte propriétaire de l'app : seul ce compte voit le panneau "🛠 Gestion" (infos dev/config
+// destinées à Claude — chemin de fichier local, liens GitHub — sans intérêt pour un autre utilisateur).
+const OWNER_EMAIL = "mallahfamille@gmail.com";
+
 /* =====================================================
    FIREBASE SYNC — synchronisation multi-appareils
    =====================================================
@@ -25993,6 +25997,8 @@ function _fbSetStatus(s) {
 function _fbUpdateUI(user) {
   const btn = document.getElementById("syncSignInBtn");
   const av  = document.getElementById("syncUserAvatar");
+  const gestionBtn = document.getElementById("gestionBtn");
+  if (gestionBtn) gestionBtn.style.display = (user && user.email === OWNER_EMAIL) ? "" : "none";
   if (!btn || !av) return;
   if (user) {
     btn.style.display = "none";
