@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1198</title>
+<title>Mon Tableau de Vie 🌿 · v1199</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10700,15 +10700,46 @@ const _EMOTION_HORMONE_DEFAULTS = {
 function _hormoneEmotionTags(e) { return e.hormones || _EMOTION_HORMONE_DEFAULTS[e.label] || []; }
 function _emotionsList() { return (state.emotions && state.emotions.length) ? state.emotions : EMOTIONS_DEFAULT; }
 function _emotionById(id) { return _emotionsList().find(e => e.id === id) || EMOTIONS_DEFAULT.find(e => e.id === id) || null; }
-function _emotionsForHormone(entry, hId) {
-  const names = [];
-  (entry.emotionLog || []).forEach(l => {
-    Object.keys(l.emotions || {}).forEach(id => {
-      const e = _emotionById(id);
-      if (e && _hormoneEmotionTags(e).includes(hId)) names.push(e.label);
+// Une émotion isolée, notée une seule fois même intensément, ne doit pas suffire à activer une
+// hormone toute la semaine. Elle ne compte que si : (1) chaque occurrence retenue a une intensité
+// suffisante (≥ 2/3 — une émotion "légère" ne compte pas), et (2) elle revient sur au moins
+// EMOTION_MIN_DAYS jours distincts des 7 derniers jours. Une fois ce seuil de récurrence atteint,
+// CHACUN de ces jours qualifiants est crédité (pas seulement "une fois par semaine").
+const EMOTION_MIN_INTENSITY = 2;
+const EMOTION_MIN_DAYS = 4;
+// Pré-calcule, pour chaque hormone, les jours (parmi last7) où une émotion taguée a suffisamment
+// récurré sur la semaine — { [hormoneId]: { [dk]: [labels] } }.
+function _computeEmotionDaysByHormone(last7) {
+  const tally = {}; // hId -> label -> Set(dk)
+  HORMONES.forEach(h => { tally[h.id] = {}; });
+  last7.forEach(d => {
+    const dk = todayKey(d);
+    const entry = state.history[dk] || {};
+    (entry.emotionLog || []).forEach(l => {
+      Object.entries(l.emotions || {}).forEach(([id, level]) => {
+        if ((Number(level) || 0) < EMOTION_MIN_INTENSITY) return;
+        const e = _emotionById(id);
+        if (!e) return;
+        _hormoneEmotionTags(e).forEach(hId => {
+          if (!tally[hId]) return;
+          if (!tally[hId][e.label]) tally[hId][e.label] = new Set();
+          tally[hId][e.label].add(dk);
+        });
+      });
     });
   });
-  return [...new Set(names)];
+  const byDay = {}; // hId -> dk -> [labels]
+  HORMONES.forEach(h => { byDay[h.id] = {}; });
+  Object.entries(tally).forEach(([hId, byLabel]) => {
+    Object.entries(byLabel).forEach(([label, daySet]) => {
+      if (daySet.size < EMOTION_MIN_DAYS) return; // pas assez récurrente cette semaine → ignorée
+      daySet.forEach(dk => {
+        if (!byDay[hId][dk]) byDay[hId][dk] = [];
+        byDay[hId][dk].push(label);
+      });
+    });
+  });
+  return byDay;
 }
 function _hormoneSourceReasons(key, entry, dk, socialRe, wellnessRe) {
   switch (key) {
@@ -10746,6 +10777,7 @@ function computeHormones() {
   const socialRe = /ami|amie|copain|copine|soirée|apéro|sortie|famille|maman|papa|parents|frère|sœur|soeur|frangine|frangin|mamie|papi|déjeuner|dejeuner|\bd[ée]j(?=[\s.]|$)|dîner|diner|\bd[îi]n(?=[\s.]|$)|brunch|repas|goûter|gouter|lunch|resto|restau|picnic|pique-nique|anniversaire|fête|fete|vacances|retrouvailles|week-end famille/i;
   // Soins bien-être (calendrier) → comptent en sérotonine (détente) et ocytocine (toucher/soin)
   const wellnessRe = /massage|spa|sauna|hammam|thalasso|cure|soin|réflexo|reflexo|relaxation|kiné|kine|ostéo|osteo|esthéti|estheti|institut|manucure|onglerie/i;
+  const emotionDaysByHormone = _computeEmotionDaysByHormone(last7);
 
   for (const d of last7) {
     const dk     = todayKey(d);
@@ -10768,8 +10800,9 @@ function computeHormones() {
         return hb.type === "numeric" ? (Number(v) || 0) > 0 : !!v;
       });
       reasons.push(...matchingHabits.map(hb => hb.name));
-      // Émotions notées ce jour-là et taguées pour cette hormone
-      reasons.push(..._emotionsForHormone(entry, h.id));
+      // Émotions taguées pour cette hormone, ce jour-là — seulement si l'émotion revient assez
+      // souvent dans la semaine (voir _computeEmotionDaysByHormone)
+      reasons.push(...(emotionDaysByHormone[h.id][dk] || []));
       // Sources automatiques activées pour cette hormone (mood, journal, calendrier, tâches…)
       _hormoneSourcesFor(h.id).forEach(key => reasons.push(..._hormoneSourceReasons(key, entry, dk, socialRe, wellnessRe)));
 
@@ -26270,7 +26303,7 @@ const HELP_TEXTS = {
       <ul style="padding-left:18px;margin:10px 0;">
         <li><strong>Activités</strong> — Chacune de tes activités (Activités → +Nouvelle) peut contribuer à une ou plusieurs hormones.</li>
         <li><strong>Habitudes</strong> — Idem pour tes habitudes personnalisées (Aujourd'hui → Mes habitudes).</li>
-        <li><strong>Émotions</strong> — Chaque émotion de ton picker (Aujourd'hui → Mes émotions), qu'elle soit par défaut ou ajoutée par toi, peut contribuer à une ou plusieurs hormones.</li>
+        <li><strong>Émotions</strong> — Chaque émotion de ton picker (Aujourd'hui → Mes émotions), qu'elle soit par défaut ou ajoutée par toi, peut contribuer à une ou plusieurs hormones. Pour éviter qu'un ressenti isolé compte pour toute la semaine, une émotion cochée ne compte que si elle est notée à intensité modérée ou forte (2/3 ou 3/3) sur au moins 4 jours des 7 derniers.</li>
         <li><strong>Autres sources</strong> — Des signaux automatiques détectés dans l'app : humeur, journal rempli, nuit de 7h+, événements du calendrier (social ou bien-être), tâche terminée, jalon de projet franchi.</li>
       </ul>
       <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
@@ -27570,7 +27603,8 @@ function _micPulse(on) {
     <div id="hcmActivities" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
     <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:10px;">HABITUDES QUI CONTRIBUENT</div>
     <div id="hcmHabits" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
-    <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:10px;">ÉMOTIONS QUI CONTRIBUENT</div>
+    <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:6px;">ÉMOTIONS QUI CONTRIBUENT</div>
+    <p style="font-size:11px;color:var(--ink-softer);margin:0 0 10px;line-height:1.5;">Pour éviter qu'un seul ressenti passager compte pour toute la semaine : une émotion cochée doit être notée à intensité au moins modérée (2/3 ou 3/3) sur au moins 4 jours des 7 derniers pour être prise en compte — et compte alors chacun de ces jours.</p>
     <div id="hcmEmotions" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
     <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:10px;">AUTRES SOURCES</div>
     <div id="hcmSources" style="display:flex;flex-direction:column;gap:8px;"></div>
