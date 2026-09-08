@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1201</title>
+<title>Mon Tableau de Vie 🌿 · v1202</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5998,6 +5998,12 @@ function migrate(s) {
         p.color = meta.color;
         p.bg    = meta.bg;
         if (!p.emoji) p.emoji = meta.emoji;
+      } else if (p.color && !p._pastelMigrated) {
+        // Projets créés avant le sélecteur pastel (ancien <input type="color"> libre) :
+        // adoucit une bonne fois la couleur enregistrée, comme pour les catégories de congés.
+        p.color = _pastelizeHex(p.color);
+        p.bg = p.color + "22";
+        p._pastelMigrated = true;
       }
       // Migration : champs fiche projet universelle
       if (!p.checklist) p.checklist = [];
@@ -9136,10 +9142,10 @@ const _PROJECT_COLORS = [
 // Convertit une couleur (ex : choisie via un <input type="color"> natif, qui permet
 // n'importe quelle teinte saturée) en une version pastel douce de faible intensité,
 // en gardant la teinte d'origine mais en bridant saturation/luminosité.
-function _pastelizeHex(hex) {
+function _hexToHsl(hex) {
   hex = String(hex || "").trim().replace("#", "");
   if (hex.length === 3) hex = hex.split("").map(c => c + c).join("");
-  if (!/^[0-9a-fA-F]{6}$/.test(hex)) return "#b8a5e8";
+  if (!/^[0-9a-fA-F]{6}$/.test(hex)) return null;
   const r = parseInt(hex.slice(0, 2), 16) / 255, g = parseInt(hex.slice(2, 4), 16) / 255, b = parseInt(hex.slice(4, 6), 16) / 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
   let h = 0, s = 0, l = (max + min) / 2;
@@ -9153,8 +9159,9 @@ function _pastelizeHex(hex) {
     }
     h /= 6;
   }
-  s = Math.min(s, 0.58);
-  l = Math.min(Math.max(l, 0.76), 0.86);
+  return { h, s, l };
+}
+function _hslToHex(h, s, l) {
   const hue2rgb = (p, q, t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1/6) return p + (q - p) * 6 * t; if (t < 1/2) return q; if (t < 2/3) return p + (q - p) * (2/3 - t) * 6; return p; };
   let r2, g2, b2;
   if (s === 0) { r2 = g2 = b2 = l; }
@@ -9165,6 +9172,20 @@ function _pastelizeHex(hex) {
   }
   const toHex = x => Math.round(x * 255).toString(16).padStart(2, "0");
   return "#" + toHex(r2) + toHex(g2) + toHex(b2);
+}
+// Palette pastel du thème Smooth : saturation/luminosité assez hautes et douces.
+function _pastelizeHex(hex) {
+  const hsl = _hexToHsl(hex);
+  if (!hsl) return "#b8a5e8";
+  return _hslToHex(hsl.h, Math.min(hsl.s, 0.58), Math.min(Math.max(hsl.l, 0.76), 0.86));
+}
+// Variante du même hue, mais plus sourde/mate (moins saturée, un peu moins claire) pour rester
+// cohérente avec la charte du thème Sérieux — utilisée pour les couleurs de projets/catégories
+// personnalisés qui n'ont pas de variante Sérieux dédiée à la main.
+function _serieuxPastelizeHex(hex) {
+  const hsl = _hexToHsl(hex);
+  if (!hsl) return "#8ab4d4";
+  return _hslToHex(hsl.h, Math.min(hsl.s, 0.32), Math.min(Math.max(hsl.l, 0.62), 0.72));
 }
 function _projectAutoColor() {
   const idx = state.work.postdocProjects.length % _PROJECT_COLORS.length;
@@ -19756,11 +19777,15 @@ function getTimeCats() {
   const isSerieux = document.body.classList.contains("t-serieux");
   const projects = (state.work?.postdocProjects || []).map(p => {
     const s = isSerieux && _seriousColors[p.id];
+    // Projets personnalisés (pas de variante Sérieux dédiée à la main) : on adapte à la volée
+    // la même teinte, en plus mate, pour rester dans la charte du thème actif.
+    const base = p.color || "#b8a5e8";
+    const custom = !_seriousColors[p.id] && isSerieux ? _serieuxPastelizeHex(base) : base;
     return {
       key: p.id,
       label: p.name,
       emoji: p.emoji || "📁",
-      color: s ? s.color : (p.color || "#b8a5e8"),
+      color: s ? s.color : custom,
       bg:    s ? s.bg    : (p.bg    || "#f0ebff")
     };
   });
