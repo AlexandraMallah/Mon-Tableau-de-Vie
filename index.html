@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1192</title>
+<title>Mon Tableau de Vie 🌿 · v1193</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10325,8 +10325,8 @@ function renderActivities() {
         <div class="activity-info">
           <div class="activity-name" style="display:flex;align-items:center;gap:6px;">
             ${escapeHtml(a.name)}
-            <span class="edit-only" onclick="_editActivity('${a.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Modifier">✏️</span>
-            <span class="edit-only" onclick="_deleteActivity('${a.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Supprimer">🗑️</span>
+            <span onclick="_editActivity('${a.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Modifier">✏️</span>
+            <span onclick="_deleteActivity('${a.id}')" style="font-size:11px;color:var(--ink-softer);cursor:pointer;" title="Supprimer">🗑️</span>
           </div>
           <div class="activity-meta">${(() => {
             if (!a.goal) return `${weekTotal} séance${weekTotal !== 1?"s":""} cette semaine`;
