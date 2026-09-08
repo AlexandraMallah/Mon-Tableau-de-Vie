@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1191</title>
+<title>Mon Tableau de Vie 🌿 · v1192</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3111,10 +3111,7 @@
       <div class="card" id="healthPillCard">
         <div class="card-row" style="margin-bottom:14px;align-items:flex-start;flex-wrap:wrap;gap:12px;">
           <div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
-              <h2 style="margin:0;">💊 Suivi pilule — <span id="pillNbLabel">90</span> jours</h2>
-              <button onclick="openPillConfigModal()" class="help-btn">⚙️ Réglages</button>
-            </div>
+            <h2 style="margin:0 0 6px;">💊 Suivi pilule — <span id="pillNbLabel">90</span> jours</h2>
             <div id="pillPackInfo" style="font-size:12px;color:var(--ink-soft);margin-bottom:6px;display:none;"></div>
             <div style="display:flex;gap:4px;">
               <button onclick="setPillNb(30)" id="pillBtn30" class="btn-soft" style="font-size:11px;padding:4px 8px;">30j</button>
@@ -3123,18 +3120,21 @@
               <button onclick="setPillNb('all')" id="pillBtnAll" class="btn-soft" style="font-size:11px;padding:4px 8px;">Tout</button>
             </div>
           </div>
-          <div style="display:flex;gap:14px;flex-wrap:wrap;">
-            <div style="text-align:center;">
-              <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Streak</div>
-              <strong id="pillStreakSante" style="font-size:20px;font-weight:700;color:#7c5cbf;">—</strong>
-            </div>
-            <div style="text-align:center;">
-              <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;"><span id="pillPctLabel">Ce mois</span></div>
-              <strong id="pillMonthPct" style="font-size:20px;font-weight:700;color:#4d9c7e;">—</strong>
-            </div>
-            <div style="text-align:center;">
-              <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Record</div>
-              <strong id="pillBestStreak" style="font-size:20px;font-weight:700;color:var(--ink-soft);">—</strong>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+            <button onclick="openPillConfigModal()" class="help-btn">⚙️ Réglages</button>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;">
+              <div style="text-align:center;">
+                <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Streak</div>
+                <strong id="pillStreakSante" style="font-size:20px;font-weight:700;color:#7c5cbf;">—</strong>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;"><span id="pillPctLabel">Ce mois</span></div>
+                <strong id="pillMonthPct" style="font-size:20px;font-weight:700;color:#4d9c7e;">—</strong>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Record</div>
+                <strong id="pillBestStreak" style="font-size:20px;font-weight:700;color:var(--ink-soft);">—</strong>
+              </div>
             </div>
           </div>
         </div>
@@ -3143,10 +3143,10 @@
           <span id="pillLabelLeft" style="font-size:11px;color:var(--ink-softer);">← il y a 90 jours</span><span style="flex:1;"></span><span style="font-size:11px;color:var(--ink-softer);">aujourd'hui →</span>
         </div>
         <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--ink-softer);flex-wrap:wrap;">
-          <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#c9b6f0;display:inline-block;"></span>Prise</span>
-          <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#ece6f5;display:inline-block;"></span>Oubliée</span>
-          <span id="pillLegendPause" style="display:none;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#e8e2d8;display:inline-block;"></span>Pause</span>
-          <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#7c5cbf;display:inline-block;"></span>Aujourd'hui</span>
+          <span style="display:inline-flex;align-items:center;gap:5px;"><span id="pillLegendDotPrise" style="width:12px;height:12px;border-radius:3px;background:#c9b6f0;display:inline-block;"></span>Prise</span>
+          <span style="display:inline-flex;align-items:center;gap:5px;"><span id="pillLegendDotOubliee" style="width:12px;height:12px;border-radius:3px;background:#ece6f5;display:inline-block;"></span>Oubliée</span>
+          <span id="pillLegendPause" style="display:none;align-items:center;gap:5px;"><span id="pillLegendDotPause" style="width:12px;height:12px;border-radius:3px;background:#e8e2d8;display:inline-block;"></span>Pause</span>
+          <span style="display:inline-flex;align-items:center;gap:5px;"><span id="pillLegendDotToday" style="width:12px;height:12px;border-radius:3px;background:#7c5cbf;display:inline-block;"></span>Aujourd'hui</span>
         </div>
         <div id="pillInsight" style="font-size:12px;color:var(--ink-soft);background:var(--bg-1);border-radius:10px;padding:8px 12px;margin-top:10px;display:none;"></div>
       </div>
@@ -12937,6 +12937,16 @@ function renderPillSante() {
   const infoEl = document.getElementById("pillPackInfo");
   const legendPause = document.getElementById("pillLegendPause");
   if (legendPause) legendPause.style.display = cfg ? "inline-flex" : "none";
+  // Légende : mêmes couleurs que le calendrier ci-dessous, adaptées au thème actif
+  const _isLegendS = document.body.classList.contains("t-serieux");
+  const legendDotPrise   = document.getElementById("pillLegendDotPrise");
+  const legendDotOubliee = document.getElementById("pillLegendDotOubliee");
+  const legendDotPause   = document.getElementById("pillLegendDotPause");
+  const legendDotToday   = document.getElementById("pillLegendDotToday");
+  if (legendDotPrise)   legendDotPrise.style.background   = _isLegendS ? "#8ab4d4" : "#c9b6f0";
+  if (legendDotOubliee) legendDotOubliee.style.background = _isLegendS ? "#d4e8f4" : "#ece6f5";
+  if (legendDotPause)   legendDotPause.style.background   = _isLegendS ? "#d8d0c0" : "#e8e2d8";
+  if (legendDotToday)   legendDotToday.style.background   = _isLegendS ? "#6b9ec4" : "#7c5cbf";
   if (infoEl) {
     const dayInfo = cfg ? _pillDayInfo(today) : null;
     if (dayInfo && dayInfo.phase === "active") {
