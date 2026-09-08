@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1202</title>
+<title>Mon Tableau de Vie 🌿 · v1203</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19472,6 +19472,37 @@ function closeGoogleCalModal() {
 document.getElementById("gcalModal")?.addEventListener("click", e => {
   if (e.target.id === "gcalModal" && _modalMouseDownTarget === e.target) closeGoogleCalModal();
 });
+// Liste unique des proxys CORS utilisée par tous les points de synchro Google Agenda (avant, ce
+// même cascade existait en 3 copies légèrement différentes qui divergeaient au fil du temps —
+// l'une avait même un format d'URL cassé pour corsproxy.io, "?<url>" au lieu de "?url=<url>").
+// cors-anywhere.herokuapp.com retiré : ce service de démo refuse toute origine non whitelistée
+// depuis des années, chaque tentative n'était qu'un délai d'attente garanti pour rien.
+const ICS_CORS_PROXIES = [
+  { build: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, json: false },
+  { build: u => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`, json: false },
+  { build: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`, json: false },
+  { build: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, json: true },
+  { build: u => `https://thingproxy.freeboard.io/fetch/${u}`, json: false },
+];
+// Essaie chaque proxy (sur `passes` tours) jusqu'à obtenir un contenu ICS valide (BEGIN:VEVENT).
+// Retourne le texte ICS, ou null si tout a échoué.
+async function _fetchIcsViaProxies(url, { timeoutMs = 25000, passes = 1, cacheBust = false } = {}) {
+  for (let pass = 0; pass < passes; pass++) {
+    for (const proxy of ICS_CORS_PROXIES) {
+      const target = cacheBust ? url + (url.includes("?") ? "&" : "?") + "_cb=" + Date.now() : url;
+      try {
+        const r = await fetch(proxy.build(target), { cache: "no-store", signal: AbortSignal.timeout(timeoutMs) });
+        if (r.ok) {
+          let tx = await r.text();
+          if (proxy.json) { try { tx = JSON.parse(tx).contents || ""; } catch (_) { tx = ""; } }
+          if (/BEGIN:VEVENT/i.test(tx)) return tx;
+        }
+      } catch (_) { /* proxy suivant */ }
+    }
+    if (pass < passes - 1) await new Promise(res => setTimeout(res, 1000));
+  }
+  return null;
+}
 async function saveGoogleCal() {
   const url = document.getElementById("gcalUrlInput").value.trim();
   const result = document.getElementById("gcalTestResult");
@@ -19480,30 +19511,7 @@ async function saveGoogleCal() {
   result.style.display = "";
   result.style.background = "var(--lavender-soft)";
   result.innerHTML = "⏳ Connexion en cours…";
-  const proxies = [
-    u => ({ url: `https://corsproxy.io/?url=${encodeURIComponent(u)}`, json: false }),
-    u => ({ url: `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, json: true }),
-    u => ({ url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`, json: false }),
-    u => ({ url: `https://proxy.cors.sh/${u}`, json: false }),
-    u => ({ url: `https://thingproxy.freeboard.io/fetch/${u}`, json: false }),
-    u => ({ url: `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, json: false }),
-    u => ({ url: `https://cors-anywhere.herokuapp.com/${u}`, json: false }),
-  ];
-  let text = null;
-  // Ne pas ajouter de cache-buster pour l'URL de base (certains proxies refusent les URLs avec trop de paramètres)
-  const bustedUrl = url;
-  for (const proxyFn of proxies) {
-    result.innerHTML = `⏳ Test proxy ${proxies.indexOf(proxyFn) + 1}/${proxies.length}…`;
-    try {
-      const { url: proxyUrl, json } = proxyFn(bustedUrl);
-      const r = await fetch(proxyUrl, { cache: "no-store", signal: AbortSignal.timeout(25000) });
-      if (r.ok) {
-        let tx = await r.text();
-        if (json) { try { tx = JSON.parse(tx).contents || ""; } catch (_) { tx = ""; } }
-        if (/BEGIN:VEVENT/i.test(tx)) { text = tx; break; }
-      }
-    } catch (_) {}
-  }
+  const text = await _fetchIcsViaProxies(url, { timeoutMs: 25000, passes: 1 });
   try {
     if (!text) throw new Error("Tous les proxies ont échoué. Vérifie l'URL et réessaie.");
     const parsed = parseICS(text);
@@ -19570,31 +19578,7 @@ async function syncGoogleCal(silent = false) {
   const url = state.googleCal?.url;
   if (!url) return;
   if (!silent) showToast("🔄 Synchronisation Google Agenda…");
-  // Proxies CORS testés en cascade — mis à jour août 2026
-  const proxies = [
-    { build: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`, json: false },
-    { build: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, json: true },
-    { build: u => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`, json: false },
-    { build: u => `https://proxy.cors.sh/${u}`, json: false },
-    { build: u => `https://thingproxy.freeboard.io/fetch/${u}`, json: false },
-    { build: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, json: false },
-    { build: u => `https://cors-anywhere.herokuapp.com/${u}`, json: false },
-  ];
-  let text = null;
-  for (let pass = 0; pass < 2 && !text; pass++) {
-    for (const proxy of proxies) {
-      const bustedUrl = url + (url.includes("?") ? "&" : "?") + "_cb=" + Date.now();
-      try {
-        const r = await fetch(proxy.build(bustedUrl), { signal: AbortSignal.timeout(25000), cache: "no-store" });
-        if (r.ok) {
-          let tx = await r.text();
-          if (proxy.json) { try { tx = JSON.parse(tx).contents || ""; } catch (_) { tx = ""; } }
-          if (/BEGIN:VEVENT/i.test(tx)) { text = tx; break; }
-        }
-      } catch (_) { /* proxy suivant */ }
-    }
-    if (!text && pass === 0) await new Promise(res => setTimeout(res, 1000));
-  }
+  const text = await _fetchIcsViaProxies(url, { timeoutMs: 25000, passes: 2, cacheBust: true });
   if (!text) {
     // En synchro automatique (silencieuse), on ne spamme pas d'erreur rouge : les événements déjà
     // chargés restent affichés. On ne prévient que lors d'une synchro manuelle.
@@ -24476,17 +24460,7 @@ async function detectPlantsFromGoogle() {
   const url = state.googleCal?.url;
   if (!url) { document.getElementById("icsFilePlants")?.click(); return; }
   showToast("🔍 Détection des plantes depuis Google Agenda…");
-  const proxies = [
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://thingproxy.freeboard.io/fetch/${u}`,
-  ];
-  const busted = url + (url.includes("?") ? "&" : "?") + "_cb=" + Date.now();
-  let text = null;
-  for (const proxy of proxies) {
-    try { const r = await fetch(proxy(busted), { signal: AbortSignal.timeout(15000), cache: "no-store" }); if (r.ok) { const tx = await r.text(); if (/BEGIN:VEVENT/i.test(tx)) { text = tx; break; } } } catch (_) {}
-  }
+  const text = await _fetchIcsViaProxies(url, { timeoutMs: 15000, passes: 1, cacheBust: true });
   if (!text) { showToast("❌ Impossible de lire Google Agenda. Réessaie ou utilise un fichier .ics."); return; }
   try { _runPlantDetection(parseICS(text)); } catch (err) { alert("Erreur de lecture : " + err.message); }
 }
