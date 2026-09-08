@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1189</title>
+<title>Mon Tableau de Vie 🌿 · v1190</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -742,7 +742,7 @@
   .add-milestone-row button { padding: 7px 12px; border-radius: 10px; background: var(--lavender-soft); border: 1px solid var(--lavender); color: var(--ink); cursor: pointer; font-size: 13px; font-family: inherit; white-space: nowrap; }
 
   .add-task-form {
-    display: grid; grid-template-columns: 2fr auto auto auto auto; gap: 8px;
+    display: flex; flex-wrap: wrap; gap: 6px;
     background: #faf8fd; padding: 12px; border-radius: 14px; margin-top: 14px;
     align-items: center;
   }
@@ -751,6 +751,17 @@
     font-family: inherit; font-size: 13px; background: white; color: var(--ink);
   }
   .add-task-form input:focus, .add-task-form select:focus { outline: 2px solid var(--lilac); }
+  /* Chaque champ garde sa propre taille naturelle au lieu de partager des colonnes de
+     grille avec les boutons de la ligne du dessous (cause de boutons "géants" hérités). */
+  .add-task-form #newTaskName     { flex: 1 1 130px; min-width: 0; }
+  .add-task-form #newTaskProject  { flex: 0 1 100px; min-width: 0; }
+  .add-task-form #addSectionBtn   { flex: 0 0 auto; }
+  .add-task-form #newTaskPriority { flex: 0 1 100px; min-width: 0; }
+  .add-task-form #newTaskDeadline { flex: 0 1 120px; min-width: 0; }
+  .add-task-form #newKindTask,
+  .add-task-form #newKindEvent    { flex: 0 0 auto; }
+  .add-task-form .btn-primary     { flex: 0 0 auto; }
+  .add-task-form .mobile-break    { display: none; }
 
   /* Kanban */
   .kanban {
@@ -1593,18 +1604,21 @@
     .add-task-form {
       display: flex; flex-wrap: wrap; gap: 6px;
     }
+    /* Séparateurs invisibles qui forcent un retour à la ligne entre les groupes
+       de champs (sinon tout essaie de tenir sur une ligne et se réduit à rien). */
+    .add-task-form .mobile-break { display: block; flex-basis: 100%; width: 0; height: 0; }
     /* Ligne 1 : champ texte pleine largeur */
     .add-task-form #newTaskName { flex: 0 0 100%; }
     /* Ligne 2 : section (grandit) + bouton ＋ (compact) */
-    .add-task-form #newTaskProject { flex: 1 1 0; min-width: 0; font-size: 12px; padding: 8px 8px; }
+    .add-task-form #newTaskProject { flex: 1 1 0; min-width: 70px; font-size: 12px; padding: 8px 8px; }
     .add-task-form #addSectionBtn  { flex: 0 0 auto; padding: 8px 14px; }
     /* Ligne 3 : priorité + date côte à côte */
-    .add-task-form #newTaskPriority   { flex: 1 1 0; min-width: 0; font-size: 12px; padding: 8px 6px; }
-    .add-task-form #newTaskDeadline   { flex: 1 1 0; min-width: 0; font-size: 12px; padding: 8px 6px; }
+    .add-task-form #newTaskPriority   { flex: 1 1 0; min-width: 90px; font-size: 12px; padding: 8px 6px; }
+    .add-task-form #newTaskDeadline   { flex: 1 1 0; min-width: 110px; font-size: 12px; padding: 8px 6px; }
     /* Ligne 4 : toggles (compacts) + Ajouter (grandit) */
     .add-task-form #newKindTask,
     .add-task-form #newKindEvent { flex: 0 0 auto; padding: 8px 12px; font-size: 14px; }
-    .add-task-form .btn-primary   { flex: 1 1 0; }
+    .add-task-form .btn-primary   { flex: 1 1 0; min-width: 90px; }
 
     /* === Plantes : 2 lignes sur mobile === */
     .plant-row { flex-wrap: wrap; gap: 8px; }
@@ -2585,6 +2599,7 @@
               <input type="text" id="newTaskName" placeholder="Nouvelle tâche…" onkeydown="if(event.key==='Enter')addTask()" />
               <select id="newTaskProject"></select>
               <button type="button" title="Gérer mes projets" onclick="openTimeCatsModal()" style="background:var(--lavender-soft);border:1px solid var(--lavender);color:var(--lavender);border-radius:8px;padding:4px 9px;font-size:14px;cursor:pointer;font-weight:700;line-height:1;flex-shrink:0;" id="addSectionBtn">＋</button>
+              <span class="mobile-break"></span>
               <select id="newTaskPriority">
                 <option value="urgent">🚨 Urgent</option>
                 <option value="high">Priorité haute</option>
@@ -2592,11 +2607,11 @@
                 <option value="low">Priorité faible</option>
               </select>
               <input type="date" id="newTaskDeadline" />
+              <span class="mobile-break"></span>
               <button type="button" id="newKindTask" class="kind-toggle active is-task" onclick="setNewTaskKind('task')" title="À faire">📌</button>
               <button type="button" id="newKindEvent" class="kind-toggle" onclick="setNewTaskKind('event')" title="Événement prévu">📅</button>
               <button class="btn-primary" onclick="addTask()">Ajouter</button>
             </div>
-            <div id="customSectionChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:0;"></div>
           </div>
           <div class="tasks-right-col">
             <div class="deadline-cal-wrap">
