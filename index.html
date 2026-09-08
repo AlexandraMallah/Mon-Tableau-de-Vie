@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1197</title>
+<title>Mon Tableau de Vie 🌿 · v1198</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10664,7 +10664,6 @@ const HORMONE_AUTO_SOURCES = [
   { key: "mood",             emoji: "😊", label: "Humeur ≥ 4/5 dans la journée" },
   { key: "journal",          emoji: "📓", label: "Entrée de journal remplie" },
   { key: "sleep",            emoji: "😴", label: "Nuit de 7h ou plus" },
-  { key: "emotions",         emoji: "💛", label: "Émotion positive liée à cette hormone (motivée, sereine, amoureuse…)" },
   { key: "calendarSocial",   emoji: "📅", label: "Événement calendrier social (ami, famille, sortie…)" },
   { key: "calendarWellness", emoji: "📅", label: "Événement calendrier bien-être (spa, massage, soin…)" },
   { key: "tasksDone",        emoji: "✅", label: "Tâche terminée dans la journée" },
@@ -10684,10 +10683,13 @@ function _hormoneSourcesFor(hId) {
 // "h-lecture" comptait pour la dopamine avant que ce système existe — préservé par défaut.
 function _hormoneHabitTags(h) { return h.hormones || (h.id === "h-lecture" ? ["dopamine"] : []); }
 function _hormoneEvOnDay(e, dk) { try { return _eventDays(e).includes(dk); } catch (_) { return e.date === dk; } }
-// Émotions (libellé féminin de base, comme _EM_GENDER_MAP) associées à chaque hormone — seules les
-// émotions plutôt positives sont mappées ; les émotions négatives (triste, stressée, en colère…) ne
-// comptent jamais pour aucune hormone.
-const _EMOTION_HORMONE_MAP = {
+// Émotions : chaque émotion (par défaut ou ajoutée par l'utilisatrice) est listée individuellement
+// dans les réglages de chaque hormone, comme pour les activités/habitudes — pas de case unique
+// "émotion positive" opaque. _EMOTION_HORMONE_DEFAULTS ne sert qu'à pré-cocher les émotions du
+// picker suggéré (libellé féminin de base, comme _EM_GENDER_MAP) tant que l'utilisatrice n'a pas
+// choisi elle-même ; une émotion totalement inédite démarre décochée partout, comme une nouvelle
+// activité sans tag.
+const _EMOTION_HORMONE_DEFAULTS = {
   "Motivée": ["dopamine"], "Confiante": ["dopamine"], "Excitée": ["dopamine"],
   "Inspirée": ["dopamine"], "Enthousiaste": ["dopamine"],
   "Contente": ["serotonine"], "Sereine": ["serotonine"], "Paisible": ["serotonine"],
@@ -10695,26 +10697,24 @@ const _EMOTION_HORMONE_MAP = {
   "Amoureuse": ["ocytocine"], "Reconnaissante": ["ocytocine"], "Émue": ["ocytocine"],
   "Rayonnante": ["ocytocine"], "Joyeuse": ["ocytocine", "serotonine"], "Émerveillée": ["ocytocine", "serotonine"],
 };
-function _emotionLabelById(id) {
-  const list = (state.emotions && state.emotions.length) ? state.emotions : EMOTIONS_DEFAULT;
-  return (list.find(e => e.id === id) || EMOTIONS_DEFAULT.find(e => e.id === id))?.label || null;
-}
+function _hormoneEmotionTags(e) { return e.hormones || _EMOTION_HORMONE_DEFAULTS[e.label] || []; }
+function _emotionsList() { return (state.emotions && state.emotions.length) ? state.emotions : EMOTIONS_DEFAULT; }
+function _emotionById(id) { return _emotionsList().find(e => e.id === id) || EMOTIONS_DEFAULT.find(e => e.id === id) || null; }
 function _emotionsForHormone(entry, hId) {
   const names = [];
   (entry.emotionLog || []).forEach(l => {
     Object.keys(l.emotions || {}).forEach(id => {
-      const label = _emotionLabelById(id);
-      if (label && (_EMOTION_HORMONE_MAP[label] || []).includes(hId)) names.push(label);
+      const e = _emotionById(id);
+      if (e && _hormoneEmotionTags(e).includes(hId)) names.push(e.label);
     });
   });
   return [...new Set(names)];
 }
-function _hormoneSourceReasons(key, entry, dk, socialRe, wellnessRe, hId) {
+function _hormoneSourceReasons(key, entry, dk, socialRe, wellnessRe) {
   switch (key) {
     case "mood": return (entry.mood || 0) >= 4 ? [`humeur ${entry.mood}/5`] : [];
     case "journal": return (entry.journal || "").trim() ? ["journal"] : [];
     case "sleep": { const dur = calcSleepDuration(entry.bedtime, entry.wakeTime); return (dur != null && dur >= 7) ? [`sommeil ${dur}h`] : []; }
-    case "emotions": return _emotionsForHormone(entry, hId).map(l => `émotion : ${l.toLowerCase()}`);
     case "calendarSocial": return state.calEvents.filter(e => _hormoneEvOnDay(e, dk) && socialRe.test(e.title || "")).map(e => e.title || "événement social");
     case "calendarWellness": return state.calEvents.filter(e => _hormoneEvOnDay(e, dk) && wellnessRe.test(e.title || "")).map(e => e.title || "soin");
     case "tasksDone": return (state.work?.postdocTasks || []).filter(t => t.done && t.completedAt === dk).map(t => `✓ ${(t.title||"tâche").slice(0,22)}`);
@@ -10768,8 +10768,10 @@ function computeHormones() {
         return hb.type === "numeric" ? (Number(v) || 0) > 0 : !!v;
       });
       reasons.push(...matchingHabits.map(hb => hb.name));
+      // Émotions notées ce jour-là et taguées pour cette hormone
+      reasons.push(..._emotionsForHormone(entry, h.id));
       // Sources automatiques activées pour cette hormone (mood, journal, calendrier, tâches…)
-      _hormoneSourcesFor(h.id).forEach(key => reasons.push(..._hormoneSourceReasons(key, entry, dk, socialRe, wellnessRe, h.id)));
+      _hormoneSourcesFor(h.id).forEach(key => reasons.push(..._hormoneSourceReasons(key, entry, dk, socialRe, wellnessRe)));
 
       const active = reasons.length > 0;
       res[h.id].days.push({ dk, label, active, reasons });
@@ -10922,6 +10924,10 @@ function _openHormoneConfig(hId) {
     const checked = _hormoneHabitTags(hb).includes(hId);
     return _hcmCheckboxRow(checked, `${hb.emoji||"✨"} ${escapeHtml(hb.name)}`, `_toggleHormoneHabit('${hb.id}','${hId}')`);
   }).join("") || `<p style="color:var(--ink-softer);font-size:13px;">Aucune habitude personnalisée. Ajoute-en dans Aujourd'hui → Mes habitudes.</p>`;
+  document.getElementById("hcmEmotions").innerHTML = _emotionsList().map(e => {
+    const checked = _hormoneEmotionTags(e).includes(hId);
+    return _hcmCheckboxRow(checked, `${e.emoji||"💛"} ${escapeHtml(e.label)}`, `_toggleHormoneEmotion('${e.id}','${hId}')`);
+  }).join("") || `<p style="color:var(--ink-softer);font-size:13px;">Aucune émotion. Ajoute-en depuis Aujourd'hui → Mes émotions.</p>`;
   const enabledSources = _hormoneSourcesFor(hId);
   document.getElementById("hcmSources").innerHTML = HORMONE_AUTO_SOURCES.map(s =>
     _hcmCheckboxRow(enabledSources.includes(s.key), `${s.emoji} ${s.label}`, `_toggleHormoneSource('${s.key}','${hId}')`)
@@ -10945,6 +10951,17 @@ function _toggleHormoneHabit(habitId, hId) {
   const tags = _hormoneHabitTags(hb).slice();
   if (tags.includes(hId)) hb.hormones = tags.filter(x => x !== hId);
   else { tags.push(hId); hb.hormones = tags; }
+  saveState();
+  _openHormoneConfig(hId);
+  renderHormones();
+}
+function _toggleHormoneEmotion(emotionId, hId) {
+  if (!state.emotions || !state.emotions.length) state.emotions = EMOTIONS_DEFAULT.map(e => ({ ...e }));
+  const e = state.emotions.find(x => x.id === emotionId);
+  if (!e) return;
+  const tags = _hormoneEmotionTags(e).slice();
+  if (tags.includes(hId)) e.hormones = tags.filter(x => x !== hId);
+  else { tags.push(hId); e.hormones = tags; }
   saveState();
   _openHormoneConfig(hId);
   renderHormones();
@@ -26249,14 +26266,15 @@ const HELP_TEXTS = {
         <li><strong>Cliquer un pétale (mode normal)</strong> — Voir le détail jour par jour et ce qui a compté chaque jour.</li>
         <li><strong>Cliquer une hormone (mode édition)</strong> — Ouvre ses réglages : tu choisis toi-même, avec des cases à cocher, tout ce qui doit compter pour <em>cette</em> hormone précise.</li>
       </ul>
-      <p>Dans les réglages d'une hormone, trois listes :</p>
+      <p>Dans les réglages d'une hormone, quatre listes :</p>
       <ul style="padding-left:18px;margin:10px 0;">
         <li><strong>Activités</strong> — Chacune de tes activités (Activités → +Nouvelle) peut contribuer à une ou plusieurs hormones.</li>
         <li><strong>Habitudes</strong> — Idem pour tes habitudes personnalisées (Aujourd'hui → Mes habitudes).</li>
-        <li><strong>Autres sources</strong> — Des signaux automatiques détectés dans l'app : humeur, journal rempli, nuit de 7h+, émotions notées, événements du calendrier (social ou bien-être), tâche terminée, jalon de projet franchi.</li>
+        <li><strong>Émotions</strong> — Chaque émotion de ton picker (Aujourd'hui → Mes émotions), qu'elle soit par défaut ou ajoutée par toi, peut contribuer à une ou plusieurs hormones.</li>
+        <li><strong>Autres sources</strong> — Des signaux automatiques détectés dans l'app : humeur, journal rempli, nuit de 7h+, événements du calendrier (social ou bien-être), tâche terminée, jalon de projet franchi.</li>
       </ul>
       <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
-        💡 <strong>Tout nouvel élément est proposé automatiquement.</strong> Dès que tu crées une nouvelle activité ou une nouvelle habitude ailleurs dans l'app, elle apparaît dans ces listes prête à être cochée — comme pour les Piliers de vie. Les cases déjà cochées reflètent ce qui compte <em>actuellement</em> ; tout le reste attend que tu l'actives si tu le souhaites.
+        💡 <strong>Tout nouvel élément est proposé automatiquement.</strong> Dès que tu crées une nouvelle activité, une nouvelle habitude ou une nouvelle émotion ailleurs dans l'app, elle apparaît dans ces listes prête à être cochée — comme pour les Piliers de vie. Les cases déjà cochées reflètent ce qui compte <em>actuellement</em> ; tout le reste attend que tu l'actives si tu le souhaites.
       </div>`
   },
 };
@@ -27552,6 +27570,8 @@ function _micPulse(on) {
     <div id="hcmActivities" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
     <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:10px;">HABITUDES QUI CONTRIBUENT</div>
     <div id="hcmHabits" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+    <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:10px;">ÉMOTIONS QUI CONTRIBUENT</div>
+    <div id="hcmEmotions" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
     <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:10px;">AUTRES SOURCES</div>
     <div id="hcmSources" style="display:flex;flex-direction:column;gap:8px;"></div>
   </div>
