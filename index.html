@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1190</title>
+<title>Mon Tableau de Vie 🌿 · v1191</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26479,6 +26479,13 @@ function _mergeFromCloud(remote) {
         localLog.forEach(le => { if (!mergedLog.find(ce => ce.time === le.time)) mergedLog.push(le); });
         mergedLog.sort((a, b) => a.time.localeCompare(b.time));
         safe.emotionLog = mergedLog;
+      } else if (k === 'weight' || k === 'bodyFat' || k === 'muscleMass') {
+        // Poids/composition saisis aujourd'hui : une valeur locale ne doit jamais disparaître
+        // à cause d'une synchro (ex: un autre appareil/onglet encore sur une version plus
+        // ancienne qui sauvegarde autre chose et écrase le cloud entre-temps) — le local
+        // l'emporte tant qu'il a une valeur, même si le cloud en a une aussi (potentiellement
+        // obsolète). Voir plainte récurrente "mon poids continue de disparaître".
+        if (v !== null && v !== undefined && v !== '' && !(typeof v === 'number' && v === 0)) safe[k] = v;
       } else if (safe[k] == null || safe[k] === '' || safe[k] === 0 || (Array.isArray(safe[k]) && safe[k].length === 0)) {
         // Cloud n'a pas de valeur → garder le local
         if (v !== null && v !== undefined && v !== '' &&
