@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1187</title>
+<title>Mon Tableau de Vie 🌿 · v1188</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13017,7 +13017,9 @@ function renderHabitsTracking() {
     const spanFull = isOdd && hIdx === habits.length - 1;
     const gridSpan = spanFull ? 'grid-column:1/-1;' : '';
     // wrap chaque habitude dans un conteneur qui gère le span
-    const _wrapStart = `<div style="${gridSpan}">`;
+    // min-width:0 empêche le contenu (ex: barres du graphique numérique) de forcer
+    // la colonne de grille à s'élargir au-delà de l'écran sur mobile.
+    const _wrapStart = `<div style="min-width:0;${gridSpan}">`;
     const _wrapEnd = `</div>`;
     h = h; // reassign suppressed warning
     const isNumeric = h.type === "numeric";
@@ -13067,7 +13069,7 @@ function renderHabitsTracking() {
     } else {
       // Mini barres CSS (numérique)
       const maxVal = Math.max(target * 1.5, ...days.map(dk => Number(state.history[dk]?.habits?.[h.id]||0)));
-      gridHtml = `<div style="display:flex;align-items:flex-end;gap:2px;height:48px;position:relative;">` +
+      gridHtml = `<div style="display:flex;align-items:flex-end;gap:2px;height:48px;position:relative;overflow-x:auto;">` +
         `<div style="position:absolute;bottom:${Math.round((target/maxVal)*100)}%;left:0;right:0;border-top:1.5px dashed ${col};opacity:0.7;pointer-events:none;"></div>` +
         days.map(dk => {
           const val = Number(state.history[dk]?.habits?.[h.id]||0);
@@ -13157,7 +13159,13 @@ function renderCustomSymptomsSante() {
   const nb = _symptomNb === 0 ? _symptomAllDays() : _symptomNb;
   const titleEl = document.getElementById("customSymptomsSanteTitle");
   if (titleEl) titleEl.textContent = `🩺 Suivi symptômes — ${_symptomNb === 0 ? "tout (" + nb + "j)" : nb + " jours"}`;
-  const levelColors = ["#aee0c8","#d4edbc","#ffe0a0","#ffb880","#ff9090"];
+  const _isSymS = document.body.classList.contains("t-serieux");
+  const levelColors = _isSymS
+    ? ["#88a890","#a3b787","#c8b890","#c39868","#b34040"]
+    : ["#aee0c8","#d4edbc","#ffe0a0","#ffb880","#ff9090"];
+  const symGood = _isSymS ? "#88a890" : "#aee0c8";
+  const symBad  = _isSymS ? "#b34040" : "#ff9090";
+  const symLavender = _isSymS ? "#6b9ec4" : "#c9b6f0";
   const dates30 = lastDates(nb);
   const todayK = todayKey();
   // Détruire anciens charts pour éviter fuite mémoire
@@ -13184,16 +13192,16 @@ function renderCustomSymptomsSante() {
         const hasVal = val !== undefined && val !== null;
         let bg;
         if (!hasVal) bg = "var(--line)";
-        else if (sym.type === "boolean") bg = val ? "#aee0c8" : "#ff9090";
-        else if (sym.type === "rating") bg = `hsl(${Math.round(120 - (val-1)*24)},60%,72%)`;
+        else if (sym.type === "boolean") bg = val ? symGood : symBad;
+        else if (sym.type === "rating") bg = _isSymS ? `hsl(${Math.round(120 - (val-1)*24)},38%,55%)` : `hsl(${Math.round(120 - (val-1)*24)},60%,72%)`;
         else bg = levelColors[Math.min(4, Number(val) || 0)];
         const isToday = k === todayK;
         const lbl = d.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}) + (hasVal ? " · " + val : "");
         return `<div data-tip="${lbl}" onmouseenter="showHoverTip(event,this.dataset.tip)" onmousemove="moveHoverTip(event)" onmouseleave="hideHoverTip()" style="width:16px;height:16px;border-radius:3px;flex-shrink:0;background:${bg};${isToday?"outline:2px solid var(--lavender);outline-offset:1px;":""}"></div>`;
       }).join("");
       const legend = sym.type === "boolean"
-        ? `<span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:#aee0c8;display:inline-block;"></span>Oui</span><span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:#ff9090;display:inline-block;"></span>Non</span>`
-        : `<span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:#aee0c8;display:inline-block;"></span>Bien</span><span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:#ff9090;display:inline-block;"></span>Intense</span>`;
+        ? `<span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:${symGood};display:inline-block;"></span>Oui</span><span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:${symBad};display:inline-block;"></span>Non</span>`
+        : `<span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:${symGood};display:inline-block;"></span>Bien</span><span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:${symBad};display:inline-block;"></span>Intense</span>`;
       return `<div>${header}<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;">${dotsHtml}</div>
         <div style="display:flex;gap:8px;font-size:10px;color:var(--ink-softer);">${legend}<span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--line);display:inline-block;"></span>Non renseigné</span></div>${sep}</div>`;
     }
@@ -13210,7 +13218,7 @@ function renderCustomSymptomsSante() {
     });
     _symSanteCharts[sym.id] = new Chart(canvas, {
       type: "line",
-      data: { labels, datasets: [{ label: sym.name, data, borderColor: "#c9b6f0", backgroundColor: "rgba(201,182,240,0.12)", pointBackgroundColor: "#c9b6f0", pointRadius: 4, fill: true, tension: 0.3, spanGaps: true }] },
+      data: { labels, datasets: [{ label: sym.name, data, borderColor: symLavender, backgroundColor: hexToRgba(symLavender, 0.12), pointBackgroundColor: symLavender, pointRadius: 4, fill: true, tension: 0.3, spanGaps: true }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.parsed.y} ${sym.unit||""}` } } }, scales: { x: { ticks: { maxTicksLimit: 6, font: { size: 10 } }, grid: { display: false } }, y: { ticks: { font: { size: 10 } } } } }
     });
   });
