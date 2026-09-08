@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1195</title>
+<title>Mon Tableau de Vie 🌿 · v1196</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10643,10 +10643,14 @@ function _getPal() {
 
 /* ── Hormones ──────────────────────────────────────────────────────── */
 const HORMONES = [
-  { id: "endorphines", label: "Endorphines", emoji: "🏃", color: "#a8e6cf", colorS: "#a0c0a8", colorM: "#555", desc: "Effort physique, sport",        target: 4, unit: "j" },
-  { id: "dopamine",    label: "Dopamine",    emoji: "🎯", color: "#ffd3a8", colorS: "#e0c4a0", colorM: "#777", desc: "Accomplissement, plaisir",     target: 5, unit: "j" },
-  { id: "serotonine",  label: "Sérotonine",  emoji: "☀️", color: "#ffe89a", colorS: "#a4cce0", colorM: "#999", desc: "Calme, créativité, nature",    target: 5, unit: "j" },
-  { id: "ocytocine",   label: "Ocytocine",   emoji: "🤗", color: "#ffc8dd", colorS: "#d0ac84", colorM: "#666", desc: "Lien social, affection",       target: 3, unit: "j" },
+  { id: "endorphines", label: "Endorphines", emoji: "🏃", color: "#a8e6cf", colorS: "#a0c0a8", colorM: "#555", desc: "Effort physique, sport",        target: 4, unit: "j",
+    longDesc: "Libérées par l'effort physique, elles réduisent la perception de la douleur et procurent une sensation de bien-être, voire d'euphorie légère." },
+  { id: "dopamine",    label: "Dopamine",    emoji: "🎯", color: "#ffd3a8", colorS: "#e0c4a0", colorM: "#777", desc: "Accomplissement, plaisir",     target: 5, unit: "j",
+    longDesc: "Le circuit de la récompense : elle monte quand tu accomplis quelque chose, atteins un objectif, apprends ou anticipes un plaisir." },
+  { id: "serotonine",  label: "Sérotonine",  emoji: "☀️", color: "#ffe89a", colorS: "#a4cce0", colorM: "#999", desc: "Calme, créativité, nature",    target: 5, unit: "j",
+    longDesc: "L'hormone de l'apaisement et de la stabilité de l'humeur — favorisée par le calme, la nature, un bon sommeil et un esprit détendu." },
+  { id: "ocytocine",   label: "Ocytocine",   emoji: "🤗", color: "#ffc8dd", colorS: "#d0ac84", colorM: "#666", desc: "Lien social, affection",       target: 3, unit: "j",
+    longDesc: "L'hormone du lien : elle monte lors des moments de connexion, d'affection, de tendresse et de proximité avec les autres." },
 ];
 function _hormoneColor(h) {
   const b = document.body.classList;
@@ -10660,7 +10664,7 @@ const HORMONE_AUTO_SOURCES = [
   { key: "mood",             emoji: "😊", label: "Humeur ≥ 4/5 dans la journée" },
   { key: "journal",          emoji: "📓", label: "Entrée de journal remplie" },
   { key: "sleep",            emoji: "😴", label: "Nuit de 7h ou plus" },
-  { key: "emotions",         emoji: "💛", label: "Émotion notée (Aujourd'hui → Mes émotions)" },
+  { key: "emotions",         emoji: "💛", label: "Émotion positive liée à cette hormone (motivée, sereine, amoureuse…)" },
   { key: "calendarSocial",   emoji: "📅", label: "Événement calendrier social (ami, famille, sortie…)" },
   { key: "calendarWellness", emoji: "📅", label: "Événement calendrier bien-être (spa, massage, soin…)" },
   { key: "tasksDone",        emoji: "✅", label: "Tâche terminée dans la journée" },
@@ -10680,12 +10684,37 @@ function _hormoneSourcesFor(hId) {
 // "h-lecture" comptait pour la dopamine avant que ce système existe — préservé par défaut.
 function _hormoneHabitTags(h) { return h.hormones || (h.id === "h-lecture" ? ["dopamine"] : []); }
 function _hormoneEvOnDay(e, dk) { try { return _eventDays(e).includes(dk); } catch (_) { return e.date === dk; } }
-function _hormoneSourceReasons(key, entry, dk, socialRe, wellnessRe) {
+// Émotions (libellé féminin de base, comme _EM_GENDER_MAP) associées à chaque hormone — seules les
+// émotions plutôt positives sont mappées ; les émotions négatives (triste, stressée, en colère…) ne
+// comptent jamais pour aucune hormone.
+const _EMOTION_HORMONE_MAP = {
+  "Motivée": ["dopamine"], "Confiante": ["dopamine"], "Excitée": ["dopamine"],
+  "Inspirée": ["dopamine"], "Enthousiaste": ["dopamine"],
+  "Contente": ["serotonine"], "Sereine": ["serotonine"], "Paisible": ["serotonine"],
+  "Apaisée": ["serotonine"], "Épanouie": ["serotonine"], "Légère": ["serotonine"], "Heureuse": ["serotonine"],
+  "Amoureuse": ["ocytocine"], "Reconnaissante": ["ocytocine"], "Émue": ["ocytocine"],
+  "Rayonnante": ["ocytocine"], "Joyeuse": ["ocytocine", "serotonine"], "Émerveillée": ["ocytocine", "serotonine"],
+};
+function _emotionLabelById(id) {
+  const list = (state.emotions && state.emotions.length) ? state.emotions : EMOTIONS_DEFAULT;
+  return (list.find(e => e.id === id) || EMOTIONS_DEFAULT.find(e => e.id === id))?.label || null;
+}
+function _emotionsForHormone(entry, hId) {
+  const names = [];
+  (entry.emotionLog || []).forEach(l => {
+    Object.keys(l.emotions || {}).forEach(id => {
+      const label = _emotionLabelById(id);
+      if (label && (_EMOTION_HORMONE_MAP[label] || []).includes(hId)) names.push(label);
+    });
+  });
+  return [...new Set(names)];
+}
+function _hormoneSourceReasons(key, entry, dk, socialRe, wellnessRe, hId) {
   switch (key) {
     case "mood": return (entry.mood || 0) >= 4 ? [`humeur ${entry.mood}/5`] : [];
     case "journal": return (entry.journal || "").trim() ? ["journal"] : [];
     case "sleep": { const dur = calcSleepDuration(entry.bedtime, entry.wakeTime); return (dur != null && dur >= 7) ? [`sommeil ${dur}h`] : []; }
-    case "emotions": return (entry.emotionLog || []).length > 0 ? ["émotions notées"] : [];
+    case "emotions": return _emotionsForHormone(entry, hId).map(l => `émotion : ${l.toLowerCase()}`);
     case "calendarSocial": return state.calEvents.filter(e => _hormoneEvOnDay(e, dk) && socialRe.test(e.title || "")).map(e => e.title || "événement social");
     case "calendarWellness": return state.calEvents.filter(e => _hormoneEvOnDay(e, dk) && wellnessRe.test(e.title || "")).map(e => e.title || "soin");
     case "tasksDone": return (state.work?.postdocTasks || []).filter(t => t.done && t.completedAt === dk).map(t => `✓ ${(t.title||"tâche").slice(0,22)}`);
@@ -10740,7 +10769,7 @@ function computeHormones() {
       });
       reasons.push(...matchingHabits.map(hb => hb.name));
       // Sources automatiques activées pour cette hormone (mood, journal, calendrier, tâches…)
-      _hormoneSourcesFor(h.id).forEach(key => reasons.push(..._hormoneSourceReasons(key, entry, dk, socialRe, wellnessRe)));
+      _hormoneSourcesFor(h.id).forEach(key => reasons.push(..._hormoneSourceReasons(key, entry, dk, socialRe, wellnessRe, h.id)));
 
       const active = reasons.length > 0;
       res[h.id].days.push({ dk, label, active, reasons });
@@ -10882,6 +10911,8 @@ function _openHormoneConfig(hId) {
   document.getElementById("hcmEmoji").textContent = h.emoji;
   document.getElementById("hcmTitle").textContent = h.label;
   document.getElementById("hcmDesc").textContent = h.desc;
+  const longDescEl = document.getElementById("hcmLongDesc");
+  if (longDescEl) longDescEl.textContent = h.longDesc || "";
   document.getElementById("hcmActivities").innerHTML = state.activities.map(a => {
     const checked = (a.hormones || (hId === "endorphines" ? ["endorphines"] : [])).includes(hId);
     return _hcmCheckboxRow(checked, `${a.emoji||"✨"} ${escapeHtml(a.name)}`, `_toggleHormoneAct('${a.id}','${hId}')`);
@@ -27515,7 +27546,8 @@ function _micPulse(on) {
       <h3 id="hcmTitle" style="margin:0;font-size:18px;"></h3>
       <button onclick="_closeHormoneConfig()" style="margin-left:auto;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-softer);">✕</button>
     </div>
-    <p id="hcmDesc" style="font-size:12px;color:var(--ink-soft);margin:0 0 16px;"></p>
+    <p id="hcmDesc" style="font-size:12px;color:var(--ink-soft);margin:0 0 6px;"></p>
+    <p id="hcmLongDesc" style="font-size:12px;color:var(--ink-soft);background:var(--bg-1);border-radius:10px;padding:9px 11px;margin:0 0 16px;line-height:1.5;"></p>
     <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:10px;">ACTIVITÉS QUI CONTRIBUENT</div>
     <div id="hcmActivities" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
     <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:10px;">HABITUDES QUI CONTRIBUENT</div>
