@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1193</title>
+<title>Mon Tableau de Vie 🌿 · v1194</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1784,7 +1784,7 @@
   .hormone-chart-wrap { display:flex; align-items:center; gap:28px; flex-wrap:wrap; justify-content:center; }
   .hormone-svg-wrap { flex-shrink:0; position:relative; }
   .hormone-legend { flex:1; min-width:200px; }
-  .hormone-legend-row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); cursor:pointer; border-radius:8px; transition:background .12s; }
+  .hormone-legend-row { display:flex; align-items:center; gap:10px; padding:9px 10px; margin:0 -10px; border-bottom:1px solid var(--line); cursor:pointer; border-radius:8px; transition:background .12s; }
   .hormone-legend-row:last-child { border-bottom:none; }
   .hormone-legend-row:hover { background:var(--lavender-soft); }
   .hormone-legend-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
@@ -2959,9 +2959,16 @@
         <div class="chart-wrap"><canvas id="activityChart"></canvas></div>
       </div>
     </div>
-    <div class="card" style="margin-top:14px;">
-      <h2>🧬 Balance hormonale — 7 derniers jours</h2>
-      <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 14px;">Hormones stimulées par tes activités, tes repas, tes moments sociaux, tes soins bien-être et tes accomplissements.</p>
+    <div class="edit-only" style="width:100%;box-sizing:border-box;margin:14px 0 0;padding:12px 14px;border:1.5px dashed var(--lavender);border-radius:12px;background:var(--bg-2);display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+      <span style="font-size:12px;color:var(--ink-soft);width:100%;margin-bottom:2px;">Afficher / masquer des sections :</span>
+      <button id="featureHormoneBtn" onclick="_toggleFeature('hormoneBalance')" style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--line);background:white;font-size:12px;cursor:pointer;font-family:inherit;">🧬 Balance hormonale</button>
+    </div>
+    <div class="card" id="hormoneBalanceCard" style="margin-top:14px;display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <h2 style="margin:0;">🧬 Balance hormonale — 7 derniers jours</h2>
+        <button onclick="openHelp('activities-hormones')" title="Aide sur la balance hormonale" class="help-btn">✦ Aide</button>
+      </div>
+      <p style="font-size:12px;color:var(--ink-soft);margin:8px 0 14px;">Hormones stimulées par tes activités, tes repas, tes moments sociaux, tes soins bien-être et tes accomplissements. En mode édition, clique une hormone pour choisir précisément ce qui compte pour elle.</p>
       <div id="hormonesContent"></div>
     </div>
     <div class="card" style="margin-top:14px;">
@@ -10647,6 +10654,46 @@ function _hormoneColor(h) {
   return h.color;
 }
 
+// Sources "automatiques" (pas liées à une activité/habitude précise) que chaque hormone
+// peut prendre en compte ou non — configurable dans la modale de réglage de chaque hormone.
+const HORMONE_AUTO_SOURCES = [
+  { key: "mood",             emoji: "😊", label: "Humeur ≥ 4/5 dans la journée" },
+  { key: "journal",          emoji: "📓", label: "Entrée de journal remplie" },
+  { key: "sleep",            emoji: "😴", label: "Nuit de 7h ou plus" },
+  { key: "emotions",         emoji: "💛", label: "Émotion notée (Aujourd'hui → Mes émotions)" },
+  { key: "calendarSocial",   emoji: "📅", label: "Événement calendrier social (ami, famille, sortie…)" },
+  { key: "calendarWellness", emoji: "📅", label: "Événement calendrier bien-être (spa, massage, soin…)" },
+  { key: "tasksDone",        emoji: "✅", label: "Tâche terminée dans la journée" },
+  { key: "milestones",       emoji: "◆", label: "Jalon de projet franchi" },
+];
+// Réglages par défaut = comportement historique (rien ne change tant que l'utilisatrice
+// ne personnalise pas explicitement une hormone).
+const HORMONE_SOURCE_DEFAULTS = {
+  endorphines: [],
+  dopamine: ["tasksDone", "milestones"],
+  serotonine: ["journal", "mood", "calendarWellness"],
+  ocytocine: ["calendarSocial", "calendarWellness"],
+};
+function _hormoneSourcesFor(hId) {
+  return state.hormoneConfig?.[hId]?.sources || HORMONE_SOURCE_DEFAULTS[hId] || [];
+}
+// "h-lecture" comptait pour la dopamine avant que ce système existe — préservé par défaut.
+function _hormoneHabitTags(h) { return h.hormones || (h.id === "h-lecture" ? ["dopamine"] : []); }
+function _hormoneEvOnDay(e, dk) { try { return _eventDays(e).includes(dk); } catch (_) { return e.date === dk; } }
+function _hormoneSourceReasons(key, entry, dk, socialRe, wellnessRe) {
+  switch (key) {
+    case "mood": return (entry.mood || 0) >= 4 ? [`humeur ${entry.mood}/5`] : [];
+    case "journal": return (entry.journal || "").trim() ? ["journal"] : [];
+    case "sleep": { const dur = calcSleepDuration(entry.bedtime, entry.wakeTime); return (dur != null && dur >= 7) ? [`sommeil ${dur}h`] : []; }
+    case "emotions": return (entry.emotionLog || []).length > 0 ? ["émotions notées"] : [];
+    case "calendarSocial": return state.calEvents.filter(e => _hormoneEvOnDay(e, dk) && socialRe.test(e.title || "")).map(e => e.title || "événement social");
+    case "calendarWellness": return state.calEvents.filter(e => _hormoneEvOnDay(e, dk) && wellnessRe.test(e.title || "")).map(e => e.title || "soin");
+    case "tasksDone": return (state.work?.postdocTasks || []).filter(t => t.done && t.completedAt === dk).map(t => `✓ ${(t.title||"tâche").slice(0,22)}`);
+    case "milestones": return (state.work?.postdocTasks || []).flatMap(t => (t.milestones||[]).filter(m => m.done && m.doneAt === dk).map(m => `◆ jalon : ${String(m.name||"jalon").slice(0,20)}`));
+    default: return [];
+  }
+}
+
 // Déduit les hormones probables d'une activité d'après son nom
 function autoHormones(name) {
   const n = (name || "").toLowerCase();
@@ -10661,10 +10708,9 @@ function autoHormones(name) {
 
 let _lastHormoneData = null; // cache pour la modale de détail
 
+const _HORMONE_SOCIAL_ACT_RE = /danse|dance|cours|club|groupe|équipe|equipe|chorale|chant|théâtre|theatre|atelier|collectif|zumba|salsa|bénévol|benevol/i;
 function computeHormones() {
   const last7 = _last7Days();
-  const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
-  const k7 = todayKey(sevenAgo);
   const res = {};
   HORMONES.forEach(h => { res[h.id] = { score: 0, sources: [], days: [] }; });
 
@@ -10679,43 +10725,27 @@ function computeHormones() {
     const habits = entry.habits     || {};
     const label  = d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
 
-    // — Endorphines
-    const endoActs = state.activities.filter(a => acts[a.id] && (a.hormones || ["endorphines"]).includes("endorphines"));
-    const endoActive = endoActs.length > 0;
-    res.endorphines.days.push({ dk, label, active: endoActive, reasons: endoActs.map(a => a.name) });
-    if (endoActive) { res.endorphines.score++; endoActs.slice(0,2).forEach(a => res.endorphines.sources.push(a.name)); }
+    HORMONES.forEach(h => {
+      const reasons = [];
+      // Activités taguées pour cette hormone (une activité sans tag compte par défaut en endorphines)
+      const matchingActs = state.activities.filter(a => acts[a.id] &&
+        ((a.hormones || (h.id === "endorphines" ? ["endorphines"] : [])).includes(h.id) ||
+         (h.id === "ocytocine" && _HORMONE_SOCIAL_ACT_RE.test(a.name || ""))));
+      reasons.push(...matchingActs.map(a => a.name));
+      // Habitudes taguées pour cette hormone
+      const matchingHabits = (state.habits || []).filter(hb => {
+        if (!_hormoneHabitTags(hb).includes(h.id)) return false;
+        const v = habits[hb.id];
+        return hb.type === "numeric" ? (Number(v) || 0) > 0 : !!v;
+      });
+      reasons.push(...matchingHabits.map(hb => hb.name));
+      // Sources automatiques activées pour cette hormone (mood, journal, calendrier, tâches…)
+      _hormoneSourcesFor(h.id).forEach(key => reasons.push(..._hormoneSourceReasons(key, entry, dk, socialRe, wellnessRe)));
 
-    // — Dopamine
-    const taskToday    = (state.work?.postdocTasks || []).filter(t => t.done && t.completedAt === dk);
-    // Jalons franchis ce jour-là — chaque jalon est déjà un accomplissement
-    const milestonesToday = (state.work?.postdocTasks || []).flatMap(t =>
-      (t.milestones || []).filter(m => m.done && m.doneAt === dk).map(m => m.name || "jalon"));
-    const lectureToday = Number(habits["h-lecture"]) > 0;
-    const dopActs      = state.activities.filter(a => acts[a.id] && (a.hormones || []).includes("dopamine"));
-    const dopReasons   = [...taskToday.map(t => `✓ ${(t.title||"tâche").slice(0,22)}`), ...milestonesToday.map(n => `◆ jalon : ${String(n).slice(0,20)}`), ...(lectureToday?["lecture"]:[]), ...dopActs.map(a=>a.name)];
-    const dopActive    = dopReasons.length > 0;
-    res.dopamine.days.push({ dk, label, active: dopActive, reasons: dopReasons });
-    if (dopActive) { res.dopamine.score++; dopReasons.slice(0,2).forEach(r => res.dopamine.sources.push(r.replace(/^✓ /,""))); }
-
-    // — Sérotonine
-    const hasJournal  = (entry.journal || "").trim().length > 0;
-    const hasGoodMood = (entry.mood || 0) >= 4;
-    const serActs     = state.activities.filter(a => acts[a.id] && (a.hormones || []).includes("serotonine"));
-    const _evOnDay = (e) => { try { return _eventDays(e).includes(dk); } catch(_) { return e.date === dk; } };
-    const wellEvs     = state.calEvents.filter(e => _evOnDay(e) && wellnessRe.test(e.title || ""));
-    const serReasons  = [...(hasJournal?["journal"]:[]), ...(hasGoodMood?[`humeur ${entry.mood}/5`]:[]), ...serActs.map(a=>a.name), ...wellEvs.map(e=>e.title||"soin")];
-    const serActive   = serReasons.length > 0;
-    res.serotonine.days.push({ dk, label, active: serActive, reasons: serReasons });
-    if (serActive) { res.serotonine.score++; serReasons.slice(0,2).forEach(r => res.serotonine.sources.push(r)); }
-
-    // — Ocytocine (événements calendrier sociaux + soins bien-être + activités sociales)
-    const socEvs    = state.calEvents.filter(e => _evOnDay(e) && socialRe.test(e.title || ""));
-    const socialActRe = /danse|dance|cours|club|groupe|équipe|equipe|chorale|chant|théâtre|theatre|atelier|collectif|zumba|salsa|bénévol|benevol/i;
-    const ocyActs   = state.activities.filter(a => acts[a.id] && (socialActRe.test(a.name) || (a.hormones || []).includes("ocytocine")));
-    const ocyReasons = [...socEvs.map(e => e.title || "événement social"), ...wellEvs.map(e => e.title || "soin"), ...ocyActs.map(a => a.name)];
-    const ocyActive = ocyReasons.length > 0;
-    res.ocytocine.days.push({ dk, label, active: ocyActive, reasons: ocyReasons });
-    if (ocyActive) { res.ocytocine.score++; ocyReasons.slice(0,2).forEach(r => res.ocytocine.sources.push(r)); }
+      const active = reasons.length > 0;
+      res[h.id].days.push({ dk, label, active, reasons });
+      if (active) { res[h.id].score++; reasons.slice(0, 2).forEach(r => res[h.id].sources.push(r.replace(/^✓ /, ""))); }
+    });
   }
 
   Object.values(res).forEach(r => { r.sources = [...new Set(r.sources)].slice(0,3); });
@@ -10757,6 +10787,7 @@ function showHormoneDetail(hId) {
 function closeHormoneDetail() { document.getElementById("hormoneDetailModal").style.display = "none"; }
 
 function renderHormones() {
+  _syncFeatureSections();
   const el = document.getElementById("hormonesContent");
   if (!el) return;
   const data = computeHormones();
@@ -10824,7 +10855,7 @@ function renderHormones() {
         <div class="hormone-legend-top">
           <span class="hormone-legend-name">${h.emoji} ${h.label}</span>
           <span class="hormone-legend-val" style="color:${col};">${d.score}/${h.target}j &nbsp;${pct}%</span>
-          <span style="color:var(--ink-softer);font-size:13px;">${inEdit?'⚙️':'›'}</span>
+          <span style="color:var(--ink-softer);font-size:15px;line-height:1;">${inEdit?'⚙':'›'}</span>
         </div>
         <div class="hormone-legend-src">${inEdit?'<span style="color:var(--ink-softer);font-style:italic;font-size:11px;">Clique pour configurer</span>':src}</div>
       </div>
@@ -10837,6 +10868,14 @@ function renderHormones() {
   </div>`;
 }
 
+function _hcmCheckboxRow(checked, label, onclick) {
+  return `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;background:${checked?'var(--mint-soft)':'var(--bg-1)'};border:1.5px solid ${checked?'var(--mint)':'var(--line)'};transition:all 0.15s;" onclick="${onclick}">
+      <div style="width:20px;height:20px;border-radius:6px;border:2px solid ${checked?'var(--mint)':'var(--line)'};background:${checked?'var(--mint)':'white'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        ${checked?'<span style="color:white;font-size:11px;font-weight:700;">✓</span>':''}
+      </div>
+      <span style="font-size:14px;">${label}</span>
+    </label>`;
+}
 function _openHormoneConfig(hId) {
   const h = HORMONES.find(x => x.id === hId);
   if (!h) return;
@@ -10844,14 +10883,18 @@ function _openHormoneConfig(hId) {
   document.getElementById("hcmTitle").textContent = h.label;
   document.getElementById("hcmDesc").textContent = h.desc;
   document.getElementById("hcmActivities").innerHTML = state.activities.map(a => {
-    const checked = (a.hormones || []).includes(hId);
-    return `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;background:${checked?'var(--mint-soft)':'var(--bg-1)'};border:1.5px solid ${checked?'var(--mint)':'var(--line)'};transition:all 0.15s;" onclick="_toggleHormoneAct('${a.id}','${hId}')">
-      <div style="width:20px;height:20px;border-radius:6px;border:2px solid ${checked?'var(--mint)':'var(--line)'};background:${checked?'var(--mint)':'white'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        ${checked?'<span style="color:white;font-size:11px;font-weight:700;">✓</span>':''}
-      </div>
-      <span style="font-size:14px;">${a.emoji} ${escapeHtml(a.name)}</span>
-    </label>`;
+    const checked = (a.hormones || (hId === "endorphines" ? ["endorphines"] : [])).includes(hId);
+    return _hcmCheckboxRow(checked, `${a.emoji||"✨"} ${escapeHtml(a.name)}`, `_toggleHormoneAct('${a.id}','${hId}')`);
   }).join("") || `<p style="color:var(--ink-softer);font-size:13px;">Aucune activité créée. Ajoute-en dans l'onglet Activités.</p>`;
+  const habits = (state.habits || []).filter(hb => !_HABIT_SKIP.has(hb.id));
+  document.getElementById("hcmHabits").innerHTML = habits.map(hb => {
+    const checked = _hormoneHabitTags(hb).includes(hId);
+    return _hcmCheckboxRow(checked, `${hb.emoji||"✨"} ${escapeHtml(hb.name)}`, `_toggleHormoneHabit('${hb.id}','${hId}')`);
+  }).join("") || `<p style="color:var(--ink-softer);font-size:13px;">Aucune habitude personnalisée. Ajoute-en dans Aujourd'hui → Mes habitudes.</p>`;
+  const enabledSources = _hormoneSourcesFor(hId);
+  document.getElementById("hcmSources").innerHTML = HORMONE_AUTO_SOURCES.map(s =>
+    _hcmCheckboxRow(enabledSources.includes(s.key), `${s.emoji} ${s.label}`, `_toggleHormoneSource('${s.key}','${hId}')`)
+  ).join("");
   document.getElementById("hormoneConfigModal").style.display = "flex";
 }
 function _toggleHormoneAct(actId, hId) {
@@ -10863,6 +10906,28 @@ function _toggleHormoneAct(actId, hId) {
   else a.hormones.push(hId);
   saveState();
   _openHormoneConfig(hId); // re-render the modal
+  renderHormones();
+}
+function _toggleHormoneHabit(habitId, hId) {
+  const hb = (state.habits || []).find(x => x.id === habitId);
+  if (!hb) return;
+  const tags = _hormoneHabitTags(hb).slice();
+  if (tags.includes(hId)) hb.hormones = tags.filter(x => x !== hId);
+  else { tags.push(hId); hb.hormones = tags; }
+  saveState();
+  _openHormoneConfig(hId);
+  renderHormones();
+}
+function _toggleHormoneSource(key, hId) {
+  if (!state.hormoneConfig) state.hormoneConfig = {};
+  if (!state.hormoneConfig[hId] || !state.hormoneConfig[hId].sources) {
+    state.hormoneConfig[hId] = { sources: [...(HORMONE_SOURCE_DEFAULTS[hId] || [])] };
+  }
+  const cfg = state.hormoneConfig[hId];
+  if (cfg.sources.includes(key)) cfg.sources = cfg.sources.filter(k => k !== key);
+  else cfg.sources.push(key);
+  saveState();
+  _openHormoneConfig(hId);
   renderHormones();
 }
 function _closeHormoneConfig() { document.getElementById("hormoneConfigModal").style.display = "none"; }
@@ -12464,6 +12529,12 @@ function _syncFeatureSections() {
   // Nav mois partagée (pilote bodyComp/kcal/balance) : inutile si les 3 sont masquées
   const navRow = document.getElementById("healthMonthNavRow");
   if (navRow) navRow.style.display = (bcOn || calOn || ebOn) ? "flex" : "none";
+  // Balance hormonale (Activités) — masquée par défaut
+  const hbOn = f.hormoneBalance === true;
+  const hbCard = document.getElementById("hormoneBalanceCard");
+  if (hbCard) hbCard.style.display = hbOn ? "" : "none";
+  const hbBtn = document.getElementById("featureHormoneBtn");
+  if (hbBtn) { hbBtn.style.background = hbOn ? "var(--lavender-soft)" : "white"; hbBtn.style.borderColor = hbOn ? "var(--lavender)" : "var(--line)"; }
   // Rafraîchir la liste des habitudes immédiatement (grisé/actif)
   if (typeof renderHabits === "function") renderHabits();
 }
@@ -26137,6 +26208,26 @@ const HELP_TEXTS = {
         💡 <strong>Exemple :</strong> Tu écris "j'ai passé une super soirée avec des amis, je suis épuisée mais contente" → l'app détecte Joie + Fatigue et affiche les badges correspondants.
       </div>`
   },
+  "activities-hormones": {
+    icon: "🧬", title: "Balance hormonale",
+    subtitle: "Un aperçu — pas une mesure médicale",
+    body: `
+      <p>Une estimation, sur les <strong>7 derniers jours</strong>, de ce qui contribue à 4 grandes familles d'hormones du bien-être : 🏃 Endorphines, 🎯 Dopamine, ☀️ Sérotonine, 🤗 Ocytocine. C'est un aperçu ludique basé sur ce que tu notes dans l'app — pas une mesure médicale.</p>
+      <p>La section est <strong>masquée par défaut</strong>. Active-la depuis "Afficher / masquer des sections" en mode édition.</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Cliquer un pétale (mode normal)</strong> — Voir le détail jour par jour et ce qui a compté chaque jour.</li>
+        <li><strong>Cliquer une hormone (mode édition)</strong> — Ouvre ses réglages : tu choisis toi-même, avec des cases à cocher, tout ce qui doit compter pour <em>cette</em> hormone précise.</li>
+      </ul>
+      <p>Dans les réglages d'une hormone, trois listes :</p>
+      <ul style="padding-left:18px;margin:10px 0;">
+        <li><strong>Activités</strong> — Chacune de tes activités (Activités → +Nouvelle) peut contribuer à une ou plusieurs hormones.</li>
+        <li><strong>Habitudes</strong> — Idem pour tes habitudes personnalisées (Aujourd'hui → Mes habitudes).</li>
+        <li><strong>Autres sources</strong> — Des signaux automatiques détectés dans l'app : humeur, journal rempli, nuit de 7h+, émotions notées, événements du calendrier (social ou bien-être), tâche terminée, jalon de projet franchi.</li>
+      </ul>
+      <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
+        💡 <strong>Tout nouvel élément est proposé automatiquement.</strong> Dès que tu crées une nouvelle activité ou une nouvelle habitude ailleurs dans l'app, elle apparaît dans ces listes prête à être cochée — comme pour les Piliers de vie. Les cases déjà cochées reflètent ce qui compte <em>actuellement</em> ; tout le reste attend que tu l'actives si tu le souhaites.
+      </div>`
+  },
 };
 
 function openHelp(key) {
@@ -27417,7 +27508,7 @@ function _micPulse(on) {
 </div>
 
 <div id="hormoneConfigModal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this&&_modalMouseDownTarget===this)_closeHormoneConfig()">
-  <div style="background:var(--card);border-radius:22px;padding:28px 24px;max-width:420px;width:92%;box-shadow:0 12px 48px rgba(60,50,80,.22);" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+  <div style="background:var(--card);border-radius:22px;padding:28px 24px;max-width:420px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 12px 48px rgba(60,50,80,.22);" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
       <span id="hcmEmoji" style="font-size:28px;"></span>
       <h3 id="hcmTitle" style="margin:0;font-size:18px;"></h3>
@@ -27425,8 +27516,11 @@ function _micPulse(on) {
     </div>
     <p id="hcmDesc" style="font-size:12px;color:var(--ink-soft);margin:0 0 16px;"></p>
     <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:10px;">ACTIVITÉS QUI CONTRIBUENT</div>
-    <div id="hcmActivities" style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;"></div>
-    <p style="font-size:11px;color:var(--ink-softer);margin:14px 0 0;">Les autres sources (calendrier, humeur, journal…) restent automatiques.</p>
+    <div id="hcmActivities" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+    <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:10px;">HABITUDES QUI CONTRIBUENT</div>
+    <div id="hcmHabits" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+    <div style="font-size:11px;color:var(--ink-softer);font-weight:600;letter-spacing:.04em;margin-bottom:10px;">AUTRES SOURCES</div>
+    <div id="hcmSources" style="display:flex;flex-direction:column;gap:8px;"></div>
   </div>
 </div>
 
