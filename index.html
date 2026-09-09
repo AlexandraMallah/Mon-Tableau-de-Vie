@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1204</title>
+<title>Mon Tableau de Vie 🌿 · v1205</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11792,6 +11792,34 @@ function _deleteRoutineItem(key, id) {
 }
 
 /* ========= PILULE ========= */
+// Rappel pilule (optionnel) : vérifie si l'heure configurée est atteinte et envoie une notification
+// navigateur. Ne marche que si l'app est ouverte dans un onglet à ce moment-là (pas de backend de
+// push) — c'est expliqué à l'utilisatrice dans la modale de réglages. Se déclenche au plus une fois
+// par jour (flag daté en localStorage) pour ne pas re-notifier en boucle.
+const PILL_NOTIFIED_KEY = "tableauDeVie_v3_pillNotifiedDate";
+function _checkPillReminder() {
+  const h = state.health || {};
+  if (!h.pillReminderEnabled || !h.pillReminderTime) return;
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+  const d = getToday();
+  if (d.pillTaken) return;
+  const dayInfo = _pillDayInfo(new Date());
+  if (dayInfo && dayInfo.phase === "pause") return;
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const remMin = Number(h.pillReminderTime.slice(0,2)) * 60 + Number(h.pillReminderTime.slice(3,5));
+  if (nowMin < remMin) return;
+  const todayK = todayKey();
+  try {
+    if (localStorage.getItem(PILL_NOTIFIED_KEY) === todayK) return;
+    localStorage.setItem(PILL_NOTIFIED_KEY, todayK);
+  } catch (_) {}
+  try {
+    const n = new Notification("💊 Pilule du jour", { body: "Pense à la prendre — clique pour ouvrir Mon Tableau de Vie.", tag: "pill-reminder" });
+    n.onclick = () => { window.focus(); n.close(); };
+  } catch (_) {}
+}
+setInterval(_checkPillReminder, 60000);
 function togglePill() {
   const d = getToday();
   if (d.pillTaken) {
@@ -11870,23 +11898,42 @@ function openPillConfigModal() {
   document.querySelectorAll('input[name="pillConfigType"]').forEach(r => r.checked = (r.value === type));
   const startInp = document.getElementById("pillConfigStart");
   if (startInp) startInp.value = h.pillPackStart || todayKey(new Date());
+  const timeInp = document.getElementById("pillConfigReminderTime");
+  if (timeInp) timeInp.value = h.pillReminderTime || "";
+  const onInp = document.getElementById("pillConfigReminderOn");
+  if (onInp) onInp.checked = !!h.pillReminderEnabled;
   document.getElementById("pillConfigModal").classList.add("open");
 }
 function closePillConfigModal() {
   document.getElementById("pillConfigModal").classList.remove("open");
 }
-function savePillConfig() {
+async function savePillConfig() {
   const type = (document.querySelector('input[name="pillConfigType"]:checked') || {}).value || "21-7";
   const [active, pause] = type.split("-").map(Number);
   const startInp = document.getElementById("pillConfigStart");
+  const timeInp = document.getElementById("pillConfigReminderTime");
+  const onInp = document.getElementById("pillConfigReminderOn");
   if (!state.health) state.health = {};
   state.health.pillActiveDays = active;
   state.health.pillPauseDays = pause;
   state.health.pillPackStart = startInp && startInp.value ? startInp.value : todayKey(new Date());
+  state.health.pillReminderTime = timeInp && timeInp.value ? timeInp.value : "";
+  const wantedReminder = !!(onInp && onInp.checked && state.health.pillReminderTime);
+  let reminderOn = wantedReminder;
+  if (reminderOn && typeof Notification !== "undefined" && Notification.permission === "default") {
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") reminderOn = false;
+    } catch (_) { reminderOn = false; }
+  }
+  if (reminderOn && typeof Notification !== "undefined" && Notification.permission !== "granted") reminderOn = false;
+  state.health.pillReminderEnabled = reminderOn;
+  if (onInp) onInp.checked = reminderOn;
   saveState();
   closePillConfigModal();
   renderPill();
   renderPillSante();
+  if (wantedReminder && !reminderOn) showToast("🔕 Notifications refusées par le navigateur — le rappel visuel reste actif dans l'app.");
 }
 
 /* ========= AUTOCOMPLÉTION NOM DU PLAT ========= */
@@ -12664,6 +12711,7 @@ function _syncFeatureSections() {
 }
 function renderPill() {
   _syncFeatureSections();
+  _checkPillReminder();
   const d = getToday();
   const taken = !!d.pillTaken;
   const btn   = document.getElementById("pillBtn");
@@ -12674,7 +12722,11 @@ function renderPill() {
 
   const dayInfo = _pillDayInfo(new Date());
   const isPause = dayInfo && dayInfo.phase === "pause";
-  const hourLate = new Date().getHours() >= 20;
+  const remTime = state.health?.pillReminderTime;
+  const now = new Date();
+  const hourLate = remTime
+    ? (now.getHours()*60+now.getMinutes()) >= (Number(remTime.slice(0,2))*60 + Number(remTime.slice(3,5)))
+    : now.getHours() >= 20;
   const linkSpan = c => `<span style="font-size:11px;color:${c};cursor:pointer;" onclick="event.stopPropagation();_goToHealth('healthPillCard')" title="Voir dans Santé">↗</span>`;
 
   if (isPause) {
