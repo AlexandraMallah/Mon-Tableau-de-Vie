@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1207</title>
+<title>Mon Tableau de Vie 🌿 · v1208</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5035,7 +5035,7 @@
     <input type="date" id="txModalDate" />
     <label>Note</label>
     <input type="text" id="txModalNote" placeholder="Optionnel" />
-    <div id="txModalAccountRow" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;">
+    <div id="txModalAccountRow" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;">
       <div id="txModalDirectSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);width:100%;">
         🏦 Compte crédité :
         <select id="txModalDirectSavings" style="flex:1;min-width:0;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
@@ -16151,6 +16151,17 @@ function deleteVirement(virId) {
 
 /* ===== TX EDIT MODAL ===== */
 let txModalType = "expense";
+// Sélectionne un compte dans un <select> ; si le compte a été renommé/supprimé depuis,
+// ajoute une option de secours pour ne pas afficher le menu vide et perdre la valeur à l'enregistrement.
+function _selectAccountOrFallback(selectEl, accountName) {
+  selectEl.value = accountName;
+  if (selectEl.value === accountName) return;
+  const opt = document.createElement("option");
+  opt.value = accountName;
+  opt.textContent = `⚠️ ${accountName} (compte introuvable)`;
+  selectEl.insertBefore(opt, selectEl.firstChild);
+  selectEl.value = accountName;
+}
 function openTxModal(id) {
   const tx = state.transactions.find(t => t.id === id);
   if (!tx) return;
@@ -16175,9 +16186,9 @@ function openTxModal(id) {
   // Recharger les catégories APRÈS avoir coché frais pro (pour afficher pro cats)
   if (tx.reimbursable) setTxModalType(txModalType, tx.category);
   const directSavEl = document.getElementById("txModalDirectSavings");
-  if (directSavEl && tx.type === "income" && tx.directSavingsAccount) directSavEl.value = tx.directSavingsAccount;
+  if (directSavEl && tx.type === "income" && tx.directSavingsAccount) _selectAccountOrFallback(directSavEl, tx.directSavingsAccount);
   const fromSavEl = document.getElementById("txModalFromSavings");
-  if (fromSavEl && (tx.type === "expense" || tx.type === "external") && tx.fromSavingsAccount) fromSavEl.value = tx.fromSavingsAccount;
+  if (fromSavEl && (tx.type === "expense" || tx.type === "external") && tx.fromSavingsAccount) _selectAccountOrFallback(fromSavEl, tx.fromSavingsAccount);
   // Compte externe
   setTimeout(() => {
     const extSel = document.getElementById("txModalExternalAccount");
