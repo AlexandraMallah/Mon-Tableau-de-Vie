@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1203</title>
+<title>Mon Tableau de Vie 🌿 · v1204</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2483,6 +2483,13 @@
       </div>
       <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Premier jour de la plaquette en cours</label>
       <input type="date" id="pillConfigStart" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;color:var(--ink);margin-bottom:16px;" />
+      <label style="font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:6px;">Heure de prise habituelle (optionnel)</label>
+      <input type="time" id="pillConfigReminderTime" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;color:var(--ink);margin-bottom:10px;" />
+      <label style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:8px;background:var(--bg-1);cursor:pointer;font-size:13px;margin-bottom:6px;">
+        <input type="checkbox" id="pillConfigReminderOn" style="margin-top:2px;" />
+        <span>Me notifier à cette heure si je n'ai pas encore pris ma pilule ce jour-là</span>
+      </label>
+      <p style="font-size:11px;color:var(--ink-softer);margin:0 0 16px;line-height:1.5;">⚠️ Ça ne marche que si l'app est ouverte dans un onglet à ce moment-là (pas de notification si le navigateur est complètement fermé) — le navigateur te demandera d'autoriser les notifications.</p>
       <div class="actions">
         <button class="secondary" onclick="closePillConfigModal()">Annuler</button>
         <button class="primary" onclick="savePillConfig()">Enregistrer</button>
@@ -6468,11 +6475,22 @@ function setupTabs() {
     });
   });
 }
+// Graphiques/couleurs de l'onglet Santé qui dépendent du thème actif (canvas Chart.js, grilles de
+// couleurs calculées en JS) — regroupés ici car ils ne sont PAS redessinés par renderAll() seul :
+// contrairement au reste de l'app (piloté par variables CSS), ces couleurs sont calculées une fois
+// en JS et restent figées tant que ces fonctions ne sont pas rappelées explicitement. D'où le bug
+// "les couleurs Santé ne suivent pas le changement de thème si on reste sur l'onglet Santé".
+function _refreshHealthCharts() {
+  renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingCorrelations();
+  renderCalorieChart(); renderStepsChart(); renderStepsStats(); renderSkincare();
+  renderPillSante(); renderCustomSymptomsSante(); renderEnergyBalance();
+  renderHabitsTracking(); renderHealthCycle();
+}
 function onViewChange(view) {
   if (view === "today") maybeLoadWeather();
   if (view === "work") updateWorkTabBadges();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
-  if (view === "health") { _healthMonthOffset = 0; _stepsMonthOffset = 0; _renderHealthMonthLabel(); _renderStepsMonthLabel(); renderBodyChart(currentBodyMetric); renderBodyComboChart(); renderWellbeingCorrelations(); renderCalorieChart(); renderStepsChart(); renderStepsStats(); renderSkincare(); renderPillSante(); renderCustomSymptomsSante(); renderEnergyBalance(); renderHabitsTracking(); renderHealthCycle(); }
+  if (view === "health") { _healthMonthOffset = 0; _stepsMonthOffset = 0; _renderHealthMonthLabel(); _renderStepsMonthLabel(); _refreshHealthCharts(); }
   if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
@@ -24851,6 +24869,10 @@ function applyTheme(id, persist = true) {
   });
   // Re-rendre tout si l'utilisateur change de thème manuellement (pas au démarrage)
   if (persist && typeof renderAll === "function") renderAll();
+  // renderAll() ne redessine pas les graphiques/couleurs de l'onglet Santé (ils ne sont normalement
+  // redessinés qu'en y naviguant) — sans ça, rester sur cet onglet en changeant de thème laissait
+  // les couleurs Pas/Symptômes figées sur l'ancien thème.
+  if (persist && typeof _refreshHealthCharts === "function") _refreshHealthCharts();
 }
 function openSettings(tab) {
   document.getElementById("nameInput").value = state.name || "";
