@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1206</title>
+<title>Mon Tableau de Vie 🌿 · v1207</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3290,27 +3290,27 @@
           <button id="txTypeCashWithdrawal" class="cash-withdrawal" onclick="setTxType('cash-withdrawal')">💵 Retrait espèces</button>
         </div>
         <div id="txAccountRow" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:6px;">
-          <div id="txDirectSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
+          <div id="txDirectSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);width:100%;">
             🏦 Compte crédité :
-            <select id="txDirectSavings" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
+            <select id="txDirectSavings" style="flex:1;min-width:0;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
               <option value="">— Compte courant (défaut)</option>
             </select>
           </div>
-          <div id="txFromSavingsWrap" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
+          <div id="txFromSavingsWrap" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);width:100%;">
             🏦 Compte débité :
-            <select id="txFromSavings" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
+            <select id="txFromSavings" style="flex:1;min-width:0;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
               <option value="">— Compte courant (défaut)</option>
             </select>
           </div>
-          <div id="txCashWithdrawalSourceWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
+          <div id="txCashWithdrawalSourceWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);width:100%;">
             💵 Depuis :
-            <select id="txCashWithdrawalSource" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
+            <select id="txCashWithdrawalSource" style="flex:1;min-width:0;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
               <option value="__checking__">💳 Compte courant</option>
             </select>
           </div>
-          <div id="txExternalAccountWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
+          <div id="txExternalAccountWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);width:100%;">
             🧾 Compte :
-            <select id="txExternalAccount" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
+            <select id="txExternalAccount" style="flex:1;min-width:0;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
             </select>
           </div>
         </div>
@@ -5036,29 +5036,29 @@
     <label>Note</label>
     <input type="text" id="txModalNote" placeholder="Optionnel" />
     <div id="txModalAccountRow" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;">
-      <div id="txModalDirectSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
+      <div id="txModalDirectSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);width:100%;">
         🏦 Compte crédité :
-        <select id="txModalDirectSavings" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
+        <select id="txModalDirectSavings" style="flex:1;min-width:0;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
           <option value="">— Compte courant (défaut)</option>
         </select>
       </div>
-      <div id="txModalFromSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);">
+      <div id="txModalFromSavingsWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);width:100%;">
         🏦 Compte débité :
-        <select id="txModalFromSavings" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
+        <select id="txModalFromSavings" style="flex:1;min-width:0;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);">
           <option value="">— Compte courant (défaut)</option>
         </select>
       </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
-      <label id="txModalReimbursableWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;">
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;">
+      <label id="txModalReimbursableWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;margin:0;">
         <input type="checkbox" id="txModalReimbursable" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;" onchange="toggleMissionField('txModalMissionWrap', this.checked)" />
         💼 Frais pro — remboursé par le boulot
       </label>
-      <label id="txModalFixedChargeWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;">
+      <label id="txModalFixedChargeWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;margin:0;">
         <input type="checkbox" id="txModalFixedCharge" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;" />
         🏠 Charge fixe
       </label>
-      <label id="txModalExceptionalWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;">
+      <label id="txModalExceptionalWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;margin:0;">
         <input type="checkbox" id="txModalExceptional" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;" />
         ✨ Dépense exceptionnelle lissée
       </label>
@@ -16247,8 +16247,8 @@ function setTxModalType(t, presetCategory) {
     if (insertAfter) {
       modalExtWrap = document.createElement("div");
       modalExtWrap.id = "txModalExternalAccountWrap";
-      modalExtWrap.style.cssText = "display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin-top:6px;";
-      modalExtWrap.innerHTML = `🧾 Compte : <select id="txModalExternalAccount" style="padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);"></select>`;
+      modalExtWrap.style.cssText = "display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);width:100%;";
+      modalExtWrap.innerHTML = `🧾 Compte : <select id="txModalExternalAccount" style="flex:1;min-width:0;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);"></select>`;
       insertAfter.parentNode.insertBefore(modalExtWrap, insertAfter.nextSibling);
     }
   }
