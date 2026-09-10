@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1211</title>
+<title>Mon Tableau de Vie 🌿 · v1212</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3484,7 +3484,7 @@
           <div id="moneyCatLegend" class="cat-legend"></div>
         </div>
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Hors charges fixes <span id="catChartNoFixTotal" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;" title="Exclut les charges fixes 🏠 et les dépenses exceptionnelles lissées ✨">− Dépenses courantes <span id="catChartNoFixTotal" style="color:#c75b4d;"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatChartNoFixed"></canvas></div>
           <div id="moneyCatNoFixLegend" class="cat-legend"></div>
         </div>
@@ -3504,7 +3504,7 @@
           <div id="moneyCatAllLegend" class="cat-legend"></div>
         </div>
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Hors charges fixes <span id="catAllChartNoFixTotal" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;" title="Exclut les charges fixes 🏠 et les dépenses exceptionnelles lissées ✨">− Dépenses courantes <span id="catAllChartNoFixTotal" style="color:#c75b4d;"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllNoFixChart"></canvas></div>
           <div id="moneyCatAllNoFixLegend" class="cat-legend"></div>
         </div>
@@ -17204,7 +17204,7 @@ function renderMoneyCatChart() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d < end && tx.type === "expense" && !tx.reimbursable && tx.type !== "cash-withdrawal" && tx.category !== "Retrait espèces") totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
+    if (d >= start && d < end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && tx.category !== "Retrait espèces") totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const depTotal = entries.reduce((s,[,v]) => s+v, 0);
@@ -17252,7 +17252,9 @@ function renderMoneyCatChart() {
   });
 }
 
-// Anneau "Dépenses hors charges fixes" : comme ci-dessus mais on exclut tout ce qui est coché 🏠 fixe
+// Anneau "Dépenses courantes" : comme ci-dessus mais on exclut les charges fixes 🏠 ET les
+// dépenses exceptionnelles lissées ✨ (un gros coup ponctuel comme des travaux de copropriété
+// ne doit pas écraser visuellement toutes les autres catégories).
 function renderMoneyCatChartNoFixed() {
   const canvas = document.getElementById("moneyCatChartNoFixed");
   if (!canvas) return;
@@ -17264,7 +17266,7 @@ function renderMoneyCatChartNoFixed() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d < end && tx.type === "expense" && !tx.reimbursable && !tx.fixedCharge && tx.category !== "Retrait espèces")
+    if (d >= start && d < end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && !tx.fixedCharge && !tx.exceptional && tx.category !== "Retrait espèces")
       totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
@@ -17273,7 +17275,7 @@ function renderMoneyCatChartNoFixed() {
   if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatNoFixLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries);
-  if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>hors charges fixes"); return; }
+  if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>courante"); return; }
 
   moneyCatChartNoFixed = new Chart(document.getElementById("moneyCatChartNoFixed"), {
     type: "doughnut",
@@ -17743,7 +17745,7 @@ function renderMoneyCatAllChart() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d <= end && tx.type === "expense" && !tx.reimbursable && tx.category !== "Retrait espèces") totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
+    if (d >= start && d <= end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && tx.category !== "Retrait espèces") totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
@@ -17789,7 +17791,7 @@ function renderMoneyCatAllNoFixChart() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d <= end && tx.type === "expense" && !tx.reimbursable && !tx.fixedCharge && tx.category !== "Retrait espèces") totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
+    if (d >= start && d <= end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && !tx.fixedCharge && !tx.exceptional && tx.category !== "Retrait espèces") totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
@@ -17797,7 +17799,7 @@ function renderMoneyCatAllNoFixChart() {
   if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatAllNoFixLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries);
-  if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>hors charges fixes"); return; }
+  if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>courante"); return; }
   moneyCatAllNoFixChart = new Chart(document.getElementById("moneyCatAllNoFixChart"), {
     type: "doughnut",
     data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
