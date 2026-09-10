@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1212</title>
+<title>Mon Tableau de Vie 🌿 · v1213</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19512,12 +19512,19 @@ document.getElementById("gcalModal")?.addEventListener("click", e => {
 // l'une avait même un format d'URL cassé pour corsproxy.io, "?<url>" au lieu de "?url=<url>").
 // cors-anywhere.herokuapp.com retiré : ce service de démo refuse toute origine non whitelistée
 // depuis des années, chaque tentative n'était qu'un délai d'attente garanti pour rien.
+// Mise à jour 2026-09 : testés en direct un par un (curl) — thingproxy.freeboard.io n'a plus de
+// DNS (service arrêté) et corsproxy.io exige désormais une clé API payante (401) : tous les deux
+// retirés, ils ne peuvent plus fonctionner pour personne. api.allorigins.win et api.codetabs.com
+// répondaient 522 (origine injoignable) au moment du test — probablement une panne passagère de
+// leur côté plutôt qu'un arrêt définitif (ce sont des projets actifs), donc gardés + un nouveau
+// candidat ajouté (cors.isomorphic-git.org, maintenu par le projet isomorphic-git). Il n'existe
+// malheureusement aucun proxy CORS public gratuit garanti fiable à long terme — si la synchro
+// recasse, c'est probablement qu'un nouveau maillon de cette liste est tombé à son tour.
 const ICS_CORS_PROXIES = [
   { build: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, json: false },
-  { build: u => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`, json: false },
-  { build: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`, json: false },
+  { build: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`, json: false },
+  { build: u => `https://cors.isomorphic-git.org/${u}`, json: false },
   { build: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, json: true },
-  { build: u => `https://thingproxy.freeboard.io/fetch/${u}`, json: false },
 ];
 // Essaie chaque proxy (sur `passes` tours) jusqu'à obtenir un contenu ICS valide (BEGIN:VEVENT).
 // Retourne le texte ICS, ou null si tout a échoué.
