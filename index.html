@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1209</title>
+<title>Mon Tableau de Vie 🌿 · v1210</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6826,12 +6826,14 @@ function renderEmotionGrid() {
       oncontextmenu="if(document.body.classList.contains('edit-mode')){event.preventDefault();_deleteEmotion('${e.id}');}"
       ${editing ? `draggable="true" ondragstart="_emDragStart(event,${i})" ondragover="_emDragOver(event)" ondrop="_emDrop(event,${i})" ondragend="_emDragEnd(event)"` : ""}
       style="
+        position:relative;
         display:flex;flex-direction:column;align-items:center;gap:3px;
         padding:8px 4px;border-radius:12px;
         border:2px solid var(--line);background:var(--card);
         cursor:${editing ? "grab" : "pointer"};transition:all .15s;font-family:inherit;
         -webkit-user-select:none;user-select:none;
       ">
+      ${editing ? `<span onclick="event.stopPropagation();_deleteEmotion('${e.id}')" title="Supprimer cette émotion" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:#dc2626;color:white;font-size:11px;line-height:18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.25);">✕</span>` : ""}
       <span style="font-size:22px;">${e.emoji}</span>
       <span style="font-size:10px;color:var(--ink-soft);text-align:center;line-height:1.2;">${e.label}</span>
     </button>`;
