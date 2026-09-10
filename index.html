@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1208</title>
+<title>Mon Tableau de Vie 🌿 · v1209</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1952,6 +1952,32 @@
         <span id="cloudSizeBadge" onclick="openCloudSizeAlert()" style="display:none;font-size:13px;padding:9px 13px;white-space:nowrap;flex-shrink:0;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--ink-soft);box-shadow:var(--shadow);cursor:pointer;font-weight:600;">📦 Stockage cloud</span>
       </div>
     </div>
+    <script>
+    // Pré-affiche l'état "connecté" (pastille + avatar) dès le premier rendu, sans attendre
+    // la résolution async de Firebase Auth — sinon le bouton "Connexion" est peint puis
+    // remplacé un instant après par l'avatar + la pastille de synchro, ce qui change la largeur
+    // de .header-actions, lui fait parfois changer de nombre de lignes (flex-wrap), et fait
+    // "sauter" la barre d'onglets juste en dessous (même conteneur sticky). En pré-affichant
+    // la forme finale tout de suite (avec un contenu provisoire), seul le TEXTE se met à jour
+    // ensuite — plus de changement de largeur, plus de saut.
+    (function() {
+      try {
+        if (!localStorage.getItem("_lastLoginUid")) return;
+        const signInBtn = document.getElementById("syncSignInBtn");
+        if (signInBtn) signInBtn.style.display = "none";
+        const av = document.getElementById("syncUserAvatar");
+        if (av) {
+          av.style.display = "flex";
+          av.innerHTML = '<div style="width:16px;height:16px;border-radius:50%;background:var(--lavender-soft);flex-shrink:0;"></div><span style="font-size:13px;color:var(--ink-soft);">…</span>';
+        }
+        const pill = document.getElementById("syncStatusPill");
+        if (pill) {
+          pill.style.display = "";
+          pill.innerHTML = '<span style="color:var(--ink-softer)">🔄 Connexion…</span>';
+        }
+      } catch (e) {}
+    })();
+    </script>
 
     <!-- Barre de raccourcis -->
     <div id="shortcutsBar" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0;margin-bottom:4px;min-height:0;"></div>
