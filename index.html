@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1210</title>
+<title>Mon Tableau de Vie 🌿 · v1211</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -417,13 +417,9 @@
   .water-count { margin-left: 10px; font-weight: 500; color: var(--ink-soft); font-size: 14px; }
 
   /* ========= MONEY ========= */
-  .money-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
   .money-stat { padding: 18px; border-radius: 18px; background: var(--card); box-shadow: var(--shadow); }
   .money-stat .label { color: var(--ink-soft); font-size: 13px; margin-bottom: 6px; }
   .money-stat .value { font-size: 26px; font-weight: 600; }
-  .money-stat.income { background: linear-gradient(135deg, white 0%, var(--mint-soft) 100%); }
-  .money-stat.expense { background: linear-gradient(135deg, white 0%, var(--rose-soft) 100%); }
-  .money-stat.balance { background: linear-gradient(135deg, white 0%, var(--lavender-soft) 100%); }
   .tx-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; background: #faf8fd; padding: 12px; border-radius: 14px; }
   .tx-form-inputs { display: grid; grid-template-columns: 1fr 1fr 2fr auto auto; gap: 8px; align-items: center; }
   .tx-form .type-toggle {
@@ -1486,7 +1482,7 @@
 
   /* ========= RESPONSIVE ========= */
   @media (max-width: 880px) {
-    .rings, .grid-three, .money-summary, .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .rings, .grid-three, .stat-grid { grid-template-columns: repeat(2, 1fr); }
     .grid-two, .grid-two-eq { grid-template-columns: 1fr; }
     .tx-form-inputs { grid-template-columns: 1fr 1fr; }
     .tx-form-inputs .add-btn { grid-column: span 2; }
@@ -1496,7 +1492,6 @@
     .add-task-form #newTaskName { flex: 0 0 100%; }
     .modal .grid-2 { grid-template-columns: 1fr; }
     /* Comptes : label + valeur lisibles, cartes qui rétrécissent sans déborder */
-    .money-summary { gap: 8px; }
     .money-stat { padding: 13px; min-width: 0; }
     .money-stat .label { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .money-stat .value { font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2701,9 +2696,9 @@
       </div>
       <div class="card" style="margin-bottom:18px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-          <button onclick="timeBarNav(-1)" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--lavender);padding:0 4px;" title="Période précédente">◀</button>
+          <button class="day-nav-btn" onclick="timeBarNav(-1)" title="Période précédente">◀</button>
           <h2 style="margin:0;flex:1;text-align:center;" id="timeBarTitle">14 derniers jours</h2>
-          <button onclick="timeBarNav(1)" id="timeBarNext" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--lavender);padding:0 4px;opacity:0.3;" title="Période suivante">▶</button>
+          <button class="day-nav-btn" onclick="timeBarNav(1)" id="timeBarNext" title="Période suivante">▶</button>
         </div>
         <div id="timeGlobalAvg" style="text-align:center;font-size:12px;color:var(--ink-soft);margin-bottom:10px;"></div>
         <div class="chart-wrap" style="height:260px;"><canvas id="timeBarChart"></canvas></div>
@@ -2714,8 +2709,8 @@
             <div class="card-row" style="margin-bottom:8px;">
               <h2 style="margin:0;font-size:14px;" id="timeDonutTitle">Sur 30 jours</h2>
               <div style="display:flex;gap:4px;align-items:center;">
-                <button onclick="timeDonutNav(-1)" style="background:none;border:1px solid var(--border);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;color:var(--ink-soft);">◀</button>
-                <button onclick="timeDonutNav(1)" id="timeDonutNext" style="background:none;border:1px solid var(--border);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;color:var(--ink-soft);">▶</button>
+                <button class="day-nav-btn" onclick="timeDonutNav(-1)" title="Période précédente">◀</button>
+                <button class="day-nav-btn" onclick="timeDonutNav(1)" id="timeDonutNext" title="Période suivante">▶</button>
               </div>
             </div>
             <div class="chart-wrap" style="height:220px;"><canvas id="timeDonutChart"></canvas></div>
@@ -2966,9 +2961,9 @@
         <p style="color:var(--ink-soft);font-size:12px;margin:0 0 10px;">Clique sur un jour de la semaine pour marquer une séance ✓</p>
         <!-- Navigation semaine -->
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <button onclick="navActWeek(-1)" style="padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:white;cursor:pointer;font-size:14px;color:var(--ink);">◀</button>
+          <button class="day-nav-btn" onclick="navActWeek(-1)" title="Semaine précédente">◀</button>
           <span id="actWeekLabel" style="flex:1;text-align:center;font-size:12px;color:var(--ink-soft);font-weight:600;"></span>
-          <button id="actWeekNextBtn" onclick="navActWeek(1)" style="padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:white;cursor:pointer;font-size:14px;color:var(--ink);" disabled>▶</button>
+          <button class="day-nav-btn" id="actWeekNextBtn" onclick="navActWeek(1)" title="Semaine suivante" disabled>▶</button>
         </div>
         <!-- Formulaire ajout/édition inline -->
         <div id="activityForm" style="display:none;background:var(--bg-1);border-radius:14px;padding:12px;margin-bottom:12px;border:1px solid var(--line);">
@@ -3093,9 +3088,9 @@
 
         <!-- Navigation mois (pour composition corporelle/kcal/balance — masquée si les 3 sont désactivées) -->
         <div id="healthMonthNavRow" style="display:flex;align-items:center;justify-content:center;gap:16px;margin:0 0 10px;">
-          <button onclick="healthNavMonth(-1)" style="background:var(--bg-2);border:1px solid var(--line);border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">◀</button>
+          <button class="day-nav-btn" onclick="healthNavMonth(-1)" title="Mois précédent">◀</button>
           <span id="healthMonthLabel" style="font-size:15px;font-weight:700;color:var(--ink);min-width:140px;text-align:center;"></span>
-          <button id="healthNavNext" onclick="healthNavMonth(1)" style="background:var(--bg-2);border:1px solid var(--line);border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">▶</button>
+          <button class="day-nav-btn" id="healthNavNext" onclick="healthNavMonth(1)" title="Mois suivant">▶</button>
         </div>
 
         <!-- Graphique kcal pleine largeur -->
@@ -3125,9 +3120,9 @@
         <div class="stat" id="stepsBestTile"></div>
       </div>
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin:12px 0 6px;">
-        <button onclick="navStepsMonth(-1)" style="background:var(--bg-2);border:1px solid var(--line);border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">◀</button>
+        <button class="day-nav-btn" onclick="navStepsMonth(-1)" title="Mois précédent">◀</button>
         <span id="stepsMonthLabel" style="font-size:15px;font-weight:700;color:var(--ink);min-width:140px;text-align:center;"></span>
-        <button id="stepsMonthNext" onclick="navStepsMonth(1)" style="background:var(--bg-2);border:1px solid var(--line);border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">▶</button>
+        <button class="day-nav-btn" id="stepsMonthNext" onclick="navStepsMonth(1)" title="Mois suivant">▶</button>
       </div>
       <p style="color:var(--ink-soft);font-size:12px;margin:0 0 6px;">🟢 ≥ 9000 · 🟠 7000-8999 · 🔴 < 7000 · pointillé vert = objectif</p>
       <div class="chart-wrap" style="height:240px;"><canvas id="stepsChart"></canvas></div>
@@ -3276,8 +3271,6 @@
       <p style="color:var(--ink-soft);font-size:12px;margin:10px 0 0;">💡 Quand tu ajoutes une transaction <strong>💰 Épargne</strong>, le montant est <strong>retiré du compte courant</strong> et <strong>ajouté au compte épargne</strong>. Pour ajuster les soldes de départ : utilise les liens <strong>Modifier départ</strong> sous chaque carte.</p>
 
     </div>
-    <div class="money-summary" id="moneySummary"></div>
-    <p id="moneySummaryCaption" style="font-size:11px;color:var(--ink-soft);margin:-10px 0 18px;"></p>
     <div class="card" style="margin-bottom:18px;">
       <!-- Panneau de gestion des catégories — visible uniquement en mode édition -->
       <div class="edit-only block" style="margin-bottom:14px;padding:14px;background:var(--butter-soft);border-radius:14px;border:1.5px dashed #f5c842;">
@@ -3386,30 +3379,30 @@
       </div>
     </div>
     <div class="card" style="margin-bottom:18px;" id="budgetGaugeCard">
-      <div class="card-row" style="margin-bottom:14px;">
+      <div class="card-row" style="margin-bottom:10px;">
         <h2 style="margin:0;">🎯 Budget de vie</h2>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <button onclick="openHelp('money-budget')" title="Aide sur le Budget de vie" class="help-btn sub-help-btn">✦<span class="help-label"> Aide</span></button>
-          <span id="budgetMonthLabel" style="font-size:12px;color:var(--ink-soft);">Ce mois</span>
-          <button onclick="_budgetNavMonth(-1)" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 2px;">◀</button>
-          <button onclick="_budgetNavMonth(1)" id="budgetNavNext" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-soft);padding:0 2px;">▶</button>
-        </div>
+        <button onclick="openHelp('money-budget')" title="Aide sur le Budget de vie" class="help-btn sub-help-btn">✦<span class="help-label"> Aide</span></button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px;">
+        <button class="day-nav-btn" onclick="_budgetNavMonth(-1)" title="Mois précédent">◀</button>
+        <span id="budgetMonthLabel" style="font-size:12px;color:var(--ink-soft);text-align:center;">Ce mois</span>
+        <button class="day-nav-btn" onclick="_budgetNavMonth(1)" id="budgetNavNext" title="Mois suivant">▶</button>
       </div>
       <div id="budgetGauge"></div>
     </div>
     <div class="card" id="externalCard" style="margin-bottom:18px;display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
         <h2 style="margin:0;white-space:nowrap;font-size:15px;" id="externalCardTitle">🏦 Comptes tiers</h2>
-        <div style="display:flex;gap:6px;align-items:center;">
+        <div style="display:flex;gap:6px;align-items:center;margin-left:auto;">
           <span id="externalTotal" style="font-size:14px;font-weight:700;color:var(--ink-soft);white-space:nowrap;"></span>
           <button id="externalEditAccountsBtn" onclick="openSecondaryAccountsManager()" class="help-btn">✦ Gérer</button>
         </div>
       </div>
       <div id="externalAccountTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;">
-        <button onclick="externalNav(-1)" style="background:none;border:1px solid var(--line);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:14px;">◀</button>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;">
+        <button class="day-nav-btn" onclick="externalNav(-1)" title="Mois précédent">◀</button>
         <span id="externalMonthLabel" style="font-size:12px;color:var(--ink-soft);min-width:70px;text-align:center;"></span>
-        <button id="externalNavNext" onclick="externalNav(1)" style="background:none;border:1px solid var(--line);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:14px;">▶</button>
+        <button class="day-nav-btn" id="externalNavNext" onclick="externalNav(1)" title="Mois suivant">▶</button>
       </div>
       <p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">💡 Argent qui ne sort pas de ton compte courant (un autre compte bancaire, une carte que tu utilises) — juste pour garder un œil dessus. N'impacte pas la jauge budget.</p>
       <div id="externalList"></div>
@@ -3465,27 +3458,18 @@
       <div class="chart-wrap" style="height:200px;"><canvas id="savingsChart"></canvas></div>
       <div id="savingsDetailPanel" style="display:none;margin-top:12px;border-top:1px solid var(--line);padding-top:12px;"></div>
     </div>
-    <!-- Évolution du solde + comparaison mois -->
-    <div class="grid-two-eq" style="margin-bottom:18px;">
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:8px;">
-          <h2 style="margin:0;white-space:nowrap;font-size:15px;">💰 Patrimoine</h2>
-          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
-            <button onclick="_patrimoineNav(-1)" style="background:none;border:1px solid var(--line);border-radius:8px;padding:2px 8px;cursor:pointer;font-size:14px;">◀</button>
-            <span id="patrimoineLabel" style="font-size:11px;color:var(--ink-soft);white-space:nowrap;text-align:center;"></span>
-            <button id="patrimoineNavNext" onclick="_patrimoineNav(1)" style="background:none;border:1px solid var(--line);border-radius:8px;padding:2px 8px;cursor:pointer;font-size:14px;">▶</button>
-          </div>
+    <!-- Évolution du solde -->
+    <div class="card" style="margin-bottom:18px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:8px;">
+        <h2 style="margin:0;white-space:nowrap;font-size:15px;">💰 Patrimoine</h2>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <button class="day-nav-btn" onclick="_patrimoineNav(-1)" title="Mois précédent">◀</button>
+          <span id="patrimoineLabel" style="font-size:11px;color:var(--ink-soft);white-space:nowrap;text-align:center;"></span>
+          <button class="day-nav-btn" id="patrimoineNavNext" onclick="_patrimoineNav(1)" title="Mois suivant">▶</button>
         </div>
-        <p style="font-size:11px;color:var(--ink-softer);margin:0 0 10px;">Compte courant + épargne — les virements vers l'épargne ne font pas plonger la courbe.</p>
-        <div class="chart-wrap" style="height:200px;"><canvas id="balanceEvolutionChart"></canvas></div>
       </div>
-      <div class="card" id="monthCompareCard">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px;">
-          <h2 style="margin:0;">⚖️ Mois en mois</h2>
-          <span id="monthCompareLabel" style="font-size:12px;color:var(--ink-soft);"></span>
-        </div>
-        <div id="monthCompareBody"></div>
-      </div>
+      <p style="font-size:11px;color:var(--ink-softer);margin:0 0 10px;">Compte courant + épargne — les virements vers l'épargne ne font pas plonger la courbe.</p>
+      <div class="chart-wrap" style="height:200px;"><canvas id="balanceEvolutionChart"></canvas></div>
     </div>
     <div class="card">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
@@ -3834,9 +3818,9 @@
       <div class="card-row" style="flex-wrap:wrap;gap:10px;">
         <h2>📅 Calendrier</h2>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
-          <button class="btn-soft" onclick="calNavMonth(-1)" style="font-size:14px;padding:7px 12px;">◀</button>
+          <button class="day-nav-btn" onclick="calNavMonth(-1)" title="Mois précédent">◀</button>
           <strong id="calMonthLabel" style="font-size:16px;min-width:110px;text-align:center;text-transform:capitalize;">…</strong>
-          <button class="btn-soft" onclick="calNavMonth(1)" style="font-size:14px;padding:7px 12px;">▶</button>
+          <button class="day-nav-btn" onclick="calNavMonth(1)" title="Mois suivant">▶</button>
           <button class="btn-soft" onclick="calNavToday()" style="font-size:12px;">Aujourd'hui</button>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -6521,7 +6505,7 @@ function onViewChange(view) {
   if (view === "work") updateWorkTabBadges();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
   if (view === "health") { _healthMonthOffset = 0; _stepsMonthOffset = 0; _renderHealthMonthLabel(); _renderStepsMonthLabel(); _refreshHealthCharts(); }
-  if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
+  if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
 }
@@ -14545,7 +14529,7 @@ function saveMoneyNote() {
 function renderMoney() {
   const noteEl = document.getElementById("moneyNote");
   if (noteEl && noteEl.value !== (state.moneyNote || "")) noteEl.value = state.moneyNote || "";
-  populateTxCategories(); populateMissionList(); renderMoneySummary(); renderBudgetGauge(); renderExternalSummary(); renderTxList(); renderReimbursable(); renderSavings(); renderAccounts(); renderForecast(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback();
+  populateTxCategories(); populateMissionList(); renderBudgetGauge(); renderExternalSummary(); renderTxList(); renderReimbursable(); renderSavings(); renderAccounts(); renderForecast(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback();
 }
 let _externalMonthOffset = 0;
 let _externalAccountFilter = null; // null = "Tous"
@@ -15077,7 +15061,7 @@ function confirmReimbursed(id) {
   tx.reimbTxId = r.incomeId; tx.reimbSurplusTxId = r.surplusId; tx.reimbReturnTxId = r.returnId;
   _reimbFormOpenId = null;
   saveState();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 
 function confirmGroupReimbursed(ids, dateInputId, mission) {
@@ -15094,7 +15078,7 @@ function confirmGroupReimbursed(ids, dateInputId, mission) {
   if (txs[0]) { txs[0].reimbTxId = r.incomeId; txs[0].reimbSurplusTxId = r.surplusId; txs[0].reimbReturnTxId = r.returnId; }
   _reimbFormOpenId = null;
   saveState();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 
 function toggleReimbForm(id) {
@@ -15103,7 +15087,7 @@ function toggleReimbForm(id) {
 }
 
 function _reimbRefresh() {
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 
 // Marquer un frais comme "remboursement lancé" (montant connu, pas encore reçu)
@@ -15198,7 +15182,7 @@ function undoReimbursed(id) {
   delete tx.reimbursedAt;
   delete tx.reimbursedAmount;
   saveState();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 /* ===== REMBOURSEMENTS PARTIELS ===== */
 function txNetAmount(tx) {
@@ -15278,7 +15262,7 @@ function savePartialReimb() {
   tx.partialReimbursements.push(reimbEntry);
   saveState();
   closePartialReimbModal();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderBudgetFeedback(); renderForecast();
 }
 function deletePartialReimb(txId, reimbId) {
   const tx = state.transactions.find(t => t.id === txId);
@@ -15296,7 +15280,7 @@ function deletePartialReimb(txId, reimbId) {
   tx.partialReimbursements = tx.partialReimbursements.filter(r => r.id !== reimbId);
   saveState();
   openPartialReimbModal(txId);
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderBudgetFeedback(); renderForecast();
 }
 
 function _goToHealth(sectionId) {
@@ -16059,30 +16043,6 @@ function currentMonthLabel() {
   const endDisplay = new Date(end); endDisplay.setDate(endDisplay.getDate() - 1);
   return `${fmt(start)} → ${fmt(endDisplay)}`;
 }
-function renderMoneySummary() {
-  const [start, end] = currentMonthRange();
-  let income = 0, expense = 0;
-  for (const tx of state.transactions) {
-    const d = new Date(tx.date);
-    if (d >= start && d < end) {
-      if (tx.type === "income" && !tx.partialReimbIncome) income += tx.amount;
-      else if (tx.type === "expense") expense += txNetAmount(tx);
-      // savings traités séparément dans la carte Épargne, pas comptés ici
-    }
-  }
-  const balance = income - expense;
-  const period = currentMonthLabel();
-  document.getElementById("moneySummary").innerHTML = `
-    <div class="money-stat income"><div class="label">Revenus — ${period}</div><div class="value">+${income.toFixed(2)} €</div></div>
-    <div class="money-stat expense"><div class="label">Dépenses — ${period}</div><div class="value">−${expense.toFixed(2)} €</div></div>
-    <div class="money-stat balance"><div class="label">Solde — ${period}</div><div class="value">${balance >= 0 ? "+" : ""}${balance.toFixed(2)} €</div></div>`;
-  const captionEl = document.getElementById("moneySummaryCaption");
-  if (captionEl) {
-    captionEl.innerHTML = state.mainSalaryCategory
-      ? `💡 "Solde" = revenus − dépenses <strong>depuis le début de la période</strong> affichée juste au-dessus (pas ton solde de compte ni ton épargne). La période démarre à ton dernier revenu catégorisé <strong>"${escapeHtml(state.mainSalaryCategory)}"</strong> (⭐ salaire principal, dans Gérer les catégories) — si tu n'en ajoutes pas un chaque mois, la période s'allonge et ce chiffre grossit d'autant.`
-      : `💡 "Solde" = revenus − dépenses <strong>depuis le début de la période</strong> affichée juste au-dessus (pas ton solde de compte ni ton épargne). Aucun "salaire principal" n'est défini : la période suit le mois calendaire (26 du mois). Tu peux en choisir un dans <strong>Gérer les catégories</strong> (icône ⭐ sur une catégorie de revenu).`;
-  }
-}
 function initTxDate() {
   const el = document.getElementById("txDate");
   if (el && !el.value) el.value = new Date().toISOString().slice(0, 10);
@@ -16156,7 +16116,7 @@ function addTransaction() {
   initTxDate(); // remet à aujourd'hui après ajout
   saveState();
   if (postdocMission) { try { admRender(); } catch(e) {} } // rafraîchit le tableau missions
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 // Remet à zéro la navigation par période (budget, catégories, comptes tiers, patrimoine) :
 // ces offsets sont relatifs à "la dernière période", qui peut se décaler quand une transaction
@@ -16169,12 +16129,12 @@ function deleteTx(id, silent) {
   const removed = state.transactions.find(t => t.id === id);
   state.transactions = state.transactions.filter(t => t.id !== id);
   if (removed && removed.type === "income" && state.mainSalaryCategory && removed.category === state.mainSalaryCategory) _resetMoneyNav();
-  if (!silent) { saveState(); renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
+  if (!silent) { saveState(); renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
 }
 function deleteVirement(virId) {
   state.transactions = state.transactions.filter(t => t.virementId !== virId);
   saveState();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 
 /* ===== TX EDIT MODAL ===== */
@@ -16369,7 +16329,7 @@ function saveTxFromModal() {
   }
   saveState();
   closeTxModal();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
 }
 function deleteTxFromModal() {
   const id = document.getElementById("txModalId").value;
@@ -16377,7 +16337,7 @@ function deleteTxFromModal() {
   _showConfirm("Supprimer cette transaction ?", () => {
     state.transactions = state.transactions.filter(t => t.id !== id);
     saveState(); closeTxModal();
-    renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMonthComparison(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+    renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
   });
 }
 document.getElementById("catDetailModal").addEventListener("click", e => { if (e.target.id === "catDetailModal" && _modalMouseDownTarget === e.target) e.target.classList.remove("open"); });
@@ -16809,46 +16769,6 @@ function renderBalanceEvolutionChart() {
       },
     },
   });
-}
-
-function renderMonthComparison() {
-  const el = document.getElementById("monthCompareBody");
-  const lbl = document.getElementById("monthCompareLabel");
-  if (!el) return;
-  const periods = _salaryPeriods();
-  const curP  = periods[periods.length - 1];
-  const prevP = periods[Math.max(0, periods.length - 2)];
-  const [mThis, mThis2] = [curP.start, curP.end];
-  const [mPrev, mPrev2] = [prevP.start, prevP.end];
-  const sum = (from, to, type) =>
-    state.transactions.filter(t => { const d = new Date(t.date); return d >= from && d < to && t.type === type; })
-    .reduce((s, t) => s + t.amount, 0);
-  const nowLabel  = _periodLabel(curP);
-  const prevLabel = _periodLabel(prevP);
-  if (lbl) lbl.textContent = `${prevLabel} → ${nowLabel}`;
-  const _isMCS = document.body.classList.contains("t-serieux");
-  const rows = [
-    { label: "Dépenses",  icon: "−", colorN: _isMCS?"#b05050":"#c75b4d", n: sum(mThis, mThis2, "expense"),  p: sum(mPrev, mPrev2, "expense") },
-    { label: "Revenus",   icon: "+", colorN: _isMCS?"#6a9e78":"#4d9c7e", n: sum(mThis, mThis2, "income"),   p: sum(mPrev, mPrev2, "income") },
-    { label: "Épargne",   icon: "💰", colorN: _isMCS?"#6b9ec4":"#7c5cbf", n: sum(mThis, mThis2, "savings"),  p: sum(mPrev, mPrev2, "savings") },
-    { label: "Hors cpt.", icon: "🧾", colorN: _isMCS?"#c0986e":"#c08a4d", n: sum(mThis, mThis2, "external"), p: sum(mPrev, mPrev2, "external") },
-  ];
-  el.innerHTML = rows.map(r => {
-    const diff = r.n - r.p;
-    const pct  = r.p > 0 ? ((diff / r.p) * 100).toFixed(0) : "—";
-    // Pour les dépenses, hausse = mauvais (rouge) ; pour le reste, hausse = bon (vert)
-    const isExpense = r.label === "Dépenses" || r.label === "Hors cpt.";
-    const _mRed = _isMCS?"#b05050":"#c75b4d", _mGrn = _isMCS?"#6a9e78":"#4d9c7e";
-    const diffColor = diff === 0 ? "var(--ink-soft)" : (diff > 0 ? (isExpense ? _mRed : _mGrn) : (isExpense ? _mGrn : _mRed));
-    const arrow = diff === 0 ? "→" : (diff > 0 ? "↑" : "↓");
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);gap:8px;">
-      <span style="font-size:13px;color:var(--ink);font-weight:500;min-width:70px;">${r.icon} ${r.label}</span>
-      <span style="font-size:12px;color:var(--ink-soft);">${r.p.toFixed(0)} €</span>
-      <span style="font-size:13px;font-weight:700;color:${r.colorN};">${r.n.toFixed(0)} €</span>
-      <span style="font-size:12px;font-weight:700;color:${diffColor};min-width:52px;text-align:right;">${arrow} ${Math.abs(diff).toFixed(0)} € ${pct !== "—" ? `(${pct}%)` : ""}</span>
-    </div>`;
-  }).join("") +
-  `<div style="margin-top:8px;font-size:11px;color:var(--ink-softer);text-align:right;">← ${prevLabel} · ${nowLabel} en cours →</div>`;
 }
 
 function renderSavings() {
