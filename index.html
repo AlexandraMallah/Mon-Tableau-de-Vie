@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1213</title>
+<title>Mon Tableau de Vie 🌿 · v1215</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5007,6 +5007,20 @@
         </ol>
         <textarea id="gcalManualICS" rows="4" placeholder="Colle ici le contenu de l'ICS (BEGIN:VCALENDAR...)" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:11px;font-family:monospace;color:var(--ink);background:white;resize:vertical;"></textarea>
         <button onclick="_importGcalManual()" style="margin-top:8px;padding:8px 16px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">📥 Importer ce contenu</button>
+      </div>
+    </details>
+    <details style="margin-top:10px;">
+      <summary style="cursor:pointer;color:var(--ink-soft);font-size:12px;font-weight:500;">🛡️ Synchro automatique plus fiable (une fois pour toutes)</summary>
+      <div style="margin-top:10px;padding:12px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);">
+        <p style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;line-height:1.5;">La connexion automatique ci-dessus passe par des services tiers gratuits qui tombent parfois en panne. Pour une synchro qui ne dépend plus d'eux :</p>
+        <ol style="font-size:12px;color:var(--ink-soft);line-height:1.7;padding-left:18px;margin:0 0 8px;">
+          <li>Va sur la page GitHub de ce site → onglet <strong>Settings</strong> → dans le menu de gauche, <strong>Secrets and variables → Actions</strong></li>
+          <li>Bouton <strong>« New repository secret »</strong></li>
+          <li>Nom : <code>GCAL_ICS_URL</code></li>
+          <li>Valeur : colle la même adresse secrète iCal que ci-dessus</li>
+          <li>« Add secret »</li>
+        </ol>
+        <p style="font-size:12px;color:var(--ink-soft);margin:0;line-height:1.5;">C'est tout. Une tâche automatique (déjà en place dans le site) ira chercher ton agenda toutes les 30 min directement depuis GitHub — plus aucun proxy, plus aucune panne possible de ce côté-là.</p>
       </div>
     </details>
     <div class="actions">
@@ -19528,6 +19542,23 @@ const ICS_CORS_PROXIES = [
 ];
 // Essaie chaque proxy (sur `passes` tours) jusqu'à obtenir un contenu ICS valide (BEGIN:VEVENT).
 // Retourne le texte ICS, ou null si tout a échoué.
+// Essaie d'abord calendar-sync.ics — un fichier déposé dans le repo toutes les ~30 min par le
+// workflow GitHub Actions .github/workflows/sync-calendar.yml (qui va chercher l'agenda côté
+// serveur, sans souci de CORS). Comme il vit sur le même site, ce fetch ne passe par AUCUN
+// proxy tiers et ne peut donc jamais échouer pour une histoire de CORS. Si le fichier n'existe
+// pas encore (workflow pas configuré, ou pas encore tourné une première fois), on retombe
+// silencieusement sur les proxies CORS publics — moins fiables, mais gratuits sans rien à
+// configurer.
+async function _fetchIcsSmart(url, opts) {
+  try {
+    const r = await fetch("./calendar-sync.ics", { cache: "no-store" });
+    if (r.ok) {
+      const tx = await r.text();
+      if (/BEGIN:VEVENT/i.test(tx)) return tx;
+    }
+  } catch (_) { /* pas de fichier local, on tente les proxies */ }
+  return _fetchIcsViaProxies(url, opts);
+}
 async function _fetchIcsViaProxies(url, { timeoutMs = 25000, passes = 1, cacheBust = false } = {}) {
   for (let pass = 0; pass < passes; pass++) {
     for (const proxy of ICS_CORS_PROXIES) {
@@ -19553,7 +19584,7 @@ async function saveGoogleCal() {
   result.style.display = "";
   result.style.background = "var(--lavender-soft)";
   result.innerHTML = "⏳ Connexion en cours…";
-  const text = await _fetchIcsViaProxies(url, { timeoutMs: 25000, passes: 1 });
+  const text = await _fetchIcsSmart(url, { timeoutMs: 25000, passes: 1 });
   try {
     if (!text) throw new Error("Tous les proxies ont échoué. Vérifie l'URL et réessaie.");
     const parsed = parseICS(text);
@@ -19620,7 +19651,7 @@ async function syncGoogleCal(silent = false) {
   const url = state.googleCal?.url;
   if (!url) return;
   if (!silent) showToast("🔄 Synchronisation Google Agenda…");
-  const text = await _fetchIcsViaProxies(url, { timeoutMs: 25000, passes: 2, cacheBust: true });
+  const text = await _fetchIcsSmart(url, { timeoutMs: 25000, passes: 2, cacheBust: true });
   if (!text) {
     // En synchro automatique (silencieuse), on ne spamme pas d'erreur rouge : les événements déjà
     // chargés restent affichés. On ne prévient que lors d'une synchro manuelle.
@@ -24502,7 +24533,7 @@ async function detectPlantsFromGoogle() {
   const url = state.googleCal?.url;
   if (!url) { document.getElementById("icsFilePlants")?.click(); return; }
   showToast("🔍 Détection des plantes depuis Google Agenda…");
-  const text = await _fetchIcsViaProxies(url, { timeoutMs: 15000, passes: 1, cacheBust: true });
+  const text = await _fetchIcsSmart(url, { timeoutMs: 15000, passes: 1, cacheBust: true });
   if (!text) { showToast("❌ Impossible de lire Google Agenda. Réessaie ou utilise un fichier .ics."); return; }
   try { _runPlantDetection(parseICS(text)); } catch (err) { alert("Erreur de lecture : " + err.message); }
 }
