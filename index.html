@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1219</title>
+<title>Mon Tableau de Vie 🌿 · v1220</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1345,6 +1345,13 @@
     display: none; align-items: center; justify-content: center;
     z-index: 100; padding: 20px;
     backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    /* Isole le flou dans sa propre couche GPU (même fix que .sticky-header-group) : sans ça,
+       le backdrop-filter est recalculé à chaque frame de scroll DANS la modale, ce qui donne
+       cet effet de clignotement/saut au défilement. */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
   }
   .modal-bg.open { display: flex; }
   .modal {
@@ -1352,6 +1359,10 @@
     width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
     overscroll-behavior: contain;
+    /* Couche GPU dédiée pour que le scroll interne ne redéclenche pas le repaint du flou
+       du fond (.modal-bg) juste derrière — même logique que ci-dessus. */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
   }
   .modal h2 { margin: 0 0 18px; }
   /* ===== Sélecteur d'emoji unifié (listes, projets, activités, plantes, routines, suivi santé…) ===== */
@@ -25951,7 +25962,7 @@ function openShortcutsEditor() {
   if (!state.shortcuts) state.shortcuts = [];
   const current = new Set(state.shortcuts.map(s => s.id));
   const modal = document.createElement("div");
-  modal.style.cssText = "position:fixed;inset:0;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center;";
+  modal.style.cssText = "position:fixed;inset:0;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;z-index:500;display:flex;align-items:center;justify-content:center;";
   modal.innerHTML = `<div style="background:white;border-radius:20px;padding:24px;max-width:480px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 12px 48px rgba(60,50,80,.22);">
     <h2 style="margin:0 0 6px;">⚡ Raccourcis</h2>
     <p style="font-size:13px;color:var(--ink-soft);margin:0 0 16px;">Coche les raccourcis à afficher en haut.</p>
@@ -27635,7 +27646,7 @@ function _micPulse(on) {
 </style>
 
 <!-- Modale détail hormone -->
-<div id="hormoneDetailModal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeHormoneDetail()">
+<div id="hormoneDetailModal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;align-items:center;justify-content:center;" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeHormoneDetail()">
   <div style="background:var(--card);border-radius:22px;padding:28px 24px;max-width:380px;width:92%;box-shadow:0 12px 48px rgba(60,50,80,.22);position:relative;">
     <button onclick="closeHormoneDetail()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-softer);">✕</button>
     <div id="hormoneDetailContent"></div>
@@ -27644,7 +27655,7 @@ function _micPulse(on) {
 
 <!-- Modal config hormone → activités -->
 <!-- Modal note libre -->
-<div id="freeNoteModal" onclick="event.target===this&&_modalMouseDownTarget===this&&_closeFreeNoteModal()" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+<div id="freeNoteModal" onclick="event.target===this&&_modalMouseDownTarget===this&&_closeFreeNoteModal()" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;align-items:center;justify-content:center;">
   <div style="background:var(--card);border-radius:22px;padding:28px 24px;max-width:520px;width:94%;box-shadow:0 12px 48px rgba(60,50,80,.22);" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
       <h3 id="freeNoteModalTitle" style="margin:0;font-size:18px;">📓 Nouvelle note</h3>
@@ -27667,7 +27678,7 @@ function _micPulse(on) {
 </div>
 
 <!-- Modal note projet perso -->
-<div id="persoNoteModal" onclick="event.target===this&&_modalMouseDownTarget===this&&_closePersoNoteModal()" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+<div id="persoNoteModal" onclick="event.target===this&&_modalMouseDownTarget===this&&_closePersoNoteModal()" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;align-items:center;justify-content:center;">
   <div style="background:var(--card);border-radius:22px;padding:28px 24px;max-width:520px;width:94%;box-shadow:0 12px 48px rgba(60,50,80,.22);" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
       <h3 id="persoNoteModalTitle" style="margin:0;font-size:18px;">📝 Nouvelle note</h3>
@@ -27690,7 +27701,7 @@ function _micPulse(on) {
   </div>
 </div>
 
-<div id="hormoneConfigModal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this&&_modalMouseDownTarget===this)_closeHormoneConfig()">
+<div id="hormoneConfigModal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(60,50,80,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;align-items:center;justify-content:center;" onclick="if(event.target===this&&_modalMouseDownTarget===this)_closeHormoneConfig()">
   <div style="background:var(--card);border-radius:22px;padding:28px 24px;max-width:420px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 12px 48px rgba(60,50,80,.22);" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
       <span id="hcmEmoji" style="font-size:28px;"></span>
