@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1223</title>
+<title>Mon Tableau de Vie 🌿 · v1224</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1738,10 +1738,6 @@
     .grocery-layout { grid-template-columns: 1fr !important; }
     .grocery-layout > div { min-width: 0; width: 100%; box-sizing: border-box; }
 
-    /* === Biblio : sidebar + liste → colonne unique === */
-    #biblioGrid { grid-template-columns: 1fr !important; }
-    #biblioGrid #biblioResizeHandle { display: none !important; }
-    #biblioGrid > div:last-child { margin-top: 14px !important; }
 
     /* === Courses : éviter overflow sur les cartes internes === */
     .food-view { overflow-x: hidden; }
@@ -1815,14 +1811,6 @@
   /* ---- Trend Prediction ---- */
 
   /* ---- Notes Travail ---- */
-  /* Biblio nav tabs */
-  .biblio-tab {
-    padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--line);
-    background: white; color: var(--ink-soft); font-size: 13px; cursor: pointer;
-    font-family: inherit; transition: all 0.15s; white-space: nowrap;
-  }
-  .biblio-tab:hover { background: var(--lavender-soft); border-color: var(--lavender); }
-  .biblio-tab.active { background: var(--lavender-soft); border-color: var(--lilac); color: var(--ink); font-weight: 600; }
 
   .note-tb-btn {
     padding: 3px 9px; border-radius: 6px; border: 1px solid var(--line);
@@ -2805,160 +2793,6 @@
   <!-- Vues dynamiques : projets custom créés par l'utilisatrice -->
     <div id="workDynamicViews"></div>
 
-  <!-- Sub: Bibliographie (onglet masqué, fonctions conservées) -->
-    <div class="sub-view" data-sub="biblio" style="display:none!important;">
-      <!-- Sélecteur de projet -->
-      <div id="biblioProjectRow" style="display:none;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-        <select id="biblioProjectSelect" onchange="switchBiblioProject(this.value)"
-          style="flex:1;min-width:160px;padding:8px 12px;border:1.5px solid var(--lavender);border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;color:var(--ink);background:var(--lavender-soft);">
-        </select>
-        <button onclick="addBiblioProject()" style="padding:7px 12px;border-radius:10px;border:1.5px solid var(--lavender);background:white;color:var(--lilac);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Projet</button>
-        <button onclick="renameBiblioProject()" style="padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;">✎</button>
-        <button onclick="deleteBiblioProject()" style="padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:white;color:#c75b4d;font-size:12px;cursor:pointer;font-family:inherit;">✕</button>
-      </div>
-      <!-- Mini-nav interne -->
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;" id="biblioNav">
-        <button class="biblio-tab active" data-biblio="refs" onclick="switchBiblioPanel('refs')">📚 Références</button>
-        <button class="biblio-tab" data-biblio="extracts" onclick="switchBiblioPanel('extracts')">✏️ Extraits</button>
-        <button class="biblio-tab" data-biblio="codes" onclick="switchBiblioPanel('codes')">🏷️ Codes</button>
-        <button class="biblio-tab" data-biblio="bycode" onclick="switchBiblioPanel('bycode')">🔍 Vue par code</button>
-        <button class="biblio-tab" data-biblio="zotero" onclick="switchBiblioPanel('zotero')" style="margin-left:auto;">⚙️ Zotero</button>
-      </div>
-
-      <!-- Panel : Références -->
-      <div id="biblioPanel-refs">
-        <div id="biblioGrid" style="display:grid;grid-template-columns:200px 6px 1fr;align-items:start;">
-          <!-- Arbre collections -->
-          <div class="card" style="padding:12px;overflow-y:auto;max-height:75vh;">
-            <div style="font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Collections</div>
-            <div id="biblioCollectionTree"></div>
-          </div>
-          <!-- Handle de redimensionnement -->
-          <div id="biblioResizeHandle"
-            style="cursor:col-resize;align-self:stretch;width:16px;min-width:16px;display:flex;align-items:center;justify-content:center;"
-            onmousedown="startBiblioResize(event)"
-            onmouseover="document.getElementById('biblioResizeLine').style.background='var(--lavender)'"
-            onmouseout="document.getElementById('biblioResizeLine').style.background='var(--line)'">
-            <div id="biblioResizeLine" style="width:3px;height:40px;background:var(--line);border-radius:4px;transition:background 0.15s;pointer-events:none;"></div>
-          </div>
-          <!-- Liste refs -->
-          <div class="card">
-          <div class="work-header">
-            <h2 style="margin:0;">📚 Mes références <span class="count" id="biblioRefCount"></span></h2>
-            <div id="biblioDebug" style="font-size:11px;color:var(--ink-softer);"></div>
-            <button class="btn-primary" onclick="openRefModal()">+ Ajouter</button>
-          </div>
-          <!-- Filtres -->
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
-            <input type="text" id="biblioSearch" placeholder="🔍 Chercher…" oninput="renderBiblioRefs()"
-              style="flex:1;min-width:160px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;" />
-            <select id="biblioFilterStatus" onchange="renderBiblioRefs()"
-              style="padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:white;">
-              <option value="">Tous les statuts</option>
-              <option value="to-read">📌 À lire</option>
-              <option value="reading">📖 En cours</option>
-              <option value="read">✅ Lu</option>
-            </select>
-            <select id="biblioFilterType" onchange="renderBiblioRefs()"
-              style="padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:white;">
-              <option value="">Tous les types</option>
-              <option value="book">📗 Livre</option>
-              <option value="article">📄 Article</option>
-              <option value="chapter">📑 Chapitre</option>
-              <option value="report">📋 Rapport</option>
-              <option value="thesis">🎓 Thèse</option>
-              <option value="other">📎 Autre</option>
-            </select>
-          </div>
-          <div id="biblioRefList" style="max-height:65vh;overflow-y:auto;"></div>
-          </div><!-- fin card liste -->
-        </div><!-- fin grid -->
-      </div><!-- fin panel refs -->
-
-      <!-- Panel : Extraits -->
-      <div id="biblioPanel-extracts" style="display:none;">
-        <div class="card">
-          <div class="work-header" style="margin-bottom:14px;">
-            <h2 style="margin:0;">✏️ Extraits codés <span class="count" id="biblioExtractCount"></span></h2>
-            <button class="btn-primary" onclick="openExtractModal()">+ Ajouter un extrait</button>
-          </div>
-          <!-- Filtres extraits -->
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
-            <input type="text" id="biblioExtractSearch" placeholder="🔍 Texte, auteur, annotation…" oninput="renderBiblioExtracts()"
-              style="flex:2;min-width:180px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;" />
-            <select id="biblioExtractFilterRef" onchange="renderBiblioExtracts()"
-              style="flex:1;min-width:160px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:white;">
-              <option value="">Toutes les références</option>
-            </select>
-            <select id="biblioExtractFilterCode" onchange="renderBiblioExtracts()"
-              style="flex:1;min-width:140px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:white;">
-              <option value="">Tous les codes</option>
-            </select>
-          </div>
-          <div id="biblioExtractList"></div>
-        </div>
-      </div>
-
-      <!-- Panel : Codes -->
-      <div id="biblioPanel-codes" style="display:none;">
-        <div class="card">
-          <div class="work-header" style="margin-bottom:14px;">
-            <h2 style="margin:0;">🏷️ Mes codes <span class="count" id="biblioCodeCount"></span></h2>
-            <button class="btn-primary" onclick="openCodeModal()">+ Nouveau code</button>
-          </div>
-          <div id="biblioCodeList"></div>
-        </div>
-      </div>
-
-      <!-- Panel : Vue par code -->
-      <div id="biblioPanel-bycode" style="display:none;">
-        <div style="display:grid;grid-template-columns:220px 1fr;gap:14px;align-items:start;">
-          <!-- Arbre codes -->
-          <div class="card" style="padding:12px;max-height:70vh;overflow-y:auto;">
-            <div style="font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Codes</div>
-            <div id="biblioByCodeTree"></div>
-          </div>
-          <!-- Extraits du code sélectionné -->
-          <div id="biblioByCodeContent" style="max-height:70vh;overflow-y:auto;"></div>
-        </div>
-        <input type="hidden" id="biblioByCodeSelect" value="" />
-      </div>
-
-      <!-- Panel : Zotero -->
-      <div id="biblioPanel-zotero" style="display:none;">
-        <div class="card">
-          <h2 style="margin:0 0 10px;">⚙️ Connexion Zotero</h2>
-          <p style="font-size:13px;color:var(--ink-soft);margin:0 0 14px;">L'API Zotero est gratuite. Trouve ton User ID et ta clé API sur <strong>zotero.org → Paramètres → Feeds/API</strong>.</p>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-            <div>
-              <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">User ID (nombre)</label>
-              <input type="text" id="zoteroUserId" placeholder="ex : 1234567"
-                style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;box-sizing:border-box;" />
-            </div>
-            <div>
-              <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Clé API</label>
-              <input type="text" id="zoteroApiKey" placeholder="ex : aBcDeFgH12345678"
-                style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;box-sizing:border-box;" />
-            </div>
-          </div>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin-bottom:10px;cursor:pointer;">
-            <input type="checkbox" id="zoteroSkipPersonal" style="width:15px;height:15px;" />
-            Ignorer la bibliothèque personnelle (n'importer que les groupes)
-          </label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn-primary" onclick="saveZoteroConfig()">💾 Enregistrer</button>
-            <button class="btn-soft" onclick="syncZotero()">🔄 Synchroniser la bibliothèque</button>
-          </div>
-          <div id="zoteroStatus" style="margin-top:12px;font-size:13px;"></div>
-
-          <!-- Sources importées -->
-          <div style="margin-top:18px;border-top:1px solid var(--line);padding-top:14px;">
-            <div style="font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Sources importées</div>
-            <div id="zoteroSourcesList"></div>
-          </div>
-        </div>
-      </div>
-    </div>
 
   </section>
 
@@ -4161,114 +3995,6 @@
   </div>
 </div>
 
-<!-- ===== BIBLIO MODALS ===== -->
-<!-- Modal référence -->
-<div class="modal-bg" id="refModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeRefModal()">
-  <div class="modal" style="max-width:680px;max-height:90vh;overflow-y:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-      <h2 id="refModalTitle" style="margin:0 0 2px;">Nouvelle référence</h2>
-      <p class="modal-hint" style="margin-bottom:14px;">Ajoute un ouvrage, article, rapport ou source en ligne à ta bibliographie. Relie-lui ensuite des extraits et des codes thématiques depuis les onglets dédiés.</p>
-      <div style="display:flex;gap:6px;">
-        <button class="biblio-tab active" id="refTabInfos" onclick="switchRefTab('infos')">📋 Infos</button>
-        <button class="biblio-tab" id="refTabFiche" onclick="switchRefTab('fiche')">📝 Fiche de lecture</button>
-      </div>
-    </div>
-    <input type="hidden" id="refModalId" />
-
-    <!-- Onglet Infos -->
-    <div id="refPanelInfos">
-      <div class="grid-2">
-        <div>
-          <label>Type</label>
-          <select id="refModalType" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;">
-            <option value="book">📗 Livre</option>
-            <option value="article">📄 Article</option>
-            <option value="chapter">📑 Chapitre</option>
-            <option value="report">📋 Rapport</option>
-            <option value="thesis">🎓 Thèse</option>
-            <option value="other">📎 Autre</option>
-          </select>
-        </div>
-        <div>
-          <label>Statut</label>
-          <select id="refModalStatus" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;">
-            <option value="to-read">📌 À lire</option>
-            <option value="reading">📖 En cours</option>
-            <option value="read">✅ Lu</option>
-          </select>
-        </div>
-      </div>
-      <label>Titre *</label>
-      <input type="text" id="refModalTitle2" placeholder="Titre de l'ouvrage ou de l'article" />
-      <label>Auteur(s)</label>
-      <input type="text" id="refModalAuthors" placeholder="Nom, Prénom ; Nom2, Prénom2" />
-      <div class="grid-2">
-        <div><label>Année</label><input type="text" id="refModalYear" placeholder="2024" /></div>
-        <div><label>Pages / Volume</label><input type="text" id="refModalPages" placeholder="ex: 234 p. ou vol. 3(2)" /></div>
-      </div>
-      <label>Éditeur / Revue</label>
-      <input type="text" id="refModalPublisher" placeholder="Maison d'édition ou nom de la revue" />
-      <label>DOI / URL</label>
-      <input type="text" id="refModalDoi" placeholder="https://..." />
-    </div>
-
-    <!-- Onglet Fiche de lecture -->
-    <div id="refPanelFiche" style="display:none;">
-      <label>Résumé</label>
-      <textarea id="refModalSummary" rows="4"
-        style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;margin-bottom:12px;"
-        placeholder="Résumé de l'ouvrage, thèse principale, arguments clés…"
-        oninput="scheduleRefNoteSave()"></textarea>
-      <label style="display:flex;align-items:center;justify-content:space-between;">
-        <span>Notes de lecture</span>
-        <span style="font-size:11px;color:var(--ink-softer);" id="refNoteAutoSave"></span>
-      </label>
-      <!-- Toolbar WYSIWYG -->
-      <div style="display:flex;gap:4px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:8px;">
-        <button onmousedown="event.preventDefault();refNoteCmd('bold')" class="note-tb-btn"><b>B</b></button>
-        <button onmousedown="event.preventDefault();refNoteCmd('italic')" class="note-tb-btn"><i>I</i></button>
-        <button onmousedown="event.preventDefault();refNoteCmd('underline')" class="note-tb-btn"><u>U</u></button>
-        <div style="width:1px;background:var(--line);margin:0 2px;"></div>
-        <button onmousedown="event.preventDefault();refNoteCmd('h2')" class="note-tb-btn" style="font-weight:700;">H2</button>
-        <button onmousedown="event.preventDefault();refNoteCmd('h3')" class="note-tb-btn" style="font-weight:600;font-size:11px;">H3</button>
-        <div style="width:1px;background:var(--line);margin:0 2px;"></div>
-        <button onmousedown="event.preventDefault();refNoteCmd('ul')" class="note-tb-btn">• —</button>
-        <button onmousedown="event.preventDefault();refNoteCmd('ol')" class="note-tb-btn">1.</button>
-        <button onmousedown="event.preventDefault();refNoteCmd('quote')" class="note-tb-btn">❝</button>
-        <button onmousedown="event.preventDefault();refNoteCmd('removeFormat')" class="note-tb-btn" style="color:var(--ink-soft);">✕</button>
-      </div>
-      <div id="refNoteContent" contenteditable="true"
-        style="min-height:180px;outline:none;font-family:inherit;font-size:13px;color:var(--ink);line-height:1.8;overflow-y:auto;cursor:text;padding:4px 0;"
-        oninput="scheduleRefNoteSave()"
-        onmouseup="_saveRefNoteSelection()"
-        onkeyup="_saveRefNoteSelection()"
-        data-placeholder="Tes notes, réflexions, passages importants…"></div>
-      <!-- Codes utilisés -->
-      <div id="refModalCodes" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--line);"></div>
-    </div>
-
-    <!-- Génération de référence bibliographique -->
-    <div id="refCitePanel" style="display:none;margin-top:12px;background:#faf8fd;border-radius:12px;padding:12px 14px;">
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-        <button onclick="generateCite('apa')" class="biblio-tab" style="font-size:12px;">APA</button>
-        <button onclick="generateCite('chicago')" class="biblio-tab" style="font-size:12px;">Chicago</button>
-        <button onclick="generateCite('mla')" class="biblio-tab" style="font-size:12px;">MLA</button>
-        <button onclick="generateCite('iso')" class="biblio-tab" style="font-size:12px;">ISO 690</button>
-      </div>
-      <div id="refCiteOutput" style="font-size:13px;color:var(--ink);line-height:1.6;padding:8px 10px;background:white;border-radius:8px;border:1px solid var(--line);min-height:40px;"></div>
-      <button id="refCiteCopyBtn" onclick="copyCite()" style="margin-top:8px;padding:5px 12px;border-radius:8px;border:none;background:var(--lilac);color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">📋 Copier</button>
-    </div>
-
-    <div class="actions" style="margin-top:14px;">
-      <button class="danger" id="refModalDeleteBtn" onclick="deleteRef()" style="display:none;">Supprimer</button>
-      <div class="spacer"></div>
-      <button class="btn-soft" onclick="toggleCitePanel()" style="font-size:13px;">📖 Citer</button>
-      <button class="secondary" onclick="closeRefModal()">Annuler</button>
-      <button class="primary" onclick="saveRef()">Enregistrer</button>
-    </div>
-  </div>
-</div>
-
 <!-- Modal détail plante -->
 <div class="modal-bg" id="plantDetailModal" onmousedown="_plantDetailBd=event.target===this" onclick="event.target===this&&_plantDetailBd&&closePlantDetail()">
   <div class="modal" style="max-width:420px;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
@@ -4340,96 +4066,6 @@
     <div style="margin-top:18px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
       <button onclick="closePlantForm()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;font-family:inherit;font-size:14px;cursor:pointer;">Annuler</button>
       <button class="btn-primary" onclick="savePlantForm()">💾 Enregistrer</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal extrait -->
-<div class="modal-bg" id="extractModal" onmousedown="_exBdDown=event.target===this" onclick="if(event.target===this&&_exBdDown)closeExtractModal()">
-  <div class="modal" style="max-width:600px;width:min(95vw,600px);resize:horizontal;overflow:auto;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-    <h2 id="extractModalTitle" style="margin:0 0 6px;">Nouvel extrait</h2>
-    <p class="modal-hint">Sauvegarde un passage, une citation ou une idée tirée d'une référence. Relie-le à une référence bibliographique et ajoute tes propres mots-clés pour le retrouver facilement.</p>
-    <input type="hidden" id="extractModalId" />
-    <label>Référence *</label>
-    <input type="hidden" id="extractModalRef" />
-    <!-- Picker de référence : recherche + arbre collections -->
-    <div style="border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:0;">
-      <div style="display:flex;gap:6px;padding:8px;background:#faf8fd;border-bottom:1px solid var(--line);">
-        <input type="text" id="extractRefSearch" placeholder="🔍 Titre, auteur ou année…"
-          oninput="renderExtractRefPicker()"
-          style="flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
-      </div>
-      <div id="extractRefPickerTree" style="max-height:200px;overflow-y:auto;padding:6px;"></div>
-      <div id="extractRefSelected" style="padding:8px 10px;font-size:13px;color:var(--lilac);font-weight:600;background:var(--lavender-soft);display:none;border-top:1px solid var(--line);">
-        ✓ <span id="extractRefSelectedLabel"></span>
-        <button onclick="clearExtractRef()" style="float:right;background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;">✕ changer</button>
-      </div>
-    </div>
-    <div class="grid-2" style="margin-top:10px;">
-      <div><label>Page(s)</label><input type="text" id="extractModalPage" placeholder="ex : 45 ou 45-47" /></div>
-      <div>
-        <label>Codes attribués *</label>
-        <!-- Codes sélectionnés -->
-        <div id="extractSelectedCodes" style="display:flex;flex-wrap:wrap;gap:5px;min-height:28px;margin-bottom:6px;"></div>
-        <!-- Recherche de code -->
-        <div style="position:relative;">
-          <input type="text" id="extractCodeSearch" placeholder="🏷️ Cliquer pour voir tous les codes…"
-            oninput="renderExtractCodeSearch()"
-            onfocus="renderExtractCodeSearch()"
-            onkeydown="if(event.key==='Escape'||event.key==='Enter'){document.getElementById('extractCodeDropdown').style.display='none';event.target.blur();}"
-            style="width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;box-sizing:border-box;" />
-          <div id="extractCodeDropdown" style="display:none;position:absolute;z-index:200;left:0;right:0;background:white;border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 16px rgba(120,100,160,0.12);max-height:180px;overflow-y:auto;margin-top:2px;"></div>
-        </div>
-      </div>
-    </div>
-    <!-- Champ caché pour compatibilité JS existant -->
-    <div id="extractCodePicker" style="display:none;"></div>
-    <label>Passage (texte à citer)</label>
-    <textarea id="extractModalText" rows="6"
-      style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;line-height:1.6;"
-      placeholder="Colle ou tape ici le passage que tu veux coder…"></textarea>
-    <label>Annotation personnelle</label>
-    <input type="text" id="extractModalNote" placeholder="Ta remarque, interprétation…" />
-    <div class="actions">
-      <button class="danger" id="extractModalDeleteBtn" onclick="deleteExtract()" style="display:none;">Supprimer</button>
-      <div class="spacer"></div>
-      <button class="secondary" onclick="closeExtractModal()">Annuler</button>
-      <button class="primary" onclick="saveExtract()">Enregistrer</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal code -->
-<div class="modal-bg" id="codeModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeCodeModal()">
-  <div class="modal" style="max-width:440px;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-    <h2 id="codeModalTitle" style="margin:0 0 6px;">Nouveau code</h2>
-    <p class="modal-hint">Crée un code thématique pour classifier tes extraits et références. Tu peux organiser les codes en arbre (parent/enfant) pour structurer ta grille d'analyse.</p>
-    <input type="hidden" id="codeModalId" />
-    <label>Intitulé du code *</label>
-    <input type="text" id="codeModalLabel" placeholder="ex : Méthode, Théorie, Exemple empirique…" />
-    <label>Couleur</label>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;" id="codeColorPicker">
-      <button onclick="selectCodeColor('#c9b6f0')" style="width:28px;height:28px;border-radius:50%;background:#c9b6f0;border:2px solid transparent;cursor:pointer;" data-color="#c9b6f0"></button>
-      <button onclick="selectCodeColor('#aee0c8')" style="width:28px;height:28px;border-radius:50%;background:#aee0c8;border:2px solid transparent;cursor:pointer;" data-color="#aee0c8"></button>
-      <button onclick="selectCodeColor('#f5b6c9')" style="width:28px;height:28px;border-radius:50%;background:#f5b6c9;border:2px solid transparent;cursor:pointer;" data-color="#f5b6c9"></button>
-      <button onclick="selectCodeColor('#f7c9a3')" style="width:28px;height:28px;border-radius:50%;background:#f7c9a3;border:2px solid transparent;cursor:pointer;" data-color="#f7c9a3"></button>
-      <button onclick="selectCodeColor('#b4d4f1')" style="width:28px;height:28px;border-radius:50%;background:#b4d4f1;border:2px solid transparent;cursor:pointer;" data-color="#b4d4f1"></button>
-      <button onclick="selectCodeColor('#f5e6a8')" style="width:28px;height:28px;border-radius:50%;background:#f5e6a8;border:2px solid transparent;cursor:pointer;" data-color="#f5e6a8"></button>
-      <button onclick="selectCodeColor('#d4b6f0')" style="width:28px;height:28px;border-radius:50%;background:#d4b6f0;border:2px solid transparent;cursor:pointer;" data-color="#d4b6f0"></button>
-      <button onclick="selectCodeColor('#89d4cf')" style="width:28px;height:28px;border-radius:50%;background:#89d4cf;border:2px solid transparent;cursor:pointer;" data-color="#89d4cf"></button>
-    </div>
-    <input type="hidden" id="codeModalColor" value="#c9b6f0" />
-    <label>Code parent (optionnel)</label>
-    <select id="codeModalParent" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:0;">
-      <option value="">— Aucun (code racine) —</option>
-    </select>
-    <label>Description (optionnel)</label>
-    <input type="text" id="codeModalDesc" placeholder="À quoi sert ce code ?" />
-    <div class="actions">
-      <button class="danger" id="codeModalDeleteBtn" onclick="deleteCode()" style="display:none;">Supprimer</button>
-      <div class="spacer"></div>
-      <button class="secondary" onclick="closeCodeModal()">Annuler</button>
-      <button class="primary" onclick="saveCode()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -6128,40 +5764,12 @@ function migrate(s) {
   }
   if (!s.work) s.work = {};
   if (!s.work.workNotes) s.work.workNotes = [];
-  if (!s.work.biblio) s.work.biblio = { refs: [], codes: [], extracts: [], zoteroUserId: '', zoteroApiKey: '' };
-  if (!s.work.biblioProjects) s.work.biblioProjects = [];
-  // Migration : déplacer les refs/collections des projets vers la biblio globale
-  try {
-    if (!s.work.biblio.collections) s.work.biblio.collections = [];
-    if (s.work.biblioProjects) {
-      s.work.biblioProjects.forEach(p => {
-        if (!p.biblio) return;
-        if (!s.shortcuts) s.shortcuts = [];
-  if ((p.biblio.refs||[]).length > 0) {
-          const existingKeys = new Set((s.work.biblio.refs||[]).map(r => r.zoteroKey || r.id).filter(Boolean));
-          (p.biblio.refs||[]).forEach(r => {
-            const k = r.zoteroKey || r.id;
-            if (k && !existingKeys.has(k)) {
-              s.work.biblio.refs.push(r);
-              existingKeys.add(k);
-            }
-          });
-          p.biblio.refs = [];
-        }
-        if ((p.biblio.collections||[]).length > 0 && s.work.biblio.collections.length === 0) {
-          s.work.biblio.collections = p.biblio.collections;
-          s.work.biblio.collectionOrder = p.biblio.collectionOrder || [];
-          p.biblio.collections = [];
-          p.biblio.collectionOrder = [];
-        }
-        if (p.biblio.zoteroUserId && !s.work.biblio.zoteroUserId) {
-          s.work.biblio.zoteroUserId = p.biblio.zoteroUserId;
-          s.work.biblio.zoteroApiKey = p.biblio.zoteroApiKey || "";
-          s.work.biblio.zoteroSkipPersonal = p.biblio.zoteroSkipPersonal || false;
-        }
-      });
-    }
-  } catch(migErr) { console.warn("[migration biblio]", migErr); }
+  if (!s.shortcuts) s.shortcuts = [];
+  // Fonctionnalité bibliographie retirée (2026-09) : purge le champ chez les utilisatrices qui
+  // l'avaient déjà rempli, sinon ces données (jusqu'à ~580 Ko) restent en mémoire et dans le
+  // stockage local indéfiniment même si elles ne sont plus synchronisées à part.
+  delete s.work.biblio;
+  delete s.work.biblioProjects;
 
   // Migration : routines configurables
   if (!s.routines) s.routines = { matin: [], soir: [] };
@@ -21932,1599 +21540,6 @@ function generateMealGroceries() {
   setTimeout(() => switchFoodTab('groceries'), 50);
 }
 
-/* ============================================================
-   BIBLIOGRAPHIE — CRUD + ZOTERO
-   ============================================================ */
-
-// ── État par défaut ──────────────────────────────────────────
-function _biblioDef() {
-  return { refs: [], codes: [], extracts: [], zoteroUserId: "", zoteroApiKey: "" };
-}
-
-// ── Panel navigation ─────────────────────────────────────────
-// ── Projets Biblio ───────────────────────────────────────────
-let _biblioProjectId = null; // projet actif
-
-function _biblioDef() {
-  return { refs: [], codes: [], extracts: [], zoteroUserId: "", zoteroApiKey: "" };
-}
-
-// Biblio GLOBALE : refs + collections partagées entre tous les projets
-function _getGlobalBiblio() {
-  if (!state.work.biblio) state.work.biblio = { refs: [], codes: [], extracts: [], collections: [], zoteroUserId: "", zoteroApiKey: "" };
-  return state.work.biblio;
-}
-
-function _getBiblioProjects() {
-  if (!state.work.biblioProjects) state.work.biblioProjects = [];
-  return state.work.biblioProjects;
-}
-
-function _getActiveBiblio() {
-  const projects = _getBiblioProjects();
-  if (!projects.length) return null;
-  const p = projects.find(p => p.id === _biblioProjectId) || projects[0];
-  _biblioProjectId = p.id;
-  return p.biblio || _biblioDef();
-}
-
-function _setActiveBiblio(biblio) {
-  const projects = _getBiblioProjects();
-  const p = projects.find(p => p.id === _biblioProjectId);
-  if (p) p.biblio = biblio;
-}
-
-function renderBiblioProjectSelect() {
-  const projects = _getBiblioProjects();
-  const sel = document.getElementById("biblioProjectSelect");
-  if (!sel) return;
-  if (!projects.length) {
-    sel.innerHTML = '<option value="">— Aucun projet —</option>';
-    return;
-  }
-  sel.innerHTML = projects.map(p =>
-    `<option value="${p.id}"${p.id === _biblioProjectId ? " selected" : ""}>${escapeHtml(p.name)}</option>`
-  ).join("");
-  if (!_biblioProjectId) _biblioProjectId = projects[0].id;
-}
-
-function switchBiblioProject(id) {
-  _biblioProjectId = id;
-  switchBiblioPanel(_biblioPanel || "refs");
-}
-
-function addBiblioProject() {
-  _showPrompt("Nom du projet bibliographique", "", name => {
-    if (!name?.trim()) return;
-    if (!state.work.biblioProjects) state.work.biblioProjects = [];
-    const id = "bproj" + Date.now();
-    state.work.biblioProjects.push({ id, name: name.trim(), biblio: _biblioDef() });
-    _biblioProjectId = id;
-    saveState(); renderBiblioProjectSelect(); switchBiblioPanel("refs");
-  });
-}
-
-function renameBiblioProject() {
-  const projects = _getBiblioProjects();
-  const p = projects.find(x => x.id === _biblioProjectId);
-  if (!p) return;
-  _showPrompt("Nouveau nom du projet", p.name, name => {
-    if (!name?.trim()) return;
-    p.name = name.trim();
-    saveState(); renderBiblioProjectSelect();
-  });
-}
-
-function deleteBiblioProject() {
-  const projects = _getBiblioProjects();
-  const p = projects.find(x => x.id === _biblioProjectId);
-  if (!p) return;
-  _showConfirm(`Supprimer le projet « ${p.name} » et toutes ses données ?`, () => {
-    state.work.biblioProjects = projects.filter(x => x.id !== _biblioProjectId);
-    _biblioProjectId = state.work.biblioProjects[0]?.id || null;
-    saveState(); renderBiblioProjectSelect(); switchBiblioPanel("refs");
-  });
-}
-
-let _biblioPanel = "refs";
-let _biblioActiveCollection = "";
-const _biblioCollapsed = new Set(); // collections repliées
-// collections masquées — chargées/sauvegardées dans state.work.biblio
-function _loadBiblioHidden() {
-  const keys = (state.work.biblio || {}).hiddenCollections || [];
-  _biblioHidden.clear();
-  keys.forEach(k => _biblioHidden.add(k));
-}
-function _saveBiblioHidden() {
-  if (!state.work.biblio) state.work.biblio = {};
-  state.work.biblio.hiddenCollections = Array.from(_biblioHidden);
-  saveState();
-}
-const _biblioHidden = new Set();
-
-// ── Drag & drop pour réordonner les collections racine ──────────
-let _biblioDragKey = null;
-
-function biblioDragStart(e, key) {
-  _biblioDragKey = key;
-  e.dataTransfer.effectAllowed = "move";
-  e.currentTarget.style.opacity = "0.5";
-}
-
-function _clearDragStyles() {
-  document.querySelectorAll("[data-biblio-drag]").forEach(el => {
-    el.style.borderTop = "";
-    el.style.borderBottom = "";
-    el.style.opacity = "";
-  });
-}
-
-function biblioDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = "move";
-  _clearDragStyles();
-  // Détermine si on est dans la moitié haute ou basse de l'élément
-  const rect = e.currentTarget.getBoundingClientRect();
-  const mid  = rect.top + rect.height / 2;
-  if (e.clientY < mid) {
-    e.currentTarget.style.borderTop    = "2px solid var(--lilac)";
-    e.currentTarget.style.borderBottom = "";
-    e.currentTarget.dataset.dropPos    = "before";
-  } else {
-    e.currentTarget.style.borderBottom = "2px solid var(--lilac)";
-    e.currentTarget.style.borderTop    = "";
-    e.currentTarget.dataset.dropPos    = "after";
-  }
-}
-
-function biblioDragLeave(e) {
-  e.currentTarget.style.borderTop    = "";
-  e.currentTarget.style.borderBottom = "";
-}
-
-function biblioDragEnd(e) {
-  _clearDragStyles();
-  e.currentTarget.style.opacity = "";
-}
-
-function biblioDrop(e, targetKey) {
-  e.preventDefault();
-  const pos = e.currentTarget.dataset.dropPos || "before";
-  _clearDragStyles();
-  if (!_biblioDragKey || _biblioDragKey === targetKey) { _biblioDragKey = null; return; }
-  const b = _getActiveBiblio() || _biblioDef();
-  if (!b.collectionOrder) {
-    b.collectionOrder = (b.collections||[]).filter(c => !c.parentKey || c.parentKey === "").map(c => c.key);
-  }
-  const order = b.collectionOrder;
-  // Ajouter les clés manquantes
-  const rootCols = (b.collections||[]).filter(c => !c.parentKey || c.parentKey === "");
-  rootCols.forEach(c => { if (!order.includes(c.key)) order.push(c.key); });
-
-  const fromIdx = order.indexOf(_biblioDragKey);
-  let toIdx = order.indexOf(targetKey);
-  if (fromIdx < 0 || toIdx < 0) { _biblioDragKey = null; return; }
-
-  order.splice(fromIdx, 1);
-  toIdx = order.indexOf(targetKey); // recalculer après suppression
-  const insertAt = pos === "after" ? toIdx + 1 : toIdx;
-  order.splice(insertAt, 0, _biblioDragKey);
-
-  _setActiveBiblio(b);
-  saveState();
-  renderBiblioCollectionTree();
-  _biblioDragKey = null;
-}
-
-function hideBiblioCollection(key) {
-  _biblioHidden.add(key);
-  _saveBiblioHidden();
-  renderBiblioCollectionTree();
-}
-function expandAllBiblioCollections() {
-  _biblioCollapsed.clear();
-  _biblioHidden.clear();
-  _saveBiblioHidden();
-  renderBiblioCollectionTree();
-}
-function collapseAllBiblioCollections() {
-  const biblio = _getGlobalBiblio();
-  (biblio.collections||[]).forEach(c => _biblioCollapsed.add(c.key));
-  renderBiblioCollectionTree();
-}
-function showAllBiblioCollections() {
-  _biblioHidden.clear();
-  _saveBiblioHidden();
-  renderBiblioCollectionTree();
-}
-
-function toggleBiblioCollapse(key, e) {
-  e.stopPropagation();
-  if (_biblioCollapsed.has(key)) _biblioCollapsed.delete(key);
-  else _biblioCollapsed.add(key);
-  const treeWrap = document.getElementById("biblioCollectionTree")?.parentElement;
-  const scrollTop = treeWrap?.scrollTop || 0;
-  renderBiblioCollectionTree();
-  if (treeWrap) requestAnimationFrame(() => { treeWrap.scrollTop = scrollTop; });
-}
-
-function renderBiblioCollectionTree() {
-  const el = document.getElementById("biblioCollectionTree");
-  if (!el) return;
-  const biblio = _getGlobalBiblio();
-  const cols = biblio.collections || [];
-
-  if (!cols.length) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--ink-softer);padding:4px 0;">Synchronise Zotero pour voir les collections.</div>';
-    return;
-  }
-
-  function renderNode(parentKey, depth) {
-    const biblio_b = _getActiveBiblio() || _biblioDef();
-    const colOrder = biblio_b.collectionOrder || [];
-    const children = cols.filter(c => (c.parentKey||"") === (parentKey||"") && !_biblioHidden.has(c.key));
-    if (!children.length) return "";
-    // Tri par ordre personnalisé pour les racines
-    const sorted = parentKey === "" && colOrder.length
-      ? [...children].sort((a, b) => {
-          const ia = colOrder.indexOf(a.key); const ib = colOrder.indexOf(b.key);
-          if (ia < 0 && ib < 0) return 0;
-          if (ia < 0) return 1; if (ib < 0) return -1;
-          return ia - ib;
-        })
-      : children;
-    return sorted.map(c => {
-      const active    = _biblioActiveCollection === c.key;
-      const collapsed = _biblioCollapsed.has(c.key);
-      const hasChildren = cols.some(x => x.parentKey === c.key);
-      const descKeys = getAllDescendantKeys(c.key, cols);
-      const directRefs = (biblio.refs||[]).filter(r => (r.zoteroCollections||[]).includes(c.key));
-      const refCount  = (biblio.refs||[]).filter(r => (r.zoteroCollections||[]).some(k => descKeys.has(k))).length;
-      const bg = active ? "var(--lavender-soft)" : "transparent";
-      const dragAttrs = depth === 0
-        ? `draggable="true" ondragstart="biblioDragStart(event,'${c.key}')" ondragover="biblioDragOver(event)" ondragleave="biblioDragLeave(event)" ondragend="biblioDragEnd(event)" ondrop="biblioDrop(event,'${c.key}')" data-biblio-drag="1" style="padding-left:0;cursor:grab;"`
-        : `style="padding-left:${depth*14}px;"`;
-      // Refs inline (pour les collections non-collapsées)
-      const inlineRefs = (!collapsed && directRefs.length > 0)
-        ? directRefs.map(r => `
-          <div onclick="openRefModal('${r.id}')" title="${escapeHtml(r.title||'')}"
-            style="padding:3px 8px 3px ${depth*14+36}px;font-size:12px;color:var(--ink);cursor:pointer;border-radius:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
-            onmouseover="this.style.background='var(--lavender-soft)'"
-            onmouseout="this.style.background='transparent'">
-            📄 ${escapeHtml(r.title||"Sans titre")}
-            ${r.year?`<span style="color:var(--ink-softer);font-size:10px;"> (${r.year})</span>`:""}
-          </div>`).join("")
-        : "";
-      return `<div ${dragAttrs}>
-        <div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:8px;cursor:pointer;font-size:13px;background:${bg};"
-          onclick="filterBiblioCollection('${c.key}')"
-          onmouseover="this.style.background='var(--lavender-soft)'"
-          onmouseout="this.style.background='${bg}'">
-          <span onclick="toggleBiblioCollapse('${c.key}',event)" style="flex-shrink:0;width:14px;font-size:10px;color:var(--ink-soft);">${collapsed?"▶":"▼"}</span>
-          <span style="flex-shrink:0;font-size:13px;">${c.isGroupRoot ? "🗂️" : hasChildren ? (collapsed?"📁":"📂") : "📄"}</span>
-          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:${active?600:400};">${escapeHtml(c.name)}</span>
-          ${refCount ? `<span style="font-size:10px;color:var(--ink-softer);flex-shrink:0;">${refCount}</span>` : ""}
-          ${depth===0 ? `<span onclick="event.stopPropagation();hideBiblioCollection('${c.key}')" title="Masquer" style="font-size:10px;color:var(--ink-softer);cursor:pointer;flex-shrink:0;padding:0 4px;opacity:0.5;">✕</span>` : ""}
-        </div>
-        ${collapsed ? "" : renderNode(c.key, depth+1) + inlineRefs}
-      </div>`;
-    }).join("");
-  }
-
-  const active0 = !_biblioActiveCollection;
-  const bg0 = active0 ? "var(--lavender-soft)" : "transparent";
-  const allBtn = `<div onclick="filterBiblioCollection('')"
-    style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;cursor:pointer;font-size:13px;background:${bg0};font-weight:${active0?600:400};margin-bottom:4px;"
-    onmouseover="this.style.background='var(--lavender-soft)'"
-    onmouseout="this.style.background='${bg0}'">
-    <span>📚</span><span>Toutes (${(biblio.refs||[]).length})</span>
-  </div>`;
-  const hiddenBtn = _biblioHidden.size > 0
-    ? `<div onclick="showAllBiblioCollections()" style="font-size:11px;color:var(--lilac);cursor:pointer;padding:6px 8px;text-align:center;">↩ Tout réafficher (${_biblioHidden.size} masquée${_biblioHidden.size>1?'s':''})</div>`
-    : "";
-  const xBtn = '<div style="display:flex;gap:6px;margin-bottom:8px;"><button onclick="expandAllBiblioCollections()" class="biblio-tab" style="font-size:11px;flex:1;">▼ Tout déplier</button><button onclick="collapseAllBiblioCollections()" class="biblio-tab" style="font-size:11px;flex:1;">▶ Tout replier</button></div>';
-  el.innerHTML = xBtn + allBtn + renderNode("", 0) + hiddenBtn;
-}
-
-function startBiblioResize(e) {
-  e.preventDefault();
-  const grid = document.getElementById("biblioGrid");
-  if (!grid) return;
-  const startX = e.clientX;
-  const startW = grid.getBoundingClientRect().width;
-  const cols   = grid.style.gridTemplateColumns.split(" ");
-  const startColW = parseInt(cols[0]) || 200;
-
-  function onMove(e) {
-    const delta = e.clientX - startX;
-    const newW  = Math.max(120, Math.min(400, startColW + delta));
-    grid.style.gridTemplateColumns = `${newW}px 6px 1fr`;
-  }
-  function onUp() {
-    document.removeEventListener("mousemove", onMove);
-    document.removeEventListener("mouseup",   onUp);
-    document.getElementById("biblioResizeLine").style.background = "var(--line)";
-  }
-  document.getElementById("biblioResizeLine").style.background = "var(--lavender)";
-  document.addEventListener("mousemove", onMove);
-  document.addEventListener("mouseup",   onUp);
-}
-
-// Récupère les clés d'une collection ET toutes ses descendantes
-function getAllDescendantKeys(colKey, collections) {
-  const keys = new Set([colKey]);
-  let changed = true;
-  while (changed) {
-    changed = false;
-    collections.forEach(c => {
-      if (keys.has(c.parentKey) && !keys.has(c.key)) {
-        keys.add(c.key); changed = true;
-      }
-    });
-  }
-  return keys;
-}
-
-function filterBiblioCollection(key) {
-  _biblioActiveCollection = key;
-  // Sauvegarder le scroll du panneau collections
-  const treeWrap = document.getElementById("biblioCollectionTree")?.parentElement;
-  const scrollTop = treeWrap?.scrollTop || 0;
-  renderBiblioCollectionTree();
-  renderBiblioRefs();
-  // Restaurer le scroll
-  if (treeWrap) requestAnimationFrame(() => { treeWrap.scrollTop = scrollTop; });
-}
-
-function switchBiblioPanel(panel) {
-  _biblioPanel = panel;
-  // Sélecteur projet : visible seulement sur codes/extraits/bycode
-  const projRow = document.getElementById("biblioProjectRow");
-  if (projRow) projRow.style.display = ["codes","extracts","bycode"].includes(panel) ? "flex" : "none";
-  renderBiblioProjectSelect();
-  // Guard : s'il n'y a pas de projet, afficher message dans le liste (sans détruire le HTML)
-  const projects = _getBiblioProjects();
-  ["refs","extracts","codes","bycode","zotero"].forEach(p => {
-    const el = document.getElementById("biblioPanel-" + p);
-    if (el) el.style.display = p === panel ? "" : "none";
-    const btn = document.querySelector(`.biblio-tab[data-biblio="${p}"]`);
-    if (btn) btn.classList.toggle("active", p === panel);
-  });
-  if (panel === "refs")     { _loadBiblioHidden(); renderBiblioCollectionTree(); renderBiblioRefs(); }
-  if (panel === "extracts") { populateBiblioExtractFilters(); renderBiblioExtracts(); }
-  if (panel === "codes")    renderBiblioCodes();
-  if (panel === "bycode")   { populateBiblioByCodeSelect(); }
-  if (panel === "zotero")   loadZoteroConfig();
-}
-
-// ── Refs ─────────────────────────────────────────────────────
-const REF_TYPE_ICON = { book:"📗", article:"📄", chapter:"📑", report:"📋", thesis:"🎓", other:"📎" };
-const REF_STATUS = { "to-read":"📌 À lire", "reading":"📖 En cours", "read":"✅ Lu" };
-
-function renderBiblioRefs() {
-  const biblio = _getGlobalBiblio(); // refs globales, pas besoin de projet
-  const search = (document.getElementById("biblioSearch")?.value || "").toLowerCase();
-  const filterStatus = document.getElementById("biblioFilterStatus")?.value || "";
-  const filterType   = document.getElementById("biblioFilterType")?.value   || "";
-  const filterColl   = _biblioActiveCollection || "";
-  let refs = biblio.refs || [];
-  if (search) refs = refs.filter(r =>
-    (r.title||"").toLowerCase().includes(search) ||
-    (r.authors||"").toLowerCase().includes(search) ||
-    (r.year||"").includes(search)
-  );
-  if (filterStatus) refs = refs.filter(r => r.status === filterStatus);
-  if (filterType)   refs = refs.filter(r => r.type   === filterType);
-  if (filterColl) {
-    // Utiliser le biblio déjà capturé (évite un double appel qui peut renvoyer un objet différent)
-    const globalCols = biblio.collections || [];
-    if (globalCols.length > 0) {
-      const descKeys = getAllDescendantKeys(filterColl, globalCols);
-      refs = refs.filter(r => (r.zoteroCollections||[]).some(k => descKeys.has(k)));
-    } else {
-      // Fallback : approche bottom-up — chercher si filterColl est ancêtre d'une collection de la ref
-      // Utilise les collections stockées dans l'arbre visible (state.work.biblio.collections recalculé)
-      const freshCols = (state.work.biblio || {}).collections || [];
-      refs = refs.filter(r => {
-        return (r.zoteroCollections||[]).some(rKey => {
-          if (rKey === filterColl) return true;
-          // Remonter les ancêtres
-          let cur = rKey; let depth = 0;
-          while (cur && depth < 30) {
-            const col = freshCols.find(c => c.key === cur);
-            if (!col) break;
-            if (col.parentKey === filterColl) return true;
-            cur = col.parentKey;
-            depth++;
-          }
-          return false;
-        });
-      });
-    }
-  }
-  const totalRefs = (state.work.biblio||{}).refs?.length || 0;
-  const countEl = document.getElementById("biblioRefCount");
-  if (countEl) countEl.textContent = `(${refs.length}/${totalRefs})`;
-  // Debug temporaire
-  const dbg = document.getElementById("biblioDebug");
-  if (dbg) dbg.textContent = "Refs en mémoire : " + totalRefs;
-  const el = document.getElementById("biblioRefList");
-  if (!el) return;
-  if (!refs.length) {
-    el.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucune référence — clique sur "+ Ajouter".</p>`;
-    return;
-  }
-  el.innerHTML = refs.map(r => {
-    const extractCount = (biblio.extracts||[]).filter(e => e.refId === r.id).length;
-    return `<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer;" onclick="openRefModal('${r.id}')">
-      <span style="font-size:18px;flex-shrink:0;margin-top:2px;">${REF_TYPE_ICON[r.type]||"📎"}</span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:600;font-size:14px;color:var(--ink);overflow-wrap:break-word;word-break:break-word;">${escapeHtml(r.title||"Sans titre")}</div>
-        <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${escapeHtml(r.authors||"")}${r.year?" · "+r.year:""}</div>
-        ${r.zoteroKey?`<span style="font-size:10px;background:#fff3e0;color:#dc7014;border-radius:5px;padding:1px 5px;">${escapeHtml(r.zoteroSource||'Zotero')}</span>`:''}
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
-        <span style="font-size:11px;background:#f0f0f5;color:var(--ink-soft);border-radius:6px;padding:2px 7px;">${REF_STATUS[r.status]||""}</span>
-        ${extractCount?`<span style="font-size:11px;color:var(--lilac);">✏️ ${extractCount} extrait${extractCount>1?"s":""}</span>`:""}
-      </div>
-    </div>`;
-  }).join("");
-}
-
-/* ── Onglets modal référence ── */
-let _refActiveTab = "infos";
-function switchRefTab(tab) {
-  _refActiveTab = tab;
-  document.getElementById("refPanelInfos").style.display  = tab === "infos"  ? "" : "none";
-  document.getElementById("refPanelFiche").style.display  = tab === "fiche"  ? "" : "none";
-  document.getElementById("refTabInfos").classList.toggle("active", tab === "infos");
-  document.getElementById("refTabFiche").classList.toggle("active", tab === "fiche");
-  if (tab === "fiche") renderRefModalCodes();
-}
-
-/* ── WYSIWYG fiche de lecture ── */
-let _refNoteSelRange = null, _refNoteSaveTimer = null;
-function _saveRefNoteSelection() {
-  const sel = window.getSelection();
-  if (sel && sel.rangeCount > 0) _refNoteSelRange = sel.getRangeAt(0).cloneRange();
-}
-function _restoreRefNoteSelection() {
-  const ed = document.getElementById("refNoteContent");
-  if (!ed) return;
-  ed.focus();
-  if (_refNoteSelRange) { const s = window.getSelection(); s.removeAllRanges(); s.addRange(_refNoteSelRange); }
-}
-function refNoteCmd(cmd) {
-  _restoreRefNoteSelection();
-  if (cmd === "h2") document.execCommand("formatBlock", false, "h2");
-  else if (cmd === "h3") document.execCommand("formatBlock", false, "h3");
-  else if (cmd === "ul") document.execCommand("insertUnorderedList");
-  else if (cmd === "ol") document.execCommand("insertOrderedList");
-  else if (cmd === "quote") document.execCommand("formatBlock", false, "blockquote");
-  else if (cmd === "removeFormat") { document.execCommand("removeFormat"); document.execCommand("formatBlock", false, "p"); }
-  else document.execCommand(cmd);
-  scheduleRefNoteSave();
-}
-function scheduleRefNoteSave() {
-  clearTimeout(_refNoteSaveTimer);
-  _refNoteSaveTimer = setTimeout(saveRefNoteNow, 1000);
-}
-function saveRefNoteNow() {
-  const id = document.getElementById("refModalId").value;
-  if (!id) return;
-  const b = _getGlobalBiblio();
-  const r = (b.refs||[]).find(x => x.id === id);
-  if (!r) return;
-  r.summary     = document.getElementById("refModalSummary").value;
-  r.noteContent = document.getElementById("refNoteContent").innerHTML;
-  r.noteUpdatedAt = new Date().toISOString();
-  saveState();
-  const lbl = document.getElementById("refNoteAutoSave");
-  if (lbl) lbl.textContent = "Sauvegardé à " + new Date().toLocaleTimeString("fr-FR");
-}
-
-function renderRefModalCodes() {
-  const id = document.getElementById("refModalId").value;
-  const el = document.getElementById("refModalCodes");
-  if (!el || !id) return;
-  // Chercher les extraits de cette ref dans tous les projets
-  const allProjects = _getBiblioProjects();
-  const allCodes = new Map(); // codeId → { code, count }
-  allProjects.forEach(p => {
-    const pb = p.biblio || {};
-    const projExts = (pb.extracts||[]).filter(e => e.refId === id);
-    projExts.forEach(e => {
-      (e.codes||[]).forEach(cid => {
-        const code = (pb.codes||[]).find(c => c.id === cid);
-        if (code) {
-          if (!allCodes.has(cid)) allCodes.set(cid, { code, count: 0, project: p.name });
-          allCodes.get(cid).count++;
-        }
-      });
-    });
-  });
-  if (!allCodes.size) {
-    el.innerHTML = '<p style="font-size:12px;color:var(--ink-softer);">Aucun extrait codé pour cette référence.</p>';
-    return;
-  }
-  el.innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Codes utilisés</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;">
-      ${Array.from(allCodes.values()).map(({code, count, project}) =>
-        `<span style="font-size:12px;background:${code.color}33;border:1.5px solid ${code.color};border-radius:20px;padding:3px 10px;font-weight:600;">
-          ${escapeHtml(code.label)} <span style="font-size:10px;opacity:0.7;">${count}×</span>
-        </span>`
-      ).join("")}
-    </div>`;
-}
-
-function openRefModal(id) {
-  const biblio = _getGlobalBiblio();
-  const r = id ? (biblio.refs||[]).find(x => x.id === id) : null;
-  document.getElementById("refModalTitle").textContent = r ? "Modifier la référence" : "Nouvelle référence";
-  document.getElementById("refModalId").value = id || "";
-  document.getElementById("refModalType").value = r?.type || "book";
-  document.getElementById("refModalStatus").value = r?.status || "to-read";
-  document.getElementById("refModalTitle2").value = r?.title || "";
-  document.getElementById("refModalAuthors").value = r?.authors || "";
-  document.getElementById("refModalYear").value = r?.year || "";
-  document.getElementById("refModalPages").value = r?.pages || "";
-  document.getElementById("refModalPublisher").value = r?.publisher || "";
-  document.getElementById("refModalDoi").value = r?.doi || "";
-  // Fiche
-  document.getElementById("refModalSummary").value = r?.summary || "";
-  document.getElementById("refNoteContent").innerHTML = r?.noteContent || "";
-  const lbl = document.getElementById("refNoteAutoSave");
-  if (lbl) lbl.textContent = r?.noteUpdatedAt ? "Sauvegardé " + new Date(r.noteUpdatedAt).toLocaleString("fr-FR") : "";
-  const delBtn = document.getElementById("refModalDeleteBtn");
-  if (delBtn) delBtn.style.display = r ? "inline-block" : "none";
-  // Toujours ouvrir sur Infos
-  switchRefTab("infos");
-  document.getElementById("refModal").classList.add("open");
-  setTimeout(() => document.getElementById("refModalTitle2").focus(), 50);
-}
-function toggleCitePanel() {
-  const panel = document.getElementById("refCitePanel");
-  if (!panel) return;
-  if (panel.style.display === "none") {
-    panel.style.display = "block";
-    generateCite("apa");
-  } else {
-    panel.style.display = "none";
-  }
-}
-
-function _getRefModalData() {
-  return {
-    title:     document.getElementById("refModalTitle2")?.value.trim() || "",
-    authors:   document.getElementById("refModalAuthors")?.value.trim() || "",
-    year:      document.getElementById("refModalYear")?.value.trim() || "",
-    publisher: document.getElementById("refModalPublisher")?.value.trim() || "",
-    doi:       document.getElementById("refModalDoi")?.value.trim() || "",
-    pages:     document.getElementById("refModalPages")?.value.trim() || "",
-    type:      document.getElementById("refModalType")?.value || "other",
-  };
-}
-
-function _formatAuthors(raw, style) {
-  if (!raw) return "";
-  const parts = raw.split(";").map(s => s.trim()).filter(Boolean);
-  if (style === "apa") {
-    return parts.map(p => {
-      const [last, first] = p.includes(",") ? p.split(",").map(s=>s.trim()) : [p, ""];
-      return first ? last + ", " + first.split(" ").map(n=>n[0]+".").join(" ") : last;
-    }).join(", ");
-  }
-  if (style === "mla") {
-    if (parts.length === 1) {
-      const [last, first] = parts[0].includes(",") ? parts[0].split(",").map(s=>s.trim()) : [parts[0], ""];
-      return first ? last + ", " + first : last;
-    }
-    const [last0, first0] = parts[0].includes(",") ? parts[0].split(",").map(s=>s.trim()) : [parts[0], ""];
-    const rest = parts.slice(1).map(p => { const [l,f] = p.includes(",") ? p.split(",").map(s=>s.trim()) : [p,""]; return f ? f+" "+l : l; });
-    return (first0 ? last0+", "+first0 : last0) + (rest.length ? ", and " + rest.join(", and ") : "");
-  }
-  // chicago / iso : Prénom NOM
-  return parts.map(p => {
-    const [last, first] = p.includes(",") ? p.split(",").map(s=>s.trim()) : [p, ""];
-    return first ? first + " " + last : last;
-  }).join(", ");
-}
-
-function generateCite(style) {
-  const r = _getRefModalData();
-  const authors = _formatAuthors(r.authors, style);
-  const year = r.year || "s.d.";
-  const title = r.title || "Sans titre";
-  const pub = r.publisher || "";
-  const doi = r.doi ? " DOI : " + r.doi : "";
-  const pages = r.pages ? ", " + r.pages : "";
-  let cite = "";
-
-  if (style === "apa") {
-    if (r.type === "article") cite = `${authors} (${year}). ${title}. <em>${pub}</em>${pages}.${doi}`;
-    else if (r.type === "chapter") cite = `${authors} (${year}). ${title}. In <em>${pub}</em>${pages}.`;
-    else cite = `${authors} (${year}). <em>${title}</em>${pub ? ". " + pub : ""}.${doi}`;
-  } else if (style === "chicago") {
-    if (r.type === "article") cite = `${authors}. "${title}." <em>${pub}</em> (${year})${pages}.${doi}`;
-    else cite = `${authors}. <em>${title}</em>. ${pub}${pub ? "," : ""} ${year}.${doi}`;
-  } else if (style === "mla") {
-    if (r.type === "article") cite = `${authors}. "${title}." <em>${pub}</em>, ${year}${pages}.`;
-    else cite = `${authors}. <em>${title}</em>. ${pub}, ${year}.`;
-  } else if (style === "iso") {
-    cite = `${authors || "Auteur inconnu"}. <em>${title}</em>. ${pub ? pub + ", " : ""}${year}.${doi}`;
-  }
-
-  const out = document.getElementById("refCiteOutput");
-  if (out) out.innerHTML = cite || "Remplis les champs de la référence pour générer la citation.";
-  // Highlight le bouton actif
-  document.querySelectorAll("#refCitePanel .biblio-tab").forEach(b => b.classList.remove("active"));
-  const activeBtn = [...document.querySelectorAll("#refCitePanel .biblio-tab")].find(b => b.textContent.toLowerCase().includes(style));
-  if (activeBtn) activeBtn.classList.add("active");
-}
-
-function copyCite() {
-  const out = document.getElementById("refCiteOutput");
-  if (!out) return;
-  const text = out.innerText || out.textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById("refCiteCopyBtn");
-    if (btn) { btn.textContent = "✅ Copié !"; setTimeout(() => btn.textContent = "📋 Copier", 2000); }
-  }).catch(() => {
-    const range = document.createRange(); range.selectNode(out);
-    window.getSelection().removeAllRanges();
-    window.getSelection().addRange(range);
-    document.execCommand("copy");
-    window.getSelection().removeAllRanges();
-  });
-}
-
-function closeRefModal() {
-  clearTimeout(_refNoteSaveTimer);
-  saveRefNoteNow();
-  document.getElementById("refModal").classList.remove("open");
-}
-function saveRef() {
-  const b = _getGlobalBiblio();
-  const id = document.getElementById("refModalId").value;
-  const title = document.getElementById("refModalTitle2").value.trim();
-  if (!title) { showToast("✏️ Le titre est obligatoire."); return; }
-  const existing = id ? (b.refs||[]).find(r=>r.id===id) : null;
-  const data = {
-    id: id || "ref" + Date.now(),
-    type:        document.getElementById("refModalType").value,
-    status:      document.getElementById("refModalStatus").value,
-    title,
-    authors:     document.getElementById("refModalAuthors").value.trim(),
-    year:        document.getElementById("refModalYear").value.trim(),
-    pages:       document.getElementById("refModalPages").value.trim(),
-    publisher:   document.getElementById("refModalPublisher").value.trim(),
-    doi:         document.getElementById("refModalDoi").value.trim(),
-    notes:       existing?.notes || "",
-    summary:     document.getElementById("refModalSummary").value.trim(),
-    noteContent: document.getElementById("refNoteContent").innerHTML,
-    noteUpdatedAt: new Date().toISOString(),
-    createdAt:   existing?.createdAt || new Date().toISOString(),
-    zoteroKey:   existing?.zoteroKey || "",
-    zoteroSource: existing?.zoteroSource || "",
-    zoteroCollections: existing?.zoteroCollections || [],
-  };
-  if (id) { const i = (b.refs||[]).findIndex(r=>r.id===id); if(i>=0) b.refs[i]={...b.refs[i],...data}; }
-  else    { if(!b.refs) b.refs=[]; b.refs.unshift(data); }
-  saveState(); closeRefModal(); renderBiblioRefs();
-}
-function deleteRef() {
-  const id = document.getElementById("refModalId").value;
-  if (!id) return;
-  _showConfirm("Supprimer cette référence et tous ses extraits ?", () => {
-    const b = _getActiveBiblio() || _biblioDef();
-    b.refs     = (b.refs||[]).filter(r => r.id !== id);
-    b.extracts = (b.extracts||[]).filter(e => e.refId !== id);
-    _setActiveBiblio(b);
-    saveState(); closeRefModal(); renderBiblioRefs();
-  });
-}
-
-// ── Codes ─────────────────────────────────────────────────────
-let _selectedCodeColor = "#c9b6f0";
-function selectCodeColor(color) {
-  _selectedCodeColor = color;
-  document.getElementById("codeModalColor").value = color;
-  document.querySelectorAll("#codeColorPicker button").forEach(b => {
-    b.style.border = b.dataset.color === color ? "2px solid var(--ink)" : "2px solid transparent";
-  });
-}
-function renderBiblioCodes() {
-  const biblio = _getActiveBiblio() || _biblioDef();
-  const codes = biblio.codes || [];
-  const countEl = document.getElementById("biblioCodeCount");
-  if (countEl) countEl.textContent = `(${codes.length})`;
-  const el = document.getElementById("biblioCodeList");
-  if (!el) return;
-  if (!codes.length) {
-    el.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucun code — crée-en un pour commencer à coder tes extraits.</p>`;
-    return;
-  }
-
-  // Rendu en arborescence (avec réordonnancement par glisser entre les codes)
-  function renderCodeNode(parentId, depth) {
-    const children = codes.filter(c => (c.parentId||"") === (parentId||""));
-    if (!children.length) return "";
-    const ind = depth ? 22 : 0;
-    const gap = beforeId => `<div ondragover="codeGapOver(event,this)" ondragleave="codeGapLeave(this)" ondrop="codeReorderDrop(event,'${beforeId}','${parentId||""}',this)" style="height:5px;margin-left:${ind}px;border-radius:4px;transition:all .1s;"></div>`;
-    let html = "";
-    children.forEach(c => {
-      const n = (biblio.extracts||[]).filter(e => (e.codes||[]).includes(c.id)).length;
-      const hasSub = codes.some(x => x.parentId === c.id);
-      const collapsed = _codeCollapsed.has(c.id);
-      const isRoot = depth === 0;
-      html += gap(c.id);
-      html += `<div style="margin-left:${ind}px;${depth?'border-left:2px solid var(--lavender);':''}">
-        <div draggable="true" ondragstart="codeDragStart(event,'${c.id}')" ondragover="codeDragOver(event,this)" ondragleave="this.style.background=''" ondrop="codeDrop(event,'${c.id}',this)" title="Glisser SUR un code = le ranger dessous · glisser ENTRE deux = réordonner" style="display:flex;align-items:center;gap:8px;padding:${isRoot?'10px 12px':'7px 12px'};border-bottom:1px solid var(--line);cursor:grab;border-radius:8px;${isRoot?'background:var(--lavender-soft);margin-top:6px;':''}" onclick="openCodeModal('${c.id}')">
-          ${depth?`<span style="color:var(--ink-softer);flex-shrink:0;font-size:12px;">↳</span>`:''}
-          ${hasSub ? `<span onclick="event.stopPropagation();toggleCodeCollapse('${c.id}')" style="font-size:10px;color:var(--ink-soft);width:12px;flex-shrink:0;cursor:pointer;">${collapsed?"▶":"▼"}</span>` : `<span style="width:12px;flex-shrink:0;"></span>`}
-          <span style="width:${isRoot?18:14}px;height:${isRoot?18:14}px;border-radius:50%;background:${c.color};flex-shrink:0;"></span>
-          <span style="font-weight:${isRoot?700:600};font-size:${isRoot?15:13}px;flex:1;color:var(--ink);">${escapeHtml(c.label)}</span>
-          ${c.description?`<span style="font-size:12px;color:var(--ink-soft);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.description)}</span>`:""}
-          <span style="font-size:11px;color:var(--ink-softer);flex-shrink:0;">${n} extrait${n!==1?"s":""}</span>
-        </div>
-        ${collapsed ? "" : renderCodeNode(c.id, depth+1)}
-      </div>`;
-    });
-    html += gap(""); // insérer à la fin de ce groupe
-    return html;
-  }
-
-  const rootZone = `<div ondragover="event.preventDefault();this.style.background='var(--lavender-soft)'" ondragleave="this.style.background=''" ondrop="codeDropRoot(event,this)" style="padding:6px 12px;border:1.5px dashed var(--line);border-radius:9px;margin-bottom:10px;font-size:12px;color:var(--ink-softer);text-align:center;">⬆ Dépose un code ici pour en faire un code principal (racine)</div>`;
-  el.innerHTML = rootZone + (renderCodeNode("", 0) || `<p style="color:var(--ink-soft);text-align:center;padding:20px;">Aucun code racine.</p>`);
-}
-
-const _codeCollapsed = new Set();
-function toggleCodeCollapse(id) {
-  if (_codeCollapsed.has(id)) _codeCollapsed.delete(id);
-  else _codeCollapsed.add(id);
-  renderBiblioCodes();
-}
-
-/* ── Glisser-déposer des codes (réorganisation parent/enfant) ── */
-let _codeDragId = null;
-function codeDragStart(e, id) { _codeDragId = id; try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", id); } catch (_) {} e.stopPropagation(); }
-function codeDragOver(e, elDiv) { e.preventDefault(); try { e.dataTransfer.dropEffect = "move"; } catch (_) {} if (elDiv && _codeDragId) elDiv.style.background = "var(--lavender-soft)"; }
-function _codeIsDescendant(codes, ancestorId, nodeId) {
-  let c = codes.find(x => x.id === nodeId), g = 0;
-  while (c && c.parentId && g++ < 100) { if (c.parentId === ancestorId) return true; c = codes.find(x => x.id === c.parentId); }
-  return false;
-}
-function _moveCode(dragId, targetId) {
-  if (!dragId || dragId === targetId) return;
-  const biblio = _getActiveBiblio() || _biblioDef();
-  const codes = biblio.codes || [];
-  const drag = codes.find(c => c.id === dragId);
-  if (!drag) return;
-  if (targetId && _codeIsDescendant(codes, dragId, targetId)) { showToast("⚠️ Un code ne peut pas aller dans un de ses propres sous-codes."); return; }
-  if ((drag.parentId || "") === (targetId || "")) return;
-  drag.parentId = targetId || "";
-  saveState();
-  renderBiblioCodes();
-  try { renderBiblioByCodeTree(); } catch (_) {}
-  showToast("✅ Code déplacé");
-}
-function codeDrop(e, targetId, elDiv) { e.preventDefault(); e.stopPropagation(); if (elDiv) elDiv.style.background = ""; _moveCode(_codeDragId, targetId); _codeDragId = null; }
-function codeDropRoot(e, elDiv) { e.preventDefault(); if (elDiv) elDiv.style.background = ""; _moveCode(_codeDragId, ""); _codeDragId = null; }
-// Réordonnancement (glisser entre deux codes)
-function codeGapOver(e, el) { e.preventDefault(); e.stopPropagation(); if (_codeDragId) { el.style.background = "var(--lavender)"; el.style.height = "12px"; } }
-function codeGapLeave(el) { el.style.background = ""; el.style.height = "5px"; }
-function codeReorderDrop(e, beforeId, parentId, el) { e.preventDefault(); e.stopPropagation(); if (el) { el.style.background = ""; el.style.height = "5px"; } _reorderCode(_codeDragId, beforeId || null, parentId || ""); _codeDragId = null; }
-function _reorderCode(dragId, beforeId, newParentId) {
-  if (!dragId || dragId === beforeId) return;
-  const biblio = _getActiveBiblio() || _biblioDef();
-  const codes = biblio.codes || [];
-  const drag = codes.find(c => c.id === dragId);
-  if (!drag) return;
-  if (newParentId && (newParentId === dragId || _codeIsDescendant(codes, dragId, newParentId))) { showToast("⚠️ Un code ne peut pas aller dans un de ses propres sous-codes."); return; }
-  drag.parentId = newParentId || "";
-  const fromIdx = codes.indexOf(drag);
-  codes.splice(fromIdx, 1);
-  let insertIdx = beforeId ? codes.findIndex(c => c.id === beforeId) : -1;
-  if (insertIdx < 0) insertIdx = codes.length;
-  codes.splice(insertIdx, 0, drag);
-  saveState();
-  renderBiblioCodes();
-  try { renderBiblioByCodeTree(); } catch (_) {}
-}
-
-function openCodeModal(id, defaultParentId) {
-  const biblio = _getActiveBiblio() || _biblioDef();
-  const codes = biblio.codes || [];
-  const c = id ? codes.find(x => x.id === id) : null;
-  document.getElementById("codeModalTitle").textContent = c ? "Modifier le code" : "Nouveau code";
-  document.getElementById("codeModalId").value = id || "";
-  document.getElementById("codeModalLabel").value = c?.label || "";
-  document.getElementById("codeModalDesc").value = c?.description || "";
-  selectCodeColor(c?.color || "#c9b6f0");
-  // Sélecteur de parent
-  const parentSel = document.getElementById("codeModalParent");
-  if (parentSel) {
-    parentSel.innerHTML = '<option value="">— Aucun (code racine) —</option>' +
-      _codeParentOptions(codes, id, (c?.parentId || defaultParentId || "")).join("");
-  }
-  const delBtn = document.getElementById("codeModalDeleteBtn");
-  if (delBtn) delBtn.style.display = c ? "inline-block" : "none";
-  document.getElementById("codeModal").classList.add("open");
-}
-
-function _codeDepth(id, codes, d=0) {
-  const c = codes.find(x => x.id === id);
-  if (!c || !c.parentId || d > 5) return d;
-  return _codeDepth(c.parentId, codes, d+1);
-}
-
-// Options du menu "Code parent" en ordre arborescent + décalage par niveau
-// (exclut le code édité et tout son sous-arbre pour éviter les boucles)
-function _codeParentOptions(codes, excludeId, selectedId, parentId = "", depth = 0) {
-  return codes.filter(x => (x.parentId || "") === parentId && x.id !== excludeId).flatMap(x => [
-    `<option value="${x.id}"${selectedId === x.id ? " selected" : ""}>${"　".repeat(depth)}${depth ? "↳ " : ""}${escapeHtml(x.label)}</option>`,
-    ..._codeParentOptions(codes, excludeId, selectedId, x.id, depth + 1)
-  ]);
-}
-
-function closeCodeModal() { document.getElementById("codeModal").classList.remove("open"); }
-
-function saveCode() {
-  const projects = _getBiblioProjects();
-  const p = projects.find(x => x.id === _biblioProjectId) || projects[0];
-  if (!p) { showToast("⚠️ Aucun projet sélectionné."); return; }
-  if (!p.biblio) p.biblio = _biblioDef();
-  if (!p.biblio.codes) p.biblio.codes = [];
-  const id = document.getElementById("codeModalId").value;
-  const label = document.getElementById("codeModalLabel").value.trim();
-  if (!label) { showToast("✏️ L'intitulé est obligatoire."); return; }
-  const parentId = document.getElementById("codeModalParent")?.value || "";
-  const data = {
-    id: id || "code" + Date.now(), label,
-    color: document.getElementById("codeModalColor").value,
-    description: document.getElementById("codeModalDesc").value.trim(),
-    parentId: parentId || "",
-  };
-  if (id) { const i = p.biblio.codes.findIndex(c=>c.id===id); if(i>=0) p.biblio.codes[i]=data; }
-  else    { p.biblio.codes.push(data); }
-  saveState(); closeCodeModal(); renderBiblioCodes();
-}
-
-function deleteCode() {
-  const id = document.getElementById("codeModalId").value;
-  if (!id) return;
-  _showConfirm("Supprimer ce code et ses sous-codes ?<br><small style='opacity:0.7'>Les extraits associés le perdront.</small>", () => { if(true) {
-  const projects = _getBiblioProjects();
-  const p = projects.find(x => x.id === _biblioProjectId) || projects[0];
-  if (!p?.biblio) return;
-  // Supprimer le code et tous ses descendants
-  function getDescendantIds(cid) {
-    const children = (p.biblio.codes||[]).filter(c => c.parentId === cid).map(c => c.id);
-    return [cid, ...children.flatMap(getDescendantIds)];
-  }
-  const toDelete = new Set(getDescendantIds(id));
-  p.biblio.codes = (p.biblio.codes||[]).filter(c => !toDelete.has(c.id));
-  (p.biblio.extracts||[]).forEach(e => { e.codes = (e.codes||[]).filter(cid => !toDelete.has(cid)); });
-  saveState(); closeCodeModal(); renderBiblioCodes();
-  }});
-}
-
-// ── Extraits ──────────────────────────────────────────────────
-function populateBiblioExtractFilters() {
-  const biblio = _getActiveBiblio() || _biblioDef();
-  const refSel  = document.getElementById("biblioExtractFilterRef");
-  const codeSel = document.getElementById("biblioExtractFilterCode");
-  if (refSel) {
-    const prev = refSel.value;
-    refSel.innerHTML = '<option value="">Toutes les références</option>' +
-      (biblio.refs||[]).map(r => `<option value="${r.id}">${escapeHtml(r.title)}</option>`).join("");
-    refSel.value = prev;
-  }
-  if (codeSel) {
-    const prev = codeSel.value;
-    codeSel.innerHTML = '<option value="">Tous les codes</option>' +
-      (biblio.codes||[]).map(c => `<option value="${c.id}">${escapeHtml(c.label)}</option>`).join("");
-    codeSel.value = prev;
-  }
-}
-function renderBiblioExtracts() {
-  const biblio = _getGlobalBiblio();           // refs (global)
-  const projectBiblio = _getActiveBiblio() || _biblioDef(); // extraits + codes (projet)
-  const filterRef    = document.getElementById("biblioExtractFilterRef")?.value   || "";
-  const filterCode   = document.getElementById("biblioExtractFilterCode")?.value  || "";
-  const filterSearch = (document.getElementById("biblioExtractSearch")?.value || "").toLowerCase().trim();
-  let exts = projectBiblio.extracts || [];
-  if (filterRef)   exts = exts.filter(e => e.refId === filterRef);
-  if (filterCode)  exts = exts.filter(e => (e.codes||[]).includes(filterCode));
-  if (filterSearch) {
-    const globalRefs = biblio.refs || [];
-    exts = exts.filter(e => {
-      const ref = globalRefs.find(r => r.id === e.refId);
-      return (e.text||"").toLowerCase().includes(filterSearch)
-          || (e.note||"").toLowerCase().includes(filterSearch)
-          || (e.page||"").includes(filterSearch)
-          || (ref?.title||"").toLowerCase().includes(filterSearch)
-          || (ref?.authors||"").toLowerCase().includes(filterSearch);
-    });
-  }
-  const countEl = document.getElementById("biblioExtractCount");
-  if (countEl) countEl.textContent = `(${exts.length})`;
-  const el = document.getElementById("biblioExtractList");
-  if (!el) return;
-  if (!exts.length) {
-    el.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucun extrait pour ce filtre.</p>`;
-    return;
-  }
-  el.innerHTML = exts.map(e => {
-    const ref = (biblio.refs||[]).find(r => r.id === e.refId);
-    const codes = (e.codes||[]).map(cid => (projectBiblio.codes||[]).find(c=>c.id===cid)).filter(Boolean);
-    return `<div style="padding:12px 14px;border-bottom:1px solid var(--line);">
-      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;">
-        <div style="display:flex;gap:6px;flex-wrap:wrap;flex:1;">
-          ${codes.map(c=>`<span style="font-size:11px;background:${c.color}33;color:var(--ink);border:1.5px solid ${c.color};border-radius:20px;padding:2px 9px;font-weight:600;">${escapeHtml(c.label)}</span>`).join("")}
-          ${e.page?`<span style="font-size:11px;color:var(--ink-softer);padding:2px 6px;">p.${e.page}</span>`:""}
-        </div>
-        <button onclick="openExtractModal('${e.id}')" title="Modifier" class="note-tb-btn" style="flex-shrink:0;font-size:13px;">✎</button>
-      </div>
-      <div style="font-size:13px;color:var(--ink);line-height:1.6;background:#faf8fd;border-left:3px solid var(--lavender);padding:8px 12px;border-radius:0 8px 8px 0;cursor:default;">"${escapeHtml((e.text||"").slice(0,300))}${e.text&&e.text.length>300?"…":""}"</div>
-      ${e.note?`<div style="font-size:12px;color:var(--ink-soft);margin-top:4px;font-style:italic;">💬 ${escapeHtml(e.note)}</div>`:""}
-      ${ref?`<div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
-        <span style="font-size:11px;color:var(--ink-softer);">📖</span>
-        <button onclick="openRefModal('${ref.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--lilac);text-decoration:underline;padding:0;font-family:inherit;text-align:left;">
-          ${escapeHtml(ref.title||"")}${ref.authors?" — "+escapeHtml(ref.authors):""}${ref.year?" ("+ref.year+")":""}
-        </button>
-      </div>`:""}
-    </div>`;
-  }).join("");
-}
-function openExtractModal(id) {
-  const biblio = _getActiveBiblio() || _biblioDef();
-  const e = id ? (biblio.extracts||[]).find(x => x.id === id) : null;
-  document.getElementById("extractModalTitle").textContent = e ? "Modifier l'extrait" : "Nouvel extrait";
-  document.getElementById("extractModalId").value = id || "";
-  // Picker référence — rendu différé pour ne pas bloquer l'ouverture
-  document.getElementById("extractRefSearch").value = "";
-  document.getElementById("extractRefPickerTree").innerHTML = "<p style='padding:8px;font-size:13px;color:var(--ink-softer);'>Tape un nom pour chercher une référence…</p>";
-  setTimeout(renderExtractRefPicker, 50); // léger délai pour afficher la modal d'abord
-  const selId = e?.refId || "";
-  const selRef = selId ? (biblio.refs||[]).find(r => r.id === selId) : null;
-  document.getElementById("extractModalRef").value = selId;
-  if (selRef) {
-    document.getElementById("extractRefSelected").style.display = "block";
-    document.getElementById("extractRefSelectedLabel").textContent = selRef.title;
-  } else {
-    document.getElementById("extractRefSelected").style.display = "none";
-  }
-  // Page, texte, note
-  document.getElementById("extractModalPage").value = e?.page || "";
-  document.getElementById("extractModalText").value = e?.text || "";
-  document.getElementById("extractModalNote").value = e?.note || "";
-  // Code picker
-  const selectedCodes = e?.codes || [];
-  // Nouveau picker avec recherche
-  document.getElementById("extractCodeSearch").value = "";
-  document.getElementById("extractCodeDropdown").style.display = "none";
-  _renderExtractSelectedCodes(selectedCodes, biblio.codes||[]);
-  renderExtractCodeSearch();
-  const delBtn = document.getElementById("extractModalDeleteBtn");
-  if (delBtn) delBtn.style.display = e ? "inline-block" : "none";
-  document.getElementById("extractModal").classList.add("open");
-}
-function renderExtractRefPicker() {
-  const biblio = _getGlobalBiblio();
-  const refs = biblio.refs || [];
-  const cols = biblio.collections || [];
-  const search = (document.getElementById("extractRefSearch")?.value || "").toLowerCase().trim();
-  const el = document.getElementById("extractRefPickerTree");
-  if (!el) return;
-  const selectedId = document.getElementById("extractModalRef").value;
-
-  function refItem(r, depth) {
-    const isSel = selectedId === r.id;
-    const bg = isSel ? "var(--lavender-soft)" : "transparent";
-    return `<div onclick="selectExtractRef('${r.id}')"
-      style="padding:5px 12px 5px ${depth*14+20}px;border-radius:8px;cursor:pointer;font-size:13px;background:${bg};font-weight:${isSel?600:400};"
-      onmouseover="this.style.background='var(--lavender-soft)'"
-      onmouseout="this.style.background='${bg}'">
-      ${escapeHtml(r.title||"Sans titre")}
-      ${r.authors||r.year?`<span style="font-size:11px;color:var(--ink-softer);"> — ${escapeHtml(r.authors||"")}${r.year?" ("+r.year+")":""}</span>`:""}
-    </div>`;
-  }
-
-  // Mode recherche : liste filtrée + dédupliquée par titre+auteur+année
-  if (search) {
-    const filtered = refs.filter(r =>
-      (r.title||"").toLowerCase().includes(search) ||
-      (r.authors||"").toLowerCase().includes(search) ||
-      (r.year||"").includes(search)
-    );
-    // Déduplication : garder seulement la première occurrence par titre+auteur+année
-    const seen = new Set();
-    const deduped = filtered.filter(r => {
-      const key = `${(r.title||"").toLowerCase().trim()}|${(r.authors||"").toLowerCase().trim()}|${r.year||""}`;
-      if (seen.has(key)) return false;
-      seen.add(key); return true;
-    }).slice(0, 50);
-    el.innerHTML = deduped.length
-      ? deduped.map(r => refItem(r, 0)).join("")
-      : `<p style='font-size:13px;color:var(--ink-softer);padding:8px;'>Aucun résultat pour "${escapeHtml(search)}"</p>`;
-    return;
-  }
-
-  // Mode arbre : collections + refs directes
-  function renderPickerNode(parentKey, depth) {
-    const children = cols.filter(c => (c.parentKey||"") === (parentKey||"") && !_biblioHidden.has(c.key));
-
-    // Pas de collections : montrer les refs directement
-    if (!children.length) {
-      if (depth === 0) return refs.slice(0, 30).map(r => refItem(r, 0)).join("") +
-        (refs.length > 30 ? `<p style='font-size:12px;color:var(--ink-softer);padding:4px 8px;'>...et ${refs.length-30} autres. Utilise la recherche ↑</p>` : "");
-      // Refs appartenant à cette collection (via parentKey)
-      const colRefs = refs.filter(r => (r.zoteroCollections||[]).includes(parentKey));
-      return colRefs.map(r => refItem(r, depth)).join("");
-    }
-
-    let html = "";
-    for (const c of children) {
-      const open = !_pickerCollapsed.has(c.key);
-      const allColRefs = refs.filter(r => {
-        const dk = getAllDescendantKeys(c.key, cols);
-        return (r.zoteroCollections||[]).some(k => dk.has(k));
-      });
-      const directRefs = refs.filter(r => (r.zoteroCollections||[]).includes(c.key));
-      const subCols = cols.filter(x => (x.parentKey||"") === c.key);
-
-      html += `<div>
-        <div onclick="togglePickerCollapse('${c.key}')"
-          style="display:flex;align-items:center;gap:5px;padding:5px 8px 5px ${depth*14+8}px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-soft);border-radius:8px;"
-          onmouseover="this.style.background='#f0eeff'" onmouseout="this.style.background='transparent'">
-          <span style="font-size:11px;">${open?"▼":"▶"}</span>
-          <span>${c.isGroupRoot?"🗂️":"📁"}</span>
-          <span style="flex:1;">${escapeHtml(c.name)}</span>
-          <span style="font-size:11px;color:var(--ink-softer);">${allColRefs.length}</span>
-        </div>
-        ${(open && c.key) ? renderPickerNode(c.key, depth+1) : ""}
-      </div>`;
-    }
-    return html;
-  }
-
-  el.innerHTML = renderPickerNode("", 0) || `<p style='font-size:13px;color:var(--ink-softer);padding:8px;'>Aucune référence — synchronise Zotero d'abord.</p>`;
-}
-
-const _pickerCollapsed = new Set();
-function togglePickerCollapse(key) {
-  if (_pickerCollapsed.has(key)) _pickerCollapsed.delete(key);
-  else _pickerCollapsed.add(key);
-  renderExtractRefPicker();
-}
-
-function selectExtractRef(id) {
-  const biblio = _getActiveBiblio() || _biblioDef();
-  const r = (biblio.refs||[]).find(x => x.id === id);
-  document.getElementById("extractModalRef").value = id;
-  document.getElementById("extractRefSelected").style.display = "block";
-  document.getElementById("extractRefSelectedLabel").textContent = r?.title || id;
-  renderExtractRefPicker();
-}
-
-function clearExtractRef() {
-  document.getElementById("extractModalRef").value = "";
-  document.getElementById("extractRefSelected").style.display = "none";
-  document.getElementById("extractRefSearch").value = "";
-  renderExtractRefPicker();
-}
-
-// ── Picker codes avec recherche ──────────────────────────────
-let _extractSelectedCodeIds = [];
-
-function _renderExtractSelectedCodes(ids, allCodes) {
-  _extractSelectedCodeIds = [...ids];
-  const el = document.getElementById("extractSelectedCodes");
-  if (!el) return;
-  if (!_extractSelectedCodeIds.length) {
-    el.innerHTML = '<span style="font-size:12px;color:var(--ink-softer);">Aucun code sélectionné</span>';
-    return;
-  }
-  el.innerHTML = _extractSelectedCodeIds.map(cid => {
-    const c = allCodes.find(x => x.id === cid);
-    if (!c) return "";
-    return `<span style="font-size:12px;background:${c.color}33;border:1.5px solid ${c.color};border-radius:20px;padding:3px 9px;font-weight:600;display:inline-flex;align-items:center;gap:5px;">
-      ${escapeHtml(c.label)}
-      <span onclick="removeExtractCode('${cid}')" style="cursor:pointer;font-size:10px;opacity:0.7;">✕</span>
-    </span>`;
-  }).join("");
-}
-
-function removeExtractCode(cid) {
-  _extractSelectedCodeIds = _extractSelectedCodeIds.filter(x => x !== cid);
-  const biblio = _getActiveBiblio() || _biblioDef();
-  _renderExtractSelectedCodes(_extractSelectedCodeIds, biblio.codes||[]);
-}
-
-function renderExtractCodeSearch() {
-  const search = (document.getElementById("extractCodeSearch")?.value || "").toLowerCase().trim();
-  const dropdown = document.getElementById("extractCodeDropdown");
-  const biblio = _getActiveBiblio() || _biblioDef();
-  const allCodes = biblio.codes || [];
-  if (!allCodes.length) {
-    dropdown.innerHTML = "<p style='padding:8px;font-size:12px;color:var(--ink-softer);'>Crée d'abord des codes dans l'onglet 🏷️ Codes.</p>";
-    dropdown.style.display = "block";
-    return;
-  }
-  const filtered = search
-    ? allCodes.filter(c => c.label.toLowerCase().includes(search) || (c.description||"").toLowerCase().includes(search))
-    : allCodes;
-  if (!filtered.length) {
-    dropdown.innerHTML = '<p style="padding:8px;font-size:12px;color:var(--ink-softer);">Aucun code trouvé.</p>';
-    dropdown.style.display = "block";
-    return;
-  }
-  // Trier les codes en ordre arborescent (parent d'abord, enfants ensuite)
-  function buildCodeTree(parentId, depth) {
-    return filtered.filter(c => (c.parentId||"") === (parentId||"")).flatMap(c => {
-      const selected = _extractSelectedCodeIds.includes(c.id);
-      const row = `<div onclick="selectExtractCode('${c.id}')"
-        style="padding:7px 12px 7px ${depth*16+12}px;cursor:pointer;font-size:13px;background:${selected?"var(--lavender-soft)":"transparent"};display:flex;align-items:center;gap:8px;"
-        onmouseover="this.style.background='var(--lavender-soft)'"
-        onmouseout="this.style.background='${selected?"var(--lavender-soft)":"transparent"}'">
-        <span style="width:12px;height:12px;border-radius:50%;background:${c.color};flex-shrink:0;"></span>
-        <span style="flex:1;">${escapeHtml(c.label)}</span>
-        ${selected ? '<span style="font-size:11px;color:var(--lilac);">✓</span>' : ""}
-      </div>`;
-      return [row, ...buildCodeTree(c.id, depth+1)];
-    });
-  }
-  dropdown.innerHTML = (search ? filtered.map(c => {
-    const selected = _extractSelectedCodeIds.includes(c.id);
-    return `<div onclick="selectExtractCode('${c.id}')"
-      style="padding:7px 12px;cursor:pointer;font-size:13px;background:${selected?"var(--lavender-soft)":"transparent"};display:flex;align-items:center;gap:8px;"
-      onmouseover="this.style.background='var(--lavender-soft)'"
-      onmouseout="this.style.background='${selected?"var(--lavender-soft)":"transparent"}'">
-      <span style="width:12px;height:12px;border-radius:50%;background:${c.color};flex-shrink:0;"></span>
-      <span style="flex:1;">${escapeHtml(c.label)}</span>
-      ${selected ? '<span style="font-size:11px;color:var(--lilac);">✓</span>' : ""}
-    </div>`;
-  }) : buildCodeTree("", 0)).join("");
-  dropdown.style.display = "block";
-}
-
-function selectExtractCode(cid) {
-  const biblio = _getActiveBiblio() || _biblioDef();
-  const allCodes = biblio.codes || [];
-  if (_extractSelectedCodeIds.includes(cid)) {
-    _extractSelectedCodeIds = _extractSelectedCodeIds.filter(x => x !== cid);
-  } else {
-    _extractSelectedCodeIds.push(cid);
-  }
-  _renderExtractSelectedCodes(_extractSelectedCodeIds, allCodes);
-  renderExtractCodeSearch(); // re-render pour mettre à jour ✓
-  // Fermer le dropdown et vider la recherche après sélection
-  document.getElementById("extractCodeDropdown").style.display = "none";
-  const srch = document.getElementById("extractCodeSearch"); if (srch) srch.value = "";
-}
-
-// Fermer dropdown codes — mousedown + touchstart pour mobile
-function _closeCodeDropdownIfOutside(target) {
-  const dropdown = document.getElementById("extractCodeDropdown");
-  if (!dropdown || dropdown.style.display === "none") return;
-  const search = document.getElementById("extractCodeSearch");
-  if (!dropdown.contains(target) && !(search && search.contains(target))) {
-    dropdown.style.display = "none";
-  }
-}
-// Empêche la molette/scroll de modifier les champs numériques non focusés
-document.addEventListener("wheel", e => { if (e.target.type === "number" && document.activeElement !== e.target) e.preventDefault(); }, { passive: false });
-document.addEventListener("mousedown", e => _closeCodeDropdownIfOutside(e.target));
-document.addEventListener("touchstart", e => _closeCodeDropdownIfOutside(e.touches[0]?.target), { passive: true });
-document.addEventListener("click", e => {
-  const dropdown = document.getElementById("extractCodeDropdown");
-  if (!dropdown) return;
-  const search = document.getElementById("extractCodeSearch");
-  const isInsideDropdown = dropdown.contains(e.target) || dropdown.contains(_modalMouseDownTarget);
-  const isInsideSearch = search && (search.contains(e.target) || search.contains(_modalMouseDownTarget));
-  if (!isInsideDropdown && !isInsideSearch) {
-    dropdown.style.display = "none";
-  }
-});
-
-function toggleExtractCode(codeId, btn) {
-  const biblio = _getActiveBiblio() || _biblioDef();
-  const c = (biblio.codes||[]).find(x=>x.id===codeId);
-  const on = btn.dataset.selected === "1";
-  btn.dataset.selected = on ? "0" : "1";
-  btn.style.fontWeight = on ? "400" : "700";
-  btn.style.background = on ? "white" : (c?.color||"#c9b6f0")+"55";
-  if (c?.color) btn.style.borderColor = c.color;
-}
-function closeExtractModal() { document.getElementById("extractModal").classList.remove("open"); }
-function saveExtract() {
-  const id = document.getElementById("extractModalId").value;
-  const text = document.getElementById("extractModalText").value.trim();
-  if (!text) { showToast("✏️ Le passage est obligatoire."); return; }
-  const refId = document.getElementById("extractModalRef").value;
-  if (!refId) { showToast("⚠️ Choisis une référence."); return; }
-
-  // S'assurer qu'on a un projet actif — en créer un si besoin
-  if (!_getBiblioProjects().length) {
-    if (!state.work.biblioProjects) state.work.biblioProjects = [];
-    const pid = "bproj" + Date.now();
-    state.work.biblioProjects.push({ id: pid, name: "Mon projet", biblio: _biblioDef() });
-    _biblioProjectId = pid;
-    renderBiblioProjectSelect();
-  }
-  // Forcer l'initialisation de _biblioProjectId
-  const b = _getActiveBiblio();
-  if (!b) { showToast("⚠️ Aucun projet sélectionné. Crée un projet dans l'onglet Codes."); return; }
-
-  // Codes sélectionnés
-  const codes = [..._extractSelectedCodeIds];
-  const data = {
-    id: id || "ext" + Date.now(),
-    refId, text, codes,
-    page: document.getElementById("extractModalPage").value.trim(),
-    note: document.getElementById("extractModalNote").value.trim(),
-    createdAt: id ? ((b.extracts||[]).find(e=>e.id===id)?.createdAt||new Date().toISOString()) : new Date().toISOString(),
-  };
-
-  // Sauvegarder DIRECTEMENT dans state (via la référence du projet)
-  const projects = _getBiblioProjects();
-  const p = projects.find(x => x.id === _biblioProjectId);
-  if (!p) { showToast("⚠️ Projet introuvable. Recharge la page."); return; }
-  if (!p.biblio) p.biblio = _biblioDef();
-  if (!p.biblio.extracts) p.biblio.extracts = [];
-
-  if (id) {
-    const i = p.biblio.extracts.findIndex(e=>e.id===id);
-    if (i >= 0) p.biblio.extracts[i] = data;
-    else p.biblio.extracts.unshift(data);
-  } else {
-    p.biblio.extracts.unshift(data);
-  }
-
-  saveState();
-  _fbSaveNow().catch(()=>{}); // sauvegarde Firebase immédiate
-  showToast(`✅ Extrait sauvegardé${codes.length ? " (" + codes.length + " code" + (codes.length>1?"s":"") + ")" : ""}`);
-  closeExtractModal();
-  populateBiblioExtractFilters(); renderBiblioExtracts();
-}
-function deleteExtract() {
-  const id = document.getElementById("extractModalId").value;
-  if (!id) return;
-  _showConfirm("Supprimer cet extrait ?", () => {
-    const b = _getActiveBiblio() || _biblioDef();
-    b.extracts = (b.extracts||[]).filter(e => e.id !== id);
-    _setActiveBiblio(b);
-    saveState(); closeExtractModal(); renderBiblioExtracts();
-  });
-}
-
-// ── Vue par code ──────────────────────────────────────────────
-function populateBiblioByCodeSelect() { renderBiblioByCodeTree(); }
-
-function renderBiblioByCodeTree() {
-  const el = document.getElementById("biblioByCodeTree");
-  if (!el) return;
-  const projectBiblio = _getActiveBiblio() || _biblioDef();
-  const allCodes = projectBiblio.codes || [];
-  const exts = projectBiblio.extracts || [];
-  const selectedId = document.getElementById("biblioByCodeSelect")?.value || "";
-
-  function countCode(id) {
-    const ids = new Set([id]);
-    let changed = true;
-    while (changed) { changed = false; allCodes.forEach(c => { if (ids.has(c.parentId||"") && !ids.has(c.id)) { ids.add(c.id); changed = true; } }); }
-    return exts.filter(e => (e.codes||[]).some(cid => ids.has(cid))).length;
-  }
-
-  function node(parentId, depth) {
-    return allCodes.filter(c => (c.parentId||"") === (parentId||"")).map(c => {
-      const n = countCode(c.id);
-      const hasSub = allCodes.some(x => x.parentId === c.id);
-      const active = selectedId === c.id;
-      const bg = active ? "var(--lavender-soft)" : "transparent";
-      return `<div style="padding-left:${depth*14}px;">
-        <div onclick="selectBiblioCode('${c.id}')"
-          style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:13px;background:${bg};font-weight:${active?600:400};"
-          onmouseover="this.style.background='var(--lavender-soft)'" onmouseout="this.style.background='${bg}'">
-          <span style="width:12px;height:12px;border-radius:50%;background:${c.color||"#c9b6f0"};flex-shrink:0;"></span>
-          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.label)}</span>
-          <span style="font-size:11px;color:var(--ink-softer);flex-shrink:0;">${n}</span>
-        </div>
-        ${hasSub ? node(c.id, depth+1) : ""}
-      </div>`;
-    }).join("");
-  }
-
-  el.innerHTML = allCodes.length
-    ? node("", 0) || '<p style="font-size:13px;color:var(--ink-softer);padding:4px;">Aucun code.</p>'
-    : '<p style="font-size:13px;color:var(--ink-softer);padding:4px;">Crée des codes dans l\'onglet Codes.</p>';
-}
-
-function selectBiblioCode(id) {
-  const sel = document.getElementById("biblioByCodeSelect");
-  if (sel) sel.value = id;
-  renderBiblioByCodeTree();
-  renderBiblioByCode();
-}
-function renderBiblioByCode() {
-  const biblio = _getGlobalBiblio();              // refs
-  const projectBiblio = _getActiveBiblio() || _biblioDef(); // codes + extraits
-  const allCodes = projectBiblio.codes || [];
-  const codeId = document.getElementById("biblioByCodeSelect")?.value || "";
-  const el = document.getElementById("biblioByCodeContent");
-  if (!el) return;
-  if (!codeId) { el.innerHTML = ""; return; }
-  const code = allCodes.find(c=>c.id===codeId);  // ← chercher dans le projet
-  if (!code) return;
-
-  // Collecter tous les IDs descendants (sous-codes inclus)
-  function getDescendantCodeIds(id) {
-    const ids = new Set([id]);
-    let changed = true;
-    while (changed) {
-      changed = false;
-      allCodes.forEach(c => {
-        if (ids.has(c.parentId) && !ids.has(c.id)) { ids.add(c.id); changed = true; }
-      });
-    }
-    return ids;
-  }
-  const codeIds = getDescendantCodeIds(codeId);
-  const exts = (projectBiblio.extracts||[]).filter(e=>(e.codes||[]).some(cid=>codeIds.has(cid)));
-  if (!exts.length) {
-    el.innerHTML = `<div class="card"><p style="color:var(--ink-soft);text-align:center;padding:20px;">Aucun extrait codé "${code.label}" pour l'instant.</p></div>`;
-    return;
-  }
-  // Grouper par référence
-  const byRef = {};
-  exts.forEach(e => { if(!byRef[e.refId]) byRef[e.refId]=[]; byRef[e.refId].push(e); });
-  el.innerHTML = Object.entries(byRef).map(([refId, refExts]) => {
-    const ref = (biblio.refs||[]).find(r=>r.id===refId);
-    return `<div class="card" style="margin-bottom:14px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <span style="width:14px;height:14px;border-radius:50%;background:${code.color};flex-shrink:0;"></span>
-        <button onclick="openRefModal('${ref?.id||''}')${ !ref?.id ? ';return false' : '' }" style="background:none;border:none;cursor:pointer;text-align:left;padding:0;font-family:inherit;">
-          <strong style="font-size:14px;color:var(--ink);">${escapeHtml(ref?.title||"Référence inconnue")}</strong>
-          <div style="font-size:12px;color:var(--ink-softer);margin-top:2px;">${escapeHtml(ref?.authors||"")}${ref?.year?" · "+ref.year:""}</div>
-        </button>
-      </div>
-      ${refExts.map(e => `
-        <div style="margin-bottom:12px;padding-left:12px;border-left:3px solid ${code.color};">
-          <div style="font-size:13px;color:var(--ink);line-height:1.7;font-style:italic;">"${escapeHtml(e.text||"")}"</div>
-          ${e.page?`<div style="font-size:11px;color:var(--ink-softer);margin-top:3px;">p.${e.page}</div>`:""}
-          ${e.note?`<div style="font-size:12px;color:var(--ink-soft);margin-top:4px;">💬 ${escapeHtml(e.note)}</div>`:""}
-        </div>`).join("")}
-    </div>`;
-  }).join("");
-}
-
-// ── Zotero ────────────────────────────────────────────────────
-function renderZoteroSources() {
-  const el = document.getElementById("zoteroSourcesList");
-  if (!el) return;
-  const b = _getGlobalBiblio(); // refs = biblio globale
-  const refs = b.refs || [];
-  if (!refs.length) { el.innerHTML = '<p style="font-size:13px;color:var(--ink-softer);">Aucune référence importée.</p>'; return; }
-
-  // Grouper par source
-  const sources = {};
-  refs.forEach(r => {
-    const src = r.zoteroSource || (r.zoteroKey ? "Zotero (ancienne sync)" : "Manuel");
-    if (!sources[src]) sources[src] = 0;
-    sources[src]++;
-  });
-
-  el.innerHTML = Object.entries(sources).map(([src, count]) => `
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#faf8fd;border-radius:10px;margin-bottom:6px;">
-      <span style="flex:1;font-size:13px;font-weight:500;">${escapeHtml(src)}</span>
-      <span style="font-size:12px;color:var(--ink-softer);">${count} réf${count>1?"s":""}</span>
-      <button onclick="deleteZoteroSource('${escapeHtml(src)}')"
-        style="padding:4px 10px;border-radius:7px;border:1px solid #fca5a5;background:#fff1f1;color:#dc2626;font-size:12px;cursor:pointer;font-family:inherit;">
-        🗑️ Supprimer
-      </button>
-    </div>`).join("");
-}
-
-function deleteZoteroSource(source) {
-  _showConfirm(`Supprimer toutes les références de la source « ${source} » ?`, () => { if(true) {
-  const b = _getActiveBiblio() || _biblioDef();
-  const before = (b.refs||[]).length;
-  b.refs = (b.refs||[]).filter(r => {
-    const src = r.zoteroSource || (r.zoteroKey ? "Zotero (ancienne sync)" : "Manuel");
-    return src !== source;
-  });
-  // Nettoyer aussi les extraits orphelins
-  const refIds = new Set((b.refs||[]).map(r=>r.id));
-  b.extracts = (b.extracts||[]).filter(e => refIds.has(e.refId));
-  _setActiveBiblio(b);
-  saveState();
-  renderZoteroSources(); renderBiblioCollectionTree(); renderBiblioRefs();
-  showToast(`🗑️ ${before - b.refs.length} références supprimées`);
-  }});
-}
-
-function loadZoteroConfig() {
-  if (!state.work.biblio) state.work.biblio = _biblioDef();
-  const b = state.work.biblio;
-  const uidEl = document.getElementById("zoteroUserId");
-  const keyEl = document.getElementById("zoteroApiKey");
-  if (uidEl) uidEl.value = b.zoteroUserId || "";
-  if (keyEl) keyEl.value = b.zoteroApiKey || "";
-  const skipEl = document.getElementById("zoteroSkipPersonal");
-  if (skipEl) skipEl.checked = !!b.zoteroSkipPersonal;
-  renderZoteroSources();
-}
-function saveZoteroConfig() {
-  if (!state.work.biblio) state.work.biblio = _biblioDef();
-  state.work.biblio.zoteroUserId = document.getElementById("zoteroUserId")?.value.trim() || "";
-  state.work.biblio.zoteroApiKey = document.getElementById("zoteroApiKey")?.value.trim() || "";
-  state.work.biblio.zoteroSkipPersonal = document.getElementById("zoteroSkipPersonal")?.checked || false;
-  saveState();
-  showToast("✅ Config Zotero enregistrée");
-}
-async function syncZotero() {
-  if (!_getBiblioProjects().length) {
-    if (!state.work.biblioProjects) state.work.biblioProjects = [];
-    const id = 'bproj' + Date.now();
-    state.work.biblioProjects.push({ id, name: 'Ma bibliothèque', biblio: _biblioDef() });
-    _biblioProjectId = id;
-    renderBiblioProjectSelect();
-  }
-  const b = _getGlobalBiblio();
-  const cfg = b;
-  const uid = cfg.zoteroUserId;
-  const key = cfg.zoteroApiKey;
-  const skipPersonal = cfg.zoteroSkipPersonal || false;
-  const statusEl = document.getElementById("zoteroStatus");
-  if (!uid || !key) { if(statusEl) statusEl.textContent = "❌ Renseigne ton User ID et ta clé API d'abord."; return; }
-  if (statusEl) statusEl.innerHTML = "⏳ Synchronisation en cours…";
-
-  // Garder les refs manuelles, vider les refs Zotero et les collections
-  b.refs = (b.refs||[]).filter(r => !r.zoteroKey);
-  b.collections = [];
-
-  // Récupère tous les items d'une URL paginée
-  async function fetchAll(baseUrl) {
-    let start = 0; const limit = 100; let items = [];
-    while (true) {
-      const res = await fetch(`${baseUrl}&limit=${limit}&start=${start}`, { signal: AbortSignal.timeout(20000) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const batch = await res.json();
-      items = items.concat(batch);
-      if (batch.length < limit) break;
-      start += limit;
-    }
-    return items;
-  }
-
-  // Traite une liste d'items et les ajoute à b.refs
-  function processItems(items, sourceName) {
-    let added = 0, updated = 0;
-    const typeMap = { book:"book", journalArticle:"article", bookSection:"chapter", report:"report", thesis:"thesis", dissertation:"thesis" };
-    items.forEach(item => {
-      const d = item.data;
-      if (!d || !d.title) return;
-      if (["attachment","note","annotation"].includes(d.itemType)) return;
-      const type = typeMap[d.itemType] || "other";
-      const authors = (d.creators||[]).filter(c=>c.creatorType==="author")
-        .map(c => [c.lastName, c.firstName].filter(Boolean).join(", ")).join("; ");
-      const existing = (b.refs||[]).find(r => r.zoteroKey === item.key);
-      const data = {
-        id: existing?.id || "ref" + Date.now() + Math.random().toString(36).slice(2,6),
-        zoteroKey: item.key, type,
-        zoteroCollections: d.collections || [],
-        title: d.title, authors,
-        year: (d.date||"").slice(0,4),
-        publisher: d.publisher || d.publicationTitle || "",
-        doi: d.DOI || d.url || "",
-        pages: d.numPages || d.pages || "",
-        notes: existing?.notes || "",
-        status: existing?.status || "to-read",
-        zoteroSource: sourceName,
-        createdAt: existing?.createdAt || new Date().toISOString(),
-      };
-      if (existing) { const i = b.refs.findIndex(r=>r.id===existing.id); b.refs[i]={...b.refs[i],...data}; updated++; }
-      else { if(!b.refs) b.refs=[]; b.refs.unshift(data); added++; }
-    });
-    return { added, updated };
-  }
-
-  const statusLines = [];
-  let hasError = false;
-
-  // 1. Bibliothèque personnelle
-  if (!skipPersonal) {
-    if (statusEl) statusEl.innerHTML = "⏳ Bibliothèque personnelle…";
-    try {
-      // Collections perso
-      const colRes = await fetch(`https://api.zotero.org/users/${uid}/collections?format=json&limit=100&key=${key}`);
-      if (colRes.ok) {
-        const cols = await colRes.json();
-        cols.forEach(c => b.collections.push({ key: c.key, name: c.data?.name||c.key, parentKey: c.data?.parentCollection||"", source: "Perso" }));
-      }
-      // Items perso
-      const personalItems = await fetchAll(`https://api.zotero.org/users/${uid}/items?format=json&key=${key}`);
-      const { added: pa, updated: pu } = processItems(personalItems, "Perso");
-      statusLines.push(`Perso : ${pa} ajoutées, ${pu} mises à jour`);
-    } catch(err) {
-      statusLines.push(`⚠️ Biblio perso : erreur (${err.message})`);
-      hasError = true;
-    }
-  }
-
-  // 2. Groupes
-  if (statusEl) statusEl.innerHTML = "⏳ Bibliothèques de groupe…";
-  try {
-    const groupsRes = await fetch(`https://api.zotero.org/users/${uid}/groups?format=json&key=${key}`);
-    if (groupsRes.ok) {
-      const groups = await groupsRes.json();
-      for (const g of groups) {
-        const gName = g.data?.name || `Groupe ${g.id}`;
-        const gVKey = `grp-${g.id}`;
-        if (statusEl) statusEl.innerHTML = `⏳ Groupe : ${gName}…`;
-        try {
-          // Collections du groupe
-          const gcRes = await fetch(`https://api.zotero.org/groups/${g.id}/collections?format=json&limit=100&key=${key}`);
-          if (gcRes.ok) {
-            const gcols = await gcRes.json();
-            if (!b.collections.find(c => c.key === gVKey)) {
-              b.collections.push({ key: gVKey, name: gName, parentKey: "", source: gName, isGroupRoot: true });
-            }
-            gcols.forEach(c => b.collections.push({
-              key: c.key, name: c.data?.name||c.key,
-              parentKey: c.data?.parentCollection || gVKey,
-              source: gName
-            }));
-          }
-          // Items du groupe
-          const groupItems = await fetchAll(`https://api.zotero.org/groups/${g.id}/items?format=json&key=${key}`);
-          const { added: ga, updated: gu } = processItems(groupItems, gName);
-          statusLines.push(`${gName} : ${ga} ajoutées, ${gu} mises à jour`);
-        } catch(err) {
-          statusLines.push(`⚠️ ${gName} : erreur (${err.message})`);
-          hasError = true;
-        }
-      }
-    }
-  } catch(err) {
-    statusLines.push(`⚠️ Groupes : erreur (${err.message})`);
-    hasError = true;
-  }
-
-  // Dédupliquer les collections par clé — priorité au placement dans un groupe
-  const colByKey = new Map();
-  for (const c of b.collections) {
-    if (!colByKey.has(c.key)) {
-      colByKey.set(c.key, c);
-    } else {
-      const existing = colByKey.get(c.key);
-      // Si la version existante est à la racine ("") mais la nouvelle est dans un groupe → préférer le groupe
-      if ((!existing.parentKey || existing.parentKey === "") && c.parentKey && c.parentKey !== "") {
-        colByKey.set(c.key, c);
-      }
-    }
-  }
-  b.collections = Array.from(colByKey.values());
-
-  // NE PAS appeler _setActiveBiblio(b) : on écrit directement dans state.work.biblio (global)
-  saveState();
-  // Sauvegarder IMMÉDIATEMENT dans Firebase (sans le délai de 2.5s)
-  _fbSaveNow().catch(() => {});
-  _biblioActiveCollection = ""; // reset filtre après sync
-  renderBiblioCollectionTree();
-  renderBiblioRefs();
-  renderZoteroSources();
-
-  const total = (b.refs||[]).filter(r=>r.zoteroKey).length;
-  const icon = hasError ? "⚠️" : "✅";
-  if (statusEl) statusEl.innerHTML = `${icon} <strong>${total}</strong> références Zotero au total.<br>
-    <span style="font-size:11px;color:var(--ink-softer);">${statusLines.join(" · ")}</span>`;
-  showToast(`📚 Zotero : ${total} références`);
-}
-
-
-
 /* ========= TÂCHES DOMESTIQUES ========= */
 let _domTaskShowDone = false;
 
@@ -25102,7 +23117,6 @@ async function _resetAllDataNow() {
       await Promise.all([
         _fbDocRef("state").delete(),
         _fbDocRef("work").delete(),
-        _fbDocRef("biblio").delete(),
       ]);
     } catch(e) { console.warn("Firebase reset error", e); }
   }
@@ -25125,7 +23139,6 @@ async function _deleteAccountNow() {
       await Promise.all([
         _fbDocRef("state").delete(),
         _fbDocRef("work").delete(),
-        _fbDocRef("biblio").delete(),
       ]);
     } catch(e) { console.warn("Firestore delete error", e); }
   }
@@ -25732,7 +23745,6 @@ const SHORTCUT_CATALOG = [
   { id:"s_time",   label:"Temps",       emoji:"⏱️", action:"subtab", tab:"work", sub:"time", group:"Travail" },
   { id:"s_notes",  label:"Notes",       emoji:"📓", action:"subtab", tab:"work", sub:"notes", group:"Travail" },
   { id:"s_admin",  label:"Administratif", emoji:"🗂️", action:"subtab", tab:"work", sub:"administratif", group:"Travail" },
-  { id:"s_biblio", label:"Biblio",      emoji:"📖", action:"subtab", tab:"work", sub:"biblio", group:"Travail" },
   // Sous-onglets Domestique
   { id:"s_domnotes", label:"Notes & To-do", emoji:"📝", action:"subtab", tab:"domestic", sub:"notes", group:"Domestique" },
   { id:"s_food",   label:"Alimentation", emoji:"🥗", action:"subtab", tab:"domestic", sub:"alimentation", group:"Domestique" },
@@ -26398,9 +24410,6 @@ function renderAll() {
   renderCalendar();
   renderPillars();
   renderJournal();
-  // Toujours re-rendre la biblio (refs globales)
-  try { renderBiblioCollectionTree(); } catch(e) { console.warn("[tree]",e); }
-  try { renderBiblioRefs(); } catch(e) { console.warn("[refs]",e); }
   // Barre de raccourcis (sinon jamais redessinée au démarrage sans cloud)
   renderShortcutsBar();
   _initWorkTabLabels();
@@ -26463,7 +24472,7 @@ const FB_CONFIG = {
 let _fbDb = null, _fbAuth = null, _fbUser = null;
 let _fbSaveTimer = null, _fbUnsub = null;
 let _fbListenTimer = null, _fbLoadTime = 0;
-let _snapCache = { state: null, work: null, biblio: null, transactions: null, domestique: null };
+let _snapCache = { state: null, work: null, transactions: null, domestique: null };
 
 function _fbDocRef(name = "state") {
   return _fbDb.collection("users").doc(_fbUser.uid).collection("dashboard").doc(name);
@@ -26519,10 +24528,11 @@ function _fbUpdateUI(user) {
 }
 
 // ── Helpers multi-documents ──────────────────────────────────────────────────
-// 3 documents Firestore par utilisateur :
-//   "state"  — données principales (sans work, sans calEvents)
-//   "work"   — state.work sans biblio/biblioProjects
-//   "biblio" — state.work.biblio + state.work.biblioProjects (~580 Ko)
+// 4 documents Firestore par utilisateur :
+//   "state"        — données principales (sans work, sans calEvents)
+//   "work"         — state.work
+//   "transactions" — state.transactions
+//   "domestique"   — state.domestique
 // Cela permet de tout synchroniser sans dépasser la limite 1 Mo/document.
 
 function _makePayload(obj) {
@@ -26554,15 +24564,7 @@ function _coreForCloud() {
 }
 function _workForCloud() {
   const w = JSON.parse(JSON.stringify(state.work || {}));
-  delete w.biblio;
-  delete w.biblioProjects;
   return { work: w, lastModified: state.lastModified };
-}
-function _biblioForCloud() {
-  return {
-    biblio: JSON.parse(JSON.stringify(state.work?.biblio || [])),
-    biblioProjects: JSON.parse(JSON.stringify(state.work?.biblioProjects || [])),
-  };
 }
 function _transactionsForCloud() {
   return { transactions: JSON.parse(JSON.stringify(state.transactions || [])), lastModified: state.lastModified };
@@ -26574,14 +24576,12 @@ function _domestiqueForCloud() {
 // Assemble les 5 docs en un seul objet state complet.
 // stateData peut contenir .work/.transactions/.domestique (ancien format, doc unique) — gardés en fallback
 // tant que les docs séparés n'existent pas encore côté cloud (migration progressive, sans perte).
-function _assembleRemote(stateData, workData, biblioData, transactionsData, domestiqueData) {
+function _assembleRemote(stateData, workData, transactionsData, domestiqueData) {
   if (!stateData) return null;
   const assembled = { ...stateData };
   // work : priorité au doc "work" séparé, sinon fallback sur ce qui était dans le doc "state" (ancien format)
   const workBase = workData?.work || stateData.work || {};
   assembled.work = { ...workBase };
-  if (biblioData?.biblio)        assembled.work.biblio = biblioData.biblio;
-  if (biblioData?.biblioProjects) assembled.work.biblioProjects = biblioData.biblioProjects;
   assembled.transactions = transactionsData?.transactions ?? stateData.transactions ?? [];
   assembled.domestique    = domestiqueData?.domestique    ?? stateData.domestique    ?? {};
   return assembled;
@@ -26673,10 +24673,9 @@ function _markCloudSynced(uid) {
 async function _fbLoad() {
   try {
     _fbSetStatus("syncing");
-    const [stateSnap, workSnap, biblioSnap, transactionsSnap, domestiqueSnap] = await Promise.all([
+    const [stateSnap, workSnap, transactionsSnap, domestiqueSnap] = await Promise.all([
       _fbDocRef("state").get(),
       _fbDocRef("work").get(),
-      _fbDocRef("biblio").get(),
       _fbDocRef("transactions").get(),
       _fbDocRef("domestique").get(),
     ]);
@@ -26684,16 +24683,14 @@ async function _fbLoad() {
     // Mettre en cache pour que le listener ne re-applique pas immédiatement
     if (stateSnap.exists)        _snapCache.state        = stateSnap.data();
     if (workSnap.exists)         _snapCache.work         = workSnap.data();
-    if (biblioSnap.exists)       _snapCache.biblio       = biblioSnap.data();
     if (transactionsSnap.exists) _snapCache.transactions = transactionsSnap.data();
     if (domestiqueSnap.exists)   _snapCache.domestique   = domestiqueSnap.data();
 
     const stateData        = stateSnap.exists        ? _readCloudState(stateSnap.data())        : null;
     const workData         = workSnap.exists         ? _readCloudState(workSnap.data())         : null;
-    const biblioData       = biblioSnap.exists       ? (_readCloudState(biblioSnap.data()) || biblioSnap.data()) : null;
     const transactionsData = transactionsSnap.exists ? _readCloudState(transactionsSnap.data()) : null;
     const domestiqueData   = domestiqueSnap.exists   ? _readCloudState(domestiqueSnap.data())   : null;
-    const remote = _assembleRemote(stateData, workData, biblioData, transactionsData, domestiqueData);
+    const remote = _assembleRemote(stateData, workData, transactionsData, domestiqueData);
 
     if (remote) {
       const localTs  = state.lastModified || 0;
@@ -26710,8 +24707,6 @@ async function _fbLoad() {
         window._lastLocalSave = 0; // protéger le lastModified cloud contre saveState post-render
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
         renderAll();
-        try { renderBiblioCollectionTree(); } catch(e) {}
-        try { renderBiblioRefs(); } catch(e) {}
         renderShortcutsBar();
         showToast("✨ Données chargées depuis le cloud !");
       } else if (localTs > remoteTs) {
@@ -26780,10 +24775,9 @@ function _applyRemoteSnaps() {
 
   const stateData        = _snapCache.state        ? _readCloudState(_snapCache.state)        : null;
   const workData         = _snapCache.work         ? _readCloudState(_snapCache.work)         : null;
-  const biblioData       = _snapCache.biblio       ? (_readCloudState(_snapCache.biblio) || _snapCache.biblio) : null;
   const transactionsData = _snapCache.transactions ? _readCloudState(_snapCache.transactions) : null;
   const domestiqueData   = _snapCache.domestique   ? _readCloudState(_snapCache.domestique)   : null;
-  const remote = _assembleRemote(stateData, workData, biblioData, transactionsData, domestiqueData);
+  const remote = _assembleRemote(stateData, workData, transactionsData, domestiqueData);
   if (!remote) { _fbSetStatus("ok"); return; }
 
   const remoteTs = remote.lastModified || 0;
@@ -26795,8 +24789,6 @@ function _applyRemoteSnaps() {
     window._lastLocalSave = 0;
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
     renderAll();
-    try { renderBiblioCollectionTree(); } catch(e) {}
-    try { renderBiblioRefs(); } catch(e) {}
     renderShortcutsBar();
     if (remoteTs > localTs) showToast("🔄 Mis à jour depuis un autre appareil");
   }
@@ -26804,17 +24796,16 @@ function _applyRemoteSnaps() {
 }
 
 const _CLOUD_SIZE_WARN_KO = 700; // ~70% de la limite Firestore (1024 Ko/document) — anticiper avant le blocage à 950
-const _CLOUD_DOC_NAMES = ["state", "work", "biblio", "transactions", "domestique"];
+const _CLOUD_DOC_NAMES = ["state", "work", "transactions", "domestique"];
 function _computeCloudSizes() {
   const corePayload         = _makePayload(_coreForCloud());
   const workPayload         = _makePayload(_workForCloud());
-  const biblioPayload       = _makePayload(_biblioForCloud());
   const transactionsPayload = _makePayload(_transactionsForCloud());
   const domestiquePayload   = _makePayload(_domestiqueForCloud());
-  const payloads = [corePayload, workPayload, biblioPayload, transactionsPayload, domestiquePayload];
+  const payloads = [corePayload, workPayload, transactionsPayload, domestiquePayload];
   const sizes = payloads.map(p => Math.round(JSON.stringify(p).length / 1024));
   const maxKo = Math.max(...sizes);
-  return { corePayload, workPayload, biblioPayload, transactionsPayload, domestiquePayload, sizes, maxKo, maxDocName: _CLOUD_DOC_NAMES[sizes.indexOf(maxKo)] };
+  return { corePayload, workPayload, transactionsPayload, domestiquePayload, sizes, maxKo, maxDocName: _CLOUD_DOC_NAMES[sizes.indexOf(maxKo)] };
 }
 // Badge permanent (header, dès qu'on est connecté) : change de couleur selon l'état, pour être
 // visible en permanence plutôt que de n'apparaître qu'au moment critique.
@@ -26858,10 +24849,8 @@ function openCloudSizeAlert() {
   const blocked = maxKo > 950;
   const warn = maxKo > _CLOUD_SIZE_WARN_KO;
   document.getElementById("cloudSizeAlertTitle").textContent = blocked ? "🚨 Stockage cloud plein" : warn ? "⚠️ Stockage cloud presque plein" : "📦 Stockage cloud";
-  // "biblio" est un onglet masqué (fonctionnalité inactive pour les utilisateurs) — inutile de l'exposer ici
   const detailLines = _CLOUD_DOC_NAMES
     .map((name, i) => [name, sizes[i]])
-    .filter(([name]) => name !== "biblio")
     .map(([name, ko]) => `<strong>${name}</strong> : ${ko} Ko`)
     .join(" · ");
   const intro = `Cette fenêtre te permet de voir où en est le stockage de tes données dans le cloud : chaque catégorie (${detailLines}) a une limite d'environ 1000 Ko.`;
@@ -26899,9 +24888,9 @@ function closeSupportContact() { document.getElementById("supportContactModal").
 async function _fbSaveNow() {
   if (!_fbUser || !_fbDb) return;
   try {
-    const { corePayload, workPayload, biblioPayload, transactionsPayload, domestiquePayload, sizes, maxKo, maxDocName } = _computeCloudSizes();
+    const { corePayload, workPayload, transactionsPayload, domestiquePayload, sizes, maxKo, maxDocName } = _computeCloudSizes();
     _updateCloudSizeBadge(sizes, maxDocName);
-    const payloadsByName = { state: corePayload, work: workPayload, biblio: biblioPayload, transactions: transactionsPayload, domestique: domestiquePayload };
+    const payloadsByName = { state: corePayload, work: workPayload, transactions: transactionsPayload, domestique: domestiquePayload };
     // Un seul document trop lourd ne doit plus bloquer la sauvegarde des 4 autres — c'est tout
     // l'intérêt d'avoir plusieurs petits documents plutôt qu'un gros : le problème reste localisé.
     const oversized = _CLOUD_DOC_NAMES.filter((name, i) => sizes[i] > 950);
@@ -27043,19 +25032,17 @@ async function cloudPull() {
   _showConfirm("⬇️ Récupérer les données du cloud et REMPLACER celles de cet appareil ?<br><small style='opacity:0.7'>💡 Fais d'abord un export si tu as un doute.</small>", async () => {
   try {
     _fbSetStatus("syncing");
-    const [stateSnap, workSnap, biblioSnap, transactionsSnap, domestiqueSnap] = await Promise.all([
+    const [stateSnap, workSnap, transactionsSnap, domestiqueSnap] = await Promise.all([
       _fbDocRef("state").get(),
       _fbDocRef("work").get(),
-      _fbDocRef("biblio").get(),
       _fbDocRef("transactions").get(),
       _fbDocRef("domestique").get(),
     ]);
     const stateData        = stateSnap.exists        ? _readCloudState(stateSnap.data())        : null;
     const workData         = workSnap.exists         ? _readCloudState(workSnap.data())         : null;
-    const biblioData       = biblioSnap.exists       ? (_readCloudState(biblioSnap.data()) || biblioSnap.data()) : null;
     const transactionsData = transactionsSnap.exists ? _readCloudState(transactionsSnap.data()) : null;
     const domestiqueData   = domestiqueSnap.exists   ? _readCloudState(domestiqueSnap.data())   : null;
-    const remote = _assembleRemote(stateData, workData, biblioData, transactionsData, domestiqueData);
+    const remote = _assembleRemote(stateData, workData, transactionsData, domestiqueData);
     if (!remote) { showToast("☁️ Aucune donnée dans le cloud pour l'instant."); _fbSetStatus("ok"); return; }
     // Remplacement total — on garde seulement le calendrier Google local
     const calEvents = state.calEvents || [];
