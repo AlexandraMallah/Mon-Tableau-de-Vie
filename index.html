@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1218</title>
+<title>Mon Tableau de Vie 🌿 · v1219</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4123,7 +4123,7 @@
       <p style="font-size:13px;color:var(--ink-soft);margin:0 0 14px;line-height:1.5;">Un problème avec tes données (une synchro qui semble ratée, un truc disparu) ? Ouvre cet onglet, clique <strong>Contacter le support</strong> juste en dessous, et colle les informations affichées ici dans le message — ça aide à comprendre ce qui se passe sans avoir besoin d'accéder à ton compte.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
         <button class="secondary" onclick="cloudDiag()" style="flex:1;min-width:150px;">🔄 Actualiser</button>
-        <a href="#" onclick="event.preventDefault();openSupportContact()" class="secondary" style="flex:1;min-width:150px;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;">📧 Contacter le support</a>
+        <button class="secondary" onclick="closeSettings();openSupportContact()" style="flex:1;min-width:150px;">📧 Contacter le support</button>
       </div>
       <pre id="settingsDiagOutput" style="font-size:11.5px;color:var(--ink);line-height:1.7;background:var(--bg-1);border:1px solid var(--line);border-radius:10px;padding:12px 14px;white-space:pre-wrap;word-break:break-word;margin:0;max-height:280px;overflow-y:auto;font-family:ui-monospace,monospace;"></pre>
     </div>
