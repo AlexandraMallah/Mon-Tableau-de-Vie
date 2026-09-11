@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1214</title>
+<title>Mon Tableau de Vie 🌿 · v1215</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19517,10 +19517,13 @@ document.getElementById("gcalModal")?.addEventListener("click", e => {
 // retirés, ils ne peuvent plus fonctionner pour personne. api.allorigins.win et api.codetabs.com
 // répondaient 522 (origine injoignable) au moment du test — probablement une panne passagère de
 // leur côté plutôt qu'un arrêt définitif (ce sont des projets actifs), donc gardés + un nouveau
-// candidat ajouté (cors.isomorphic-git.org, maintenu par le projet isomorphic-git). Il n'existe
-// malheureusement aucun proxy CORS public gratuit garanti fiable à long terme — si la synchro
-// recasse, c'est probablement qu'un nouveau maillon de cette liste est tombé à son tour.
+// candidat ajouté (cors.isomorphic-git.org, maintenu par le projet isomorphic-git).
+// Relais dédié (2026-09) : Worker Cloudflare déployé et maintenu par nous (voir
+// cloudflare-worker.js à la racine du repo pour le code source) — ne dépend d'aucun service
+// tiers gratuit, fonctionne pour n'importe quel agenda Google que n'importe quel utilisateur
+// connecte. Placé en premier : c'est le plus fiable des cinq. Les autres restent en secours.
 const ICS_CORS_PROXIES = [
+  { build: u => `https://ics-proxy.alexandra-mallah.workers.dev/?url=${encodeURIComponent(u)}`, json: false },
   { build: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, json: false },
   { build: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`, json: false },
   { build: u => `https://cors.isomorphic-git.org/${u}`, json: false },
@@ -19528,9 +19531,13 @@ const ICS_CORS_PROXIES = [
 ];
 // Essaie chaque proxy (sur `passes` tours) jusqu'à obtenir un contenu ICS valide (BEGIN:VEVENT).
 // Retourne le texte ICS, ou null si tout a échoué.
-async function _fetchIcsViaProxies(url, { timeoutMs = 25000, passes = 1, cacheBust = false } = {}) {
+async function _fetchIcsViaProxies(url, { timeoutMs = 25000, passes = 1, cacheBust = false, onProgress = null } = {}) {
+  let attempt = 0;
+  const total = passes * ICS_CORS_PROXIES.length;
   for (let pass = 0; pass < passes; pass++) {
     for (const proxy of ICS_CORS_PROXIES) {
+      attempt++;
+      if (onProgress) { try { onProgress(attempt, total); } catch (_) {} }
       const target = cacheBust ? url + (url.includes("?") ? "&" : "?") + "_cb=" + Date.now() : url;
       try {
         const r = await fetch(proxy.build(target), { cache: "no-store", signal: AbortSignal.timeout(timeoutMs) });
