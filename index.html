@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1221</title>
+<title>Mon Tableau de Vie 🌿 · v1222</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1897,12 +1897,23 @@
 <link rel="apple-touch-icon" href="icon-192-v3.png" />
 </head>
 <body>
+<script>
+// Applique la classe de thème AVANT le premier rendu (donc avant même l'écran de connexion) : sans
+// ça, une utilisatrice en thème Sérieux voyait toujours l'écran de connexion pastel du thème
+// Smooth au tout premier affichage, le thème n'étant appliqué qu'une fois les données chargées.
+(function() {
+  try {
+    const raw = localStorage.getItem("tableauDeVie_v3");
+    if (raw && JSON.parse(raw).uiTheme === "serieux") document.body.classList.add("t-serieux");
+  } catch (e) {}
+})();
+</script>
 
-<div id="authGate" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#fdf6f0,#f3ecff);display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;">
+<div id="authGate" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,var(--bg-1),var(--bg-2));display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;">
   <div style="max-width:380px;width:100%;text-align:center;">
     <div style="font-size:48px;margin-bottom:8px;">🌿</div>
-    <h1 style="font-size:22px;margin:0 0 6px;color:#4a4458;font-family:inherit;">Mon Tableau de Vie</h1>
-    <p style="font-size:14px;color:#8a8499;margin:0 0 28px;">Connecte-toi pour retrouver tes données sur tous tes appareils.</p>
+    <h1 style="font-size:22px;margin:0 0 6px;color:var(--ink);font-family:inherit;">Mon Tableau de Vie</h1>
+    <p style="font-size:14px;color:var(--ink-soft);margin:0 0 28px;">Connecte-toi pour retrouver tes données sur tous tes appareils.</p>
     <button onclick="signInWithGoogle()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#e8f0fe,#d2e3fc);color:#1a73e8;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(26,115,232,.15);">☁️ Se connecter avec Google</button>
     <a href="#" onclick="event.preventDefault();_skipAuthGate()" style="display:inline-block;margin-top:18px;font-size:12px;color:#a89fc4;text-decoration:underline;cursor:pointer;">Continuer sans compte</a>
   </div>
@@ -2088,9 +2099,9 @@
           <div class="wb-block">
             <label>Humeur</label>
             <div class="scale mood" id="moodScale">
-              <button data-v="1">😞</button><button data-v="2">😐</button>
-              <button data-v="3">🙂</button><button data-v="4">😊</button>
-              <button data-v="5">🤩</button>
+              <button data-v="1" aria-label="Humeur : mauvaise">😞</button><button data-v="2" aria-label="Humeur : faible">😐</button>
+              <button data-v="3" aria-label="Humeur : moyenne">🙂</button><button data-v="4" aria-label="Humeur : bonne">😊</button>
+              <button data-v="5" aria-label="Humeur : excellente">🤩</button>
             </div>
           </div>
           <div class="wb-block">
@@ -2115,12 +2126,12 @@
             <div style="margin-top:12px;">
               <label style="font-size:11px;color:var(--ink-softer);margin-bottom:6px;display:block;">Qualité du sommeil</label>
               <div class="scale sleepquality" id="sleepQualityScale">
-                <button data-v="peaceful">😴</button>
-                <button data-v="restless">😫</button>
-                <button data-v="fragmented">👁️</button>
-                <button data-v="insomnia">😵</button>
-                <button data-v="nightmare">👹</button>
-                <button data-v="dream">🌙</button>
+                <button data-v="peaceful" aria-label="Sommeil paisible">😴</button>
+                <button data-v="restless" aria-label="Sommeil agité">😫</button>
+                <button data-v="fragmented" aria-label="Sommeil fragmenté">👁️</button>
+                <button data-v="insomnia" aria-label="Insomnie">😵</button>
+                <button data-v="nightmare" aria-label="Cauchemar">👹</button>
+                <button data-v="dream" aria-label="Rêves marquants">🌙</button>
               </div>
               <div class="sleepquality-label" id="sleepQualityLabel"></div>
             </div>
@@ -2128,9 +2139,9 @@
           <div class="wb-block">
             <label>Énergie</label>
             <div class="scale energy" id="energyScale">
-              <button data-v="1">🪫</button><button data-v="2">🌀</button>
-              <button data-v="3">⚡</button><button data-v="4">🔥</button>
-              <button data-v="5">🌟</button>
+              <button data-v="1" aria-label="Énergie : très faible">🪫</button><button data-v="2" aria-label="Énergie : faible">🌀</button>
+              <button data-v="3" aria-label="Énergie : moyenne">⚡</button><button data-v="4" aria-label="Énergie : élevée">🔥</button>
+              <button data-v="5" aria-label="Énergie : très élevée">🌟</button>
             </div>
           </div>
           <div id="customSymptomsBlocks"></div>
@@ -3009,6 +3020,9 @@
 
   <!-- VIEW: HEALTH -->
   <section class="view" data-view="health">
+    <div class="card" id="hormoneCrossLinkCard" style="display:none;padding:10px 16px;margin-bottom:14px;background:linear-gradient(135deg,var(--lavender-soft),var(--pink-soft));cursor:pointer;" onclick="document.querySelector('button[data-view=&quot;activities&quot;]').click();setTimeout(()=>document.getElementById('hormoneBalanceCard')?.scrollIntoView({behavior:'smooth',block:'start'}),80);">
+      <span style="font-size:13px;color:var(--ink);">🧪 Le suivi de ta <strong>balance hormonale</strong> (règles, sommeil, alimentation, activités…) se trouve dans l'onglet <strong>Activités</strong> →</span>
+    </div>
     <div class="card" id="healthCompCard">
         <h2>💪 Composition corporelle</h2>
         <!-- Toggles sections Santé — visibles en mode édition -->
@@ -4443,7 +4457,7 @@
     <div id="confirmIcon" style="font-size:36px;margin-bottom:10px;">🗑️</div>
     <div id="confirmMsg" style="font-size:15px;color:var(--ink);line-height:1.5;margin-bottom:20px;"></div>
     <div style="display:flex;gap:10px;justify-content:center;">
-      <button onclick="_closeConfirm(false)" style="padding:10px 22px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+      <button id="confirmCancelBtn" onclick="_closeConfirm(false)" style="padding:10px 22px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
       <button id="confirmOkBtn" onclick="_closeConfirm(true)" style="padding:10px 22px;border-radius:12px;border:none;background:#f08080;color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Supprimer</button>
     </div>
   </div>
@@ -7690,8 +7704,10 @@ function _addProjNote(projId) {
 function _deleteProjNote(projId, ni) {
   const p = (state.work.postdocProjects||[]).find(pp=>pp.id===projId);
   if (!p || !p.ficheNotesList) return;
-  p.ficheNotesList.splice(ni, 1);
-  saveState(); _renderProjFicheNotes(projId);
+  _showConfirm("Supprimer cette note ?", () => {
+    p.ficheNotesList.splice(ni, 1);
+    saveState(); _renderProjFicheNotes(projId);
+  });
 }
 function _addProjSubNote(projId, ni) {
   const p = (state.work.postdocProjects||[]).find(pp=>pp.id===projId);
@@ -7703,8 +7719,10 @@ function _addProjSubNote(projId, ni) {
 function _deleteProjSubNote(projId, ni, si) {
   const p = (state.work.postdocProjects||[]).find(pp=>pp.id===projId);
   if (!p || !p.ficheNotesList[ni]) return;
-  p.ficheNotesList[ni].subnotes.splice(si, 1);
-  saveState(); _renderProjFicheNotes(projId);
+  _showConfirm("Supprimer cette sous-note ?", () => {
+    p.ficheNotesList[ni].subnotes.splice(si, 1);
+    saveState(); _renderProjFicheNotes(projId);
+  });
 }
 var _projNotesTimer = {};
 function _saveProjNoteField(projId, ni, field, val, si) {
@@ -9731,12 +9749,14 @@ function renderBilanChart() {
   });
 }
 function deleteTask(id) {
-  state.work.postdocTasks = state.work.postdocTasks.filter(t => t.id !== id);
-  saveState();
-  renderTasks();
-  renderTaskBilan();
-  renderProjects();
-  updateWorkTabBadges();
+  _showConfirm("Supprimer cette tâche ?", () => {
+    state.work.postdocTasks = state.work.postdocTasks.filter(t => t.id !== id);
+    saveState();
+    renderTasks();
+    renderTaskBilan();
+    renderProjects();
+    updateWorkTabBadges();
+  });
 }
 
 /* ---- Édition de tâche ---- */
@@ -12715,6 +12735,8 @@ function _toggleCycleDetailed() {
 }
 function _syncFeatureSections() {
   const f = state.features || {};
+  const hormoneLink = document.getElementById("hormoneCrossLinkCard");
+  if (hormoneLink) hormoneLink.style.display = f.hormoneBalance ? "" : "none";
   const pillSec  = document.getElementById("pillSection");
   const cycleSec = document.getElementById("cycleSection");
   const pillBtn2  = document.getElementById("featurePillBtn");
@@ -16176,16 +16198,22 @@ function addTransaction() {
 function _resetMoneyNav() {
   _budgetMonthOffset = 0; _moneyCatMonthOffset = 0; _externalMonthOffset = 0; _patrimoineOffset = 0;
 }
-function deleteTx(id, silent) {
+function _deleteTxNow(id) {
   const removed = state.transactions.find(t => t.id === id);
   state.transactions = state.transactions.filter(t => t.id !== id);
   if (removed && removed.type === "income" && state.mainSalaryCategory && removed.category === state.mainSalaryCategory) _resetMoneyNav();
-  if (!silent) { saveState(); renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
+  saveState(); renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+}
+function deleteTx(id, silent) {
+  if (silent) { _deleteTxNow(id); return; }
+  _showConfirm("Supprimer cette transaction ?", () => _deleteTxNow(id));
 }
 function deleteVirement(virId) {
-  state.transactions = state.transactions.filter(t => t.virementId !== virId);
-  saveState();
-  renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  _showConfirm("Supprimer ce virement ?", () => {
+    state.transactions = state.transactions.filter(t => t.virementId !== virId);
+    saveState();
+    renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyCatAllNoFixChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
+  });
 }
 
 /* ===== TX EDIT MODAL ===== */
@@ -24576,7 +24604,7 @@ async function detectPlantsFromGoogle() {
   showToast("🔍 Détection des plantes depuis Google Agenda…");
   const text = await _fetchIcsViaProxies(url, { timeoutMs: 15000, passes: 1, cacheBust: true });
   if (!text) { showToast("❌ Impossible de lire Google Agenda. Réessaie ou utilise un fichier .ics."); return; }
-  try { _runPlantDetection(parseICS(text)); } catch (err) { alert("Erreur de lecture : " + err.message); }
+  try { _runPlantDetection(parseICS(text)); } catch (err) { _showAlert("Erreur de lecture : " + err.message); }
 }
 
 function detectPlantsFromICS(event) {
@@ -24586,7 +24614,7 @@ function detectPlantsFromICS(event) {
   const reader = new FileReader();
   reader.onload = ev => {
     try { _runPlantDetection(parseICS(ev.target.result)); }
-    catch (err) { alert("Erreur de lecture du fichier ICS : " + err.message); }
+    catch (err) { _showAlert("Erreur de lecture du fichier ICS : " + err.message); }
   };
   reader.readAsText(f);
 }
@@ -25087,7 +25115,7 @@ function exportData() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     showToast("📥 Sauvegarde téléchargée");
   } catch (e) {
-    alert("Erreur lors de l'export : " + e.message);
+    _showAlert("Erreur lors de l'export : " + e.message);
   }
 }
 // Importe un fichier .json (dump localStorage OU objet state direct) et recharge l'app
@@ -25102,13 +25130,13 @@ function importData() {
     reader.onload = () => {
       let data;
       try { data = JSON.parse(reader.result); }
-      catch (err) { alert("Fichier illisible — ce n'est pas un .json valide."); return; }
+      catch (err) { _showAlert("Fichier illisible — ce n'est pas un .json valide."); return; }
       if (!data || typeof data !== "object") { showToast("⚠️ Fichier non reconnu."); return; }
       // Deux formats acceptés : dump {clé: "...json..."} (contient STORE_KEY) ou objet state direct
       const isDump = typeof data[STORE_KEY] === "string";
       const isState = data.history !== undefined || data.transactions !== undefined;
       if (!isDump && !isState) {
-        alert("Ce fichier ne ressemble pas à une sauvegarde du Tableau de Vie.");
+        _showAlert("Ce fichier ne ressemble pas à une sauvegarde du Tableau de Vie.");
         return;
       }
       _showConfirm("⚠️ Importer va REMPLACER toutes tes données actuelles par celles du fichier.<br><small style='opacity:0.7'>💡 Exporte d'abord une sauvegarde si tu veux garder l'état actuel.</small>", () => {
@@ -25265,11 +25293,12 @@ function exportData() {
 }
 function importData() { document.getElementById("importFile").click(); }
 
-async function resetAllData() {
-  const ok = confirm("⚠️ Effacer TOUTES tes données ?\n\nCela remet l'appli à zéro (habitudes, finances, journal, santé…). Ton compte Google reste connecté.\n\nCette action est irréversible. Confirme ?");
-  if (!ok) return;
-  const ok2 = confirm("Dernière confirmation : effacer définitivement toutes les données ?");
-  if (!ok2) return;
+function resetAllData() {
+  _showConfirm("⚠️ Effacer TOUTES tes données ?<br><small style='opacity:0.7'>Cela remet l'appli à zéro (habitudes, finances, journal, santé…). Ton compte Google reste connecté. Cette action est irréversible.</small>", () => {
+    _showConfirm("Dernière confirmation : effacer définitivement toutes les données ?", () => _resetAllDataNow(), { okLabel: "Effacer", okColor: "#f08080" });
+  }, { okLabel: "Continuer", okColor: "#f08080" });
+}
+async function _resetAllDataNow() {
   // Supprimer Firebase
   if (_fbUser && _fbDb) {
     try {
@@ -25287,11 +25316,12 @@ async function resetAllData() {
   setTimeout(() => { window.location.href = window.location.pathname + "?_r=" + Date.now(); }, 1200);
 }
 
-async function deleteAccount() {
-  const ok = confirm("🚫 Supprimer définitivement ton compte ?\n\nToutes tes données seront effacées de nos serveurs et tu seras déconnectée. Cette action est irréversible.\n\nConfirme ?");
-  if (!ok) return;
-  const ok2 = confirm("Dernière confirmation : supprimer le compte et toutes les données ?");
-  if (!ok2) return;
+function deleteAccount() {
+  _showConfirm("🚫 Supprimer définitivement ton compte ?<br><small style='opacity:0.7'>Toutes tes données seront effacées de nos serveurs et tu seras déconnectée. Cette action est irréversible.</small>", () => {
+    _showConfirm("Dernière confirmation : supprimer le compte et toutes les données ?", () => _deleteAccountNow(), { okLabel: "Supprimer", okColor: "#f08080" });
+  }, { okLabel: "Continuer", okColor: "#f08080" });
+}
+async function _deleteAccountNow() {
   // Supprimer les documents Firestore
   if (_fbUser && _fbDb) {
     try {
@@ -25375,7 +25405,7 @@ function loadPatchExample() {
 function applyPatchFromInput() {
   let p;
   try { p = JSON.parse(document.getElementById("patchInput").value); }
-  catch (e) { alert("JSON invalide : " + e.message); return; }
+  catch (e) { _showAlert("JSON invalide : " + e.message); return; }
   const summary = applyPatch(p);
   const sumDiv = document.getElementById("patchSummary");
   if (summary.length) {
@@ -26469,12 +26499,25 @@ function _showConfirm(msg, onYes, opts = {}) {
   const okBtn = document.getElementById("confirmOkBtn");
   okBtn.textContent = opts.okLabel || "Supprimer";
   okBtn.style.background = opts.okColor || "#f08080";
-  document.getElementById("confirmModal").style.display = "flex";
+  document.getElementById("confirmModal").classList.add("open");
 }
 function _closeConfirm(ok) {
-  document.getElementById("confirmModal").style.display = "none";
+  document.getElementById("confirmModal").classList.remove("open");
+  document.getElementById("confirmCancelBtn").style.display = "";
   if (ok && typeof _confirmCb === "function") _confirmCb();
   _confirmCb = null;
+}
+// Message d'info/erreur à un seul bouton "OK" — remplace l'alert() natif du navigateur, qui casse
+// le thème et ne peut pas être stylé, par la même fenêtre que le reste de l'app.
+function _showAlert(msg, opts = {}) {
+  _confirmCb = null;
+  document.getElementById("confirmMsg").innerHTML = msg;
+  document.getElementById("confirmIcon").textContent = opts.icon || "⚠️";
+  document.getElementById("confirmCancelBtn").style.display = "none";
+  const okBtn = document.getElementById("confirmOkBtn");
+  okBtn.textContent = opts.okLabel || "OK";
+  okBtn.style.background = opts.okColor || "var(--lavender)";
+  document.getElementById("confirmModal").classList.add("open");
 }
 let _promptCb = null;
 function _showPrompt(title, defaultVal, onOk, inputType = "text") {
@@ -26482,12 +26525,12 @@ function _showPrompt(title, defaultVal, onOk, inputType = "text") {
   document.getElementById("promptModalTitle").textContent = title;
   const inp = document.getElementById("promptModalInput");
   inp.type = inputType; inp.value = defaultVal ?? "";
-  document.getElementById("promptModal").style.display = "flex";
+  document.getElementById("promptModal").classList.add("open");
   setTimeout(() => inp.select(), 50);
 }
 function _closePromptModal(ok) {
   const val = document.getElementById("promptModalInput").value;
-  document.getElementById("promptModal").style.display = "none";
+  document.getElementById("promptModal").classList.remove("open");
   if (ok && typeof _promptCb === "function") _promptCb(val);
   _promptCb = null;
 }
@@ -27122,7 +27165,7 @@ function signInWithGoogle() {
       if (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment" || e.code === "auth/cancelled-popup-request") {
         _fbAuth.signInWithRedirect(provider);
       } else if (e.code !== "auth/popup-closed-by-user") {
-        alert("Erreur Firebase : " + (e.code || "") + " " + e.message);
+        _showAlert("Erreur Firebase : " + (e.code || "") + " " + e.message);
       }
     });
 }
@@ -27168,7 +27211,7 @@ function closeBudgetDetail() { document.getElementById("budgetDetailModal").clas
 // 🔍 Diagnostic sync
 async function cloudDiag() {
   const out = document.getElementById("settingsDiagOutput");
-  const show = text => { if (out) out.textContent = text; else alert(text); };
+  const show = text => { if (out) out.textContent = text; else _showAlert(escapeHtml(text)); };
   show("⏳ Récupération des informations…");
   try {
     const user = firebase.auth().currentUser;
