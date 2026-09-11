@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1229</title>
+<title>Mon Tableau de Vie 🌿 · v1230</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1852,12 +1852,21 @@
 
   /* ---- Notes responsive (mobile) ---- */
   .notes-layout {
-    display: grid; grid-template-columns: minmax(180px,260px) 1fr; gap: 16px; min-height: 600px;
+    display: grid; grid-template-columns: var(--notes-sidebar-w, 260px) 1fr; gap: 16px; min-height: 600px;
   }
+  .notes-resize-handle {
+    position: absolute; top: 0; bottom: 0; right: -14px; width: 12px; cursor: col-resize; z-index: 2;
+  }
+  .notes-resize-handle::after {
+    content: ""; position: absolute; left: 5px; top: 0; bottom: 0; width: 2px; border-radius: 2px;
+    background: var(--line); transition: background .15s;
+  }
+  .notes-resize-handle:hover::after, .notes-resize-handle.dragging::after { background: var(--lavender); }
   .notes-back-btn { display: none; }
   @media (max-width: 640px) {
     #habitsTrackingGrid { grid-template-columns: 1fr !important; }
     .notes-layout { grid-template-columns: 1fr; min-height: unset; gap: 10px; }
+    .notes-resize-handle { display: none !important; }
     /* Par défaut sur mobile : sidebar visible, éditeur caché */
     #notesEditorPanel { display: none !important; }
     /* Quand une note est ouverte : éditeur visible, sidebar cachée */
@@ -2746,12 +2755,13 @@
     <div class="sub-view" data-sub="notes">
       <div class="notes-layout" id="notesLayout">
         <!-- Sidebar groupes -->
-        <div id="notesSidebar" style="display:flex;flex-direction:column;gap:0;">
+        <div id="notesSidebar" style="display:flex;flex-direction:column;gap:0;position:relative;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <h2 style="margin:0;font-size:15px;">Groupes</h2>
             <button onclick="addNoteGroup()" style="padding:4px 10px;border-radius:8px;border:1.5px solid var(--lilac);background:var(--lavender-soft);color:var(--lilac);font-size:12px;font-weight:600;cursor:pointer;">+ Groupe</button>
           </div>
           <div id="noteGroupList" style="flex:1;overflow-y:auto;"></div>
+          <div class="notes-resize-handle" id="notesResizeHandle" onmousedown="startNotesResize(event)" title="Glisser pour élargir"></div>
         </div>
         <!-- Éditeur -->
         <div id="notesEditorPanel" class="card" style="display:flex;flex-direction:column;min-height:0;padding:20px;">
@@ -25202,7 +25212,46 @@ function _restoreNoteSelection() {
   }
 }
 
+// Largeur réglable de la sidebar "Groupes" (onglet Notes) — glisser le curseur sur le bord
+// droit pour révéler progressivement les titres tronqués. Persistée pour rester d'une session
+// à l'autre.
+const NOTES_SIDEBAR_W_KEY = "tableauDeVie_v3_notesSidebarW";
+function _applyNotesSidebarWidth() {
+  const saved = Number(localStorage.getItem(NOTES_SIDEBAR_W_KEY));
+  if (saved) document.getElementById("notesLayout")?.style.setProperty("--notes-sidebar-w", saved + "px");
+}
+let _notesResizing = false;
+function startNotesResize(e) {
+  e.preventDefault();
+  _notesResizing = true;
+  document.getElementById("notesResizeHandle")?.classList.add("dragging");
+  document.body.style.userSelect = "none";
+  document.body.style.cursor = "col-resize";
+  document.addEventListener("mousemove", _onNotesResize);
+  document.addEventListener("mouseup", _stopNotesResize);
+}
+function _onNotesResize(e) {
+  if (!_notesResizing) return;
+  const sidebar = document.getElementById("notesSidebar");
+  if (!sidebar) return;
+  const left = sidebar.getBoundingClientRect().left;
+  const w = Math.max(180, Math.min(560, e.clientX - left));
+  document.getElementById("notesLayout")?.style.setProperty("--notes-sidebar-w", w + "px");
+}
+function _stopNotesResize() {
+  if (!_notesResizing) return;
+  _notesResizing = false;
+  document.getElementById("notesResizeHandle")?.classList.remove("dragging");
+  document.body.style.userSelect = "";
+  document.body.style.cursor = "";
+  document.removeEventListener("mousemove", _onNotesResize);
+  document.removeEventListener("mouseup", _stopNotesResize);
+  const layout = document.getElementById("notesLayout");
+  const w = layout ? getComputedStyle(layout).getPropertyValue("--notes-sidebar-w") : null;
+  if (w) { try { localStorage.setItem(NOTES_SIDEBAR_W_KEY, parseInt(w)); } catch(_) {} }
+}
 function renderWorkNotes() {
+  _applyNotesSidebarWidth();
   const groups = state.work.workNotes || [];
   const el = document.getElementById("noteGroupList");
   if (!el) return;
