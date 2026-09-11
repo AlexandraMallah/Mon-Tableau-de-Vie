@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1222</title>
+<title>Mon Tableau de Vie 🌿 · v1223</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2060,10 +2060,11 @@
         <!-- Toggle opt-in cycle/pilule (mode édition) — séparé -->
         <div class="edit-only" style="margin-top:10px;padding:12px 16px;border-radius:12px;background:var(--bg-1);border:1.5px dashed var(--lavender);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-sizing:border-box;width:100%;">
           <div style="font-size:11px;font-weight:600;color:var(--ink-softer);letter-spacing:.05em;white-space:nowrap;">🌸 Cycle menstruel — activer le suivi :</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             <button onclick="_toggleFeature('pill')" id="featurePillBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">💊 Suivi pilule</button>
             <button onclick="_toggleFeature('cycle')" id="featureCycleBtn" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🩸 Suivi règles</button>
-            <button onclick="_toggleCycleDetailed()" id="featureCycleDetailedBtn" title="Prédictions, phases du cycle, symptômes — s'appuie sur le suivi règles" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🌸 Suivi détaillé du cycle</button>
+            <span style="font-size:13px;color:var(--ink-softer);margin:0 -2px;" aria-hidden="true">↳</span>
+            <button onclick="_toggleCycleDetailed()" id="featureCycleDetailedBtn" title="Prédictions, phases du cycle, symptômes — active aussi le suivi règles s'il ne l'est pas déjà" style="padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink-soft);">🌸 + suivi détaillé (prédictions, phases…)</button>
           </div>
         </div>
         <!-- 💊 Pilule (opt-in) -->
@@ -7660,7 +7661,8 @@ function _renderProjFicheNotes(projId) {
   const subStyle = "margin-left:16px;padding-left:12px;border-left:3px solid var(--lavender-soft);margin-top:8px;";
   const subTaStyle = "width:100%;border:none;outline:none;font-family:inherit;font-size:13px;color:var(--ink-soft);background:transparent;resize:vertical;min-height:40px;box-sizing:border-box;";
 
-  let html = `<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+  let html = `<p style="font-size:11px;color:var(--ink-softer);margin:0 0 10px;line-height:1.5;">💡 Ces notes sont propres à ce projet et restent simples (texte libre). Pour des notes mises en forme (titres, gras, listes…) valables sur plusieurs projets, utilise plutôt l'onglet <strong>📓 Notes</strong>.</p>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
     <button onclick="_addProjNote('${projId}')" style="font-size:12px;padding:5px 12px;border-radius:8px;border:1.5px dashed var(--lavender);background:var(--lavender-soft);color:var(--ink);cursor:pointer;font-family:inherit;">+ Nouvelle note</button>
   </div>`;
 
@@ -11368,7 +11370,6 @@ function renderSportPlanning() {
   const el = document.getElementById("sportPlanningContent");
   if (!el) return;
 
-  const GOAL = 3; // objectif séances/semaine
   const now = new Date(); now.setHours(0, 0, 0, 0);
   const todayDk = todayKey();
 
@@ -11380,6 +11381,11 @@ function renderSportPlanning() {
   // Activités "salle de sport" (sinon repli sur toutes les activités)
   const gymActs = state.activities.filter(a => /salle|gym|muscu|fitness|crossfit|sport/i.test(a.name));
   const gymList = gymActs.length ? gymActs : state.activities;
+  // Objectif séances/semaine : reprend celui déjà réglé sur l'activité elle-même (carte Activités)
+  // au lieu d'un chiffre fixe déconnecté — 3 seulement si aucune des activités concernées n'a
+  // d'objectif hebdomadaire propre.
+  const ownWeeklyGoal = gymList.find(a => a.goal?.period === "week" && a.goal.count > 0)?.goal?.count;
+  const GOAL = ownWeeklyGoal || 3;
   const wentGym = dk => gymList.some(a => state.history[dk]?.activities?.[a.id]);
   // Déplacement (étranger / colloque / Valenciennes…) → pas de sport possible, même le week-end
   const awayRe = /valenciennes|marseille|colloque|conf[ée]rence|congr[èe]s|s[ée]minaire|d[ée]placement|voyage|\b[ée]tranger\b|abroad|\btrain\b|\btgv\b|\bter\b|\bsncf\b|\bvol\b|\bavion\b|a[ée]roport|\bgare\b|navette/i;
@@ -14791,86 +14797,6 @@ function _delAllAccDom(a, rowEl) {
   });
 }
 
-// Gestionnaire de comptes externes (mode édition)
-function _extAccRow(a, canDelete) {
-  return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);">
-    <button type="button" id="extEmojiBtn_${a.id}" onclick="_openEmojiPopup(this,'extEmoji_${a.id}')" style="width:38px;height:38px;font-size:22px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;">${escapeHtml(a.emoji)}</button>
-    <input type="hidden" id="extEmoji_${a.id}" value="${escapeHtml(a.emoji)}" />
-    <input value="${escapeHtml(a.name)}" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" id="extName_${a.id}" placeholder="Nom du compte" />
-    ${canDelete ? `<button onclick="_delExtAcc('${a.id}')" title="Supprimer" style="flex-shrink:0;width:30px;height:30px;border:none;background:none;color:#d44;font-size:16px;cursor:pointer;border-radius:6px;">🗑</button>` : ""}
-  </div>`;
-}
-function openExternalAccountsManager() {
-  const accounts = state.externalAccounts || [];
-  const rows = accounts.map(a => _extAccRow(a, accounts.length > 1)).join("");
-  document.getElementById("helpIcon").textContent = "🧾";
-  document.getElementById("helpTitle").textContent = "Gérer mes autres comptes";
-  document.getElementById("helpSubtitle").textContent = "Compte joint, Revolut, PayPal… chacun a son onglet";
-  document.getElementById("helpBody").innerHTML = `
-    <p style="font-size:13px;color:var(--ink-soft);margin:0 0 10px;">Clique sur l'emoji pour le changer. Modifie le nom directement.</p>
-    <div id="extAccList">${rows}</div>
-    <button onclick="_addExtAcc()" style="margin-top:12px;width:100%;padding:9px;border-radius:10px;border:1.5px dashed var(--lavender);background:var(--lavender-soft);font-size:13px;font-family:inherit;cursor:pointer;color:#6b4d99;font-weight:600;">+ Ajouter un compte</button>
-    <div style="margin-top:14px;display:flex;justify-content:flex-end;">
-      <button onclick="_saveExtAccounts()" style="padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer ✓</button>
-    </div>`;
-  document.getElementById("helpModal").classList.add("open");
-  const _hf=document.getElementById("helpFooter"); if(_hf) _hf.style.display="none";
-}
-function _saveExtAccounts() {
-  if (!Array.isArray(state.externalAccounts)) state.externalAccounts = [];
-  state.externalAccounts.forEach(a => {
-    const nameEl = document.getElementById("extName_" + a.id);
-    const emojiEl = document.getElementById("extEmoji_" + a.id);
-    if (nameEl && nameEl.value.trim()) a.name = nameEl.value.trim();
-    if (emojiEl && emojiEl.value.trim()) a.emoji = emojiEl.value.trim().slice(0,4);
-  });
-  // Nouveaux comptes ajoutés via _addExtAcc (ids temporaires "new-XXX")
-  document.querySelectorAll("[id^='extName_new-']").forEach(nameEl => {
-    const tmpId = nameEl.id.replace("extName_", "");
-    const emojiEl = document.getElementById("extEmoji_" + tmpId);
-    if (nameEl.value.trim()) {
-      state.externalAccounts.push({ id: "ext-" + Date.now() + Math.random(), name: nameEl.value.trim(), emoji: (emojiEl?.value.trim().slice(0,4)) || "🧾" });
-    }
-  });
-  saveState();
-  _fbFlushPending();
-  closeHelp();
-  const _hf2=document.getElementById("helpFooter"); if(_hf2) _hf2.style.display="";
-  renderExternalSummary();
-  const extAccSel = document.getElementById("txExternalAccount");
-  if (extAccSel) extAccSel.innerHTML = (state.externalAccounts||[]).map(a=>`<option value="${escapeHtml(a.id)}">${a.emoji} ${escapeHtml(a.name)}</option>`).join("");
-  const modalExtSel = document.getElementById("txModalExternalAccount");
-  if (modalExtSel) modalExtSel.innerHTML = (state.externalAccounts||[]).map(a=>`<option value="${escapeHtml(a.id)}">${a.emoji} ${escapeHtml(a.name)}</option>`).join("");
-  _refreshPreleveSur();
-  showToast("✅ Comptes enregistrés");
-}
-function _addExtAcc() {
-  const listEl = document.getElementById("extAccList");
-  if (!listEl) return;
-  const tmpId = "new-" + Date.now();
-  const tmpAcc = { id: tmpId, emoji: "🧾", name: "" };
-  const row = document.createElement("div");
-  row.innerHTML = _extAccRow(tmpAcc, true);
-  listEl.appendChild(row);
-  document.getElementById("extName_" + tmpId)?.focus();
-}
-function _delExtAcc(id) {
-  const hasTxs = state.transactions.some(t => t.type === "external" && t.externalAccountId === id);
-  const msg = hasTxs
-    ? "Ce compte a des transactions — elles seront rattachées au premier compte. Supprimer ?"
-    : "Supprimer ce compte ?";
-  closeHelp();
-  const _hf2=document.getElementById("helpFooter"); if(_hf2) _hf2.style.display="";
-  _showConfirm(msg, () => {
-    const fallback = (state.externalAccounts.find(a => a.id !== id) || {}).id || "ext-default";
-    state.transactions.forEach(t => { if (t.type === "external" && t.externalAccountId === id) t.externalAccountId = fallback; });
-    state.externalAccounts = state.externalAccounts.filter(a => a.id !== id);
-    if (_externalAccountFilter === id) _externalAccountFilter = null;
-    saveState();
-    renderExternalSummary();
-    openExternalAccountsManager();
-  });
-}
 let _reimbFormOpenId = null;
 let _txBdDown = false;
 let _exBdDown = false;
@@ -15553,135 +15479,6 @@ function openSecondaryAccountsManager() {
   saveRow.appendChild(saveBtn); bodyEl.appendChild(saveRow);
   document.getElementById("helpModal").classList.add("open");
   const _hf = document.getElementById("helpFooter"); if (_hf) _hf.style.display = "none";
-}
-function openAllAccountsManager() {
-  // Merge savings + external accounts into one list
-  const savCats = state.savingsCategories || [];
-  const extAccs = state.externalAccounts || [];
-  const allAccs = [
-    ...savCats.map(c => ({ uid: "sav__" + c, name: c, emoji: (state.accounts?.savingsEmojis?.[c]) || "🏦", type: "savings", balance: (state.accounts?.savingsBreakdown?.[c]) || 0 })),
-    ...extAccs.map(a => ({ uid: "ext__" + a.id, name: a.name, emoji: a.emoji, type: "external", extId: a.id, balance: a.balance || 0 }))
-  ];
-  const typeOpts = `<option value="savings">💰 Épargne</option><option value="external">🧾 Compte secondaire</option>`;
-  const listEl = document.createElement("div");
-  listEl.id = "allAccList";
-  allAccs.forEach((a, i) => {
-    const row = document.createElement("div");
-    row.style.cssText = "display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line);";
-    // emoji btn
-    const emojiBtn = document.createElement("button");
-    emojiBtn.type = "button"; emojiBtn.textContent = a.emoji;
-    emojiBtn.style.cssText = "width:36px;height:36px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;";
-    const emojiInp = document.createElement("input"); emojiInp.type = "hidden"; emojiInp.value = a.emoji; emojiInp.className = "aaEmoji";
-    emojiBtn.onclick = () => _openEmojiPopup(emojiBtn, null, v => { emojiInp.value = v; emojiBtn.textContent = v; });
-    // name
-    const nameInp = document.createElement("input"); nameInp.value = a.name; nameInp.placeholder = "Nom";
-    nameInp.style.cssText = "flex:1;min-width:60px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);"; nameInp.className = "aaName";
-    // type select
-    const typeSel = document.createElement("select");
-    typeSel.innerHTML = typeOpts; typeSel.value = a.type;
-    typeSel.style.cssText = "padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:11px;font-family:inherit;color:var(--ink);background:white;"; typeSel.className = "aaType";
-    typeSel.value = a.type;
-    // balance (only for savings)
-    const balInp = document.createElement("input"); balInp.type = "number"; balInp.step = "0.01";
-    balInp.value = a.balance.toFixed(2); balInp.placeholder = "Solde";
-    balInp.style.cssText = "width:70px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink);"; balInp.className = "aaBal";
-    typeSel.onchange = () => {};
-    // delete btn
-    const delBtn = document.createElement("button"); delBtn.textContent = "🗑"; delBtn.type = "button";
-    delBtn.title = "Supprimer"; delBtn.style.cssText = "flex-shrink:0;width:28px;height:28px;border:none;background:none;color:#d44;font-size:15px;cursor:pointer;border-radius:6px;";
-    delBtn.onclick = () => _delAllAccDom(a, row);
-    row.append(emojiBtn, emojiInp, nameInp, typeSel, balInp, delBtn);
-    row._accData = a;
-    listEl.appendChild(row);
-  });
-  document.getElementById("helpIcon").textContent = "🏦";
-  document.getElementById("helpTitle").textContent = "Mes comptes";
-  document.getElementById("helpSubtitle").textContent = "Épargne, Revolut, compte joint… tout en un";
-  const bodyEl = document.getElementById("helpBody");
-  bodyEl.innerHTML = `<p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">Clique sur l'emoji pour le changer · 💰 Épargne = section Épargne · 🧾 Compte secondaire = section Comptes secondaires</p>`;
-  bodyEl.appendChild(listEl);
-  // Add row
-  const addRow = document.createElement("div");
-  addRow.style.cssText = "margin-top:10px;border-top:1px solid var(--line);padding-top:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;";
-  const newEmojiBtn = document.createElement("button"); newEmojiBtn.type = "button"; newEmojiBtn.textContent = "🏦";
-  newEmojiBtn.style.cssText = "width:36px;height:36px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;";
-  const newEmojiInp = document.createElement("input"); newEmojiInp.type = "hidden"; newEmojiInp.id = "newAllAccEmoji"; newEmojiInp.value = "🏦";
-  newEmojiBtn.onclick = () => _openEmojiPopup(newEmojiBtn, null, v => { newEmojiInp.value = v; newEmojiBtn.textContent = v; });
-  const newNameInp = document.createElement("input"); newNameInp.id = "newAllAccName"; newNameInp.placeholder = "Nom du compte…";
-  newNameInp.style.cssText = "flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);";
-  const newTypeSel = document.createElement("select"); newTypeSel.id = "newAllAccType"; newTypeSel.innerHTML = typeOpts;
-  newTypeSel.style.cssText = "padding:7px;border:1px solid var(--line);border-radius:8px;font-size:11px;font-family:inherit;color:var(--ink);background:white;";
-  const addBtn = document.createElement("button"); addBtn.textContent = "Ajouter"; addBtn.type = "button";
-  addBtn.style.cssText = "padding:7px 12px;border-radius:8px;border:none;background:var(--lavender-soft);color:#6b4d99;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;";
-  addBtn.onclick = _addAllAcc;
-  addRow.append(newEmojiBtn, newEmojiInp, newNameInp, newTypeSel, addBtn);
-  bodyEl.appendChild(addRow);
-  const saveRow = document.createElement("div");
-  saveRow.style.cssText = "margin-top:12px;display:flex;justify-content:flex-end;";
-  const saveBtn = document.createElement("button"); saveBtn.textContent = "Enregistrer ✓";
-  saveBtn.style.cssText = "padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;";
-  saveBtn.onclick = _saveAllAccounts; saveRow.appendChild(saveBtn);
-  bodyEl.appendChild(saveRow);
-  document.getElementById("helpModal").classList.add("open");
-  const _hf = document.getElementById("helpFooter"); if (_hf) _hf.style.display = "none";
-}
-function _addAllAcc() {
-  const name = document.getElementById("newAllAccName")?.value.trim();
-  if (!name) { showToast("⚠️ Entre un nom."); return; }
-  const emoji = document.getElementById("newAllAccEmoji")?.value || "🏦";
-  const type = document.getElementById("newAllAccType")?.value || "savings";
-  const typeOpts = `<option value="savings">💰 Épargne</option><option value="external">🧾 Compte secondaire</option>`;
-  // Ajouter une ligne dans le DOM sans recharger la modale
-  const listEl = document.getElementById("allAccList");
-  if (!listEl) { openAllAccountsManager(); return; }
-  const a = { uid: (type === "savings" ? "sav__" : "ext__") + Date.now(), name, emoji, type, extId: "ext-" + Date.now(), balance: 0 };
-  const row = document.createElement("div");
-  row.style.cssText = "display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line);";
-  const emojiBtn = document.createElement("button"); emojiBtn.type = "button"; emojiBtn.textContent = emoji;
-  emojiBtn.style.cssText = "width:36px;height:36px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;";
-  const emojiInp = document.createElement("input"); emojiInp.type = "hidden"; emojiInp.value = emoji; emojiInp.className = "aaEmoji";
-  emojiBtn.onclick = () => _openEmojiPopup(emojiBtn, null, v => { emojiInp.value = v; emojiBtn.textContent = v; });
-  const nameInp = document.createElement("input"); nameInp.value = name; nameInp.placeholder = "Nom";
-  nameInp.style.cssText = "flex:1;min-width:60px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);"; nameInp.className = "aaName";
-  const typeSel = document.createElement("select"); typeSel.innerHTML = typeOpts; typeSel.value = type;
-  typeSel.style.cssText = "padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:11px;font-family:inherit;color:var(--ink);background:white;"; typeSel.className = "aaType";
-  typeSel.value = type;
-  typeSel.onchange = () => {};
-  const balInp = document.createElement("input"); balInp.type = "number"; balInp.step = "0.01"; balInp.value = "0.00"; balInp.placeholder = "Solde";
-  balInp.style.cssText = "width:70px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;color:var(--ink);"; balInp.className = "aaBal";
-  const delBtn = document.createElement("button"); delBtn.textContent = "🗑"; delBtn.type = "button";
-  delBtn.title = "Supprimer"; delBtn.style.cssText = "flex-shrink:0;width:28px;height:28px;border:none;background:none;color:#d44;font-size:15px;cursor:pointer;border-radius:6px;";
-  delBtn.onclick = () => _delAllAccDom(a, row);
-  row.append(emojiBtn, emojiInp, nameInp, typeSel, balInp, delBtn);
-  row._accData = a;
-  listEl.appendChild(row);
-  // Réinitialiser le formulaire d'ajout
-  const newNameInp = document.getElementById("newAllAccName"); if (newNameInp) { newNameInp.value = ""; newNameInp.focus(); }
-  const newEmojiInp = document.getElementById("newAllAccEmoji"); if (newEmojiInp) newEmojiInp.value = "🏦";
-  const newEmojiBtn = newEmojiInp?.previousElementSibling; if (newEmojiBtn) newEmojiBtn.textContent = "🏦";
-}
-function _delAllAcc(uid) {
-  if (uid.startsWith("sav__")) {
-    const name = uid.slice(5);
-    _showConfirm("Supprimer « " + name + " » ?", () => {
-      state.savingsCategories = (state.savingsCategories || []).filter(c => c !== name);
-      if (state.accounts?.savingsBreakdown) delete state.accounts.savingsBreakdown[name];
-      if (state.accounts?.savingsEmojis) delete state.accounts.savingsEmojis[name];
-      state.transactions = (state.transactions||[]).filter(t=>!(t.category===name&&(t.type==="savings"||t.type==="savings-out")));
-      saveState(); _refreshPreleveSur(); renderSavings(); renderAccounts(); openAllAccountsManager();
-    });
-  } else {
-    const extId = uid.slice(5);
-    const hasTxs = (state.transactions || []).some(t => t.type === "external" && t.externalAccountId === extId);
-    const msg = hasTxs ? "Ce compte a des transactions — supprimer quand même ?" : "Supprimer ce compte ?";
-    _showConfirm(msg, () => {
-      const fallback = (state.externalAccounts.find(a => a.id !== extId) || {}).id || "";
-      state.transactions?.forEach(t => { if (t.type === "external" && t.externalAccountId === extId) t.externalAccountId = fallback; });
-      state.externalAccounts = state.externalAccounts.filter(a => a.id !== extId);
-      saveState(); _refreshPreleveSur(); renderExternalSummary(); openAllAccountsManager();
-    });
-  }
 }
 function _saveAllAccounts() {
   if (!state.accounts) state.accounts = {};
