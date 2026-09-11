@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1228</title>
+<title>Mon Tableau de Vie 🌿 · v1229</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2758,9 +2758,10 @@
           <button class="notes-back-btn" onclick="notesBackToList()">← Groupes</button>
           <div id="noteEditorEmpty" style="display:flex;align-items:center;justify-content:center;flex:1;color:var(--ink-soft);font-size:14px;">← Sélectionne ou crée une note</div>
           <div id="noteEditor" style="display:none;flex-direction:column;flex:1;gap:10px;">
-            <input type="text" id="noteTitleInput" placeholder="Titre de la note…"
-              style="font-size:18px;font-weight:700;border:none;outline:none;color:var(--ink);font-family:inherit;width:100%;background:transparent;"
-              oninput="scheduleNoteSave()" />
+            <textarea id="noteTitleInput" placeholder="Titre de la note…" rows="1"
+              style="font-size:18px;font-weight:700;border:none;outline:none;color:var(--ink);font-family:inherit;width:100%;background:transparent;resize:none;overflow:hidden;line-height:1.3;padding:0;box-sizing:border-box;"
+              oninput="scheduleNoteSave();_autoResizeNoteTitle(this)"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();}"></textarea>
             <div style="display:flex;gap:4px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
               <button onmousedown="event.preventDefault();noteCmd('bold')" title="Gras" class="note-tb-btn"><b>B</b></button>
               <button onmousedown="event.preventDefault();noteCmd('italic')" title="Italique" class="note-tb-btn"><i>I</i></button>
@@ -25293,9 +25294,18 @@ function openNote(gid, nid) {
   renderWorkNotes(); _openNoteEditor(g, n);
 }
 
+// Le titre est un <textarea> à 1 ligne qui grandit avec son contenu (pour qu'un titre long
+// passe à la ligne au lieu de déborder hors du cadre) — recalcule sa hauteur à chaque frappe
+// ET à l'ouverture d'une note existante.
+function _autoResizeNoteTitle(el) {
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
+}
 function _openNoteEditor(g, n) {
   showNoteEditor(true);
-  document.getElementById("noteTitleInput").value = n.title || "";
+  const titleEl = document.getElementById("noteTitleInput");
+  titleEl.value = n.title || "";
+  _autoResizeNoteTitle(titleEl);
   const ed = document.getElementById("noteContentInput");
   ed.innerHTML = n.content || "";
   document.getElementById("noteAutoSaveLabel").textContent = n.updatedAt ? "Sauvegardé " + new Date(n.updatedAt).toLocaleString("fr-FR") : "";
