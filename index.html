@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1224</title>
+<title>Mon Tableau de Vie 🌿 · v1225</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3345,9 +3345,9 @@
         </div>
       </div>
     </div>
-    <div class="card" style="margin-top:18px;">
-      <h2 style="margin:0 0 12px;" id="moneyCatAllTitle">Par catégorie · Depuis le 26 mai 2026</h2>
-      <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:8px;align-items:start;">
+    <details class="card" id="moneyCatAllCard" style="margin-top:18px;" ontoggle="if(this.open)_renderMoneyAllCharts()">
+      <summary style="margin:0;font-size:16px;font-weight:600;cursor:pointer;color:var(--ink);" id="moneyCatAllTitle">Par catégorie · Depuis le 26 mai 2026</summary>
+      <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:14px;align-items:start;">
         <div>
           <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses <span id="catAllChartDepTotal" style="color:#c75b4d;"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllChart"></canvas></div>
@@ -3364,7 +3364,7 @@
           <div id="moneyIncomeAllLegend" class="cat-legend"></div>
         </div>
       </div>
-    </div>
+    </details>
     <div class="card" id="reimbursableCard" style="margin-top:18px;display:none;">
       <div class="card-row" style="margin-bottom:12px;">
         <h2 style="margin:0;">💼 Frais pros en attente</h2>
@@ -17224,9 +17224,21 @@ const APP_START_LABEL = APP_START_DATE.toLocaleDateString("fr-FR", { day: "numer
 function _allTimeRange() {
   return [APP_START_DATE, new Date()];
 }
+// Rendu à la demande des 3 graphiques "depuis toujours" (repliés par défaut) — appelé par
+// ontoggle quand l'utilisatrice déplie la section, en plus des rendus normaux une fois ouverte.
+function _renderMoneyAllCharts() {
+  renderMoneyCatAllChart();
+  renderMoneyCatAllNoFixChart();
+  renderMoneyIncomeAllChart();
+}
 function renderMoneyCatAllChart() {
   const titleEl = document.getElementById("moneyCatAllTitle");
   if (titleEl) titleEl.textContent = "Par catégorie · Depuis le " + APP_START_LABEL;
+  // Repliée par défaut (voir #moneyCatAllCard) : pas la peine de calculer/dessiner ces 3
+  // graphiques tant que la section n'est pas ouverte — _renderMoneyAllCharts() s'en charge à
+  // l'ouverture (ontoggle).
+  const detailsEl = document.getElementById("moneyCatAllCard");
+  if (detailsEl && !detailsEl.open) return;
   if (moneyCatAllChart) moneyCatAllChart.destroy();
   const wrap = document.getElementById("moneyCatAllChart")?.parentElement;
   if (!wrap) return;
@@ -17273,6 +17285,8 @@ function renderMoneyCatAllChart() {
   });
 }
 function renderMoneyCatAllNoFixChart() {
+  const detailsEl = document.getElementById("moneyCatAllCard");
+  if (detailsEl && !detailsEl.open) return;
   if (moneyCatAllNoFixChart) moneyCatAllNoFixChart.destroy();
   const wrap = document.getElementById("moneyCatAllNoFixChart")?.parentElement;
   if (!wrap) return;
@@ -17319,6 +17333,8 @@ function renderMoneyCatAllNoFixChart() {
   });
 }
 function renderMoneyIncomeAllChart() {
+  const detailsEl = document.getElementById("moneyCatAllCard");
+  if (detailsEl && !detailsEl.open) return;
   if (moneyIncomeAllChart) moneyIncomeAllChart.destroy();
   const wrap = document.getElementById("moneyIncomeAllChart")?.parentElement;
   if (!wrap) return;
