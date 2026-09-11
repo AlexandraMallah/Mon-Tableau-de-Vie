@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1220</title>
+<title>Mon Tableau de Vie 🌿 · v1221</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3497,7 +3497,7 @@
       </div>
     </div>
     <div class="card" style="margin-top:18px;">
-      <h2 style="margin:0 0 12px;">Par catégorie · Depuis le 26 mai 2026</h2>
+      <h2 style="margin:0 0 12px;" id="moneyCatAllTitle">Par catégorie · Depuis le 26 mai 2026</h2>
       <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:8px;align-items:start;">
         <div>
           <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses <span id="catAllChartDepTotal" style="color:#c75b4d;"></span></p>
@@ -9493,7 +9493,7 @@ function renderDeadlineCalendar() {
     }
   }
   // Ajouter les événements du calendrier manuel (calEvents)
-  for (const ev of (state.work.calEvents || [])) {
+  for (const ev of (state.calEvents || [])) {
     if (ev.date) {
       // Éviter le doublon si un calEvent est déjà représenté par une tâche liée
       const alreadyInTasks = (byDate[ev.date] || []).some(t => t.calEventId === ev.id);
@@ -13045,6 +13045,11 @@ function toggleCycleSymptom(id) {
   renderCycleDetailed();
 }
 // Analyse l'historique de flux : regroupe les jours de flux en règles, calcule cycles/durées/phase/prédiction.
+// Convertit une clé "AAAA-MM-JJ" en Date à minuit HEURE LOCALE (et non minuit UTC, ce que fait
+// `new Date("AAAA-MM-JJ")` nativement) — pour rester cohérent avec `today.setHours(0,0,0,0)"
+// plus bas dans cette même fonction, sans quoi soustraire les deux peut décaler le calcul du
+// jour de cycle selon le fuseau horaire.
+function _dkDate(dk) { const [y, m, d] = dk.split("-").map(Number); return new Date(y, m - 1, d); }
 function _cycleStats() {
   const flowDays = Object.entries(state.history || {})
     .filter(([, d]) => d && d.cycleFlow > 0)
@@ -13055,15 +13060,15 @@ function _cycleStats() {
   const periods = [];
   let cur = [flowDays[0]];
   for (let i = 1; i < flowDays.length; i++) {
-    const prev = new Date(flowDays[i - 1]);
-    const now = new Date(flowDays[i]);
+    const prev = _dkDate(flowDays[i - 1]);
+    const now = _dkDate(flowDays[i]);
     const gapDays = Math.round((now - prev) / 86400000);
     if (gapDays <= 1) cur.push(flowDays[i]);
     else { periods.push(cur); cur = [flowDays[i]]; }
   }
   periods.push(cur);
-  const periodStarts = periods.map(p => new Date(p[0]));
-  const periodLengths = periods.map(p => Math.round((new Date(p[p.length - 1]) - new Date(p[0])) / 86400000) + 1);
+  const periodStarts = periods.map(p => _dkDate(p[0]));
+  const periodLengths = periods.map(p => Math.round((_dkDate(p[p.length - 1]) - _dkDate(p[0])) / 86400000) + 1);
   const cycleLengths = [];
   for (let i = 1; i < periodStarts.length; i++) {
     cycleLengths.push(Math.round((periodStarts[i] - periodStarts[i - 1]) / 86400000));
@@ -17361,7 +17366,7 @@ function openCatDetailAllTime(cat) {
     .filter(tx => tx.type === "expense" && tx.category === cat && new Date(tx.date) >= start && new Date(tx.date) <= end)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
   const total = txs.reduce((s, tx) => s + txNetAmount(tx), 0);
-  document.getElementById("catDetailTitle").textContent = cat + " · Depuis le 26 mai";
+  document.getElementById("catDetailTitle").textContent = cat + " · Depuis le " + APP_START_LABEL;
   document.getElementById("catDetailTotal").textContent = total.toFixed(2) + " €";
   document.getElementById("catDetailDot").style.background = catColor(cat);
   document.getElementById("catDetailList").innerHTML = txs.length ? txs.map(tx => {
@@ -17779,10 +17784,16 @@ function renderMoneyIncomeCatChart() {
   });
 }
 
+// Date de début du suivi financier "depuis toujours" — seule source de vérité, utilisée aussi
+// pour les libellés affichés (APP_START_LABEL) afin qu'un futur changement ne se fasse qu'ici.
+const APP_START_DATE = new Date("2026-05-26");
+const APP_START_LABEL = APP_START_DATE.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 function _allTimeRange() {
-  return [new Date("2026-05-26"), new Date()];
+  return [APP_START_DATE, new Date()];
 }
 function renderMoneyCatAllChart() {
+  const titleEl = document.getElementById("moneyCatAllTitle");
+  if (titleEl) titleEl.textContent = "Par catégorie · Depuis le " + APP_START_LABEL;
   if (moneyCatAllChart) moneyCatAllChart.destroy();
   const wrap = document.getElementById("moneyCatAllChart")?.parentElement;
   if (!wrap) return;
@@ -18483,9 +18494,13 @@ function computeMetric(m, override) {
   if (m.type === "habit-avg") {
     const habit = state.habits.find(h => h.id === m.habitId);
     if (!habit) return { score: 0, value: "—", label: m.label };
+    // L'objectif réel et modifiable de l'habitude (ex. objectif de pas) prime sur celui codé en
+    // dur dans la définition du pilier — sinon changer son objectif de pas ne changeait jamais
+    // le seuil utilisé ici, silencieusement.
+    const target = habit.target || m.target;
     const vals = _last7Days().map(d => Number(state.history[todayKey(d)]?.habits?.[m.habitId]) || 0);
     const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
-    return { score: Math.min(1, avg / m.target), value: avg.toFixed(0) + " moy.", label: m.label };
+    return { score: Math.min(1, avg / target), value: avg.toFixed(0) + " moy.", label: m.label };
   }
   if (m.type === "wellbeing-avg") {
     const vals = _last7Days().map(d => state.history[todayKey(d)]?.[m.field]).filter(v => v != null);
@@ -19273,13 +19288,6 @@ function deleteCalSource(id) {
     saveState(); renderCalendar();
   });
 }
-function manageCalSource(id) {
-  // Conservé pour compat — redirige vers le panneau de couleurs
-  showToast("👇 Utilise le panneau « Mes calendriers » sous la légende pour changer les couleurs et noms");
-}
-function manageCalSource(id) {
-  deleteCalSource(id);
-}
 function renderCalendar() {
   const monthLabelEl = document.getElementById("calMonthLabel");
   const gridEl = document.getElementById("calGrid");
@@ -19647,7 +19655,7 @@ function _importGcalManual() {
     state.calEvents = state.calEvents.filter(e => e.sourceId && e.sourceId !== srcId);
     if (!state.calSources.find(s => s.id === srcId))
       state.calSources.push({ id: srcId, name: "Google Agenda", color: "#aee0c8", importedAt: new Date().toISOString() });
-    const newEvts = parsed.events.map(p => ({
+    const newEvts = parsed.events.filter(p => !/arros/i.test(p.title || "")).map(p => ({
       id: "gcal-" + (p.uid || (Date.now() + Math.random().toString(36).slice(2,6))),
       title: p.title || "(Sans titre)", date: p.date, time: p.time || "",
       endDate: p.endDate || null, endTime: p.endTime || "", allDayEnd: !!p.allDayEnd,
@@ -19802,15 +19810,20 @@ document.getElementById("icsFile")?.addEventListener("change", e => {
       const detectedName = result.name || f.name.replace(/\.ics$/i, "") || "Calendrier";
       const customColor = detectedColor;
       const _doImport = (customName) => {
-      // Crée la source (ou met à jour si existe déjà avec ce nom)
-      let source = state.calSources.find(s => s.name === customName);
+      // Retrouve la source déjà importée par son nom DÉTECTÉ dans le fichier (importKey), pas par
+      // son nom affiché — si la source a été renommée depuis dans l'app, un nom affiché différent
+      // ne doit pas empêcher de la reconnaître et créer un doublon. Repli sur le nom affiché pour
+      // les sources importées avant l'ajout de ce champ.
+      let source = state.calSources.find(s => s.importKey === detectedName) || state.calSources.find(s => s.name === customName);
       if (source) {
+        source.name = customName;
+        source.importKey = detectedName;
         source.color = customColor;
         source.importedAt = new Date().toISOString();
         // Supprime les anciens events de cette source
         state.calEvents = state.calEvents.filter(e => e.sourceId !== source.id);
       } else {
-        source = { id: "src" + Date.now(), name: customName, color: customColor, importedAt: new Date().toISOString() };
+        source = { id: "src" + Date.now(), name: customName, importKey: detectedName, color: customColor, importedAt: new Date().toISOString() };
         state.calSources.push(source);
       }
       // Injecte les nouveaux events
@@ -22076,13 +22089,19 @@ function generateMealGroceries() {
     state.domestique.groceryEvents.push({ id: evId, name: "Courses semaine", date: todayKey() });
   }
   if (!state.domestique.groceries) state.domestique.groceries = [];
-  Object.values(aggregated).forEach(item => {
+  // Met à jour l'article existant plutôt que d'en recréer un si le même ingrédient (ingKey) a déjà
+  // été ajouté à cet événement par une génération précédente — sinon relancer la génération après
+  // avoir modifié le planning de la semaine dupliquait chaque ingrédient à chaque fois.
+  let added = 0, updated = 0;
+  Object.entries(aggregated).forEach(([k, item]) => {
     const qty = item.quantity > 0 ? (Number.isInteger(item.quantity) ? String(item.quantity) : item.quantity.toFixed(1)) : item.qtyStr;
     const label = (qty ? qty+" "+(item.unit?item.unit+" ":"") : "") + item.name;
-    state.domestique.groceries.push({ id: "g"+Date.now()+Math.random().toString(36).slice(2,5), name: label, eventId: evId, checked: false });
+    const existing = state.domestique.groceries.find(g => g.eventId === evId && g.ingKey === k);
+    if (existing) { existing.name = label; updated++; }
+    else { state.domestique.groceries.push({ id: "g"+Date.now()+Math.random().toString(36).slice(2,5), name: label, eventId: evId, ingKey: k, checked: false }); added++; }
   });
   saveState();
-  showToast(`🛒 ${Object.keys(aggregated).length} ingrédients ajoutés aux courses !`);
+  showToast(`🛒 ${added} ingrédient${added>1?"s":""} ajouté${added>1?"s":""}${updated ? `, ${updated} mis à jour` : ""} aux courses !`);
   // Aller aux courses
   document.querySelector('[data-sub="alimentation"]')?.click();
   setTimeout(() => switchFoodTab('groceries'), 50);
@@ -27138,7 +27157,7 @@ function openBudgetDetail() {
       const net = txNetAmount(tx);
       const reimbTag = net < tx.amount ? `<span style="font-size:10px;background:#dcfce7;color:#16a34a;border-radius:6px;padding:1px 5px;margin-left:4px;">💸 remb. ${(tx.amount - net).toFixed(0)}€</span>` : "";
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;">
-        <div><span style="color:var(--ink-soft);min-width:52px;display:inline-block;">${d}</span> ${tx.label || tx.category}${tag}${reimbTag}</div>
+        <div><span style="color:var(--ink-soft);min-width:52px;display:inline-block;">${d}</span> ${escapeHtml(tx.note || tx.category)}${tag}${reimbTag}</div>
         <strong style="color:#c75b4d;white-space:nowrap;margin-left:8px;">−${net.toFixed(2)} €</strong>
       </div>`;
     }).join("") + `<div style="text-align:right;padding-top:8px;font-size:13px;font-weight:600;">Total : ${total.toFixed(2)} €</div>`;
