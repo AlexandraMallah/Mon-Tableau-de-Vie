@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1226</title>
+<title>Mon Tableau de Vie 🌿 · v1227</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13416,11 +13416,12 @@ function renderStepsStats() {
   const todayVal = getStepsForDate(now);
   const monthVals = dates.filter(d => d <= now).map(d => getStepsForDate(d)).filter(v => v > 0);
   const monthAvg = monthVals.length ? Math.round(monthVals.reduce((a,b)=>a+b,0)/monthVals.length) : 0;
-  const allVals = Object.entries(state.history||{}).map(([,d])=>Number(d?.habits?.['h-pas'])||0).filter(v=>v>0);
-  const best = allVals.length ? Math.max(...allVals) : 0;
+  // "Meilleur jour" et "jours objectif atteint" portent sur le mois affiché (comme "Moy. du
+  // mois" juste à côté et la navigation ◀▶), pas sur tout l'historique.
+  const best = monthVals.length ? Math.max(...monthVals) : 0;
   const targetSteps = getStepsHabit()?.target || 9000;
   const todayPct = targetSteps ? Math.round(todayVal/targetSteps*100) : 0;
-  const daysOnTarget = allVals.filter(v=>v>=targetSteps).length;
+  const daysOnTarget = monthVals.filter(v=>v>=targetSteps).length;
   const todayTile = document.getElementById("stepsTodayTile");
   const mTile = document.getElementById("stepsMonthlyTile");
   const bTile = document.getElementById("stepsBestTile");
@@ -13431,7 +13432,7 @@ function renderStepsStats() {
   const monthBg = monthAvg >= targetSteps ? (_isS?"#ccddd0":"#d8f0e5") : monthAvg >= 7000 ? (_isS?"#f0e0cc":"#fce5d1") : "";
   if (mTile) mTile.innerHTML = `<div class="stat-label">Moy. du mois</div><div class="stat-value" style="font-size:20px;">${monthAvg.toLocaleString("fr-FR")}</div><div class="stat-hint">sur ${monthVals.length} j renseignés</div>`;
   if (mTile) mTile.style.background = monthBg;
-  if (bTile) bTile.innerHTML = `<div class="stat-label">🏆 Meilleur jour</div><div class="stat-value" style="font-size:20px;color:var(--lavender);">${best.toLocaleString("fr-FR")}</div><div class="stat-hint">${daysOnTarget} jours objectif atteint</div>`;
+  if (bTile) bTile.innerHTML = `<div class="stat-label">🏆 Meilleur jour du mois</div><div class="stat-value" style="font-size:20px;color:var(--lavender);">${best.toLocaleString("fr-FR")}</div><div class="stat-hint">${daysOnTarget} jours objectif atteint ce mois</div>`;
 }
 function renderStepsChart() {
   const h = getStepsHabit();
