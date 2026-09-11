@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1217</title>
+<title>Mon Tableau de Vie 🌿 · v1218</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1923,7 +1923,6 @@
       <button class="btn-icon" id="editModeBtn" onclick="toggleEditMode()" title="Activer le mode édition pour modifier l'application">✏️ Éditer</button>
       <button class="btn-icon" id="settingsBtn" onclick="openSettings()">⚙ Personnaliser</button>
       <button class="btn-icon" id="gestionBtn" onclick="openGestionModal()" style="display:none;background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
-      <button class="btn-icon" onclick="cloudDiag()" title="Diagnostic sync" style="background:var(--lavender-soft);">🔍</button>
       <a href="#" onclick="event.preventDefault();openSupportContact()" title="Contacter le support" class="btn-icon" style="text-decoration:none;">📧 Support</a>
       <button class="btn-icon" onclick="openShortcutsEditor()" title="Gérer les raccourcis" style="background:var(--lavender-soft);">⚡</button>
       <!-- Thème visuel -->
@@ -2466,7 +2465,7 @@
         <button class="secondary" onclick="cloudPull()" style="text-align:left;padding:12px 14px;">⬇️ <strong>Récupérer du cloud</strong><br><span style="font-size:12px;color:var(--ink-soft);">Remplace les données de CET appareil par celles du cloud (ex : rapatrier ce que tu as saisi sur le tél).</span></button>
         <button class="secondary" onclick="cloudPush()" style="text-align:left;padding:12px 14px;">⬆️ <strong>Envoyer vers le cloud</strong><br><span style="font-size:12px;color:var(--ink-soft);">Remplace les données du cloud par celles de CET appareil.</span></button>
         <button class="secondary" onclick="cloudSignOut()" style="text-align:left;padding:12px 14px;color:#c75b4d;">🚪 <strong>Se déconnecter</strong><br><span style="font-size:12px;color:var(--ink-soft);">Tes données locales restent intactes.</span></button>
-        <button class="secondary" onclick="cloudDiag()" style="text-align:left;padding:12px 14px;color:#8a7aaa;">🔍 <strong>Diagnostic sync</strong><br><span style="font-size:12px;color:var(--ink-soft);">Affiche l'état de la connexion Firebase (debug).</span></button>
+        <button class="secondary" onclick="closeSyncMenu();openSettings('diagnostic')" style="text-align:left;padding:12px 14px;color:#8a7aaa;">🔍 <strong>Diagnostic sync</strong><br><span style="font-size:12px;color:var(--ink-soft);">Affiche l'état de la connexion Firebase (debug).</span></button>
         <a href="#" onclick="event.preventDefault();closeSyncMenu();openSupportContact()" style="text-align:left;padding:12px 14px;text-decoration:none;color:var(--ink);border-radius:10px;border:1px solid var(--line);display:block;">📧 <strong>Contacter le support</strong><br><span style="font-size:12px;color:var(--ink-soft);">Signaler un problème, une idée de fonctionnalité, ou toute autre remarque.</span></a>
       </div>
       <div class="actions" style="margin-top:16px;">
@@ -4018,6 +4017,7 @@
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button id="settingsTabApparence" onclick="switchSettingsTab('apparence')" style="padding:6px 14px;border-radius:20px;border:1px solid var(--lavender);background:var(--lavender-soft);font-family:inherit;font-size:13px;cursor:pointer;font-weight:600;color:var(--ink);">🎨 Apparence</button>
         <button id="settingsTabDonnees"   onclick="switchSettingsTab('donnees')"   style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">💾 Données</button>
+        <button id="settingsTabDiagnostic" onclick="switchSettingsTab('diagnostic')" style="padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:white;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);">🔍 Diagnostic</button>
       </div>
     </div>
 
@@ -4116,6 +4116,16 @@
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Onglet Diagnostic -->
+    <div id="settingsPanelDiagnostic" style="display:none;">
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 14px;line-height:1.5;">Un problème avec tes données (une synchro qui semble ratée, un truc disparu) ? Ouvre cet onglet, clique <strong>Contacter le support</strong> juste en dessous, et colle les informations affichées ici dans le message — ça aide à comprendre ce qui se passe sans avoir besoin d'accéder à ton compte.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="secondary" onclick="cloudDiag()" style="flex:1;min-width:150px;">🔄 Actualiser</button>
+        <a href="#" onclick="event.preventDefault();openSupportContact()" class="secondary" style="flex:1;min-width:150px;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;">📧 Contacter le support</a>
+      </div>
+      <pre id="settingsDiagOutput" style="font-size:11.5px;color:var(--ink);line-height:1.7;background:var(--bg-1);border:1px solid var(--line);border-radius:10px;padding:12px 14px;white-space:pre-wrap;word-break:break-word;margin:0;max-height:280px;overflow-y:auto;font-family:ui-monospace,monospace;"></pre>
     </div>
 
     <div class="actions">
@@ -24890,7 +24900,7 @@ document.getElementById("newEventName")?.addEventListener("keydown", e => {
 
 /* ========= SETTINGS MODAL ========= */
 function switchSettingsTab(tab) {
-  ["donnees","apparence"].forEach(t => {
+  ["donnees","apparence","diagnostic"].forEach(t => {
     const key = t.charAt(0).toUpperCase() + t.slice(1);
     const panel = document.getElementById("settingsPanel" + key);
     const btn   = document.getElementById("settingsTab"   + key);
@@ -24903,6 +24913,7 @@ function switchSettingsTab(tab) {
       btn.style.fontWeight     = active ? "600"                  : "400";
     }
   });
+  if (tab === "diagnostic" && typeof cloudDiag === "function") cloudDiag();
 }
 function applyTheme(id, persist = true) {
   document.body.classList.remove("t-serieux");
@@ -27126,9 +27137,12 @@ function openBudgetDetail() {
 function closeBudgetDetail() { document.getElementById("budgetDetailModal").classList.remove("open"); }
 // 🔍 Diagnostic sync
 async function cloudDiag() {
+  const out = document.getElementById("settingsDiagOutput");
+  const show = text => { if (out) out.textContent = text; else alert(text); };
+  show("⏳ Récupération des informations…");
   try {
     const user = firebase.auth().currentUser;
-    if (!user) { alert("❌ Non connecté à Firebase"); return; }
+    if (!user) { show("❌ Non connecté à Firebase"); return; }
     const uid = user.uid;
     const snaps = await Promise.all(_CLOUD_DOC_NAMES.map(name => _fbDocRef(name).get()));
     const sSnap = snaps[0];
@@ -27149,8 +27163,8 @@ async function cloudDiag() {
       "",
       "🌐 Version app: " + (document.title.match(/v(\d+)/)?.[0] || "?"),
     ];
-    alert(lines.join("\n"));
-  } catch(e) { alert("Erreur diagnostic:\n" + e.message); }
+    show(lines.join("\n"));
+  } catch(e) { show("Erreur diagnostic :\n" + e.message); }
 }
 
 // ⬇️ Récupérer : remplace les données locales par celles du cloud
