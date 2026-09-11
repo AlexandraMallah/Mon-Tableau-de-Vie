@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1216</title>
+<title>Mon Tableau de Vie 🌿 · v1217</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -169,8 +169,7 @@
   .help-btn:hover { background: var(--lavender-soft); color: var(--ink); border-color: var(--lavender); transform: translateY(-1px); }
   /* header buttons — pilule comme les onglets de nav */
   .header-actions .btn-icon,
-  #syncUserAvatar,
-  #syncStatusPill { border-radius: 999px !important; }
+  #syncUserAvatar { border-radius: 999px !important; }
 
   /* ========= MAIN TABS ========= */
   nav.tabs {
@@ -1520,8 +1519,7 @@
       margin-bottom: 0;
     }
     .header-actions .btn-icon { padding: 7px 10px; font-size: 11px; }
-    #cloudSizeBadge, #syncStatusPill, #syncUserAvatar { padding: 7px 10px !important; font-size: 11px !important; }
-    #syncStatusPill { min-width: 96px !important; }
+    #cloudSizeBadge, #syncUserAvatar { padding: 7px 10px !important; font-size: 11px !important; }
     /* Catégories de temps : une par ligne pleine largeur (au lieu d'une grille qui laisse
        des colonnes vides et tronque les noms) — le libellé prend la place, la case heures reste à droite. */
     #timeCatsGrid { grid-template-columns: 1fr !important; }
@@ -1943,18 +1941,16 @@
       <button class="btn-icon" id="syncSignInBtn" onclick="signInWithGoogle()" style="background:linear-gradient(135deg,#e8f0fe,#d2e3fc);color:#1a73e8;font-weight:600;">☁️ Connexion</button>
       <div class="sync-row">
         <div id="syncUserAvatar" style="display:none;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:9px 13px;white-space:nowrap;flex-shrink:0;cursor:pointer;box-shadow:var(--shadow);font-size:13px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
-        <span id="syncStatusPill" onclick="_fbUser ? showSyncMenu() : signInWithGoogle()" title="Voir l'état de la synchronisation" style="font-size:13px;padding:9px 13px;min-width:118px;text-align:center;box-sizing:border-box;white-space:nowrap;flex-shrink:0;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:none;cursor:pointer;"></span>
         <span id="cloudSizeBadge" onclick="openCloudSizeAlert()" style="display:none;font-size:13px;padding:9px 13px;white-space:nowrap;flex-shrink:0;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--ink-soft);box-shadow:var(--shadow);cursor:pointer;font-weight:600;">📦 Stockage cloud</span>
       </div>
     </div>
     <script>
-    // Pré-affiche l'état "connecté" (pastille + avatar) dès le premier rendu, sans attendre
-    // la résolution async de Firebase Auth — sinon le bouton "Connexion" est peint puis
-    // remplacé un instant après par l'avatar + la pastille de synchro, ce qui change la largeur
-    // de .header-actions, lui fait parfois changer de nombre de lignes (flex-wrap), et fait
-    // "sauter" la barre d'onglets juste en dessous (même conteneur sticky). En pré-affichant
-    // la forme finale tout de suite (avec un contenu provisoire), seul le TEXTE se met à jour
-    // ensuite — plus de changement de largeur, plus de saut.
+    // Pré-affiche l'état "connecté" (avatar) dès le premier rendu, sans attendre la résolution
+    // async de Firebase Auth — sinon le bouton "Connexion" est peint puis remplacé un instant
+    // après par l'avatar, ce qui change la largeur de .header-actions, lui fait parfois changer
+    // de nombre de lignes (flex-wrap), et fait "sauter" la barre d'onglets juste en dessous
+    // (même conteneur sticky). En pré-affichant la forme finale tout de suite (avec un contenu
+    // provisoire), seul le TEXTE se met à jour ensuite — plus de changement de largeur.
     (function() {
       try {
         if (!localStorage.getItem("_lastLoginUid")) return;
@@ -1964,11 +1960,6 @@
         if (av) {
           av.style.display = "flex";
           av.innerHTML = '<div style="width:16px;height:16px;border-radius:50%;background:var(--lavender-soft);flex-shrink:0;"></div><span style="font-size:13px;color:var(--ink-soft);">…</span>';
-        }
-        const pill = document.getElementById("syncStatusPill");
-        if (pill) {
-          pill.style.display = "";
-          pill.innerHTML = '<span style="color:var(--ink-softer)">🔄 Connexion…</span>';
         }
       } catch (e) {}
     })();
@@ -26597,17 +26588,21 @@ function _fbDocRef(name = "state") {
   return _fbDb.collection("users").doc(_fbUser.uid).collection("dashboard").doc(name);
 }
 
+// Fusionné dans l'avatar (petit point de couleur) plutôt qu'une pastille séparée à côté — même
+// info, un bouton de moins dans le bandeau. Sans effet tant que l'avatar n'est pas construit
+// (_fbUpdateUI pas encore passé) : la prochaine mise à jour de statut rattrapera l'affichage.
 function _fbSetStatus(s) {
-  const pill = document.getElementById("syncStatusPill");
-  if (!pill) return;
+  const dot = document.getElementById("syncStatusDot");
+  const av = document.getElementById("syncUserAvatar");
+  if (!dot) return;
   const cfg = {
-    off:      { icon: "☁️", label: "Non connecté",  color: "var(--ink-softer)" },
-    syncing:  { icon: "🔄", label: "Synchro…",      color: "var(--orange)" },
-    ok:       { icon: "✅", label: "Synchronisé",   color: "var(--green)" },
-    error:    { icon: "⚠️", label: "Erreur sync",   color: "var(--red)" },
-  }[s] || { icon: "☁️", label: s, color: "var(--ink-softer)" };
-  pill.style.display = "";
-  pill.innerHTML = `<span style="color:${cfg.color}">${cfg.icon} ${cfg.label}</span>`;
+    off:      { label: "Non connecté",  color: "var(--ink-softer)" },
+    syncing:  { label: "Synchro…",      color: "var(--orange)" },
+    ok:       { label: "Synchronisé",   color: "var(--green)" },
+    error:    { label: "Erreur de synchro", color: "var(--red)" },
+  }[s] || { label: s, color: "var(--ink-softer)" };
+  dot.style.background = cfg.color;
+  if (av) av.title = (_fbUser?.email ? _fbUser.email + " — " : "") + cfg.label;
 }
 
 function _fbUpdateUI(user) {
@@ -26632,7 +26627,8 @@ function _fbUpdateUI(user) {
     } else if (!state.name && firstName) {
       state.name = firstName; saveState(); if (typeof renderAll === "function") { document.getElementById("greeting").textContent = getGreeting(); }
     }
-    av.innerHTML = imgHtml + `<span style="font-size:13px;color:var(--ink);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${firstName}</span>`;
+    av.innerHTML = imgHtml + `<span style="font-size:13px;color:var(--ink);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${firstName}</span>` +
+      `<span id="syncStatusDot" style="width:7px;height:7px;border-radius:50%;background:var(--ink-softer);flex-shrink:0;"></span>`;
     _maybePromptGender();
   } else {
     btn.style.display = "";
