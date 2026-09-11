@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1225</title>
+<title>Mon Tableau de Vie 🌿 · v1226</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23130,10 +23130,7 @@ async function _resetAllDataNow() {
   // Supprimer Firebase
   if (_fbUser && _fbDb) {
     try {
-      await Promise.all([
-        _fbDocRef("state").delete(),
-        _fbDocRef("work").delete(),
-      ]);
+      await Promise.all(_CLOUD_DOC_NAMES.map(name => _fbDocRef(name).delete()));
     } catch(e) { console.warn("Firebase reset error", e); }
   }
   // Vider localStorage
@@ -23152,10 +23149,7 @@ async function _deleteAccountNow() {
   // Supprimer les documents Firestore
   if (_fbUser && _fbDb) {
     try {
-      await Promise.all([
-        _fbDocRef("state").delete(),
-        _fbDocRef("work").delete(),
-      ]);
+      await Promise.all(_CLOUD_DOC_NAMES.map(name => _fbDocRef(name).delete()));
     } catch(e) { console.warn("Firestore delete error", e); }
   }
   // Vider localStorage
