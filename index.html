@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1215</title>
+<title>Mon Tableau de Vie 🌿 · v1216</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -9344,13 +9344,23 @@ function renderTasks() {
   }
   // Filtre par deadline si une date est sélectionnée dans le calendrier
   document.getElementById("deadlineFilterBanner")?.remove();
-  const filtered = _deadlineFilter ? tasks.filter(t => t.deadline === _deadlineFilter) : tasks;
+  document.getElementById("bilanFilterBanner")?.remove();
+  const filtered = _deadlineFilter ? tasks.filter(t => t.deadline === _deadlineFilter)
+    : _bilanFilter ? _bilanTaskSets()[_bilanFilter]
+    : tasks;
   if (_deadlineFilter) {
     const dateLabel = new Date(_deadlineFilter + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
     document.getElementById("taskList").insertAdjacentHTML("beforebegin",
       `<div id="deadlineFilterBanner" style="background:var(--lavender-soft);border:1px solid var(--lavender);border-radius:10px;padding:7px 12px;font-size:13px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <span>📅 Tâches du <strong>${dateLabel}</strong></span>
         <button onclick="filterTasksByDeadline(null)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--lavender);">✕ Tout voir</button>
+      </div>`
+    );
+  } else if (_bilanFilter) {
+    document.getElementById("taskList").insertAdjacentHTML("beforebegin",
+      `<div id="bilanFilterBanner" style="background:var(--lavender-soft);border:1px solid var(--lavender);border-radius:10px;padding:7px 12px;font-size:13px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span>${_BILAN_FILTER_LABELS[_bilanFilter]} <strong>(${filtered.length})</strong></span>
+        <button onclick="filterTasksByBilan('${_bilanFilter}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--lavender);">✕ Tout voir</button>
       </div>`
     );
   }
@@ -9541,8 +9551,23 @@ function renderDeadlineCalendar() {
 let _deadlineFilter = null;
 function filterTasksByDeadline(dateKey) {
   _deadlineFilter = _deadlineFilter === dateKey ? null : dateKey;
+  _bilanFilter = null;
   renderTasks();
   // Scroll vers la liste
+  document.getElementById("taskList")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+const _BILAN_FILTER_LABELS = {
+  week: "✓ Complétées — 7 derniers jours",
+  month: "✓ Complétées — 30 derniers jours",
+  overdue: "⏰ En retard",
+  remaining: "📋 Restantes",
+};
+let _bilanFilter = null;
+function filterTasksByBilan(kind) {
+  _bilanFilter = _bilanFilter === kind ? null : kind;
+  _deadlineFilter = null;
+  renderTaskBilan();
+  renderTasks();
   document.getElementById("taskList")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 let _newTaskKind = "task";
@@ -9604,7 +9629,9 @@ function toggleCandTask(id, checked) {
 
 /* ========= WORK :: BILAN DES TÂCHES ========= */
 let bilanChart;
-function renderTaskBilan() {
+// Regroupe la logique de filtrage du Bilan (comptages ET listes réelles) en un seul endroit,
+// pour que les 4 cases du Bilan et le filtre cliquable de la liste des tâches restent cohérents.
+function _bilanTaskSets() {
   const tasks = state.work.postdocTasks;
   const todayK = todayKey();
   const now = new Date();
@@ -9618,32 +9645,39 @@ function renderTaskBilan() {
     return dt >= refDate;
   };
 
-  const completedWeek = tasks.filter(t => t.done && t.completedAt && isAfter(t.completedAt, weekStart)).length;
-  const completedMonth = tasks.filter(t => t.done && t.completedAt && isAfter(t.completedAt, monthStart)).length;
-  const overdue = tasks.filter(t => !t.done && t.deadline && t.deadline < todayK).length;
-  const remaining = tasks.filter(t => !t.done).length;
+  return {
+    week:      tasks.filter(t => t.done && t.completedAt && isAfter(t.completedAt, weekStart)),
+    month:     tasks.filter(t => t.done && t.completedAt && isAfter(t.completedAt, monthStart)),
+    overdue:   tasks.filter(t => !t.done && t.deadline && t.deadline < todayK),
+    remaining: tasks.filter(t => !t.done),
+  };
+}
+function renderTaskBilan() {
+  const tasks = state.work.postdocTasks;
+  const sets = _bilanTaskSets();
   const totalDone = tasks.filter(t => t.done).length;
   const totalAll = tasks.length;
   const pct = totalAll ? Math.round((totalDone / totalAll) * 100) : 0;
 
   document.getElementById("bilanCaption").textContent = `${totalDone}/${totalAll} complétées au total (${pct}%)`;
 
+  const active = kind => _bilanFilter === kind ? "outline:2px solid var(--lavender);outline-offset:-2px;" : "";
   document.getElementById("bilanStats").innerHTML = `
-    <div class="stat" style="background:var(--mint-soft);">
+    <div class="stat" style="background:var(--mint-soft);cursor:pointer;${active('week')}" onclick="filterTasksByBilan('week')" title="Voir les tâches complétées">
       <div class="stat-label">✓ 7 derniers jours</div>
-      <div class="stat-val">${completedWeek}</div>
+      <div class="stat-val">${sets.week.length}</div>
     </div>
-    <div class="stat" style="background:var(--lavender-soft);">
+    <div class="stat" style="background:var(--lavender-soft);cursor:pointer;${active('month')}" onclick="filterTasksByBilan('month')" title="Voir les tâches complétées">
       <div class="stat-label">✓ 30 derniers jours</div>
-      <div class="stat-val">${completedMonth}</div>
+      <div class="stat-val">${sets.month.length}</div>
     </div>
-    <div class="stat" style="background:${overdue > 0 ? 'var(--rose-soft)' : '#faf8fd'};">
+    <div class="stat" style="background:${sets.overdue.length > 0 ? 'var(--rose-soft)' : '#faf8fd'};cursor:pointer;${active('overdue')}" onclick="filterTasksByBilan('overdue')" title="Voir les tâches en retard">
       <div class="stat-label">⏰ En retard</div>
-      <div class="stat-val" style="${overdue > 0 ? 'color:var(--red);' : ''}">${overdue}</div>
+      <div class="stat-val" style="${sets.overdue.length > 0 ? 'color:var(--red);' : ''}">${sets.overdue.length}</div>
     </div>
-    <div class="stat">
+    <div class="stat" style="cursor:pointer;${active('remaining')}" onclick="filterTasksByBilan('remaining')" title="Voir les tâches restantes">
       <div class="stat-label">📋 Restantes</div>
-      <div class="stat-val">${remaining}</div>
+      <div class="stat-val">${sets.remaining.length}</div>
     </div>
   `;
 
