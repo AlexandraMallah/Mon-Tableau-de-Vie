@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1235</title>
+<title>Mon Tableau de Vie 🌿 · v1236</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24564,7 +24564,10 @@ function _fbUpdateUI(user) {
     }
     av.innerHTML = imgHtml + `<span style="font-size:13px;color:var(--ink);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${firstName}</span>` +
       `<span id="syncStatusDot" style="width:7px;height:7px;border-radius:50%;background:var(--ink-softer);flex-shrink:0;"></span>`;
-    _maybePromptGender();
+    // Pas ici : à ce stade les données du cloud ne sont pas encore chargées (_fbLoad tourne en
+    // parallèle), donc state.gender peut sembler vide alors qu'il est déjà renseigné côté cloud
+    // sur ce compte — ça redemandait le genre à chaque connexion sur un nouvel appareil. Voir
+    // l'appel dans _fbLoad(), une fois le merge cloud terminé.
   } else {
     btn.style.display = "";
     av.style.display  = "none";
@@ -24769,6 +24772,9 @@ async function _fbLoad() {
     // Vérifie tout de suite la taille (pas seulement après une sauvegarde) pour que le badge
     // apparaisse dès l'ouverture si le seuil est déjà dépassé, sans attendre une modification.
     try { const _cs = _computeCloudSizes(); _updateCloudSizeBadge(_cs.sizes, _cs.maxDocName); } catch(e) {}
+    // Une fois les données du cloud effectivement chargées dans state (pas avant) : ne demande
+    // le genre que si ce compte n'y a jamais répondu (state.gender encore null).
+    _maybePromptGender();
     // Restauration belly/endo : si des valeurs existent dans l'historique mais les définitions ont été supprimées
     if (_fbUser) {
       if (!state.customSymptoms) state.customSymptoms = [];
