@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1233</title>
+<title>Mon Tableau de Vie 🌿 · v1234</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2973,7 +2973,7 @@
     <div class="card" id="healthStepsCard" style="margin-top:18px;">
       <div class="card-row">
         <h2>🚶 Pas</h2>
-        <span style="font-size:13px;color:var(--ink-soft);">Objectif : <strong>9000 pas</strong> · orange dès 7000</span>
+        <span id="stepsGoalText" style="font-size:13px;color:var(--ink-soft);">Objectif : <strong>9000 pas</strong> · orange dès 7000</span>
       </div>
       <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
         <div class="stat" id="stepsTodayTile" style="transition:background 0.3s;"></div>
@@ -2985,7 +2985,7 @@
         <span id="stepsMonthLabel" style="font-size:15px;font-weight:700;color:var(--ink);min-width:140px;text-align:center;"></span>
         <button class="day-nav-btn" id="stepsMonthNext" onclick="navStepsMonth(1)" title="Mois suivant">▶</button>
       </div>
-      <p style="color:var(--ink-soft);font-size:12px;margin:0 0 6px;">🟢 ≥ 9000 · 🟠 7000-8999 · 🔴 < 7000 · pointillé vert = objectif</p>
+      <p id="stepsLegendText" style="color:var(--ink-soft);font-size:12px;margin:0 0 6px;">🟢 ≥ 9000 · 🟠 7000-8999 · 🔴 < 7000 · pointillé vert = objectif</p>
       <div class="chart-wrap" style="height:240px;"><canvas id="stepsChart"></canvas></div>
     </div>
 
@@ -13436,6 +13436,10 @@ function renderStepsStats() {
   const todayTile = document.getElementById("stepsTodayTile");
   const mTile = document.getElementById("stepsMonthlyTile");
   const bTile = document.getElementById("stepsBestTile");
+  const goalText = document.getElementById("stepsGoalText");
+  if (goalText) goalText.innerHTML = `Objectif : <strong>${targetSteps.toLocaleString("fr-FR")} pas</strong> · orange dès 7000`;
+  const legendText = document.getElementById("stepsLegendText");
+  if (legendText) legendText.textContent = `🟢 ≥ ${targetSteps.toLocaleString("fr-FR")} · 🟠 7000-${(targetSteps-1).toLocaleString("fr-FR")} · 🔴 < 7000 · pointillé vert = objectif`;
   const _isS = document.body.classList.contains("t-serieux");
   const todayBg = todayVal >= targetSteps ? (_isS?"#ccddd0":"#d8f0e5") : todayVal >= 7000 ? (_isS?"#f0e0cc":"#fce5d1") : (_isS?"#f0d0d0":"#fde8e8");
   if (todayTile) todayTile.innerHTML = `<div class="stat-label">Aujourd'hui</div><div class="stat-value" style="font-size:20px;">${todayVal.toLocaleString("fr-FR")}</div><div class="stat-hint">${todayPct}% de l'objectif</div>`;
@@ -13464,7 +13468,7 @@ function renderStepsChart() {
       labels,
       datasets: [
         { type: "bar", label: "Pas", data: values, backgroundColor: colors, borderRadius: 6, borderSkipped: false, order: 2 },
-        { type: "line", label: "Objectif 9000", data: values.map(() => target), borderColor: document.body.classList.contains("t-serieux")?"#6a9e78":"#4d9c7e", borderWidth: 2, borderDash: [6, 4], pointRadius: 0, fill: false, order: 1 },
+        { type: "line", label: "Objectif " + target, data: values.map(() => target), borderColor: document.body.classList.contains("t-serieux")?"#6a9e78":"#4d9c7e", borderWidth: 2, borderDash: [6, 4], pointRadius: 0, fill: false, order: 1 },
       ],
     },
     options: {
