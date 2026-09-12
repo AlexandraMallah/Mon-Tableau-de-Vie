@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="color-scheme" content="light" />
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1234</title>
+<title>Mon Tableau de Vie 🌿 · v1235</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -539,6 +539,13 @@
   .sub-total-banner strong { font-size: 16px; font-weight: 700; }
   /* Bouton aide mobile : caché par défaut, visible seulement sous 640px */
   #mobileHelpBtn { display: none; }
+  /* iOS zoome automatiquement toute la page quand on touche un champ dont le texte fait
+     moins de 16px — c'est ce "zoom chelou" qui n'existe pas sur Android (Chrome n'a pas ce
+     comportement). Le !important est nécessaire : beaucoup de champs ont leur taille en style
+     inline, plus prioritaire qu'une règle de classe normale. */
+  @media (max-width: 700px) {
+    input, select, textarea { font-size: 16px !important; }
+  }
   @media (max-width: 700px) {
     .sub-row { grid-template-columns: 1fr auto; gap: 8px; }
     .sub-row .sub-freq-badge, .sub-row .sub-renewal { grid-column: 1 / -1; justify-self: start; }
@@ -24985,6 +24992,10 @@ function signInWithGoogle() {
     return;
   }
   const provider = new firebase.auth.GoogleAuthProvider();
+  // Force le sélecteur de compte Google à chaque connexion — sinon Google reconnecte
+  // automatiquement au dernier compte utilisé sur cet appareil sans rien demander (gênant sur
+  // un ordi/tél partagé entre plusieurs personnes).
+  provider.setCustomParameters({ prompt: "select_account" });
   // Connexion par pop-up (fiable malgré le blocage des cookies tiers de Chrome),
   // avec repli sur la redirection si le pop-up est bloqué.
   _fbAuth.signInWithPopup(provider)
