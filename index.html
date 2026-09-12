@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1242</title>
+<title>Mon Tableau de Vie 🌿 · v1243</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4496,6 +4496,19 @@
       <button onclick="closeRecipeModal()" title="Fermer" style="background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:var(--ink-soft);padding:4px 6px;">✕</button>
     </div>
     <p class="modal-hint">Crée une recette avec ses ingrédients et valeurs nutritionnelles. Elle sera disponible dans le planificateur de repas et dans la liste de courses automatique.</p>
+    <div style="display:flex;gap:6px;margin-bottom:6px;">
+      <input type="url" id="recipeImportUrl" placeholder="🔗 Coller le lien d'une recette (Marmiton, etc.)"
+        style="flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();importRecipeFromUrl();}" />
+      <button type="button" onclick="importRecipeFromUrl()" class="btn-soft" style="font-size:12px;white-space:nowrap;flex-shrink:0;">Importer</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px;">
+      <div style="flex:1;height:1px;background:var(--line);"></div>
+      <span style="font-size:11px;color:var(--ink-softer);">ou</span>
+      <div style="flex:1;height:1px;background:var(--line);"></div>
+    </div>
+    <button type="button" onclick="openAiRecipeModal()" class="btn-soft" style="width:100%;font-size:12px;margin-bottom:6px;box-sizing:border-box;">✨ Coller un texte de recette (IA)</button>
+    <div id="recipeImportStatus" style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;min-height:16px;"></div>
     <input type="hidden" id="recipeModalId" />
     <div style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;margin-bottom:0;">
       <div><label>Emoji</label>
@@ -4525,6 +4538,30 @@
       <div class="spacer"></div>
       <button class="secondary" onclick="closeRecipeModal()">Annuler</button>
       <button class="primary" onclick="saveRecipe()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Assistant IA (recette) -->
+<div class="modal-bg" id="aiRecipeModal" onclick="event.target===this&&_modalMouseDownTarget===this&&closeAiRecipeModal()">
+  <div class="modal" style="max-width:480px;" onclick="event.stopPropagation()">
+    <h2 style="margin:0 0 4px;">✨ Assistant IA — Recette</h2>
+    <p class="modal-hint">Colle un texte de recette copié n'importe où (n'importe quel format) : l'IA le structure automatiquement en ingrédients, portions et préparation.</p>
+    <label>Assistant</label>
+    <select id="aiProviderSelect" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;">
+      <option value="anthropic">Claude (Anthropic)</option>
+      <option value="openai">ChatGPT (OpenAI)</option>
+    </select>
+    <label>Clé API <span style="font-weight:400;color:var(--ink-softer);font-size:11px;">— reste uniquement sur cet appareil, jamais envoyée à nos serveurs</span></label>
+    <input type="password" id="aiApiKeyInput" placeholder="sk-… ou sk-ant-…"
+      style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:10px;box-sizing:border-box;" />
+    <label>Texte de la recette</label>
+    <textarea id="aiRecipeInput" rows="6" placeholder="Colle ici les ingrédients et la préparation…"
+      style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+    <div id="aiRecipeStatus" style="font-size:12px;color:var(--ink-soft);margin-top:8px;min-height:16px;"></div>
+    <div class="actions">
+      <button class="secondary" onclick="closeAiRecipeModal()">Annuler</button>
+      <button class="primary" onclick="runAiRecipeImport()">✨ Structurer avec l'IA</button>
     </div>
   </div>
 </div>
@@ -21373,6 +21410,135 @@ function deleteRecipe() {
     state.domestique.recipes = state.domestique.recipes.filter(r => r.id !== id);
     saveState(); closeRecipeModal(); renderRecipes();
   });
+}
+
+/* ---- Import de recette (URL ou IA) — remplit le formulaire déjà ouvert ---- */
+
+// Découpe une ligne d'ingrédient en texte libre ("200 g de farine") en quantité/unité/nom.
+// Heuristique best-effort : à vérifier/corriger à la main après import, comme tout import auto.
+function _parseIngredientLine(line) {
+  line = String(line || "").trim();
+  const m = line.match(/^([\d]+(?:[.,\/][\d]+)?)\s*(cuillères?\s+à\s+soupe|cuillères?\s+à\s+café|c\.?\s?à\s?s(?:\.|oupe)?|c\.?\s?à\s?c(?:\.|afé)?|cuillerées?|càs|càc|kg|g|mg|ml|cl|dl|l|tasses?|pincées?|gousses?|tranches?|sachets?|verres?|boîtes?|bottes?|unités?)?\s*(?:de\s+|d')?(.+)$/i);
+  if (m) return { quantity: m[1].replace(",", "."), unit: (m[2] || "").trim(), name: m[3].trim() };
+  return { quantity: "", unit: "", name: line };
+}
+
+// Remplit le formulaire recette ouvert à partir de données importées (URL ou IA) —
+// même forme normalisée dans les deux cas : { name, servings, ingredients:[{quantity,unit,name}], notes }.
+function _applyImportedRecipe(data) {
+  if (data.name) document.getElementById("recipeModalName").value = data.name;
+  if (data.servings) document.getElementById("recipeModalServings").value = data.servings;
+  if (data.notes) document.getElementById("recipeModalNotes").value = data.notes;
+  const list = document.getElementById("recipeIngredientsList");
+  list.innerHTML = "";
+  const ingredients = (data.ingredients && data.ingredients.length) ? data.ingredients : [{ quantity: "", unit: "", name: "" }];
+  ingredients.forEach(ing => {
+    addRecipeIngredient(ing);
+    // Essaie de retrouver un kcal automatique via la base d'aliments de l'app, comme en saisie manuelle.
+    if (ing.name) _autoFillRecipeIngKcal(list.lastElementChild);
+  });
+  updateRecipeTotals();
+}
+
+async function importRecipeFromUrl() {
+  const urlInput = document.getElementById("recipeImportUrl");
+  const url = (urlInput.value || "").trim();
+  const statusEl = document.getElementById("recipeImportStatus");
+  if (!url) return;
+  statusEl.textContent = "⏳ Récupération de la recette…";
+  try {
+    const resp = await fetch(`https://ics-proxy.alexandra-mallah.workers.dev/?recipe=${encodeURIComponent(url)}`);
+    const data = await resp.json();
+    if (!data.ok) {
+      statusEl.textContent = data.error === "not_found"
+        ? "❌ Aucune recette structurée trouvée sur cette page — essaie « ✨ Coller un texte (IA) »."
+        : "❌ Import impossible depuis ce lien.";
+      return;
+    }
+    _applyImportedRecipe({
+      name: data.name,
+      servings: data.servings,
+      ingredients: (data.ingredients || []).map(_parseIngredientLine),
+      notes: data.instructions || "",
+    });
+    statusEl.textContent = data.kcalPerServing
+      ? `✅ Recette importée — le site indique ~${data.kcalPerServing} kcal/portion (vérifie les kcal par ingrédient ci-dessous).`
+      : "✅ Recette importée — vérifie et complète les kcal si besoin.";
+    urlInput.value = "";
+  } catch (e) {
+    statusEl.textContent = "❌ Erreur réseau — vérifie le lien ou réessaie.";
+  }
+}
+
+/* ---- Assistant IA (clé perso Claude ou ChatGPT, stockée uniquement en local) ---- */
+function openAiRecipeModal() {
+  const provider = localStorage.getItem("tableauDeVie_v3_aiProvider") || "anthropic";
+  document.getElementById("aiProviderSelect").value = provider;
+  document.getElementById("aiApiKeyInput").value = localStorage.getItem("tableauDeVie_v3_aiKey_" + provider) || "";
+  document.getElementById("aiRecipeInput").value = "";
+  document.getElementById("aiRecipeStatus").textContent = "";
+  document.getElementById("aiRecipeModal").classList.add("open");
+}
+function closeAiRecipeModal() { document.getElementById("aiRecipeModal").classList.remove("open"); }
+document.getElementById("aiProviderSelect")?.addEventListener("change", function() {
+  document.getElementById("aiApiKeyInput").value = localStorage.getItem("tableauDeVie_v3_aiKey_" + this.value) || "";
+});
+
+async function _callClaude(key, prompt) {
+  const resp = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
+    body: JSON.stringify({ model: "claude-sonnet-5", max_tokens: 1500, messages: [{ role: "user", content: prompt }] }),
+  });
+  if (!resp.ok) throw new Error("Claude a répondu une erreur (" + resp.status + ") — vérifie ta clé API.");
+  const data = await resp.json();
+  return data.content?.[0]?.text || "";
+}
+async function _callOpenAI(key, prompt) {
+  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "content-type": "application/json", "authorization": "Bearer " + key },
+    body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], temperature: 0.3 }),
+  });
+  if (!resp.ok) throw new Error("ChatGPT a répondu une erreur (" + resp.status + ") — vérifie ta clé API.");
+  const data = await resp.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+function _extractJsonFromAiReply(text) {
+  const m = String(text || "").match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try { return JSON.parse(m[0]); } catch (e) { return null; }
+}
+async function runAiRecipeImport() {
+  const provider = document.getElementById("aiProviderSelect").value;
+  const key = document.getElementById("aiApiKeyInput").value.trim();
+  const text = document.getElementById("aiRecipeInput").value.trim();
+  const statusEl = document.getElementById("aiRecipeStatus");
+  if (!key) { statusEl.textContent = "⚠️ Ajoute ta clé API pour continuer."; return; }
+  if (!text) { statusEl.textContent = "⚠️ Colle d'abord le texte de la recette."; return; }
+  localStorage.setItem("tableauDeVie_v3_aiProvider", provider);
+  localStorage.setItem("tableauDeVie_v3_aiKey_" + provider, key);
+  statusEl.textContent = "⏳ L'IA structure la recette…";
+  const prompt = `Voici un texte de recette de cuisine, dans un format libre. Structure-le en JSON STRICT (uniquement le JSON, sans \`\`\` ni texte autour), avec exactement ces clés :
+{"name": string, "servings": number, "ingredients": [{"quantity": string, "unit": string, "name": string}], "notes": string}
+"notes" contient les étapes de préparation résumées en texte simple, avec des retours à la ligne. Si une info manque, fais une estimation raisonnable plutôt que de la laisser vide. Voici le texte :
+---
+${text}`;
+  try {
+    const reply = provider === "anthropic" ? await _callClaude(key, prompt) : await _callOpenAI(key, prompt);
+    const parsed = _extractJsonFromAiReply(reply);
+    if (!parsed) { statusEl.textContent = "❌ Réponse de l'IA illisible — réessaie."; return; }
+    closeAiRecipeModal();
+    _applyImportedRecipe(parsed);
+    document.getElementById("recipeImportStatus").textContent = "✅ Recette structurée par l'IA — vérifie et complète si besoin.";
+  } catch (e) {
+    statusEl.textContent = "❌ " + (e.message || "Erreur pendant l'appel à l'IA.");
+  }
 }
 
 /* ---- Alimentation inner tabs ---- */
