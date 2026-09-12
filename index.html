@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1243</title>
+<title>Mon Tableau de Vie 🌿 · v1244</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1964,6 +1964,7 @@
       <button class="btn-icon" id="settingsBtn" onclick="openSettings()">⚙ Personnaliser</button>
       <button class="btn-icon" id="gestionBtn" onclick="openGestionModal()" style="display:none;background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
       <a href="#" onclick="event.preventDefault();openSupportContact()" title="Contacter le support" class="btn-icon" style="text-decoration:none;">📧 Support</a>
+      <button class="btn-icon" onclick="openAiRecipeModal()" title="Assistant IA (Claude ou ChatGPT, avec ta propre clé)" style="background:linear-gradient(135deg,var(--lavender-soft),var(--sky-soft));">✨ Assistant IA</button>
       <button class="btn-icon" onclick="openShortcutsEditor()" title="Gérer les raccourcis" style="background:var(--lavender-soft);">⚡</button>
       <!-- Thème visuel -->
       <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);">
@@ -4545,8 +4546,8 @@
 <!-- Modal Assistant IA (recette) -->
 <div class="modal-bg" id="aiRecipeModal" onclick="event.target===this&&_modalMouseDownTarget===this&&closeAiRecipeModal()">
   <div class="modal" style="max-width:480px;" onclick="event.stopPropagation()">
-    <h2 style="margin:0 0 4px;">✨ Assistant IA — Recette</h2>
-    <p class="modal-hint">Colle un texte de recette copié n'importe où (n'importe quel format) : l'IA le structure automatiquement en ingrédients, portions et préparation.</p>
+    <h2 style="margin:0 0 4px;">✨ Assistant IA</h2>
+    <p class="modal-hint">Utilise ton propre assistant IA (Claude ou ChatGPT, avec ta propre clé) pour t'aider dans l'app. Pour l'instant il sait structurer une recette collée dans n'importe quel format — d'autres actions arriveront plus tard.</p>
     <label>Assistant</label>
     <select id="aiProviderSelect" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;">
       <option value="anthropic">Claude (Anthropic)</option>
@@ -4554,7 +4555,8 @@
     </select>
     <label>Clé API <span style="font-weight:400;color:var(--ink-softer);font-size:11px;">— reste uniquement sur cet appareil, jamais envoyée à nos serveurs</span></label>
     <input type="password" id="aiApiKeyInput" placeholder="sk-… ou sk-ant-…"
-      style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:10px;box-sizing:border-box;" />
+      style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:4px;box-sizing:border-box;" />
+    <p id="aiKeyHelp" style="font-size:11.5px;color:var(--ink-soft);margin:0 0 10px;"></p>
     <label>Texte de la recette</label>
     <textarea id="aiRecipeInput" rows="6" placeholder="Colle ici les ingrédients et la préparation…"
       style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
@@ -21471,17 +21473,28 @@ async function importRecipeFromUrl() {
 }
 
 /* ---- Assistant IA (clé perso Claude ou ChatGPT, stockée uniquement en local) ---- */
+// Bouton accessible depuis l'en-tête sur tous les onglets, ET depuis le formulaire recette.
+const _AI_KEY_HELP = {
+  anthropic: 'Crée une clé sur <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com/settings/keys</a> (compte Anthropic requis, l\'usage est facturé à toi, pas à nous).',
+  openai: 'Crée une clé sur <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a> (compte OpenAI requis, l\'usage est facturé à toi, pas à nous).',
+};
+function _updateAiKeyHelp() {
+  const provider = document.getElementById("aiProviderSelect").value;
+  document.getElementById("aiKeyHelp").innerHTML = _AI_KEY_HELP[provider] || "";
+}
 function openAiRecipeModal() {
   const provider = localStorage.getItem("tableauDeVie_v3_aiProvider") || "anthropic";
   document.getElementById("aiProviderSelect").value = provider;
   document.getElementById("aiApiKeyInput").value = localStorage.getItem("tableauDeVie_v3_aiKey_" + provider) || "";
   document.getElementById("aiRecipeInput").value = "";
   document.getElementById("aiRecipeStatus").textContent = "";
+  _updateAiKeyHelp();
   document.getElementById("aiRecipeModal").classList.add("open");
 }
 function closeAiRecipeModal() { document.getElementById("aiRecipeModal").classList.remove("open"); }
 document.getElementById("aiProviderSelect")?.addEventListener("change", function() {
   document.getElementById("aiApiKeyInput").value = localStorage.getItem("tableauDeVie_v3_aiKey_" + this.value) || "";
+  _updateAiKeyHelp();
 });
 
 async function _callClaude(key, prompt) {
@@ -21534,6 +21547,9 @@ ${text}`;
     const parsed = _extractJsonFromAiReply(reply);
     if (!parsed) { statusEl.textContent = "❌ Réponse de l'IA illisible — réessaie."; return; }
     closeAiRecipeModal();
+    // Si l'assistant a été ouvert depuis l'en-tête (pas depuis le formulaire recette déjà
+    // ouvert), on ouvre une nouvelle recette vierge pour y appliquer le résultat.
+    if (!document.getElementById("recipeModal").classList.contains("open")) openRecipeModal(null);
     _applyImportedRecipe(parsed);
     document.getElementById("recipeImportStatus").textContent = "✅ Recette structurée par l'IA — vérifie et complète si besoin.";
   } catch (e) {
