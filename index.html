@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1249</title>
+<title>Mon Tableau de Vie 🌿 · v1250</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4570,15 +4570,19 @@
       </details>
     </div>
 
+    <div id="aiChatHistory" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;margin-bottom:2px;"></div>
     <label>Que veux-tu faire ?</label>
     <div style="display:flex;gap:6px;align-items:flex-start;">
-      <textarea id="aiRecipeInput" rows="4" placeholder="Ex : « J'ai marché 9000 pas aujourd'hui » · « Ajoute une recette de tarte aux pommes » · « Comment j'active le suivi du cycle ? »"
-        style="flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+      <textarea id="aiRecipeInput" rows="3" placeholder="Ex : « J'ai marché 9000 pas aujourd'hui » · « Ajoute une recette de tarte aux pommes » · « Comment j'active le suivi du cycle ? »"
+        style="flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();runAiAssistant();}"></textarea>
       <button type="button" id="aiMicBtn" onclick="_toggleAiMic()" title="Dicter à la voix" style="display:none;flex-shrink:0;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:white;cursor:pointer;font-size:16px;">🎤</button>
     </div>
-    <p style="font-size:11px;color:var(--ink-softer);margin:4px 0 0;">💡 Sur téléphone, tu peux aussi dicter directement avec le micro de ton clavier.</p>
-    <div id="aiRecipeStatus" style="font-size:13px;color:var(--ink);margin-top:10px;min-height:16px;white-space:pre-wrap;background:var(--butter-soft);border-radius:10px;padding:0;"></div>
+    <p style="font-size:11px;color:var(--ink-softer);margin:4px 0 0;">💡 Sur téléphone, tu peux aussi dicter directement avec le micro de ton clavier. Entrée envoie, Maj+Entrée fait un retour à la ligne.</p>
+    <div id="aiRecipeStatus" style="font-size:13px;color:var(--ink);margin-top:8px;min-height:0;white-space:pre-wrap;background:#fde8e8;border-radius:10px;padding:0;"></div>
     <div class="actions">
+      <button class="secondary" onclick="_resetAiChat()" title="Effacer la conversation en cours">🔄 Nouvelle conversation</button>
+      <div class="spacer"></div>
       <button class="secondary" onclick="closeAiRecipeModal()">Fermer</button>
       <button class="primary" onclick="runAiAssistant()">✨ Envoyer</button>
     </div>
@@ -21570,11 +21574,32 @@ function openAiRecipeModal() {
   document.getElementById("aiKeyHelpDetails").open = !key;
   _updateAiKeyHelp();
   _initAiMic();
+  // Une conversation déjà en cours (par ex. rouverte depuis le formulaire recette juste après)
+  // reste affichée — seule "Nouvelle conversation" ou une fermeture complète la vide.
+  _renderAiChat();
   document.getElementById("aiRecipeModal").classList.add("open");
 }
 function closeAiRecipeModal() {
   document.getElementById("aiRecipeModal").classList.remove("open");
   _stopAiMic();
+}
+// Historique de la conversation en cours — envoyé à chaque message pour que l'assistant se
+// souvienne de ce qui a été dit avant (sinon chaque envoi repartait de zéro, sans suivi possible).
+let _aiHistory = [];
+function _resetAiChat() {
+  _aiHistory = [];
+  document.getElementById("aiRecipeInput").value = "";
+  document.getElementById("aiRecipeStatus").textContent = "";
+  _renderAiChat();
+}
+function _renderAiChat() {
+  const box = document.getElementById("aiChatHistory");
+  if (!box) return;
+  box.innerHTML = _aiHistory.map(m => {
+    const isUser = m.role === "user";
+    return `<div style="align-self:${isUser ? "flex-end" : "flex-start"};max-width:85%;padding:8px 12px;border-radius:12px;font-size:13px;white-space:pre-wrap;background:${isUser ? "var(--lavender-soft)" : "var(--bg-1)"};color:var(--ink);">${escapeHtml(m.content)}</div>`;
+  }).join("");
+  box.scrollTop = box.scrollHeight;
 }
 document.getElementById("aiProviderSelect")?.addEventListener("change", function() {
   const key = localStorage.getItem("tableauDeVie_v3_aiKey_" + this.value) || "";
@@ -21655,12 +21680,29 @@ const _AI_TOOLS = [
       required: ["name", "ingredients"],
     },
   },
+  {
+    name: "log_food",
+    description: "Enregistre un aliment ou un repas consommé dans le journal alimentaire (Aujourd'hui > Alimentation) de l'application.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Nom du plat ou aliment consommé" },
+        calories: { type: "number", description: "Estimation des calories pour la portion mentionnée" },
+        time: { type: "string", description: "Heure au format HH:MM si mentionnée, sinon laisser vide" },
+      },
+      required: ["name"],
+    },
+  },
 ];
 const _AI_SYSTEM_PROMPT = `Tu es l'assistant intégré à "Mon Tableau de Vie", une application personnelle de suivi (habitudes, santé, travail, activités, finances, domestique — courses/recettes/plantes/tâches —, calendrier, journal, piliers de vie). Réponds toujours en français, de façon brève et concrète.
-Si l'utilisatrice te demande d'effectuer une action que tu peux faire avec les outils fournis (enregistrer des pas, ajouter une recette), utilise l'outil correspondant plutôt que de répondre en texte. Si elle te demande une recette par son nom sans donner les détails, invente une recette plausible et complète avec tes propres connaissances. Si elle pose une question ou demande une explication sur le fonctionnement de l'app, réponds en texte simple, sans utiliser d'outil.
+Si l'utilisatrice te demande d'effectuer une action que tu peux faire avec les outils fournis (enregistrer des pas, ajouter une recette, enregistrer un repas mangé), utilise l'outil correspondant plutôt que de répondre en texte. Si elle te demande une recette par son nom sans donner les détails, invente une recette plausible et complète avec tes propres connaissances. Pour log_food, estime les calories du repas décrit du mieux que tu peux à partir de tes connaissances générales. Si elle pose une question ou demande une explication sur le fonctionnement de l'app, réponds en texte simple, sans utiliser d'outil. C'est une conversation suivie : tiens compte des messages précédents pour comprendre les demandes qui font référence à ce qui a été dit avant.
 Pour add_recipe, "quantity" est TOUJOURS un poids en grammes (convertis toi-même cl/l/cuillères en grammes) — jamais un nombre de pièces. Pour un aliment compté à la pièce (ex : un poivron, un oignon, un oeuf), laisse "quantity" vide et mets le nombre de pièces dans "unit" à la place (ex : quantity="", unit="1", name="poivron").`;
 
-async function _callClaude(key, text) {
+// Les trois fonctions ci-dessous prennent désormais tout l'historique de la conversation
+// (tableau [{role:"user"|"assistant", content}]) plutôt qu'un seul message, pour permettre un
+// vrai suivi (répondre à ce que l'assistant vient de dire, au lieu de repartir de zéro à chaque
+// envoi).
+async function _callClaude(key, history) {
   const resp = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -21671,7 +21713,7 @@ async function _callClaude(key, text) {
     },
     body: JSON.stringify({
       model: "claude-sonnet-5", max_tokens: 1500, system: _AI_SYSTEM_PROMPT,
-      tools: _AI_TOOLS, messages: [{ role: "user", content: text }],
+      tools: _AI_TOOLS, messages: history.map(m => ({ role: m.role, content: m.content })),
     }),
   });
   if (!resp.ok) throw new Error("Claude a répondu une erreur (" + resp.status + ") — vérifie ta clé API.");
@@ -21680,13 +21722,13 @@ async function _callClaude(key, text) {
   const textBlock = (data.content || []).find(b => b.type === "text");
   return { toolName: toolBlock?.name || null, toolInput: toolBlock?.input || null, text: textBlock?.text || "" };
 }
-async function _callOpenAI(key, text) {
+async function _callOpenAI(key, history) {
   const resp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "content-type": "application/json", "authorization": "Bearer " + key },
     body: JSON.stringify({
       model: "gpt-4o-mini", temperature: 0.3,
-      messages: [{ role: "system", content: _AI_SYSTEM_PROMPT }, { role: "user", content: text }],
+      messages: [{ role: "system", content: _AI_SYSTEM_PROMPT }, ...history.map(m => ({ role: m.role, content: m.content }))],
       tools: _AI_TOOLS.map(t => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.input_schema } })),
     }),
   });
@@ -21702,7 +21744,7 @@ async function _callOpenAI(key, text) {
 // disparaître de l'API) — on essaie plusieurs noms courants dans l'ordre, et on ne s'arrête
 // que sur la première réponse qui n'est pas un simple "modèle introuvable" (404).
 const _GEMINI_MODELS = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
-async function _callGemini(key, text) {
+async function _callGemini(key, history) {
   let resp, lastErr;
   for (const model of _GEMINI_MODELS) {
     resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`, {
@@ -21710,7 +21752,7 @@ async function _callGemini(key, text) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: _AI_SYSTEM_PROMPT }] },
-        contents: [{ role: "user", parts: [{ text }] }],
+        contents: history.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
         tools: [{ functionDeclarations: _AI_TOOLS.map(t => ({ name: t.name, description: t.description, parameters: t.input_schema })) }],
       }),
     });
@@ -21743,6 +21785,19 @@ function _executeAiTool(name, input) {
     switchFoodTab("cuisine");
     return `✅ Recette « ${input.name} » préparée dans le formulaire — vérifie et clique « Enregistrer ».`;
   }
+  if (name === "log_food") {
+    const d = getToday();
+    if (!d.foodLog) d.foodLog = [];
+    const calories = Number(input.calories) || 0;
+    d.foodLog.push({
+      id: "fl" + Date.now(),
+      name: input.name,
+      time: input.time || new Date().toTimeString().slice(0, 5),
+      calories,
+    });
+    saveState(); renderAll();
+    return `✅ « ${input.name} » ajouté à ton journal alimentaire${calories ? " (~" + calories + " kcal)" : ""}.`;
+  }
   return "⚠️ Action non reconnue.";
 }
 
@@ -21751,26 +21806,37 @@ async function runAiAssistant() {
   const key = document.getElementById("aiApiKeyInput").value.trim();
   const text = document.getElementById("aiRecipeInput").value.trim();
   const statusEl = document.getElementById("aiRecipeStatus");
-  const setStatus = (msg, bg) => { statusEl.textContent = msg; statusEl.style.padding = msg ? "8px 12px" : "0"; statusEl.style.background = bg || "var(--butter-soft)"; };
-  if (!key) { setStatus("⚠️ Ajoute ta clé API ci-dessus pour continuer (voir l'explication juste en dessous)."); return; }
-  if (!text) { setStatus("⚠️ Écris ou dicte d'abord ce que tu veux faire."); return; }
+  const setError = (msg) => { statusEl.textContent = msg; statusEl.style.padding = msg ? "8px 12px" : "0"; };
+  if (!key) { setError("⚠️ Ajoute ta clé API ci-dessus pour continuer (voir l'explication juste en dessous)."); return; }
+  if (!text) { setError("⚠️ Écris ou dicte d'abord ce que tu veux faire."); return; }
   localStorage.setItem("tableauDeVie_v3_aiProvider", provider);
   localStorage.setItem("tableauDeVie_v3_aiKey_" + provider, key);
-  setStatus("⏳ L'assistant réfléchit…");
+  setError("");
+  _aiHistory.push({ role: "user", content: text });
+  document.getElementById("aiRecipeInput").value = "";
+  _renderAiChat();
   try {
-    const result = provider === "anthropic" ? await _callClaude(key, text)
-      : provider === "openai" ? await _callOpenAI(key, text)
-      : await _callGemini(key, text);
+    const result = provider === "anthropic" ? await _callClaude(key, _aiHistory)
+      : provider === "openai" ? await _callOpenAI(key, _aiHistory)
+      : await _callGemini(key, _aiHistory);
+    let reply;
     if (result.toolName) {
-      const confirmMsg = _executeAiTool(result.toolName, result.toolInput || {});
-      setStatus(confirmMsg, "var(--mint-soft)");
+      reply = _executeAiTool(result.toolName, result.toolInput || {});
     } else if (result.text) {
-      setStatus(result.text);
+      reply = result.text;
     } else {
-      setStatus("❌ Réponse vide — réessaie en reformulant.", "#fde8e8");
+      reply = "❌ Réponse vide — réessaie en reformulant.";
     }
+    _aiHistory.push({ role: "assistant", content: reply });
+    _renderAiChat();
   } catch (e) {
-    setStatus("❌ " + (e.message || "Erreur pendant l'appel à l'IA."), "#fde8e8");
+    // L'échec ne fait pas partie de la conversation (pas la peine que l'IA "voie" une erreur
+    // réseau au tour suivant) — affiché à part, et le message de l'utilisatrice reste dans le
+    // champ pour pouvoir juste réessayer sans le retaper.
+    _aiHistory.pop();
+    document.getElementById("aiRecipeInput").value = text;
+    _renderAiChat();
+    setError("❌ " + (e.message || "Erreur pendant l'appel à l'IA."));
   }
 }
 
