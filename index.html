@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1240</title>
+<title>Mon Tableau de Vie 🌿 · v1241</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1516,6 +1516,11 @@
   }
   @media (max-width: 600px) {
     #emotionGrid { grid-template-columns: repeat(4, 1fr) !important; }
+
+    /* Couché/Réveil empilés au lieu de côte à côte : à 16px (forcé sur mobile pour éviter le
+       zoom auto iOS), le champ natif <input type="time"> ne rentre plus dans une colonne de
+       grille à 1fr sur un écran étroit — les deux champs se chevauchaient. */
+    .sleep-times { grid-template-columns: 1fr; }
 
     /* === Conteneur === */
     .container { padding: 14px 16px 80px; }
@@ -5798,6 +5803,8 @@ function migrate(s) {
   if (s.features.cycle === undefined) s.features.cycle = false;
   if (s.features.pas === undefined) s.features.pas = true;
   if (s.features.calories === undefined) s.features.calories = false;
+  if (s.features.routineMatin === undefined) s.features.routineMatin = true;
+  if (s.features.routineSoir === undefined) s.features.routineSoir = true;
   if (s.features.bodyComp === undefined) s.features.bodyComp = false;
   if (s.features.energyBalance === undefined) s.features.energyBalance = false;
   // Migration (une seule fois) : Suivi poids / Suivi calorique / Balance énergétique
@@ -12442,6 +12449,7 @@ function _syncFeatureSections() {
   if (hbBtn) { hbBtn.style.background = hbOn ? "var(--lavender-soft)" : "white"; hbBtn.style.borderColor = hbOn ? "var(--lavender)" : "var(--line)"; }
   // Rafraîchir la liste des habitudes immédiatement (grisé/actif)
   if (typeof renderHabits === "function") renderHabits();
+  if (typeof renderSkincare === "function") renderSkincare();
 }
 function renderPill() {
   _syncFeatureSections();
@@ -13316,8 +13324,20 @@ function renderSkincare() {
 
   // --- Sections cases à cocher (partagées entre les deux onglets) ---
   const inEdit = document.body.classList.contains('edit-mode');
+  const f2 = state.features || {};
   const routineSection = (key) => {
     const meta = ROUTINES_META[key];
+    const featureKey = key === "matin" ? "routineMatin" : "routineSoir";
+    const routineOn = f2[featureKey] !== false;
+    // Même logique que Pas/Calories dépensées : carte grisée + bouton Activer quand désactivée,
+    // masquée complètement hors du mode édition.
+    if (!routineOn) {
+      if (!inEdit) return "";
+      return `<div style="opacity:0.45;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1.5px dashed var(--line);background:var(--bg-1);">
+        <span style="font-size:14px;font-weight:600;color:var(--ink-soft);">${meta.emoji} ${meta.label}</span>
+        <button onclick="_toggleFeature('${featureKey}')" style="margin-left:auto;padding:4px 12px;border-radius:999px;border:1.5px solid var(--lavender);background:var(--lavender-soft);font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink);font-weight:600;opacity:1;">Activer</button>
+      </div>`;
+    }
     const rc = _routineColor(key);
     const steps = getRoutines()[key] || [];
     const done = steps.map(s => !!habits[s.id]);
@@ -13354,7 +13374,7 @@ function renderSkincare() {
             color:${full ? rc : "var(--ink-softer)"};">
             ${full ? "✓ Complète" : `${nb}/${steps.length}`}
           </span>
-          ${inEdit ? `<button onclick="_addRoutineItem('${key}')" style="font-size:11px;padding:2px 8px;border-radius:999px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;font-family:inherit;">+ Ajouter</button>` : ""}
+          ${inEdit ? `<span style="display:inline-flex;gap:6px;"><button onclick="_addRoutineItem('${key}')" style="font-size:11px;padding:2px 8px;border-radius:999px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;font-family:inherit;">+ Ajouter</button><button onclick="_toggleFeature('${featureKey}')" style="font-size:10px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;color:var(--ink-soft);" title="Désactiver">Désactiver</button></span>` : ""}
         </div>
         ${steps.map((s, i) => checkRow(s, done[i])).join("")}
       </div>`;
