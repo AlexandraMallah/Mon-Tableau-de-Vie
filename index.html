@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1239</title>
+<title>Mon Tableau de Vie 🌿 · v1240</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1363,7 +1363,8 @@
   .modal-bg.open { display: flex; }
   .modal {
     background: var(--card); border-radius: 22px; padding: 28px;
-    width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+    width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; overflow-x: hidden;
+    box-sizing: border-box;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
     overscroll-behavior: contain;
     /* Couche GPU dédiée pour que le scroll interne ne redéclenche pas le repaint du flou
