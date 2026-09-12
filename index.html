@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1231</title>
+<title>Mon Tableau de Vie 🌿 · v1232</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24619,7 +24619,11 @@ function _assembleRemote(stateData, workData, transactionsData, domestiqueData) 
 function _mergeFromCloud(remote) {
   const merged = migrate({ ...DEFAULT_STATE, ...remote });
   merged.calEvents = state.calEvents || []; // le cloud ne contient pas le calendrier → garder le local
-  if ((!merged.shortcuts || !merged.shortcuts.length) && state.shortcuts?.length) merged.shortcuts = state.shortcuts;
+  // (Pas de filet "garder le local si le cloud est vide" pour les raccourcis, contrairement aux
+  // sections ci-dessous : ça empêchait justement de propager la suppression de TOUS les
+  // raccourcis d'un appareil à l'autre — un cloud vide voulait dire "vidés exprès", pas "donnée
+  // perdue". Voir le rapport où retirer tous les raccourcis sur un appareil les faisait
+  // réapparaître depuis un autre resté ouvert avec l'ancienne liste en mémoire.)
   // Protège chaque grande section : si le local est nettement plus riche que ce qui arrive
   // du cloud, on garde le local plutôt que d'écraser (filet de sécurité en plus du correctif
   // de premier-sync — voir incident du 2026-09-06 : ce filet n'existait que pour "work",
