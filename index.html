@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1245</title>
+<title>Mon Tableau de Vie 🌿 · v1246</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1566,7 +1566,7 @@
     .sync-row { flex-basis: 100%; }
 
     /* === NAV PRINCIPALE : grille 3×3 au lieu de scroll horizontal === */
-    #helpNavBtn { display: none; }
+    #helpNavBtnWrap { display: none !important; }
     nav.tabs {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -1574,13 +1574,15 @@
       gap: 6px;
       margin-bottom: 10px;
     }
-    /* Cacher le bouton Aide de la nav desktop dans la grille mobile */
-    #helpNavBtn { display: none; }
-    /* Bouton aide contextuel sous la nav, discret */
+    /* Cacher le bouton Aide (+ Assistant IA) de la nav desktop dans la grille mobile —
+       ils reviennent juste en dessous via #mobileHelpBtn. */
+    #helpNavBtnWrap { display: none !important; }
+    /* Bouton aide contextuel sous la nav, discret — Assistant IA juste en dessous */
     #mobileHelpBtn {
       display: flex;
-      align-items: center;
-      justify-content: flex-start;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
       margin-top: 16px;
       margin-bottom: 16px;
     }
@@ -1964,7 +1966,6 @@
       <button class="btn-icon" id="settingsBtn" onclick="openSettings()">⚙ Personnaliser</button>
       <button class="btn-icon" id="gestionBtn" onclick="openGestionModal()" style="display:none;background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
       <a href="#" onclick="event.preventDefault();openSupportContact()" title="Contacter le support" class="btn-icon" style="text-decoration:none;">📧 Support</a>
-      <button class="btn-icon" onclick="openAiRecipeModal()" title="Assistant IA (Claude ou ChatGPT, avec ta propre clé)" style="background:linear-gradient(135deg,var(--lavender-soft),var(--sky-soft));">✨ Assistant IA</button>
       <button class="btn-icon" onclick="openShortcutsEditor()" title="Gérer les raccourcis" style="background:var(--lavender-soft);">⚡</button>
       <!-- Thème visuel -->
       <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);">
@@ -2018,12 +2019,16 @@
       <button class="tab" data-view="calendar">Calendrier</button>
       <button class="tab" data-view="journal">Journal</button>
       <button class="tab" data-view="pillars">Piliers</button>
-      <button id="helpNavBtn" onclick="openHelpForCurrentView()" title="Aide sur cette section" class="help-btn" style="margin-left:auto;">✦ Aide</button>
+      <div id="helpNavBtnWrap" style="margin-left:auto;display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+        <button onclick="openHelpForCurrentView()" title="Aide sur cette section" class="help-btn">✦ Aide</button>
+        <button onclick="openAiRecipeModal()" title="Assistant IA (Claude ou ChatGPT, avec ta propre clé)" class="help-btn">✨ Assistant IA</button>
+      </div>
     </nav>
   </div>
   <!-- Bouton aide mobile (sous la nav, caché sur desktop) -->
   <div id="mobileHelpBtn">
     <button onclick="openHelpForCurrentView()" class="help-btn">✦ Aide</button>
+    <button onclick="openAiRecipeModal()" class="help-btn">✨ Assistant IA</button>
   </div>
 
   <!-- VIEW: TODAY -->
