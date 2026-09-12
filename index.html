@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1237</title>
+<title>Mon Tableau de Vie 🌿 · v1238</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6020,17 +6020,43 @@ async function fetchWeather(force) {
   const tryGeo = force || geoPerm === "granted" || !state.weatherCity;
   if (!tryGeo) { fetchWeatherByCity(); return; }
   document.getElementById("weatherDesc").textContent = "Chargement…";
+  // 1. Géolocalisation — isolée dans son propre try/catch : si ÇA échoue, c'est un vrai
+  // problème de permission/appareil. Les étapes suivantes (ville, météo) ont leurs propres
+  // filets pour ne pas être confondues avec un refus de localisation — avant, la moindre panne
+  // réseau sur Nominatim/Open-Meteo (fréquent : blocage opérateur mobile, service surchargé…)
+  // faisait réafficher "Autorise la localisation" même quand la géoloc avait parfaitement
+  // fonctionné, ce qui donnait l'impression que le bouton "Autoriser" ne servait à rien.
+  let lat, lon;
   try {
-    // 1. Géolocalisation
     const pos = await new Promise((res, rej) =>
       navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000 })
     );
-    const { latitude: lat, longitude: lon } = pos.coords;
-    // 2. Nom de la ville via Nominatim
+    lat = pos.coords.latitude; lon = pos.coords.longitude;
+  } catch(e) {
+    if (!force && state.weatherCity) { fetchWeatherByCity(); return; }
+    document.getElementById("weatherTemp").textContent = "—";
+    const denied = geoPerm === "denied" || (e && e.code === 1); // permission bloquée
+    // Message court dans weatherCity (grande police, pensée pour un nom de ville court) — le
+    // détail va dans weatherDesc (petite police) pour éviter l'énorme bloc de texte à gauche
+    // que ça donnait sur téléphone quand la permission n'est pas accordée.
+    document.getElementById("weatherCity").textContent = "📍 Météo";
+    document.getElementById("weatherDesc").textContent = denied
+      ? "Localisation bloquée dans les réglages du navigateur — indique ta ville :"
+      : "Autorise la localisation ou indique ta ville :";
+    const ctrl = document.getElementById("weatherControls");
+    if (ctrl) ctrl.style.display = "flex";
+    return;
+  }
+  // 2. Nom de la ville via Nominatim — best effort : si ça échoue (réseau, service
+  // indisponible…), on garde juste "Ma position" plutôt que de faire échouer toute la météo.
+  let city = "Ma position";
+  try {
     const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
     const geoData = await geoRes.json();
-    const city = geoData.address?.city || geoData.address?.town || geoData.address?.village || geoData.address?.county || "Ma position";
-    // 3. Météo via Open-Meteo (gratuit, sans clé)
+    city = geoData.address?.city || geoData.address?.town || geoData.address?.village || geoData.address?.county || "Ma position";
+  } catch(e) {}
+  // 3. Météo via Open-Meteo (gratuit, sans clé)
+  try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&wind_speed_unit=kmh&timezone=auto`;
     const wRes = await fetch(url);
     const wData = await wRes.json();
@@ -6048,22 +6074,10 @@ async function fetchWeather(force) {
     const ctrl = document.getElementById("weatherControls");
     if (ctrl) ctrl.style.display = "none";
   } catch(e) {
-    // Échec géoloc. Si ce n'est PAS un clic explicite « Ma position » et qu'une ville est mémorisée,
-    // on l'utilise silencieusement (pas de message d'erreur au chargement normal).
-    if (!force && state.weatherCity) { fetchWeatherByCity(); return; }
-    document.getElementById("weatherTemp").textContent = "—";
-    const denied = geoPerm === "denied" || (e && e.code === 1); // permission bloquée
-    // Message court dans weatherCity (grande police, pensée pour un nom de ville court) — le
-    // détail va dans weatherDesc (petite police) pour éviter l'énorme bloc de texte à gauche
-    // que ça donnait sur téléphone quand la permission n'est pas accordée.
-    if (denied) {
-      document.getElementById("weatherCity").textContent = "📍 Météo";
-      document.getElementById("weatherDesc").textContent = "Localisation bloquée dans les réglages du navigateur — indique ta ville :";
-    } else {
-      document.getElementById("weatherCity").textContent = "📍 Météo";
-      document.getElementById("weatherDesc").textContent = "Autorise la localisation ou indique ta ville :";
-    }
-    // Afficher les contrôles (Ma position + saisie ville) uniquement en cas d'échec
+    // La géoloc a marché, seule la météo a échoué (réseau/service) — pas la peine de reparler
+    // de permission ici, ce n'est pas le problème.
+    document.getElementById("weatherCity").textContent = "📍 " + city;
+    document.getElementById("weatherDesc").textContent = "Météo indisponible pour l'instant — réessaie plus tard";
     const ctrl = document.getElementById("weatherControls");
     if (ctrl) ctrl.style.display = "flex";
   }
