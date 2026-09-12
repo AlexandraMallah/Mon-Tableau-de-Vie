@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1241</title>
+<title>Mon Tableau de Vie 🌿 · v1242</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -333,14 +333,22 @@
     background: #faf8fd; border: 1px solid var(--line); border-radius: 12px;
     padding: 12px 0; font-size: 22px; cursor: pointer; transition: all 0.2s;
   }
-  .scale button:hover { background: var(--lavender-soft); transform: translateY(-1px); }
+  /* (hover: hover) exclut les écrans tactiles : sur iPhone/Android, un tap déclenche le :hover
+     et il reste "collé" jusqu'au tap suivant ailleurs sur l'écran — un émoji tout juste
+     désélectionné semblait alors repasser en violet (lavande) au lieu de redevenir blanc,
+     et l'émoji violet ne redevenait blanc qu'en tapant sur un AUTRE émoji juste après. */
+  @media (hover: hover) {
+    .scale button:hover { background: var(--lavender-soft); transform: translateY(-1px); }
+  }
   .scale.mood button.active { background: var(--pink-soft); border-color: var(--pink); }
   .scale.energy button.active { background: var(--peach-soft); border-color: var(--peach); }
   .scale.belly button.active { background: var(--lavender-soft); border-color: var(--lavender); }
   .scale button:focus { outline: none; }
-  .scale.sleepquality { grid-template-columns: repeat(6, 1fr); }
+  .scale.sleepquality { grid-template-columns: repeat(6, 1fr); align-items: start; }
   .scale.sleepquality button.active { background: var(--sky-soft); border-color: var(--sky); }
-  .sleepquality-label { font-size: 11px; color: var(--sky); text-align: center; margin-top: 5px; min-height: 15px; font-weight: 500; letter-spacing: 0.01em; }
+  .sq-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .sq-item button { width: 100%; }
+  .sq-cap { font-size: 9.5px; color: var(--ink-softer); text-align: center; line-height: 1.15; }
   .sleep-input { display: flex; align-items: center; gap: 12px; }
   .sleep-input input[type="range"] { flex: 1; accent-color: var(--sky); }
   .sleep-input .sleep-val {
@@ -2137,14 +2145,13 @@
             <div style="margin-top:12px;">
               <label style="font-size:11px;color:var(--ink-softer);margin-bottom:6px;display:block;">Qualité du sommeil</label>
               <div class="scale sleepquality" id="sleepQualityScale">
-                <button data-v="peaceful" aria-label="Sommeil paisible">😴</button>
-                <button data-v="restless" aria-label="Sommeil agité">😫</button>
-                <button data-v="fragmented" aria-label="Sommeil fragmenté">👁️</button>
-                <button data-v="insomnia" aria-label="Insomnie">😵</button>
-                <button data-v="nightmare" aria-label="Cauchemar">👹</button>
-                <button data-v="dream" aria-label="Rêves marquants">🌙</button>
+                <div class="sq-item"><button data-v="peaceful" aria-label="Sommeil paisible">😴</button><span class="sq-cap">Paisible</span></div>
+                <div class="sq-item"><button data-v="restless" aria-label="Sommeil agité">😫</button><span class="sq-cap">Agité</span></div>
+                <div class="sq-item"><button data-v="fragmented" aria-label="Sommeil fragmenté">👁️</button><span class="sq-cap">Réveils</span></div>
+                <div class="sq-item"><button data-v="insomnia" aria-label="Insomnie">😵</button><span class="sq-cap">Insomnie</span></div>
+                <div class="sq-item"><button data-v="nightmare" aria-label="Cauchemar">👹</button><span class="sq-cap">Cauchemar</span></div>
+                <div class="sq-item"><button data-v="dream" aria-label="Rêves marquants">🌙</button><span class="sq-cap">Rêve</span></div>
               </div>
-              <div class="sleepquality-label" id="sleepQualityLabel"></div>
             </div>
           </div>
           <div class="wb-block">
@@ -7026,7 +7033,12 @@ function setupWellbeing() {
   });
   // belly/endo scales now rendered dynamically in renderCustomSymptoms()
   document.querySelectorAll("#energyScale button").forEach(b => {
-    b.onclick = () => { getToday().energy = Number(b.dataset.v); saveState(); renderTodayView(); };
+    b.onclick = () => {
+      const t = getToday();
+      const v = Number(b.dataset.v);
+      t.energy = t.energy === v ? null : v; // reclic sur la même valeur = désélectionne
+      saveState(); renderTodayView();
+    };
   });
   document.querySelectorAll("#sleepQualityScale button").forEach(b => {
     b.onclick = () => {
