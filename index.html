@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1230</title>
+<title>Mon Tableau de Vie 🌿 · v1231</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23836,6 +23836,10 @@ function runShortcut(id) {
 function removeShortcut(id) {
   state.shortcuts = (state.shortcuts||[]).filter(s => s.id !== id);
   saveState(); renderShortcutsBar();
+  // Envoie tout de suite au cloud plutôt que d'attendre le délai normal (800ms + éventuellement
+  // perdu si l'appareil se met en veille juste après) — sinon un autre appareil ouvert avant que
+  // ça arrive voit encore l'ancienne liste, la sauvegarde, et republie l'ancienne liste par-dessus.
+  if (typeof _fbFlushPending === "function") _fbFlushPending();
 }
 
 function openShortcutsEditor() {
@@ -23873,6 +23877,9 @@ function toggleShortcut(id, on) {
   else state.shortcuts = state.shortcuts.filter(s => s.id !== id);
   saveState();
   renderShortcutsBar();
+  // Voir commentaire dans removeShortcut() : synchro immédiate pour éviter qu'un autre appareil
+  // resynchronise l'ancienne liste par-dessus avant que ce changement n'ait eu le temps d'arriver.
+  if (typeof _fbFlushPending === "function") _fbFlushPending();
 }
 
 function _renameCatDirect(list, catName) {
