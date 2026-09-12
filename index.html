@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1250</title>
+<title>Mon Tableau de Vie 🌿 · v1251</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4582,6 +4582,7 @@
     <div id="aiRecipeStatus" style="font-size:13px;color:var(--ink);margin-top:8px;min-height:0;white-space:pre-wrap;background:#fde8e8;border-radius:10px;padding:0;"></div>
     <div class="actions">
       <button class="secondary" onclick="_resetAiChat()" title="Effacer la conversation en cours">🔄 Nouvelle conversation</button>
+      <button class="secondary" id="aiUndoBtn" onclick="undoLastAiChange()" title="Revenir en arrière sur la dernière modification faite par l'IA" style="display:none;color:#c75b4d;">↩️ Annuler</button>
       <div class="spacer"></div>
       <button class="secondary" onclick="closeAiRecipeModal()">Fermer</button>
       <button class="primary" onclick="runAiAssistant()">✨ Envoyer</button>
@@ -21693,10 +21694,34 @@ const _AI_TOOLS = [
       required: ["name"],
     },
   },
+  {
+    name: "read_data",
+    description: "Lit une partie des données de l'application (le contenu réel : tâches, transactions, courses, notes, journal, etc.) pour voir ce qui existe déjà avant de le modifier ou d'en ajouter. Utilise un chemin pointé, ex: \"domestique.groceries\", \"work.tasks\", \"transactions\", \"history.2026-09-12\". Chemin vide = vue d'ensemble de premier niveau.",
+    input_schema: { type: "object", properties: { path: { type: "string" } }, required: [] },
+  },
+  {
+    name: "write_data",
+    description: "Crée, modifie ou supprime n'importe quelle donnée de l'application (tâche, transaction, article de courses, note, entrée de journal, réglage...) qui n'a pas d'outil dédié plus haut. Utilise read_data d'abord si tu n'es pas sûr(e) de la forme exacte des données à cet endroit. \"mode\" = \"append\" pour ajouter un élément à une liste, \"merge\" pour ne changer que certains champs d'un objet existant, \"set\" pour remplacer entièrement la valeur à ce chemin.",
+    input_schema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Chemin pointé dans les données, ex: domestique.groceries, work.tasks, transactions" },
+        value: { description: "La valeur à écrire (objet, texte, nombre, tableau...)" },
+        mode: { type: "string", enum: ["set", "merge", "append"] },
+      },
+      required: ["path", "value", "mode"],
+    },
+  },
 ];
-const _AI_SYSTEM_PROMPT = `Tu es l'assistant intégré à "Mon Tableau de Vie", une application personnelle de suivi (habitudes, santé, travail, activités, finances, domestique — courses/recettes/plantes/tâches —, calendrier, journal, piliers de vie). Réponds toujours en français, de façon brève et concrète.
-Si l'utilisatrice te demande d'effectuer une action que tu peux faire avec les outils fournis (enregistrer des pas, ajouter une recette, enregistrer un repas mangé), utilise l'outil correspondant plutôt que de répondre en texte. Si elle te demande une recette par son nom sans donner les détails, invente une recette plausible et complète avec tes propres connaissances. Pour log_food, estime les calories du repas décrit du mieux que tu peux à partir de tes connaissances générales. Si elle pose une question ou demande une explication sur le fonctionnement de l'app, réponds en texte simple, sans utiliser d'outil. C'est une conversation suivie : tiens compte des messages précédents pour comprendre les demandes qui font référence à ce qui a été dit avant.
+function _aiSystemPrompt() {
+  return `Tu es l'assistant intégré à "Mon Tableau de Vie", une application personnelle de suivi. Réponds toujours en français, de façon brève et concrète. C'est une conversation suivie : tiens compte des messages précédents.
+Aujourd'hui est le ${todayKey()}.
+Tu peux effectuer des actions avec les outils fournis plutôt que de seulement expliquer comment faire :
+- log_steps, add_recipe, log_food pour les cas courants (pas, recette, repas).
+- read_data / write_data pour TOUT LE RESTE : tâches (work.tasks), transactions (transactions), courses (domestique.groceries), plantes (domestique.plants), notes, entrées de journal (history.<date>.journal), réglages/fonctionnalités (features), et plus généralement n'importe quelle donnée de l'app. Utilise read_data pour voir la forme exacte des données existantes (champs utilisés, exemples) avant d'écrire avec write_data, pour rester cohérent avec ce qui existe déjà. Tu ne peux PAS modifier le code de l'application elle-même — seulement ses données.
+Si elle te demande une recette par son nom sans donner les détails, invente une recette plausible et complète avec tes propres connaissances. Pour log_food, estime les calories du mieux que tu peux. Si elle pose une question ou demande une explication sur le fonctionnement de l'app, réponds en texte simple, sans utiliser d'outil.
 Pour add_recipe, "quantity" est TOUJOURS un poids en grammes (convertis toi-même cl/l/cuillères en grammes) — jamais un nombre de pièces. Pour un aliment compté à la pièce (ex : un poivron, un oignon, un oeuf), laisse "quantity" vide et mets le nombre de pièces dans "unit" à la place (ex : quantity="", unit="1", name="poivron").`;
+}
 
 // Les trois fonctions ci-dessous prennent désormais tout l'historique de la conversation
 // (tableau [{role:"user"|"assistant", content}]) plutôt qu'un seul message, pour permettre un
@@ -21712,7 +21737,7 @@ async function _callClaude(key, history) {
       "anthropic-dangerous-direct-browser-access": "true",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-5", max_tokens: 1500, system: _AI_SYSTEM_PROMPT,
+      model: "claude-sonnet-5", max_tokens: 1500, system: _aiSystemPrompt(),
       tools: _AI_TOOLS, messages: history.map(m => ({ role: m.role, content: m.content })),
     }),
   });
@@ -21728,7 +21753,7 @@ async function _callOpenAI(key, history) {
     headers: { "content-type": "application/json", "authorization": "Bearer " + key },
     body: JSON.stringify({
       model: "gpt-4o-mini", temperature: 0.3,
-      messages: [{ role: "system", content: _AI_SYSTEM_PROMPT }, ...history.map(m => ({ role: m.role, content: m.content }))],
+      messages: [{ role: "system", content: _aiSystemPrompt() }, ...history.map(m => ({ role: m.role, content: m.content }))],
       tools: _AI_TOOLS.map(t => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.input_schema } })),
     }),
   });
@@ -21751,7 +21776,7 @@ async function _callGemini(key, history) {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: _AI_SYSTEM_PROMPT }] },
+        systemInstruction: { parts: [{ text: _aiSystemPrompt() }] },
         contents: history.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
         tools: [{ functionDeclarations: _AI_TOOLS.map(t => ({ name: t.name, description: t.description, parameters: t.input_schema })) }],
       }),
@@ -21769,8 +21794,57 @@ async function _callGemini(key, history) {
 }
 
 // Exécute réellement l'action demandée dans l'app, et renvoie un message de confirmation.
+// Filet de sécurité avant toute écriture directe de l'IA dans les données : ce projet a déjà
+// eu un incident de perte de données par le passé (voir mémoire du 2026-09-06), donc une
+// capacité aussi large que write_data mérite un vrai "annuler" et pas seulement de la confiance.
+let _aiUndoSnapshot = null;
+function _aiSnapshotBeforeWrite() {
+  _aiUndoSnapshot = JSON.parse(JSON.stringify(state));
+  const btn = document.getElementById("aiUndoBtn");
+  if (btn) btn.style.display = "";
+}
+function undoLastAiChange() {
+  if (!_aiUndoSnapshot) return;
+  state = _aiUndoSnapshot;
+  _aiUndoSnapshot = null;
+  saveState(); renderAll();
+  const btn = document.getElementById("aiUndoBtn");
+  if (btn) btn.style.display = "none";
+  _aiHistory.push({ role: "assistant", content: "↩️ Dernière modification annulée." });
+  _renderAiChat();
+}
+function _getByPath(obj, path) {
+  if (!path) return obj;
+  return path.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
+}
+function _setByPath(obj, path, value, mode) {
+  const keys = path.split(".");
+  const last = keys.pop();
+  let cur = obj;
+  for (const k of keys) {
+    if (cur[k] == null || typeof cur[k] !== "object") cur[k] = {};
+    cur = cur[k];
+  }
+  if (mode === "append") {
+    if (!Array.isArray(cur[last])) cur[last] = [];
+    cur[last].push(value);
+  } else if (mode === "merge" && cur[last] && typeof cur[last] === "object" && value && typeof value === "object") {
+    Object.assign(cur[last], value);
+  } else {
+    cur[last] = value;
+  }
+}
+// Réduit un objet trop volumineux avant de l'envoyer à l'IA (évite de gaspiller tout le
+// contexte de la conversation sur, par exemple, l'historique complet de plusieurs mois).
+function _truncateForAi(value, maxChars = 4000) {
+  const json = JSON.stringify(value, null, 1);
+  if (json.length <= maxChars) return json;
+  return json.slice(0, maxChars) + `\n… (tronqué, ${json.length} caractères au total — précise un chemin plus spécifique si besoin)`;
+}
+
 function _executeAiTool(name, input) {
   if (name === "log_steps") {
+    _aiSnapshotBeforeWrite();
     const steps = Number(input.steps) || 0;
     getToday().habits["h-pas"] = steps;
     saveState(); renderAll();
@@ -21786,6 +21860,7 @@ function _executeAiTool(name, input) {
     return `✅ Recette « ${input.name} » préparée dans le formulaire — vérifie et clique « Enregistrer ».`;
   }
   if (name === "log_food") {
+    _aiSnapshotBeforeWrite();
     const d = getToday();
     if (!d.foodLog) d.foodLog = [];
     const calories = Number(input.calories) || 0;
@@ -21797,6 +21872,28 @@ function _executeAiTool(name, input) {
     });
     saveState(); renderAll();
     return `✅ « ${input.name} » ajouté à ton journal alimentaire${calories ? " (~" + calories + " kcal)" : ""}.`;
+  }
+  if (name === "read_data") {
+    try {
+      const value = _getByPath(state, (input.path || "").trim());
+      if (value === undefined) return `⚠️ Rien trouvé à ce chemin : "${input.path || ""}".`;
+      return _truncateForAi(value);
+    } catch (e) {
+      return "⚠️ Chemin illisible : " + e.message;
+    }
+  }
+  if (name === "write_data") {
+    const path = (input.path || "").trim();
+    if (!path) return "⚠️ Chemin manquant — impossible de remplacer toutes les données d'un coup.";
+    try {
+      _aiSnapshotBeforeWrite();
+      _setByPath(state, path, input.value, input.mode || "set");
+      saveState(); renderAll();
+      return `✅ Donnée mise à jour (${path}). Tu peux annuler avec le bouton "↩️ Annuler" si ce n'est pas ce que tu voulais.`;
+    } catch (e) {
+      state = _aiUndoSnapshot || state; // si l'écriture plante en cours de route, on revient en arrière
+      return "❌ Écriture impossible : " + e.message;
+    }
   }
   return "⚠️ Action non reconnue.";
 }
