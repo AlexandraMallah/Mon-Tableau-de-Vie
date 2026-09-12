@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1236</title>
+<title>Mon Tableau de Vie 🌿 · v1237</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2039,11 +2039,11 @@
           <span id="weatherWind" style="white-space:nowrap;">Vent : —</span>
         </div>
       </div>
-      <div id="weatherControls" style="display:none;flex-direction:row;flex-wrap:wrap;gap:4px;align-items:center;">
-        <button onclick="fetchWeather(true)" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.6);font-size:11px;cursor:pointer;color:var(--ink-soft);" title="Utiliser ma position (géolocalisation)">🔄 Ma position</button>
+      <div id="weatherControls" style="display:none;flex-direction:column;gap:6px;align-items:stretch;width:100%;">
+        <button onclick="fetchWeather(true)" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.6);font-size:12px;cursor:pointer;color:var(--ink-soft);white-space:nowrap;" title="Utiliser ma position (géolocalisation)">📍 Autoriser la localisation</button>
         <div id="weatherCityInput" style="display:flex;gap:4px;">
-          <input type="text" id="weatherManualCity" placeholder="Ville…" style="padding:4px 8px;border:1px solid var(--line);border-radius:7px;font-size:11px;width:90px;font-family:inherit;" onkeydown="if(event.key==='Enter')fetchWeatherByCity()" />
-          <button onclick="fetchWeatherByCity()" style="padding:4px 8px;border-radius:7px;border:none;background:var(--lavender);color:white;font-size:11px;cursor:pointer;">OK</button>
+          <input type="text" id="weatherManualCity" placeholder="Ou indique ta ville…" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;flex:1;min-width:0;font-family:inherit;" onkeydown="if(event.key==='Enter')fetchWeatherByCity()" />
+          <button onclick="fetchWeatherByCity()" style="padding:6px 12px;border-radius:7px;border:none;background:var(--lavender);color:white;font-size:12px;cursor:pointer;flex-shrink:0;">OK</button>
         </div>
       </div>
     </div>
@@ -6053,12 +6053,15 @@ async function fetchWeather(force) {
     if (!force && state.weatherCity) { fetchWeatherByCity(); return; }
     document.getElementById("weatherTemp").textContent = "—";
     const denied = geoPerm === "denied" || (e && e.code === 1); // permission bloquée
+    // Message court dans weatherCity (grande police, pensée pour un nom de ville court) — le
+    // détail va dans weatherDesc (petite police) pour éviter l'énorme bloc de texte à gauche
+    // que ça donnait sur téléphone quand la permission n'est pas accordée.
     if (denied) {
-      document.getElementById("weatherCity").textContent = "📍 Localisation bloquée";
-      document.getElementById("weatherDesc").textContent = "Localisation bloquée — autorise-la dans les paramètres du navigateur";
+      document.getElementById("weatherCity").textContent = "📍 Météo";
+      document.getElementById("weatherDesc").textContent = "Localisation bloquée dans les réglages du navigateur — indique ta ville :";
     } else {
-      document.getElementById("weatherCity").textContent = "📍 Autoriser la localisation ou saisir une ville →";
-      document.getElementById("weatherDesc").textContent = "Localisation indisponible";
+      document.getElementById("weatherCity").textContent = "📍 Météo";
+      document.getElementById("weatherDesc").textContent = "Autorise la localisation ou indique ta ville :";
     }
     // Afficher les contrôles (Ma position + saisie ville) uniquement en cas d'échec
     const ctrl = document.getElementById("weatherControls");
