@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1244</title>
+<title>Mon Tableau de Vie 🌿 · v1245</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4545,25 +4545,36 @@
 
 <!-- Modal Assistant IA (recette) -->
 <div class="modal-bg" id="aiRecipeModal" onclick="event.target===this&&_modalMouseDownTarget===this&&closeAiRecipeModal()">
-  <div class="modal" style="max-width:480px;" onclick="event.stopPropagation()">
+  <div class="modal" style="max-width:520px;" onclick="event.stopPropagation()">
     <h2 style="margin:0 0 4px;">✨ Assistant IA</h2>
-    <p class="modal-hint">Utilise ton propre assistant IA (Claude ou ChatGPT, avec ta propre clé) pour t'aider dans l'app. Pour l'instant il sait structurer une recette collée dans n'importe quel format — d'autres actions arriveront plus tard.</p>
-    <label>Assistant</label>
-    <select id="aiProviderSelect" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;">
-      <option value="anthropic">Claude (Anthropic)</option>
-      <option value="openai">ChatGPT (OpenAI)</option>
-    </select>
-    <label>Clé API <span style="font-weight:400;color:var(--ink-softer);font-size:11px;">— reste uniquement sur cet appareil, jamais envoyée à nos serveurs</span></label>
-    <input type="password" id="aiApiKeyInput" placeholder="sk-… ou sk-ant-…"
-      style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:4px;box-sizing:border-box;" />
-    <p id="aiKeyHelp" style="font-size:11.5px;color:var(--ink-soft);margin:0 0 10px;"></p>
-    <label>Texte de la recette</label>
-    <textarea id="aiRecipeInput" rows="6" placeholder="Colle ici les ingrédients et la préparation…"
-      style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
-    <div id="aiRecipeStatus" style="font-size:12px;color:var(--ink-soft);margin-top:8px;min-height:16px;"></div>
+    <p class="modal-hint">Ton assistant personnel (Claude ou ChatGPT, avec ta propre clé) pour te faire gagner du temps dans l'app : lui demander d'enregistrer une info, d'ajouter une recette, ou d'expliquer comment faire quelque chose.</p>
+
+    <div id="aiConfigBlock" style="background:var(--bg-1);border-radius:12px;padding:12px 14px;margin-bottom:12px;">
+      <label>Assistant</label>
+      <select id="aiProviderSelect" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;">
+        <option value="anthropic">Claude (Anthropic)</option>
+        <option value="openai">ChatGPT (OpenAI)</option>
+      </select>
+      <label>Clé API <span style="font-weight:400;color:var(--ink-softer);font-size:11px;">— reste uniquement sur cet appareil, jamais envoyée à nos serveurs</span></label>
+      <input type="password" id="aiApiKeyInput" placeholder="Colle ta clé ici"
+        style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:6px;box-sizing:border-box;" oninput="_onAiKeyInput()" />
+      <details id="aiKeyHelpDetails" open>
+        <summary style="cursor:pointer;font-size:12px;color:var(--lavender);font-weight:600;">❓ C'est quoi une clé API, et où je la trouve ?</summary>
+        <div id="aiKeyHelp" style="font-size:12.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6;"></div>
+      </details>
+    </div>
+
+    <label>Que veux-tu faire ?</label>
+    <div style="display:flex;gap:6px;align-items:flex-start;">
+      <textarea id="aiRecipeInput" rows="4" placeholder="Ex : « J'ai marché 9000 pas aujourd'hui » · « Ajoute une recette de tarte aux pommes » · « Comment j'active le suivi du cycle ? »"
+        style="flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+      <button type="button" id="aiMicBtn" onclick="_toggleAiMic()" title="Dicter à la voix" style="display:none;flex-shrink:0;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:white;cursor:pointer;font-size:16px;">🎤</button>
+    </div>
+    <p style="font-size:11px;color:var(--ink-softer);margin:4px 0 0;">💡 Sur téléphone, tu peux aussi dicter directement avec le micro de ton clavier.</p>
+    <div id="aiRecipeStatus" style="font-size:13px;color:var(--ink);margin-top:10px;min-height:16px;white-space:pre-wrap;background:var(--butter-soft);border-radius:10px;padding:0;"></div>
     <div class="actions">
-      <button class="secondary" onclick="closeAiRecipeModal()">Annuler</button>
-      <button class="primary" onclick="runAiRecipeImport()">✨ Structurer avec l'IA</button>
+      <button class="secondary" onclick="closeAiRecipeModal()">Fermer</button>
+      <button class="primary" onclick="runAiAssistant()">✨ Envoyer</button>
     </div>
   </div>
 </div>
@@ -21472,32 +21483,126 @@ async function importRecipeFromUrl() {
   }
 }
 
-/* ---- Assistant IA (clé perso Claude ou ChatGPT, stockée uniquement en local) ---- */
-// Bouton accessible depuis l'en-tête sur tous les onglets, ET depuis le formulaire recette.
+/* ---- Assistant IA général (clé perso Claude ou ChatGPT, stockée uniquement en local) ---- */
+// Bouton accessible depuis l'en-tête sur tous les onglets. Peut répondre en texte (questions,
+// explications) ou effectuer une action concrète dans l'app via les outils déclarés dans _AI_TOOLS.
 const _AI_KEY_HELP = {
-  anthropic: 'Crée une clé sur <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com/settings/keys</a> (compte Anthropic requis, l\'usage est facturé à toi, pas à nous).',
-  openai: 'Crée une clé sur <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a> (compte OpenAI requis, l\'usage est facturé à toi, pas à nous).',
+  anthropic: `
+    <ol style="margin:0;padding-left:18px;">
+      <li>Va sur <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> et crée un compte gratuit (avec ton email), ou connecte-toi si tu en as déjà un.</li>
+      <li>Une fois connectée, cherche dans le menu à gauche un lien <strong>« API Keys »</strong> (clés API) — ou va directement sur <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com/settings/keys</a>.</li>
+      <li>Clique sur le bouton <strong>« Create Key »</strong> (créer une clé), donne-lui un nom si demandé (ex : « Mon Tableau de Vie »), puis valide.</li>
+      <li>Un code apparaît, commençant par <code>sk-ant-…</code>. <strong>Copie-le tout de suite</strong> — il ne sera plus jamais réaffiché ensuite.</li>
+      <li>Reviens ici et colle-le dans le champ juste au-dessus.</li>
+    </ol>
+    <p style="margin:8px 0 0;">⚠️ Anthropic demande en général d'ajouter un petit crédit (quelques euros) dans <strong>« Billing »</strong> avant que la clé fonctionne — c'est cette utilisation-là qui est facturée à toi directement, pas à nous.</p>`,
+  openai: `
+    <ol style="margin:0;padding-left:18px;">
+      <li>Va sur <a href="https://platform.openai.com" target="_blank" rel="noopener">platform.openai.com</a> et crée un compte gratuit (avec ton email), ou connecte-toi si tu en as déjà un.</li>
+      <li>Une fois connectée, va directement sur <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a>.</li>
+      <li>Clique sur le bouton <strong>« Create new secret key »</strong> (créer une nouvelle clé secrète), donne-lui un nom si demandé, puis valide.</li>
+      <li>Un code apparaît, commençant par <code>sk-…</code>. <strong>Copie-le tout de suite</strong> — il ne sera plus jamais réaffiché ensuite.</li>
+      <li>Reviens ici et colle-le dans le champ juste au-dessus.</li>
+    </ol>
+    <p style="margin:8px 0 0;">⚠️ OpenAI demande en général d'ajouter un petit crédit (quelques euros) dans <strong>« Billing »</strong> avant que la clé fonctionne — c'est cette utilisation-là qui est facturée à toi directement, pas à nous.</p>`,
 };
 function _updateAiKeyHelp() {
   const provider = document.getElementById("aiProviderSelect").value;
   document.getElementById("aiKeyHelp").innerHTML = _AI_KEY_HELP[provider] || "";
 }
+// Replie l'explication dès qu'une clé est déjà présente, pour ne pas l'imposer à chaque usage.
+function _onAiKeyInput() {
+  const has = !!document.getElementById("aiApiKeyInput").value.trim();
+  document.getElementById("aiKeyHelpDetails").open = !has;
+}
 function openAiRecipeModal() {
   const provider = localStorage.getItem("tableauDeVie_v3_aiProvider") || "anthropic";
   document.getElementById("aiProviderSelect").value = provider;
-  document.getElementById("aiApiKeyInput").value = localStorage.getItem("tableauDeVie_v3_aiKey_" + provider) || "";
+  const key = localStorage.getItem("tableauDeVie_v3_aiKey_" + provider) || "";
+  document.getElementById("aiApiKeyInput").value = key;
   document.getElementById("aiRecipeInput").value = "";
   document.getElementById("aiRecipeStatus").textContent = "";
+  document.getElementById("aiRecipeStatus").style.padding = "0";
+  document.getElementById("aiKeyHelpDetails").open = !key;
   _updateAiKeyHelp();
+  _initAiMic();
   document.getElementById("aiRecipeModal").classList.add("open");
 }
-function closeAiRecipeModal() { document.getElementById("aiRecipeModal").classList.remove("open"); }
+function closeAiRecipeModal() {
+  document.getElementById("aiRecipeModal").classList.remove("open");
+  _stopAiMic();
+}
 document.getElementById("aiProviderSelect")?.addEventListener("change", function() {
-  document.getElementById("aiApiKeyInput").value = localStorage.getItem("tableauDeVie_v3_aiKey_" + this.value) || "";
+  const key = localStorage.getItem("tableauDeVie_v3_aiKey_" + this.value) || "";
+  document.getElementById("aiApiKeyInput").value = key;
+  document.getElementById("aiKeyHelpDetails").open = !key;
   _updateAiKeyHelp();
 });
 
-async function _callClaude(key, prompt) {
+/* ---- Dictée vocale (facultative — sur iPhone, le micro du clavier fait déjà ça nativement) ---- */
+let _aiRecognition = null, _aiListening = false;
+function _initAiMic() {
+  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById("aiMicBtn");
+  if (!btn) return;
+  btn.style.display = Ctor ? "" : "none";
+}
+function _toggleAiMic() {
+  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Ctor) return;
+  const btn = document.getElementById("aiMicBtn");
+  if (_aiListening) { _stopAiMic(); return; }
+  _aiRecognition = new Ctor();
+  _aiRecognition.lang = "fr-FR";
+  _aiRecognition.interimResults = false;
+  _aiRecognition.onresult = (e) => {
+    const said = e.results[0][0].transcript;
+    const ta = document.getElementById("aiRecipeInput");
+    ta.value = (ta.value ? ta.value + " " : "") + said;
+  };
+  _aiRecognition.onerror = () => _stopAiMic();
+  _aiRecognition.onend = () => _stopAiMic();
+  _aiRecognition.start();
+  _aiListening = true;
+  btn.style.background = "var(--rose-soft)";
+  btn.style.borderColor = "var(--pink)";
+}
+function _stopAiMic() {
+  if (_aiRecognition) { try { _aiRecognition.stop(); } catch (e) {} _aiRecognition = null; }
+  _aiListening = false;
+  const btn = document.getElementById("aiMicBtn");
+  if (btn) { btn.style.background = "white"; btn.style.borderColor = "var(--line)"; }
+}
+
+/* ---- Outils que l'assistant peut réellement exécuter dans l'app ---- */
+const _AI_TOOLS = [
+  {
+    name: "log_steps",
+    description: "Enregistre le nombre de pas fait aujourd'hui dans le suivi Santé de l'application.",
+    input_schema: { type: "object", properties: { steps: { type: "number", description: "Nombre de pas" } }, required: ["steps"] },
+  },
+  {
+    name: "add_recipe",
+    description: "Crée une nouvelle recette dans l'onglet Domestique > Cuisine > Recettes de l'application, à partir d'un nom de plat connu ou d'un texte de recette fourni par l'utilisateur.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        servings: { type: "number", description: "Nombre de portions" },
+        ingredients: {
+          type: "array",
+          items: { type: "object", properties: { quantity: { type: "string" }, unit: { type: "string" }, name: { type: "string" } }, required: ["name"] },
+        },
+        notes: { type: "string", description: "Étapes de préparation, résumées" },
+      },
+      required: ["name", "ingredients"],
+    },
+  },
+];
+const _AI_SYSTEM_PROMPT = `Tu es l'assistant intégré à "Mon Tableau de Vie", une application personnelle de suivi (habitudes, santé, travail, activités, finances, domestique — courses/recettes/plantes/tâches —, calendrier, journal, piliers de vie). Réponds toujours en français, de façon brève et concrète.
+Si l'utilisatrice te demande d'effectuer une action que tu peux faire avec les outils fournis (enregistrer des pas, ajouter une recette), utilise l'outil correspondant plutôt que de répondre en texte. Si elle te demande une recette par son nom sans donner les détails, invente une recette plausible et complète avec tes propres connaissances. Si elle pose une question ou demande une explication sur le fonctionnement de l'app, réponds en texte simple, sans utiliser d'outil.`;
+
+async function _callClaude(key, text) {
   const resp = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -21506,54 +21611,79 @@ async function _callClaude(key, prompt) {
       "anthropic-version": "2023-06-01",
       "anthropic-dangerous-direct-browser-access": "true",
     },
-    body: JSON.stringify({ model: "claude-sonnet-5", max_tokens: 1500, messages: [{ role: "user", content: prompt }] }),
+    body: JSON.stringify({
+      model: "claude-sonnet-5", max_tokens: 1500, system: _AI_SYSTEM_PROMPT,
+      tools: _AI_TOOLS, messages: [{ role: "user", content: text }],
+    }),
   });
   if (!resp.ok) throw new Error("Claude a répondu une erreur (" + resp.status + ") — vérifie ta clé API.");
   const data = await resp.json();
-  return data.content?.[0]?.text || "";
+  const toolBlock = (data.content || []).find(b => b.type === "tool_use");
+  const textBlock = (data.content || []).find(b => b.type === "text");
+  return { toolName: toolBlock?.name || null, toolInput: toolBlock?.input || null, text: textBlock?.text || "" };
 }
-async function _callOpenAI(key, prompt) {
+async function _callOpenAI(key, text) {
   const resp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "content-type": "application/json", "authorization": "Bearer " + key },
-    body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], temperature: 0.3 }),
+    body: JSON.stringify({
+      model: "gpt-4o-mini", temperature: 0.3,
+      messages: [{ role: "system", content: _AI_SYSTEM_PROMPT }, { role: "user", content: text }],
+      tools: _AI_TOOLS.map(t => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.input_schema } })),
+    }),
   });
   if (!resp.ok) throw new Error("ChatGPT a répondu une erreur (" + resp.status + ") — vérifie ta clé API.");
   const data = await resp.json();
-  return data.choices?.[0]?.message?.content || "";
+  const msg = data.choices?.[0]?.message || {};
+  const call = (msg.tool_calls || [])[0];
+  let toolInput = null;
+  if (call) { try { toolInput = JSON.parse(call.function.arguments); } catch (e) {} }
+  return { toolName: call?.function?.name || null, toolInput, text: msg.content || "" };
 }
-function _extractJsonFromAiReply(text) {
-  const m = String(text || "").match(/\{[\s\S]*\}/);
-  if (!m) return null;
-  try { return JSON.parse(m[0]); } catch (e) { return null; }
+
+// Exécute réellement l'action demandée dans l'app, et renvoie un message de confirmation.
+function _executeAiTool(name, input) {
+  if (name === "log_steps") {
+    const steps = Number(input.steps) || 0;
+    getToday().habits["h-pas"] = steps;
+    saveState(); renderAll();
+    return `✅ ${steps.toLocaleString("fr-FR")} pas enregistrés pour aujourd'hui.`;
+  }
+  if (name === "add_recipe") {
+    if (!document.getElementById("recipeModal").classList.contains("open")) openRecipeModal(null);
+    _applyImportedRecipe({ name: input.name, servings: input.servings, ingredients: input.ingredients, notes: input.notes });
+    // Amène visuellement sur l'onglet où la recette va apparaître une fois enregistrée.
+    document.querySelector('.tab[data-view="domestic"]')?.click();
+    document.querySelector('[data-sub="alimentation"]')?.click();
+    switchFoodTab("cuisine");
+    return `✅ Recette « ${input.name} » préparée dans le formulaire — vérifie et clique « Enregistrer ».`;
+  }
+  return "⚠️ Action non reconnue.";
 }
-async function runAiRecipeImport() {
+
+async function runAiAssistant() {
   const provider = document.getElementById("aiProviderSelect").value;
   const key = document.getElementById("aiApiKeyInput").value.trim();
   const text = document.getElementById("aiRecipeInput").value.trim();
   const statusEl = document.getElementById("aiRecipeStatus");
-  if (!key) { statusEl.textContent = "⚠️ Ajoute ta clé API pour continuer."; return; }
-  if (!text) { statusEl.textContent = "⚠️ Colle d'abord le texte de la recette."; return; }
+  const setStatus = (msg, bg) => { statusEl.textContent = msg; statusEl.style.padding = msg ? "8px 12px" : "0"; statusEl.style.background = bg || "var(--butter-soft)"; };
+  if (!key) { setStatus("⚠️ Ajoute ta clé API ci-dessus pour continuer (voir l'explication juste en dessous)."); return; }
+  if (!text) { setStatus("⚠️ Écris ou dicte d'abord ce que tu veux faire."); return; }
   localStorage.setItem("tableauDeVie_v3_aiProvider", provider);
   localStorage.setItem("tableauDeVie_v3_aiKey_" + provider, key);
-  statusEl.textContent = "⏳ L'IA structure la recette…";
-  const prompt = `Voici un texte de recette de cuisine, dans un format libre. Structure-le en JSON STRICT (uniquement le JSON, sans \`\`\` ni texte autour), avec exactement ces clés :
-{"name": string, "servings": number, "ingredients": [{"quantity": string, "unit": string, "name": string}], "notes": string}
-"notes" contient les étapes de préparation résumées en texte simple, avec des retours à la ligne. Si une info manque, fais une estimation raisonnable plutôt que de la laisser vide. Voici le texte :
----
-${text}`;
+  setStatus("⏳ L'assistant réfléchit…");
   try {
-    const reply = provider === "anthropic" ? await _callClaude(key, prompt) : await _callOpenAI(key, prompt);
-    const parsed = _extractJsonFromAiReply(reply);
-    if (!parsed) { statusEl.textContent = "❌ Réponse de l'IA illisible — réessaie."; return; }
-    closeAiRecipeModal();
-    // Si l'assistant a été ouvert depuis l'en-tête (pas depuis le formulaire recette déjà
-    // ouvert), on ouvre une nouvelle recette vierge pour y appliquer le résultat.
-    if (!document.getElementById("recipeModal").classList.contains("open")) openRecipeModal(null);
-    _applyImportedRecipe(parsed);
-    document.getElementById("recipeImportStatus").textContent = "✅ Recette structurée par l'IA — vérifie et complète si besoin.";
+    const result = provider === "anthropic" ? await _callClaude(key, text) : await _callOpenAI(key, text);
+    if (result.toolName) {
+      const confirmMsg = _executeAiTool(result.toolName, result.toolInput || {});
+      setStatus(confirmMsg, "var(--mint-soft)");
+    } else if (result.text) {
+      setStatus(result.text);
+    } else {
+      setStatus("❌ Réponse vide — réessaie en reformulant.", "#fde8e8");
+    }
   } catch (e) {
-    statusEl.textContent = "❌ " + (e.message || "Erreur pendant l'appel à l'IA.");
+    setStatus("❌ " + (e.message || "Erreur pendant l'appel à l'IA."), "#fde8e8");
   }
 }
 
