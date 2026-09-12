@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1247</title>
+<title>Mon Tableau de Vie 🌿 · v1248</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21435,11 +21435,36 @@ function deleteRecipe() {
 
 // Découpe une ligne d'ingrédient en texte libre ("200 g de farine") en quantité/unité/nom.
 // Heuristique best-effort : à vérifier/corriger à la main après import, comme tout import auto.
+// Poids/volumes/mesures qu'on convertit directement en grammes (estimation courante en
+// cuisine — une cuillère à soupe de farine et une d'huile ne pèsent pas pareil en vrai, mais
+// c'est l'ordre de grandeur habituel). But : tout ce qui se mesure finit en grammes, comme
+// demandé — seuls les aliments qui se comptent à la pièce (1 poivron, 3 oeufs…) gardent un
+// simple nombre sans unité, le nom de l'ingrédient dit déjà ce qui est compté.
+const _ING_GRAM_FACTORS = {
+  "kg": 1000, "g": 1, "mg": 0.001,
+  "l": 1000, "dl": 100, "cl": 10, "ml": 1,
+  "cuillère à soupe": 15, "cuillères à soupe": 15, "c. à soupe": 15, "c à s": 15, "càs": 15,
+  "cuillère à café": 5, "cuillères à café": 5, "c. à café": 5, "c à c": 5, "càc": 5,
+  "cuillerée": 15, "cuillerées": 15,
+  "pincée": 1, "pincées": 1,
+  "tasse": 200, "tasses": 200,
+};
 function _parseIngredientLine(line) {
   line = String(line || "").trim();
-  const m = line.match(/^([\d]+(?:[.,\/][\d]+)?)\s*(cuillères?\s+à\s+soupe|cuillères?\s+à\s+café|c\.?\s?à\s?s(?:\.|oupe)?|c\.?\s?à\s?c(?:\.|afé)?|cuillerées?|càs|càc|kg|g|mg|ml|cl|dl|l|tasses?|pincées?|gousses?|tranches?|sachets?|verres?|boîtes?|bottes?|unités?)?\s*(?:de\s+|d')?(.+)$/i);
-  if (m) return { quantity: m[1].replace(",", "."), unit: (m[2] || "").trim(), name: m[3].trim() };
-  return { quantity: "", unit: "", name: line };
+  const unitPattern = "cuillères?\\s+à\\s+soupe|cuillères?\\s+à\\s+café|c\\.?\\s?à\\s?s(?:\\.|oupe)?|c\\.?\\s?à\\s?c(?:\\.|afé)?|cuillerées?|càs|càc|kg|g|mg|ml|cl|dl|l|tasses?|pincées?|gousses?|tranches?|sachets?|verres?|boîtes?|bottes?|unités?";
+  const m = line.match(new RegExp("^([\\d]+(?:[.,\\/][\\d]+)?)\\s*(" + unitPattern + ")?\\s*(?:de\\s+|d')?(.+)$", "i"));
+  if (!m) return { quantity: "", unit: "", name: line };
+  const qty = parseFloat(m[1].replace(",", ".").replace("/", "."));
+  const rawUnit = (m[2] || "").trim().toLowerCase().replace(/^c\.?\s?à\s?s\.?$/, "c à s").replace(/^c\.?\s?à\s?c\.?$/, "c à c");
+  const name = m[3].trim();
+  const gramFactor = _ING_GRAM_FACTORS[rawUnit];
+  if (rawUnit && gramFactor != null) {
+    // Mesure de poids/volume connue → convertie en grammes, pas d'unité affichée.
+    return { quantity: String(Math.round(qty * gramFactor * 100) / 100), unit: "", name };
+  }
+  // Sinon : soit une unité "à la pièce" (gousse, tranche, sachet…) qu'on garde telle quelle,
+  // soit pas d'unité du tout (ex : "1 poivron") — le nombre seul suffit alors comme portion.
+  return { quantity: m[1].replace(",", "."), unit: (m[2] || "").trim(), name };
 }
 
 // Remplit le formulaire recette ouvert à partir de données importées (URL ou IA) —
@@ -21614,7 +21639,8 @@ const _AI_TOOLS = [
   },
 ];
 const _AI_SYSTEM_PROMPT = `Tu es l'assistant intégré à "Mon Tableau de Vie", une application personnelle de suivi (habitudes, santé, travail, activités, finances, domestique — courses/recettes/plantes/tâches —, calendrier, journal, piliers de vie). Réponds toujours en français, de façon brève et concrète.
-Si l'utilisatrice te demande d'effectuer une action que tu peux faire avec les outils fournis (enregistrer des pas, ajouter une recette), utilise l'outil correspondant plutôt que de répondre en texte. Si elle te demande une recette par son nom sans donner les détails, invente une recette plausible et complète avec tes propres connaissances. Si elle pose une question ou demande une explication sur le fonctionnement de l'app, réponds en texte simple, sans utiliser d'outil.`;
+Si l'utilisatrice te demande d'effectuer une action que tu peux faire avec les outils fournis (enregistrer des pas, ajouter une recette), utilise l'outil correspondant plutôt que de répondre en texte. Si elle te demande une recette par son nom sans donner les détails, invente une recette plausible et complète avec tes propres connaissances. Si elle pose une question ou demande une explication sur le fonctionnement de l'app, réponds en texte simple, sans utiliser d'outil.
+Pour add_recipe, les quantités des ingrédients doivent être exprimées en grammes autant que possible (convertis toi-même cl/l/cuillères en grammes), le champ "unit" restant vide dans ce cas. Ne laisse "quantity" en simple nombre sans "unit" que pour les aliments comptés à la pièce (ex : quantity="1", unit="", name="poivron").`;
 
 async function _callClaude(key, text) {
   const resp = await fetch("https://api.anthropic.com/v1/messages", {
