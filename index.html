@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1246</title>
+<title>Mon Tableau de Vie 🌿 · v1247</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4557,8 +4557,9 @@
     <div id="aiConfigBlock" style="background:var(--bg-1);border-radius:12px;padding:12px 14px;margin-bottom:12px;">
       <label>Assistant</label>
       <select id="aiProviderSelect" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;">
-        <option value="anthropic">Claude (Anthropic)</option>
-        <option value="openai">ChatGPT (OpenAI)</option>
+        <option value="gemini">Gemini (Google — gratuit)</option>
+        <option value="anthropic">Claude (Anthropic — payant)</option>
+        <option value="openai">ChatGPT (OpenAI — payant)</option>
       </select>
       <label>Clé API <span style="font-weight:400;color:var(--ink-softer);font-size:11px;">— reste uniquement sur cet appareil, jamais envoyée à nos serveurs</span></label>
       <input type="password" id="aiApiKeyInput" placeholder="Colle ta clé ici"
@@ -21492,6 +21493,14 @@ async function importRecipeFromUrl() {
 // Bouton accessible depuis l'en-tête sur tous les onglets. Peut répondre en texte (questions,
 // explications) ou effectuer une action concrète dans l'app via les outils déclarés dans _AI_TOOLS.
 const _AI_KEY_HELP = {
+  gemini: `
+    <ol style="margin:0;padding-left:18px;">
+      <li>Va sur <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> et connecte-toi avec un compte Google (le tien, celui de ta boîte mail Gmail par exemple).</li>
+      <li>Clique sur le bouton <strong>« Create API key »</strong> (créer une clé API).</li>
+      <li>Un code apparaît. <strong>Copie-le</strong> (avec le petit bouton copier à côté).</li>
+      <li>Reviens ici et colle-le dans le champ juste au-dessus.</li>
+    </ol>
+    <p style="margin:8px 0 0;">✅ Gratuit — Google offre un usage gratuit de son IA Gemini par ce moyen, aucune carte bancaire à ajouter pour un usage comme le tien.</p>`,
   anthropic: `
     <ol style="margin:0;padding-left:18px;">
       <li>Va sur <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> et crée un compte gratuit (avec ton email), ou connecte-toi si tu en as déjà un.</li>
@@ -21521,7 +21530,7 @@ function _onAiKeyInput() {
   document.getElementById("aiKeyHelpDetails").open = !has;
 }
 function openAiRecipeModal() {
-  const provider = localStorage.getItem("tableauDeVie_v3_aiProvider") || "anthropic";
+  const provider = localStorage.getItem("tableauDeVie_v3_aiProvider") || "gemini";
   document.getElementById("aiProviderSelect").value = provider;
   const key = localStorage.getItem("tableauDeVie_v3_aiKey_" + provider) || "";
   document.getElementById("aiApiKeyInput").value = key;
@@ -21645,6 +21654,23 @@ async function _callOpenAI(key, text) {
   if (call) { try { toolInput = JSON.parse(call.function.arguments); } catch (e) {} }
   return { toolName: call?.function?.name || null, toolInput, text: msg.content || "" };
 }
+async function _callGemini(key, text) {
+  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: _AI_SYSTEM_PROMPT }] },
+      contents: [{ role: "user", parts: [{ text }] }],
+      tools: [{ functionDeclarations: _AI_TOOLS.map(t => ({ name: t.name, description: t.description, parameters: t.input_schema })) }],
+    }),
+  });
+  if (!resp.ok) throw new Error("Gemini a répondu une erreur (" + resp.status + ") — vérifie ta clé API.");
+  const data = await resp.json();
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  const fnPart = parts.find(p => p.functionCall);
+  const textPart = parts.find(p => p.text);
+  return { toolName: fnPart?.functionCall?.name || null, toolInput: fnPart?.functionCall?.args || null, text: textPart?.text || "" };
+}
 
 // Exécute réellement l'action demandée dans l'app, et renvoie un message de confirmation.
 function _executeAiTool(name, input) {
@@ -21678,7 +21704,9 @@ async function runAiAssistant() {
   localStorage.setItem("tableauDeVie_v3_aiKey_" + provider, key);
   setStatus("⏳ L'assistant réfléchit…");
   try {
-    const result = provider === "anthropic" ? await _callClaude(key, text) : await _callOpenAI(key, text);
+    const result = provider === "anthropic" ? await _callClaude(key, text)
+      : provider === "openai" ? await _callOpenAI(key, text)
+      : await _callGemini(key, text);
     if (result.toolName) {
       const confirmMsg = _executeAiTool(result.toolName, result.toolInput || {});
       setStatus(confirmMsg, "var(--mint-soft)");
