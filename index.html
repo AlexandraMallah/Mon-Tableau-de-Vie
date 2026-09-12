@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1248</title>
+<title>Mon Tableau de Vie 🌿 · v1249</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21435,11 +21435,14 @@ function deleteRecipe() {
 
 // Découpe une ligne d'ingrédient en texte libre ("200 g de farine") en quantité/unité/nom.
 // Heuristique best-effort : à vérifier/corriger à la main après import, comme tout import auto.
-// Poids/volumes/mesures qu'on convertit directement en grammes (estimation courante en
-// cuisine — une cuillère à soupe de farine et une d'huile ne pèsent pas pareil en vrai, mais
-// c'est l'ordre de grandeur habituel). But : tout ce qui se mesure finit en grammes, comme
-// demandé — seuls les aliments qui se comptent à la pièce (1 poivron, 3 oeufs…) gardent un
-// simple nombre sans unité, le nom de l'ingrédient dit déjà ce qui est compté.
+//
+// Les deux cases du formulaire recette ont un sens précis (voir addRecipeIngredient et
+// _autoFillRecipeIngKcal) : la case "quantité" est un poids en GRAMMES, la case "unité" est un
+// NOMBRE DE PIÈCES (ex : "1 unité" = 1 poivron). Donc :
+//   - "200 g de farine", "50 cl de crème" → un poids connu → converti en grammes, case unité vide.
+//   - "1 oignon", "3 jaunes d'oeuf" → un aliment compté à la pièce → le nombre va dans la case
+//     unité, la case grammes reste vide (le nom garde le mot descriptif s'il y en avait un,
+//     ex : "gousses d'ail").
 const _ING_GRAM_FACTORS = {
   "kg": 1000, "g": 1, "mg": 0.001,
   "l": 1000, "dl": 100, "cl": 10, "ml": 1,
@@ -21452,19 +21455,21 @@ const _ING_GRAM_FACTORS = {
 function _parseIngredientLine(line) {
   line = String(line || "").trim();
   const unitPattern = "cuillères?\\s+à\\s+soupe|cuillères?\\s+à\\s+café|c\\.?\\s?à\\s?s(?:\\.|oupe)?|c\\.?\\s?à\\s?c(?:\\.|afé)?|cuillerées?|càs|càc|kg|g|mg|ml|cl|dl|l|tasses?|pincées?|gousses?|tranches?|sachets?|verres?|boîtes?|bottes?|unités?";
-  const m = line.match(new RegExp("^([\\d]+(?:[.,\\/][\\d]+)?)\\s*(" + unitPattern + ")?\\s*(?:de\\s+|d')?(.+)$", "i"));
+  // \b après le groupe d'unité : sans ça, l'abréviation courte "g" matchait le début du mot
+  // "gousses" avant même que le moteur regex essaie l'alternative plus longue "gousses?".
+  const m = line.match(new RegExp("^([\\d]+(?:[.,\\/][\\d]+)?)\\s*(" + unitPattern + ")?\\b\\s*(?:de\\s+|d')?(.+)$", "i"));
   if (!m) return { quantity: "", unit: "", name: line };
   const qty = parseFloat(m[1].replace(",", ".").replace("/", "."));
   const rawUnit = (m[2] || "").trim().toLowerCase().replace(/^c\.?\s?à\s?s\.?$/, "c à s").replace(/^c\.?\s?à\s?c\.?$/, "c à c");
-  const name = m[3].trim();
   const gramFactor = _ING_GRAM_FACTORS[rawUnit];
   if (rawUnit && gramFactor != null) {
-    // Mesure de poids/volume connue → convertie en grammes, pas d'unité affichée.
-    return { quantity: String(Math.round(qty * gramFactor * 100) / 100), unit: "", name };
+    // Mesure de poids/volume connue → convertie en grammes, case unité vide.
+    return { quantity: String(Math.round(qty * gramFactor * 100) / 100), unit: "", name: m[3].trim() };
   }
-  // Sinon : soit une unité "à la pièce" (gousse, tranche, sachet…) qu'on garde telle quelle,
-  // soit pas d'unité du tout (ex : "1 poivron") — le nombre seul suffit alors comme portion.
-  return { quantity: m[1].replace(",", "."), unit: (m[2] || "").trim(), name };
+  // Aliment compté à la pièce : le nombre va dans la case unité, pas dans la case grammes.
+  // Si un mot de comptage était présent (gousse, tranche…), on le garde dans le nom.
+  const name = rawUnit ? rawUnit + " " + m[3].trim() : m[3].trim();
+  return { quantity: "", unit: m[1].replace(",", "."), name };
 }
 
 // Remplit le formulaire recette ouvert à partir de données importées (URL ou IA) —
@@ -21586,18 +21591,31 @@ function _initAiMic() {
   if (!btn) return;
   btn.style.display = Ctor ? "" : "none";
 }
+let _aiMicBaseText = "";
 function _toggleAiMic() {
   const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!Ctor) return;
   const btn = document.getElementById("aiMicBtn");
   if (_aiListening) { _stopAiMic(); return; }
+  const ta = document.getElementById("aiRecipeInput");
+  // Ce qui était déjà écrit avant d'appuyer sur le micro — on complète dessus, on ne l'efface pas.
+  _aiMicBaseText = ta.value.trim();
   _aiRecognition = new Ctor();
   _aiRecognition.lang = "fr-FR";
-  _aiRecognition.interimResults = false;
+  _aiRecognition.continuous = false;
+  _aiRecognition.interimResults = true;
+  let finalTranscript = "";
   _aiRecognition.onresult = (e) => {
-    const said = e.results[0][0].transcript;
-    const ta = document.getElementById("aiRecipeInput");
-    ta.value = (ta.value ? ta.value + " " : "") + said;
+    // Reconstruit TOUT le texte à chaque événement (au lieu d'ajouter au fur et à mesure) :
+    // certains navigateurs redéclenchent onresult plusieurs fois pour la même phrase, et
+    // ajouter bêtement à chaque fois dupliquait des bouts entiers ("j'ai marché j'ai marché…").
+    let interim = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    const said = (finalTranscript + " " + interim).trim();
+    ta.value = _aiMicBaseText ? _aiMicBaseText + (said ? " " + said : "") : said;
   };
   _aiRecognition.onerror = () => _stopAiMic();
   _aiRecognition.onend = () => _stopAiMic();
@@ -21640,7 +21658,7 @@ const _AI_TOOLS = [
 ];
 const _AI_SYSTEM_PROMPT = `Tu es l'assistant intégré à "Mon Tableau de Vie", une application personnelle de suivi (habitudes, santé, travail, activités, finances, domestique — courses/recettes/plantes/tâches —, calendrier, journal, piliers de vie). Réponds toujours en français, de façon brève et concrète.
 Si l'utilisatrice te demande d'effectuer une action que tu peux faire avec les outils fournis (enregistrer des pas, ajouter une recette), utilise l'outil correspondant plutôt que de répondre en texte. Si elle te demande une recette par son nom sans donner les détails, invente une recette plausible et complète avec tes propres connaissances. Si elle pose une question ou demande une explication sur le fonctionnement de l'app, réponds en texte simple, sans utiliser d'outil.
-Pour add_recipe, les quantités des ingrédients doivent être exprimées en grammes autant que possible (convertis toi-même cl/l/cuillères en grammes), le champ "unit" restant vide dans ce cas. Ne laisse "quantity" en simple nombre sans "unit" que pour les aliments comptés à la pièce (ex : quantity="1", unit="", name="poivron").`;
+Pour add_recipe, "quantity" est TOUJOURS un poids en grammes (convertis toi-même cl/l/cuillères en grammes) — jamais un nombre de pièces. Pour un aliment compté à la pièce (ex : un poivron, un oignon, un oeuf), laisse "quantity" vide et mets le nombre de pièces dans "unit" à la place (ex : quantity="", unit="1", name="poivron").`;
 
 async function _callClaude(key, text) {
   const resp = await fetch("https://api.anthropic.com/v1/messages", {
@@ -21680,17 +21698,27 @@ async function _callOpenAI(key, text) {
   if (call) { try { toolInput = JSON.parse(call.function.arguments); } catch (e) {} }
   return { toolName: call?.function?.name || null, toolInput, text: msg.content || "" };
 }
+// Google renomme/retire régulièrement ses modèles (ex : "gemini-2.0-flash" a fini par
+// disparaître de l'API) — on essaie plusieurs noms courants dans l'ordre, et on ne s'arrête
+// que sur la première réponse qui n'est pas un simple "modèle introuvable" (404).
+const _GEMINI_MODELS = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
 async function _callGemini(key, text) {
-  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: _AI_SYSTEM_PROMPT }] },
-      contents: [{ role: "user", parts: [{ text }] }],
-      tools: [{ functionDeclarations: _AI_TOOLS.map(t => ({ name: t.name, description: t.description, parameters: t.input_schema })) }],
-    }),
-  });
-  if (!resp.ok) throw new Error("Gemini a répondu une erreur (" + resp.status + ") — vérifie ta clé API.");
+  let resp, lastErr;
+  for (const model of _GEMINI_MODELS) {
+    resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: _AI_SYSTEM_PROMPT }] },
+        contents: [{ role: "user", parts: [{ text }] }],
+        tools: [{ functionDeclarations: _AI_TOOLS.map(t => ({ name: t.name, description: t.description, parameters: t.input_schema })) }],
+      }),
+    });
+    if (resp.ok) break;
+    lastErr = resp.status;
+    if (resp.status !== 404) break; // une autre erreur (ex : clé invalide) ne sert à rien de réessayer
+  }
+  if (!resp.ok) throw new Error(lastErr === 404 ? "Gemini : aucun modèle disponible n'a répondu — réessaie plus tard." : "Gemini a répondu une erreur (" + lastErr + ") — vérifie ta clé API.");
   const data = await resp.json();
   const parts = data.candidates?.[0]?.content?.parts || [];
   const fnPart = parts.find(p => p.functionCall);
