@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1252</title>
+<title>Mon Tableau de Vie 🌿 · v1253</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4561,7 +4561,7 @@
         <option value="anthropic">Claude (Anthropic — payant)</option>
         <option value="openai">ChatGPT (OpenAI — payant)</option>
       </select>
-      <label>Clé API <span style="font-weight:400;color:var(--ink-softer);font-size:11px;">— reste uniquement sur cet appareil, jamais envoyée à nos serveurs</span></label>
+      <label>Clé API <span style="font-weight:400;color:var(--ink-softer);font-size:11px;">— synchronisée entre tes appareils comme le reste de tes données, protégée par ton compte : personne d'autre que toi ne peut y accéder</span></label>
       <input type="password" id="aiApiKeyInput" placeholder="Colle ta clé ici"
         style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:6px;box-sizing:border-box;" oninput="_onAiKeyInput()" />
       <details id="aiKeyHelpDetails" open>
@@ -5875,6 +5875,10 @@ function migrate(s) {
   if (s.features.routineSoir === undefined) s.features.routineSoir = true;
   if (s.features.bodyComp === undefined) s.features.bodyComp = false;
   if (s.features.energyBalance === undefined) s.features.energyBalance = false;
+  // Assistant IA : fournisseur + clés API — synchronisées comme le reste des données (même
+  // protection que tout le reste : accessible uniquement depuis le compte de l'utilisatrice).
+  if (!s.aiAssistant) s.aiAssistant = { provider: "gemini", keys: {} };
+  if (!s.aiAssistant.keys) s.aiAssistant.keys = {};
   // Migration (une seule fois) : Suivi poids / Suivi calorique / Balance énergétique
   // sont désormais désactivés par défaut dans Composition corporelle — si jamais
   // utilisés (aucune donnée réelle saisie), on les repasse à false. Le profil
@@ -21565,9 +21569,9 @@ function _onAiKeyInput() {
   document.getElementById("aiKeyHelpDetails").open = !has;
 }
 function openAiRecipeModal() {
-  const provider = localStorage.getItem("tableauDeVie_v3_aiProvider") || "gemini";
+  const provider = state.aiAssistant?.provider || "gemini";
   document.getElementById("aiProviderSelect").value = provider;
-  const key = localStorage.getItem("tableauDeVie_v3_aiKey_" + provider) || "";
+  const key = state.aiAssistant?.keys?.[provider] || "";
   document.getElementById("aiApiKeyInput").value = key;
   document.getElementById("aiRecipeInput").value = "";
   document.getElementById("aiRecipeStatus").textContent = "";
@@ -21603,7 +21607,7 @@ function _renderAiChat() {
   box.scrollTop = box.scrollHeight;
 }
 document.getElementById("aiProviderSelect")?.addEventListener("change", function() {
-  const key = localStorage.getItem("tableauDeVie_v3_aiKey_" + this.value) || "";
+  const key = state.aiAssistant?.keys?.[this.value] || "";
   document.getElementById("aiApiKeyInput").value = key;
   document.getElementById("aiKeyHelpDetails").open = !key;
   _updateAiKeyHelp();
@@ -21906,8 +21910,10 @@ async function runAiAssistant() {
   const setError = (msg) => { statusEl.textContent = msg; statusEl.style.padding = msg ? "8px 12px" : "0"; };
   if (!key) { setError("⚠️ Ajoute ta clé API ci-dessus pour continuer (voir l'explication juste en dessous)."); return; }
   if (!text) { setError("⚠️ Écris ou dicte d'abord ce que tu veux faire."); return; }
-  localStorage.setItem("tableauDeVie_v3_aiProvider", provider);
-  localStorage.setItem("tableauDeVie_v3_aiKey_" + provider, key);
+  if (!state.aiAssistant) state.aiAssistant = { provider: "gemini", keys: {} };
+  state.aiAssistant.provider = provider;
+  state.aiAssistant.keys[provider] = key;
+  saveState(); // synchronisée comme le reste des données, pour retrouver la clé sur les autres appareils
   setError("");
   _aiHistory.push({ role: "user", content: text });
   document.getElementById("aiRecipeInput").value = "";
