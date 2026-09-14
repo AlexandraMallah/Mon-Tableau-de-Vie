@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1251</title>
+<title>Mon Tableau de Vie 🌿 · v1252</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25555,6 +25555,27 @@ function closeSupportContact() { document.getElementById("supportContactModal").
 async function _fbSaveNow() {
   if (!_fbUser || !_fbDb) return;
   try {
+    // Garde-fou avant d'écraser le cloud : jusqu'ici, cette fonction remplaçait toujours les
+    // documents cloud par la copie locale, sans jamais vérifier si un AUTRE appareil avait déjà
+    // écrit quelque chose de plus riche entre-temps (ex : une transaction ajoutée sur le
+    // téléphone, puis effacée par l'ordi qui pousse sa propre copie restée en mémoire, plus
+    // ancienne). _mergeFromCloud avait déjà ce filet côté lecture (voir incident du 2026-09-06),
+    // il lui manquait côté écriture. _snapCache contient la dernière version connue du cloud
+    // via le listener temps réel — si elle est nettement plus riche que ce qu'on s'apprête à
+    // écrire, on la fusionne d'abord dans le local au lieu d'écraser.
+    const cachedRemote = _assembleRemote(
+      _readCloudState(_snapCache.state), _readCloudState(_snapCache.work),
+      _readCloudState(_snapCache.transactions), _readCloudState(_snapCache.domestique)
+    );
+    if (cachedRemote) {
+      let mergedSomething = false;
+      ["work", "transactions", "domestique"].forEach(key => {
+        const localSize  = JSON.stringify(state[key] || (key === "transactions" ? [] : {})).length;
+        const remoteSize = JSON.stringify(cachedRemote[key] || (key === "transactions" ? [] : {})).length;
+        if (remoteSize > localSize * 1.2) { state[key] = cachedRemote[key]; mergedSomething = true; }
+      });
+      if (mergedSomething) { localStorage.setItem(STORE_KEY, JSON.stringify(state)); renderAll(); }
+    }
     const { corePayload, workPayload, transactionsPayload, domestiquePayload, sizes, maxKo, maxDocName } = _computeCloudSizes();
     _updateCloudSizeBadge(sizes, maxDocName);
     const payloadsByName = { state: corePayload, work: workPayload, transactions: transactionsPayload, domestique: domestiquePayload };
