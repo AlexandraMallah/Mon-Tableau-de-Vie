@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1255</title>
+<title>Mon Tableau de Vie 🌿 · v1256</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15895,6 +15895,7 @@ function saveTxFromModal() {
   const [y, m, d] = dateStr.split("-").map(Number);
   orig.setFullYear(y); orig.setMonth(m - 1); orig.setDate(d);
   const wasSalaryPostdoc = tx.type === "income" && state.mainSalaryCategory && tx.category === state.mainSalaryCategory;
+  const oldAmount = tx.amount; // capturé AVANT d'écraser tx.amount — sinon impossible de calculer la différence plus bas
   tx.type = txModalType;
   tx.amount = amount;
   tx.category = category;
@@ -15927,26 +15928,26 @@ function saveTxFromModal() {
   if (!state.accounts.cashLog) state.accounts.cashLog = [];
   if (oldFromSav === "__cash__" && newFromSav !== "__cash__") {
     // N'était plus espèces — rembourser l'ancien montant
-    state.accounts.cashBalance = (state.accounts.cashBalance || 0) + tx.amount;
-    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount: tx.amount, dir: "in", note: "Correction édition — " + (tx.note || tx.category) });
+    state.accounts.cashBalance = (state.accounts.cashBalance || 0) + oldAmount;
+    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount: oldAmount, dir: "in", note: "Correction édition — " + (tx.note || tx.category) });
   } else if (oldFromSav !== "__cash__" && newFromSav === "__cash__") {
     // Maintenant espèces — déduire
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) - amount;
     state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount, dir: "out", note: note || category });
-  } else if (oldFromSav === "__cash__" && newFromSav === "__cash__" && tx.amount !== amount) {
+  } else if (oldFromSav === "__cash__" && newFromSav === "__cash__" && oldAmount !== amount) {
     // Montant modifié, compte espèces inchangé — ajuster la différence
-    const diff = tx.amount - amount;
+    const diff = oldAmount - amount;
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) + diff;
   }
   // Idem pour un revenu versé directement en espèces
   if (oldDirectSav === "__cash__" && newDirectSav !== "__cash__") {
-    state.accounts.cashBalance = (state.accounts.cashBalance || 0) - tx.amount;
-    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount: tx.amount, dir: "out", note: "Correction édition — " + (tx.note || tx.category) });
+    state.accounts.cashBalance = (state.accounts.cashBalance || 0) - oldAmount;
+    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount: oldAmount, dir: "out", note: "Correction édition — " + (tx.note || tx.category) });
   } else if (oldDirectSav !== "__cash__" && newDirectSav === "__cash__") {
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) + amount;
     state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount, dir: "in", note: note || category });
-  } else if (oldDirectSav === "__cash__" && newDirectSav === "__cash__" && tx.amount !== amount) {
-    const diff = amount - tx.amount;
+  } else if (oldDirectSav === "__cash__" && newDirectSav === "__cash__" && oldAmount !== amount) {
+    const diff = amount - oldAmount;
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) + diff;
   }
   saveState();
