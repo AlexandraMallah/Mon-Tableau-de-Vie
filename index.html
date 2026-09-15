@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1260</title>
+<title>Mon Tableau de Vie 🌿 · v1261</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16817,10 +16817,14 @@ function _emptyDonutPlaceholder(wrap, text) {
        <p style="color:var(--ink-softer);font-size:12px;margin:0;">${text}</p>
      </div>`);
 }
-// Légende HTML (sous le donut) — pastille + nom, cliquable vers le détail catégorie
-function _catLegendHtml(entries) {
+// Légende HTML (sous le donut) — pastille + nom, cliquable vers le détail catégorie.
+// type : "expense" (défaut) ou "income" — le donut Revenus est un anneau de type "income",
+// sinon son détail cherchait des dépenses et affichait toujours 0€/"Aucune dépense".
+// allTime : true pour les 3 graphiques "depuis toujours" (sinon détail calé sur le mois affiché).
+function _catLegendHtml(entries, type = "expense", allTime = false) {
+  const fn = allTime ? "openCatDetailAllTime" : "openCatDetail";
   return entries.map(([cat]) =>
-    `<span class="cat-legend-item" onclick="openCatDetail('${(cat||'').replace(/'/g,"\\'")}')"><span class="cat-legend-dot" style="background:${catColor(cat)};"></span>${escapeHtml(cat)}</span>`
+    `<span class="cat-legend-item" onclick="${fn}('${(cat||'').replace(/'/g,"\\'")}','${type}')"><span class="cat-legend-dot" style="background:${catColor(cat)};"></span>${escapeHtml(cat)}</span>`
   ).join("");
 }
 function renderMoneyCatChart() {
@@ -16939,32 +16943,33 @@ function renderMoneyCatChartNoFixed() {
   });
 }
 
-function openCatDetailAllTime(cat) {
+function openCatDetailAllTime(cat, type = "expense") {
   const [start, end] = _allTimeRange();
   const txs = state.transactions
-    .filter(tx => tx.type === "expense" && tx.category === cat && new Date(tx.date) >= start && new Date(tx.date) <= end)
+    .filter(tx => tx.type === type && tx.category === cat && new Date(tx.date) >= start && new Date(tx.date) <= end)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
-  const total = txs.reduce((s, tx) => s + txNetAmount(tx), 0);
+  const total = txs.reduce((s, tx) => s + (type === "expense" ? txNetAmount(tx) : tx.amount), 0);
   document.getElementById("catDetailTitle").textContent = cat + " · Depuis le " + APP_START_LABEL;
   document.getElementById("catDetailTotal").textContent = total.toFixed(2) + " €";
   document.getElementById("catDetailDot").style.background = catColor(cat);
   document.getElementById("catDetailList").innerHTML = txs.length ? txs.map(tx => {
     const d = new Date(tx.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+    const amount = type === "expense" ? txNetAmount(tx) : tx.amount;
     return `<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);">
       <div style="flex:1;">
         <div style="font-size:14px;color:var(--ink);">${escapeHtml(tx.note || "—")}</div>
         <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${d}</div>
       </div>
-      <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${txNetAmount(tx).toFixed(2)} €</div>
+      <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${amount.toFixed(2)} €</div>
       <button onclick="openTxModal('${tx.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:11px;cursor:pointer;flex-shrink:0;">✎</button>
     </div>`;
-  }).join("") : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px 0;">Aucune dépense dans cette catégorie.</p>`;
+  }).join("") : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px 0;">${type === "expense" ? "Aucune dépense" : "Aucun revenu"} dans cette catégorie.</p>`;
   document.getElementById("catDetailModal").classList.add("open");
 }
-function openCatDetail(cat) {
+function openCatDetail(cat, type = "expense") {
   const [start, end] = _moneyCatRange();
   const txs = state.transactions
-    .filter(tx => tx.type === "expense" && tx.category === cat && new Date(tx.date) >= start && new Date(tx.date) < end)
+    .filter(tx => tx.type === type && tx.category === cat && new Date(tx.date) >= start && new Date(tx.date) < end)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
   const total = txs.reduce((s, tx) => s + tx.amount, 0);
 
@@ -16983,7 +16988,7 @@ function openCatDetail(cat) {
         <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${tx.amount.toFixed(2)} €</div>
         <button onclick="openTxModal('${tx.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:11px;cursor:pointer;flex-shrink:0;">✎</button>
       </div>`;
-  }).join("") : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px 0;">Aucune dépense dans cette catégorie.</p>`;
+  }).join("") : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px 0;">${type === "expense" ? "Aucune dépense" : "Aucun revenu"} dans cette catégorie.</p>`;
 
   document.getElementById("catDetailModal").classList.add("open");
 }
@@ -17342,7 +17347,7 @@ function renderMoneyIncomeCatChart() {
   const incEl = document.getElementById("catChartIncTotal");
   if (incEl) incEl.textContent = incTotal > 0 ? ": " +incTotal.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyIncomeLegend");
-  if (lg) lg.innerHTML = _catLegendHtml(entries);
+  if (lg) lg.innerHTML = _catLegendHtml(entries, "income");
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucun revenu<br>ce mois"); return; }
 
   moneyIncomeCatChart = new Chart(document.getElementById("moneyIncomeCatChart"), {
@@ -17400,7 +17405,7 @@ function renderMoneyCatAllChart() {
   const el = document.getElementById("catAllChartDepTotal");
   if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatAllLegend");
-  if (lg) lg.innerHTML = _catLegendHtml(entries);
+  if (lg) lg.innerHTML = _catLegendHtml(entries, "expense", true);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense"); return; }
   moneyCatAllChart = new Chart(document.getElementById("moneyCatAllChart"), {
     type: "doughnut",
@@ -17448,7 +17453,7 @@ function renderMoneyCatAllNoFixChart() {
   const el = document.getElementById("catAllChartNoFixTotal");
   if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatAllNoFixLegend");
-  if (lg) lg.innerHTML = _catLegendHtml(entries);
+  if (lg) lg.innerHTML = _catLegendHtml(entries, "expense", true);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>courante"); return; }
   moneyCatAllNoFixChart = new Chart(document.getElementById("moneyCatAllNoFixChart"), {
     type: "doughnut",
@@ -17497,7 +17502,7 @@ function renderMoneyIncomeAllChart() {
   const el = document.getElementById("catAllChartIncTotal");
   if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyIncomeAllLegend");
-  if (lg) lg.innerHTML = _catLegendHtml(entries);
+  if (lg) lg.innerHTML = _catLegendHtml(entries, "income", true);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucun revenu"); return; }
   moneyIncomeAllChart = new Chart(document.getElementById("moneyIncomeAllChart"), {
     type: "doughnut",
