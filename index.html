@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1258</title>
+<title>Mon Tableau de Vie 🌿 · v1259</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4558,21 +4558,24 @@
     <h2 style="margin:0 0 4px;">✨ Assistant IA</h2>
     <p class="modal-hint">Ton assistant personnel (Claude ou ChatGPT, avec ta propre clé) pour te faire gagner du temps dans l'app : lui demander d'enregistrer une info, d'ajouter une recette, ou d'expliquer comment faire quelque chose.</p>
 
-    <div id="aiConfigBlock" style="background:var(--bg-1);border-radius:12px;padding:12px 14px;margin-bottom:12px;">
-      <label>Assistant</label>
-      <select id="aiProviderSelect" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;">
-        <option value="gemini">Gemini (Google — gratuit)</option>
-        <option value="anthropic">Claude (Anthropic — payant)</option>
-        <option value="openai">ChatGPT (OpenAI — payant)</option>
-      </select>
-      <label>Clé API <span style="font-weight:400;color:var(--ink-softer);font-size:11px;">— synchronisée entre tes appareils comme le reste de tes données, protégée par ton compte : personne d'autre que toi ne peut y accéder</span></label>
-      <input type="password" id="aiApiKeyInput" placeholder="Colle ta clé ici"
-        style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:6px;box-sizing:border-box;" oninput="_onAiKeyInput()" />
-      <details id="aiKeyHelpDetails" open>
-        <summary style="cursor:pointer;font-size:12px;color:var(--lavender);font-weight:600;">❓ C'est quoi une clé API, et où je la trouve ?</summary>
-        <div id="aiKeyHelp" style="font-size:12.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6;"></div>
-      </details>
-    </div>
+    <details id="aiConfigDetails" style="background:var(--bg-1);border-radius:12px;padding:12px 14px;margin-bottom:12px;">
+      <summary id="aiConfigSummary" style="cursor:pointer;font-size:13px;font-weight:600;color:var(--ink);">🔑 Configurer l'assistant</summary>
+      <div id="aiConfigBlock" style="margin-top:10px;">
+        <label>Assistant</label>
+        <select id="aiProviderSelect" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;">
+          <option value="gemini">Gemini (Google — gratuit)</option>
+          <option value="anthropic">Claude (Anthropic — payant)</option>
+          <option value="openai">ChatGPT (OpenAI — payant)</option>
+        </select>
+        <label>Clé API <span style="font-weight:400;color:var(--ink-softer);font-size:11px;">— synchronisée entre tes appareils comme le reste de tes données, protégée par ton compte : personne d'autre que toi ne peut y accéder</span></label>
+        <input type="password" id="aiApiKeyInput" placeholder="Colle ta clé ici"
+          style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:6px;box-sizing:border-box;" oninput="_onAiKeyInput()" />
+        <details id="aiKeyHelpDetails" open>
+          <summary style="cursor:pointer;font-size:12px;color:var(--lavender);font-weight:600;">❓ C'est quoi une clé API, et où je la trouve ?</summary>
+          <div id="aiKeyHelp" style="font-size:12.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6;"></div>
+        </details>
+      </div>
+    </details>
 
     <div id="aiChatHistory" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;margin-bottom:2px;"></div>
     <label>Que veux-tu faire ?</label>
@@ -21573,6 +21576,17 @@ function _onAiKeyInput() {
   const has = !!document.getElementById("aiApiKeyInput").value.trim();
   document.getElementById("aiKeyHelpDetails").open = !has;
 }
+const _AI_PROVIDER_LABELS = { gemini: "Gemini", anthropic: "Claude", openai: "ChatGPT" };
+// Replié par défaut dès qu'une clé existe déjà : sur téléphone, ce bloc (dropdown + champ +
+// explication) pouvait à lui seul pousser les boutons "Fermer"/"Envoyer" hors de l'écran,
+// obligeant à faire défiler DANS la fenêtre pour les atteindre — repliable, il ne prend que
+// la hauteur d'une ligne une fois configuré.
+function _updateAiConfigSummary() {
+  const provider = document.getElementById("aiProviderSelect").value;
+  const hasKey = !!(state.aiAssistant?.keys?.[provider]);
+  const summary = document.getElementById("aiConfigSummary");
+  summary.textContent = hasKey ? `🔑 ${_AI_PROVIDER_LABELS[provider] || provider} configuré · Changer` : "🔑 Configurer l'assistant";
+}
 function openAiRecipeModal() {
   const provider = state.aiAssistant?.provider || "gemini";
   document.getElementById("aiProviderSelect").value = provider;
@@ -21582,6 +21596,8 @@ function openAiRecipeModal() {
   document.getElementById("aiRecipeStatus").textContent = "";
   document.getElementById("aiRecipeStatus").style.padding = "0";
   document.getElementById("aiKeyHelpDetails").open = !key;
+  document.getElementById("aiConfigDetails").open = !key;
+  _updateAiConfigSummary();
   _updateAiKeyHelp();
   _initAiMic();
   // Une conversation déjà en cours (par ex. rouverte depuis le formulaire recette juste après)
@@ -21616,6 +21632,7 @@ document.getElementById("aiProviderSelect")?.addEventListener("change", function
   document.getElementById("aiApiKeyInput").value = key;
   document.getElementById("aiKeyHelpDetails").open = !key;
   _updateAiKeyHelp();
+  _updateAiConfigSummary();
 });
 
 /* ---- Dictée vocale (facultative — sur iPhone, le micro du clavier fait déjà ça nativement) ---- */
@@ -21777,7 +21794,9 @@ async function _callOpenAI(key, history) {
 // Google renomme/retire régulièrement ses modèles (ex : "gemini-2.0-flash" a fini par
 // disparaître de l'API) — on essaie plusieurs noms courants dans l'ordre. 503/429 = serveur
 // Gemini temporairement surchargé (fréquent sur l'offre gratuite, rien à voir avec la clé) —
-// on réessaie une fois après une courte pause avant d'abandonner sur CE modèle.
+// jusqu'à 3 essais avec pause croissante (1s/2s/4s) sur CHAQUE modèle avant de passer au
+// suivant, plutôt qu'abandonner tout de suite : un modèle saturé n'implique pas que les autres
+// le sont aussi.
 const _GEMINI_MODELS = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
 async function _callGemini(key, history) {
   const body = JSON.stringify({
@@ -21789,18 +21808,15 @@ async function _callGemini(key, history) {
     method: "POST", headers: { "content-type": "application/json" }, body,
   });
   let resp, lastErr;
-  for (const model of _GEMINI_MODELS) {
-    resp = await call(model);
-    if (resp.ok) break;
-    lastErr = resp.status;
-    if (lastErr === 503 || lastErr === 429) {
-      // Surcharge temporaire : une seule pause + nouvel essai sur ce même modèle avant de passer au suivant.
-      await new Promise(r => setTimeout(r, 1500));
+  outer: for (const model of _GEMINI_MODELS) {
+    for (const pauseMs of [0, 1000, 2000]) {
+      if (pauseMs) await new Promise(r => setTimeout(r, pauseMs));
       resp = await call(model);
-      if (resp.ok) break;
+      if (resp.ok) break outer;
       lastErr = resp.status;
+      if (lastErr !== 503 && lastErr !== 429) break; // pas une surcharge → inutile de réessayer ce modèle
     }
-    if (lastErr !== 404) break; // erreur non liée au nom du modèle (ex : clé invalide) — inutile d'essayer un autre modèle
+    if (lastErr !== 404 && lastErr !== 503 && lastErr !== 429) break; // erreur non liée au modèle (ex : clé invalide) — inutile d'en essayer un autre
   }
   if (!resp.ok) {
     const msg = lastErr === 404 ? "Gemini : aucun modèle disponible n'a répondu — réessaie plus tard."
@@ -21932,6 +21948,8 @@ async function runAiAssistant() {
   state.aiAssistant.provider = provider;
   state.aiAssistant.keys[provider] = key;
   saveState(); // synchronisée comme le reste des données, pour retrouver la clé sur les autres appareils
+  _updateAiConfigSummary();
+  document.getElementById("aiConfigDetails").open = false; // clé valide envoyée → replier pour laisser la place à la conversation
   setError("");
   _aiHistory.push({ role: "user", content: text });
   document.getElementById("aiRecipeInput").value = "";
