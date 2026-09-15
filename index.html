@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1259</title>
+<title>Mon Tableau de Vie 🌿 · v1260</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21792,11 +21792,14 @@ async function _callOpenAI(key, history) {
   return { toolName: call?.function?.name || null, toolInput, text: msg.content || "" };
 }
 // Google renomme/retire régulièrement ses modèles (ex : "gemini-2.0-flash" a fini par
-// disparaître de l'API) — on essaie plusieurs noms courants dans l'ordre. 503/429 = serveur
-// Gemini temporairement surchargé (fréquent sur l'offre gratuite, rien à voir avec la clé) —
-// jusqu'à 3 essais avec pause croissante (1s/2s/4s) sur CHAQUE modèle avant de passer au
-// suivant, plutôt qu'abandonner tout de suite : un modèle saturé n'implique pas que les autres
-// le sont aussi.
+// Google renomme/retire régulièrement ses modèles (ex : "gemini-2.0-flash" a fini par
+// disparaître de l'API) — on essaie plusieurs noms courants dans l'ordre.
+// 503 = serveur temporairement surchargé → une pause courte et UN nouvel essai suffit.
+// 429 = limite de requêtes gratuites atteinte (Gemini free tier : ~15 requêtes/minute) →
+// insister ne sert à rien et ne fait qu'aggraver/prolonger la limite ; on abandonne tout de
+// suite avec un message clair plutôt que de marteler l'API sur plusieurs modèles d'affilée
+// (l'ancienne version pouvait envoyer jusqu'à 12 requêtes pour un seul message, ce qui
+// déclenchait elle-même la limite qu'elle essayait de contourner).
 const _GEMINI_MODELS = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
 async function _callGemini(key, history) {
   const body = JSON.stringify({
@@ -21808,19 +21811,24 @@ async function _callGemini(key, history) {
     method: "POST", headers: { "content-type": "application/json" }, body,
   });
   let resp, lastErr;
-  outer: for (const model of _GEMINI_MODELS) {
-    for (const pauseMs of [0, 1000, 2000]) {
-      if (pauseMs) await new Promise(r => setTimeout(r, pauseMs));
+  for (const model of _GEMINI_MODELS) {
+    resp = await call(model);
+    if (resp.ok) break;
+    lastErr = resp.status;
+    if (lastErr === 429) break; // limite atteinte : inutile d'essayer un autre modèle avec la même clé
+    if (lastErr === 503) {
+      await new Promise(r => setTimeout(r, 1200));
       resp = await call(model);
-      if (resp.ok) break outer;
+      if (resp.ok) break;
       lastErr = resp.status;
-      if (lastErr !== 503 && lastErr !== 429) break; // pas une surcharge → inutile de réessayer ce modèle
+      if (lastErr === 429) break;
     }
-    if (lastErr !== 404 && lastErr !== 503 && lastErr !== 429) break; // erreur non liée au modèle (ex : clé invalide) — inutile d'en essayer un autre
+    if (lastErr !== 404 && lastErr !== 503) break; // erreur non liée au modèle (ex : clé invalide) — inutile d'en essayer un autre
   }
   if (!resp.ok) {
-    const msg = lastErr === 404 ? "Gemini : aucun modèle disponible n'a répondu — réessaie plus tard."
-      : (lastErr === 503 || lastErr === 429) ? "Gemini est temporairement surchargé (courant sur l'offre gratuite) — réessaie dans quelques instants."
+    const msg = lastErr === 429 ? "Tu as atteint la limite de requêtes gratuites de Gemini (environ 15/minute) — attends une minute avant de réessayer."
+      : lastErr === 404 ? "Gemini : aucun modèle disponible n'a répondu — réessaie plus tard."
+      : lastErr === 503 ? "Gemini est temporairement surchargé (courant sur l'offre gratuite) — réessaie dans quelques instants."
       : "Gemini a répondu une erreur (" + lastErr + ") — vérifie ta clé API.";
     throw new Error(msg);
   }
