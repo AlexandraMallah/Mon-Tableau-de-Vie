@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1257</title>
+<title>Mon Tableau de Vie 🌿 · v1258</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -336,9 +336,13 @@
   /* (hover: hover) exclut les écrans tactiles : sur iPhone/Android, un tap déclenche le :hover
      et il reste "collé" jusqu'au tap suivant ailleurs sur l'écran — un émoji tout juste
      désélectionné semblait alors repasser en violet (lavande) au lieu de redevenir blanc,
-     et l'émoji violet ne redevenait blanc qu'en tapant sur un AUTRE émoji juste après. */
+     et l'émoji violet ne redevenait blanc qu'en tapant sur un AUTRE émoji juste après.
+     Couleur de survol neutre (grise) plutôt qu'un pastel : var(--lavender-soft) est aussi la
+     couleur "activé" de .scale.belly (et très proche de .scale.sleepquality) — sur ordi, si la
+     souris reste sur un émoji tout juste désélectionné, le survol se confondait avec l'état
+     "activé" et donnait l'impression que le clic n'avait rien fait. */
   @media (hover: hover) {
-    .scale button:hover { background: var(--lavender-soft); transform: translateY(-1px); }
+    .scale button:hover { background: var(--bg-1); border-color: var(--ink-softer); transform: translateY(-1px); }
   }
   .scale.mood button.active { background: var(--pink-soft); border-color: var(--pink); }
   .scale.energy button.active { background: var(--peach-soft); border-color: var(--peach); }
