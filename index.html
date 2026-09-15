@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1256</title>
+<title>Mon Tableau de Vie 🌿 · v1257</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21771,26 +21771,39 @@ async function _callOpenAI(key, history) {
   return { toolName: call?.function?.name || null, toolInput, text: msg.content || "" };
 }
 // Google renomme/retire régulièrement ses modèles (ex : "gemini-2.0-flash" a fini par
-// disparaître de l'API) — on essaie plusieurs noms courants dans l'ordre, et on ne s'arrête
-// que sur la première réponse qui n'est pas un simple "modèle introuvable" (404).
+// disparaître de l'API) — on essaie plusieurs noms courants dans l'ordre. 503/429 = serveur
+// Gemini temporairement surchargé (fréquent sur l'offre gratuite, rien à voir avec la clé) —
+// on réessaie une fois après une courte pause avant d'abandonner sur CE modèle.
 const _GEMINI_MODELS = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
 async function _callGemini(key, history) {
+  const body = JSON.stringify({
+    systemInstruction: { parts: [{ text: _aiSystemPrompt() }] },
+    contents: history.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+    tools: [{ functionDeclarations: _AI_TOOLS.map(t => ({ name: t.name, description: t.description, parameters: t.input_schema })) }],
+  });
+  const call = model => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`, {
+    method: "POST", headers: { "content-type": "application/json" }, body,
+  });
   let resp, lastErr;
   for (const model of _GEMINI_MODELS) {
-    resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: _aiSystemPrompt() }] },
-        contents: history.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-        tools: [{ functionDeclarations: _AI_TOOLS.map(t => ({ name: t.name, description: t.description, parameters: t.input_schema })) }],
-      }),
-    });
+    resp = await call(model);
     if (resp.ok) break;
     lastErr = resp.status;
-    if (resp.status !== 404) break; // une autre erreur (ex : clé invalide) ne sert à rien de réessayer
+    if (lastErr === 503 || lastErr === 429) {
+      // Surcharge temporaire : une seule pause + nouvel essai sur ce même modèle avant de passer au suivant.
+      await new Promise(r => setTimeout(r, 1500));
+      resp = await call(model);
+      if (resp.ok) break;
+      lastErr = resp.status;
+    }
+    if (lastErr !== 404) break; // erreur non liée au nom du modèle (ex : clé invalide) — inutile d'essayer un autre modèle
   }
-  if (!resp.ok) throw new Error(lastErr === 404 ? "Gemini : aucun modèle disponible n'a répondu — réessaie plus tard." : "Gemini a répondu une erreur (" + lastErr + ") — vérifie ta clé API.");
+  if (!resp.ok) {
+    const msg = lastErr === 404 ? "Gemini : aucun modèle disponible n'a répondu — réessaie plus tard."
+      : (lastErr === 503 || lastErr === 429) ? "Gemini est temporairement surchargé (courant sur l'offre gratuite) — réessaie dans quelques instants."
+      : "Gemini a répondu une erreur (" + lastErr + ") — vérifie ta clé API.";
+    throw new Error(msg);
+  }
   const data = await resp.json();
   const parts = data.candidates?.[0]?.content?.parts || [];
   const fnPart = parts.find(p => p.functionCall);
@@ -25257,6 +25270,12 @@ function _assembleRemote(stateData, workData, transactionsData, domestiqueData) 
 function _mergeFromCloud(remote) {
   const merged = migrate({ ...DEFAULT_STATE, ...remote });
   merged.calEvents = state.calEvents || []; // le cloud ne contient pas le calendrier → garder le local
+  // Clés API de l'Assistant IA : fusionnées (union), jamais remplacées en bloc — une clé
+  // saisie sur un appareil ne doit pas disparaître parce qu'un autre appareil, pas encore à
+  // jour, a resauvegardé sa version locale sans cette clé entre-temps.
+  merged.aiAssistant = merged.aiAssistant || { provider: "gemini", keys: {} };
+  merged.aiAssistant.keys = { ...(merged.aiAssistant.keys || {}), ...(state.aiAssistant?.keys || {}) };
+  if (state.aiAssistant?.provider) merged.aiAssistant.provider = state.aiAssistant.provider;
   // (Pas de filet "garder le local si le cloud est vide" pour les raccourcis, contrairement aux
   // sections ci-dessous : ça empêchait justement de propager la suppression de TOUS les
   // raccourcis d'un appareil à l'autre — un cloud vide voulait dire "vidés exprès", pas "donnée
@@ -25581,6 +25600,15 @@ async function _fbSaveNow() {
         const remoteSize = JSON.stringify(cachedRemote[key] || (key === "transactions" ? [] : {})).length;
         if (remoteSize > localSize * 1.2) { state[key] = cachedRemote[key]; mergedSomething = true; }
       });
+      // Clés API de l'Assistant IA : union avec ce que le cloud connaît déjà, jamais un
+      // remplacement en bloc — sinon une clé tout juste saisie ailleurs se ferait écraser par
+      // une copie locale qui ne la connaît pas encore.
+      const remoteAiKeys = cachedRemote.aiAssistant?.keys || {};
+      if (Object.keys(remoteAiKeys).some(k => !state.aiAssistant?.keys?.[k])) {
+        if (!state.aiAssistant) state.aiAssistant = { provider: "gemini", keys: {} };
+        state.aiAssistant.keys = { ...remoteAiKeys, ...state.aiAssistant.keys };
+        mergedSomething = true;
+      }
       if (mergedSomething) { localStorage.setItem(STORE_KEY, JSON.stringify(state)); renderAll(); }
     }
     const { corePayload, workPayload, transactionsPayload, domestiquePayload, sizes, maxKo, maxDocName } = _computeCloudSizes();
