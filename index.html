@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1263</title>
+<title>Mon Tableau de Vie 🌿 · v1264</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5372,6 +5372,18 @@
 /* Empêche les modales de se fermer quand on sélectionne du texte (drag qui finit hors du modal) */
 let _modalMouseDownTarget = null;
 document.addEventListener('mousedown', e => { _modalMouseDownTarget = e.target; }, true);
+// Sur mobile, taper un bouton pendant qu'un champ voisin a le clavier ouvert peut ne servir
+// qu'à fermer ce clavier (la fenêtre se redimensionne/redescend) sans activer le bouton — il
+// fallait alors taper une seconde fois. En forçant le "blur" dès le contact du doigt (avant le
+// clic complet), le clavier se ferme et la mise en page se stabilise PENDANT ce même tap, donc
+// il suffit d'un seul appui.
+document.addEventListener('mousedown', e => {
+  const btn = e.target.closest?.('.modal button, .modal .day-nav-btn');
+  const active = document.activeElement;
+  if (btn && active && active !== btn && typeof active.blur === 'function' && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+    active.blur();
+  }
+}, true);
 
 /* Mesure la hauteur réelle de .sticky-header-group (variable selon les raccourcis actifs,
    le mode édition, la largeur d'écran…) pour que les autres éléments sticky de la page
