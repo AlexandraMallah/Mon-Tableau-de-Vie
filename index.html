@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1261</title>
+<title>Mon Tableau de Vie 🌿 · v1262</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -101,6 +101,10 @@
 
   /* ===== THÈME MINIMAL ===== */
   * { box-sizing: border-box; }
+  /* Retire le délai/ambiguïté de détection du double-tap sur mobile (le navigateur hésite
+     entre "tap simple" et "début d'un geste de zoom"), qui peut faire qu'un tap sur un champ
+     ou un bouton semble ne rien faire la première fois. */
+  input, select, textarea, button { touch-action: manipulation; }
   html { color-scheme: light; background: #fdf6f0; } /* fond clair immédiat avant CSS vars */
   html, body { margin: 0; padding: 0; }
   html { overflow-x: clip; } /* clip ≠ hidden : n'empêche pas position:sticky */
@@ -643,12 +647,17 @@
     padding: 9px 16px; border-radius: 12px; cursor: pointer;
     font-weight: 500; font-family: inherit; font-size: 13px;
     transition: all 0.2s;
+    /* Cible tactile fiable (≥44pt recommandé par Apple/Google) + désactive le délai/ambiguïté
+       de détection du double-tap sur mobile, qui peut faire "rater" un tap si le navigateur
+       hésite entre un simple tap et un zoom. */
+    min-height: 40px; touch-action: manipulation;
   }
   .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
   .btn-soft {
     background: white; color: var(--ink); border: 1px solid var(--line);
     padding: 8px 14px; border-radius: 10px; cursor: pointer;
     font-size: 13px; font-family: inherit; transition: all 0.2s;
+    min-height: 40px; touch-action: manipulation;
   }
   .btn-soft:hover { background: #faf8fd; }
 
@@ -10096,6 +10105,7 @@ function toggleActivityDay(actId, dateKey) {
     const isSport = !!(act?.sport && act?.met);
     const sportFields = document.getElementById('actTimeSportFields');
     sportFields.style.display = isSport ? 'block' : 'none';
+    void sportFields.offsetHeight; // force un recalcul de mise en page avant l'ouverture (voir plus bas)
     if (isSport) {
       const durInput = document.getElementById('actTimeDuration');
       durInput.value = '';
