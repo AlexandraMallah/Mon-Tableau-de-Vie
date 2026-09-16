@@ -5,6 +5,31 @@ service cloud.firestore {
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Import automatique des pas (Raccourcis iOS / Tasker-MacroDroid Android) : ces
+    // automatisations tournent en tâche de fond, sans session Firebase active, donc sans
+    // authentification classique possible. Le "jeton d'envoi" personnel (généré une fois
+    // depuis l'app) joue le rôle d'une clé API — connaître le jeton exact suffit à l'utiliser,
+    // exactement comme une clé API classique, sans jamais donner accès au reste du compte.
+
+    // stepTokens/{token} → { uid: "..." } : la seule façon de retrouver le uid d'un jeton est
+    // de connaître le jeton exact (get sur un id précis) — lister tous les jetons est interdit.
+    match /stepTokens/{token} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if request.auth != null && request.auth.uid == request.resource.data.uid;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.uid;
+    }
+
+    // users/{userId}/dashboard/stepsImport : petit document dédié (jour + nombre de pas),
+    // séparé du document "state" principal pour ne jamais interférer avec sa synchronisation.
+    // Écriture non authentifiée admise UNIQUEMENT si le jeton fourni dans le document
+    // correspond bien, via stepTokens, à ce userId précis.
+    match /users/{userId}/dashboard/stepsImport {
+      allow write: if request.resource.data.token is string
+        && get(/databases/$(database)/documents/stepTokens/$(request.resource.data.token)).data.uid == userId;
+    }
+
     // Tout le reste est bloqué
     match /{document=**} {
       allow read, write: if false;

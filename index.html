@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1262</title>
+<title>Mon Tableau de Vie 🌿 · v1263</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3013,6 +3013,7 @@
       <div class="card-row">
         <h2>🚶 Pas</h2>
         <span id="stepsGoalText" style="font-size:13px;color:var(--ink-soft);">Objectif : <strong>9000 pas</strong> · orange dès 7000</span>
+        <button onclick="openStepsImportModal()" class="help-btn" style="margin-left:auto;" title="Récupérer automatiquement tes pas depuis l'app Santé/Fit de ton téléphone">🔗 Import auto</button>
       </div>
       <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
         <div class="stat" id="stepsTodayTile" style="transition:background 0.3s;"></div>
@@ -4606,6 +4607,52 @@
   </div>
 </div>
 
+<!-- Modal Import automatique des pas -->
+<div class="modal-bg" id="stepsImportModal" onclick="event.target===this&&_modalMouseDownTarget===this&&closeStepsImportModal()">
+  <div class="modal" style="max-width:520px;" onclick="event.stopPropagation()">
+    <h2 style="margin:0 0 4px;">🔗 Import automatique des pas</h2>
+    <p class="modal-hint">Le téléphone compte déjà tes pas en permanence (app Santé sur iPhone, Fit/Health Connect sur Android). Avec une petite automatisation gratuite à configurer <strong>une seule fois</strong>, ce nombre s'enregistre ici tout seul chaque jour — plus besoin de le retaper à la main.</p>
+
+    <label>Ton lien personnel <span style="font-weight:400;color:var(--ink-softer);font-size:11px;">— propre à ton compte, ne le partage avec personne</span></label>
+    <div style="display:flex;gap:6px;margin-bottom:14px;">
+      <input type="text" id="stepsImportUrl" readonly
+        style="flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:12px;color:var(--ink-soft);background:var(--bg-1);box-sizing:border-box;" />
+      <button class="btn-soft" onclick="_copyStepsUrl()" style="flex-shrink:0;">📋 Copier</button>
+    </div>
+
+    <details open style="margin-bottom:10px;">
+      <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--lavender);"> Sur iPhone (app Raccourcis)</summary>
+      <ol style="margin:8px 0 0;padding-left:18px;font-size:12.5px;color:var(--ink-soft);line-height:1.7;">
+        <li>Ouvre l'app <strong>Raccourcis</strong> (déjà installée sur tout iPhone).</li>
+        <li>Onglet <strong>Automatisation</strong> en bas → <strong>+</strong> en haut à droite → <strong>Créer une automatisation personnelle</strong>.</li>
+        <li>Choisis un déclencheur, par exemple <strong>Heure du jour</strong> (ex : tous les soirs à 22h). Valide.</li>
+        <li><strong>Ajouter une action</strong> → cherche <strong>« Obtenir le nombre de pas d'aujourd'hui »</strong> (catégorie Santé) → ajoute-la.</li>
+        <li>Ajoute une 2ᵉ action : cherche <strong>« Obtenir le contenu de l'URL »</strong> (catégorie Web).</li>
+        <li>Dans cette action, colle ton lien personnel (bouton Copier ci-dessus) — puis, juste après le <code>steps=</code> à la fin du lien, remplace ce qui suit par la variable <strong>Nombre de pas d'aujourd'hui</strong> (appuie sur le champ, l'app propose la variable de l'étape précédente).</li>
+        <li>En bas, désactive <strong>« Demander avant l'exécution »</strong> pour que ça tourne tout seul, puis <strong>Terminé</strong>.</li>
+      </ol>
+    </details>
+    <details style="margin-bottom:10px;">
+      <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--lavender);"> Sur Android (Tasker ou MacroDroid)</summary>
+      <ol style="margin:8px 0 0;padding-left:18px;font-size:12.5px;color:var(--ink-soft);line-height:1.7;">
+        <li>Installe <strong>MacroDroid</strong> (gratuit, jusqu'à 5 automatisations — largement assez ici) ou <strong>Tasker</strong> (payant, ~3€) depuis le Play Store.</li>
+        <li>Crée une nouvelle macro/tâche avec un déclencheur <strong>Heure du jour</strong> (ex : tous les soirs à 22h).</li>
+        <li>Ajoute une action pour lire le nombre de pas — <strong>Health Connect</strong> ou <strong>Google Fit</strong> selon ce que ton téléphone propose (« Get Steps », « Fitness Data »…).</li>
+        <li>Ajoute une action <strong>« Requête web / HTTP GET »</strong>, colle ton lien personnel (bouton Copier ci-dessus), et remplace la fin (après <code>steps=</code>) par la variable du nombre de pas obtenue à l'étape précédente.</li>
+        <li>Enregistre et active la macro.</li>
+      </ol>
+    </details>
+
+    <p style="font-size:11.5px;color:var(--ink-softer);margin:4px 0 0;">Une fois configuré, l'app récupère automatiquement le dernier envoi à chaque ouverture (et régulièrement si elle reste ouverte) — rien d'autre à faire.</p>
+    <div id="stepsImportStatus" style="font-size:12.5px;color:var(--ink-soft);margin-top:8px;"></div>
+    <div class="actions">
+      <button class="secondary" onclick="_regenerateStepsToken()" title="Si ton lien a fuité, génère-en un nouveau (l'ancien arrêtera de fonctionner)">🔄 Régénérer le lien</button>
+      <div class="spacer"></div>
+      <button class="primary" onclick="closeStepsImportModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <!-- Project modal -->
 <div class="modal-bg" id="projectModal">
   <div class="modal">
@@ -5895,6 +5942,10 @@ function migrate(s) {
   // protection que tout le reste : accessible uniquement depuis le compte de l'utilisatrice).
   if (!s.aiAssistant) s.aiAssistant = { provider: "gemini", keys: {} };
   if (!s.aiAssistant.keys) s.aiAssistant.keys = {};
+  // Jeton d'import automatique des pas (Raccourcis/Tasker) — généré à la demande, voir
+  // _ensureStepsToken(). Synchronisé comme le reste : retrouvé automatiquement sur les autres
+  // appareils, pas besoin de reconfigurer l'automatisation sur chacun séparément.
+  if (s.stepsToken === undefined) s.stepsToken = null;
   // Migration (une seule fois) : Suivi poids / Suivi calorique / Balance énergétique
   // sont désormais désactivés par défaut dans Composition corporelle — si jamais
   // utilisés (aucune donnée réelle saisie), on les repasse à false. Le profil
@@ -25200,6 +25251,78 @@ function _fbDocRef(name = "state") {
   return _fbDb.collection("users").doc(_fbUser.uid).collection("dashboard").doc(name);
 }
 
+/* ---- Import automatique des pas (Raccourcis iOS / Tasker-MacroDroid Android) ----
+   Le "jeton d'envoi" (state.stepsToken) est un identifiant aléatoire qui joue le rôle d'une
+   clé API personnelle : le stocker dans la collection stepTokens (règles dans firestore.rules)
+   permet au Worker Cloudflare d'écrire les pas au bon endroit sans jamais avoir besoin d'une
+   session Firebase authentifiée — indispensable puisque l'automatisation tourne en tâche de
+   fond, sans que l'app soit ouverte. */
+const STEPS_WEBHOOK_BASE = "https://ics-proxy.alexandra-mallah.workers.dev/";
+function _stepsImportUrl() {
+  return state.stepsToken ? `${STEPS_WEBHOOK_BASE}?steps=REMPLACE_PAR_LE_NOMBRE_DE_PAS&token=${state.stepsToken}` : "";
+}
+async function _ensureStepsToken() {
+  if (state.stepsToken) return state.stepsToken;
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  const token = [...bytes].map(b => b.toString(16).padStart(2, "0")).join("");
+  state.stepsToken = token;
+  saveState();
+  if (_fbUser && _fbDb) {
+    try { await _fbDb.collection("stepTokens").doc(token).set({ uid: _fbUser.uid }); }
+    catch (e) { console.warn("[steps token]", e); }
+  }
+  return token;
+}
+async function openStepsImportModal() {
+  document.getElementById("stepsImportStatus").textContent = "";
+  const urlInput = document.getElementById("stepsImportUrl");
+  urlInput.value = "⏳ Préparation de ton lien…";
+  document.getElementById("stepsImportModal").classList.add("open");
+  await _ensureStepsToken();
+  urlInput.value = _stepsImportUrl();
+}
+function closeStepsImportModal() { document.getElementById("stepsImportModal").classList.remove("open"); }
+function _copyStepsUrl() {
+  const url = document.getElementById("stepsImportUrl").value;
+  navigator.clipboard?.writeText(url).then(
+    () => { document.getElementById("stepsImportStatus").textContent = "✅ Copié !"; },
+    () => { document.getElementById("stepsImportStatus").textContent = "⚠️ Copie impossible ici — sélectionne le texte manuellement."; }
+  );
+}
+function _regenerateStepsToken() {
+  _showConfirm("Régénérer ton lien ? L'ancien lien arrêtera de fonctionner — il faudra remettre le nouveau dans ton automatisation.", async () => {
+    if (state.stepsToken && _fbUser && _fbDb) {
+      try { await _fbDb.collection("stepTokens").doc(state.stepsToken).delete(); } catch (e) {}
+    }
+    state.stepsToken = null;
+    saveState();
+    document.getElementById("stepsImportUrl").value = "⏳ Préparation de ton lien…";
+    await _ensureStepsToken();
+    document.getElementById("stepsImportUrl").value = _stepsImportUrl();
+    document.getElementById("stepsImportStatus").textContent = "✅ Nouveau lien généré.";
+  }, { icon: "🔄", okLabel: "Régénérer", okColor: "#f08080" });
+}
+// Relit le dernier envoi automatique (s'il correspond bien à AUJOURD'HUI dans le fuseau horaire
+// de CET appareil — le Worker n'enregistre qu'un instant absolu, jamais une date déjà "décidée",
+// pour ne jamais se tromper de jour selon le fuseau de qui lit).
+async function _checkStepsImport() {
+  if (!_fbUser || !_fbDb) return;
+  try {
+    const snap = await _fbDb.collection("users").doc(_fbUser.uid).collection("dashboard").doc("stepsImport").get();
+    if (!snap.exists) return;
+    const data = snap.data();
+    const updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt);
+    if (todayKey(updatedAt) !== todayKey()) return; // import d'un autre jour, on ignore
+    const steps = Number(data.steps) || 0;
+    if (steps > 0 && getToday().habits["h-pas"] !== steps) {
+      getToday().habits["h-pas"] = steps;
+      saveState(); renderAll();
+      showToast("🚶 " + steps.toLocaleString("fr-FR") + " pas importés automatiquement");
+    }
+  } catch (e) { console.warn("[steps import]", e); }
+}
+setInterval(() => _checkStepsImport(), 10 * 60 * 1000); // si l'app reste ouverte, revérifie de temps en temps
+
 // Fusionné dans l'avatar (petit point de couleur) plutôt qu'une pastille séparée à côté — même
 // info, un bouton de moins dans le bandeau. Sans effet tant que l'avatar n'est pas construit
 // (_fbUpdateUI pas encore passé) : la prochaine mise à jour de statut rattrapera l'affichage.
@@ -25482,6 +25605,7 @@ async function _fbLoad() {
     _fbSetStatus("ok");
     _fbLoadTime = Date.now();
     _fbListen();
+    _checkStepsImport();
   } catch(e) {
     console.warn("[Firebase] load error", e);
     _fbSetStatus("error");
