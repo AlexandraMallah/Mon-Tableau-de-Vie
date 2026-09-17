@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1265</title>
+<title>Mon Tableau de Vie 🌿 · v1266</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13349,8 +13349,13 @@ function renderHabitsTracking() {
   }).join("");
 }
 
+// Les 2 sélecteurs "30/60/90/Tout" (routines ci-dessous, symptômes plus bas) sont mémorisés
+// dans state.skincareNbPref/symptomNbPref — sinon ils repartaient à leur valeur par défaut
+// (60 / 30) à chaque réouverture de l'app, plainte récurrente signalée plusieurs fois.
 let _skincareNb = 60;
-function setSkincareNb(n) {
+let _skincareNbRestored = false;
+function setSkincareNb(n, _fromRestore) {
+  if (!_fromRestore) { state.skincareNbPref = n; saveState(); }
   _skincareNb = n;
   const allDks = Object.keys(state.history || {}).sort();
   const firstActDk = allDks.find(dk => Object.values(state.history[dk]?.habits || {}).some(v => v)) || allDks[0];
@@ -13367,7 +13372,9 @@ function setSkincareNb(n) {
 }
 let _symSanteCharts = {};
 let _symptomNb = 30;
-function setSymptomNb(n) {
+let _symptomNbRestored = false;
+function setSymptomNb(n, _fromRestore) {
+  if (!_fromRestore) { state.symptomNbPref = n; saveState(); }
   _symptomNb = n;
   [30,60,90].forEach(v => { const b = document.getElementById("symBtn"+v); if(b) b.style.fontWeight = v===n ? "700" : "400"; });
   const bAll = document.getElementById("symBtnAll"); if(bAll) bAll.style.fontWeight = n===0 ? "700" : "400";
@@ -13386,6 +13393,13 @@ function _symptomAllDays() {
   return Math.max(1, Math.round((today - first) / 86400000) + 1);
 }
 function renderCustomSymptomsSante() {
+  if (!_symptomNbRestored) {
+    _symptomNbRestored = true;
+    if (state.symptomNbPref !== undefined && state.symptomNbPref !== null && state.symptomNbPref !== _symptomNb) {
+      setSymptomNb(state.symptomNbPref);
+      return;
+    }
+  }
   const card = document.getElementById("customSymptomsSanteCard");
   const grid = document.getElementById("customSymptomsSanteGrid");
   if (!card || !grid) return;
@@ -13461,6 +13475,13 @@ function renderCustomSymptomsSante() {
 }
 
 function renderSkincare() {
+  if (!_skincareNbRestored) {
+    _skincareNbRestored = true;
+    if (state.skincareNbPref !== undefined && state.skincareNbPref !== null && state.skincareNbPref !== _skincareNb) {
+      setSkincareNb(state.skincareNbPref);
+      return;
+    }
+  }
   const todayBlock    = document.getElementById("skincareTodayBlock");   // onglet Santé
   const todayAujourd = document.getElementById("routineTodayBlock");     // onglet Aujourd'hui
   const grid30        = document.getElementById("skincare30Grid");
