@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1264</title>
+<title>Mon Tableau de Vie 🌿 · v1265</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11359,7 +11359,11 @@ function saveBodyComp() {
   if (f > 0) { entry.bodyFat = f; any = true; }
   if (m > 0) { entry.muscleMass = m; any = true; }
   if (!any) return;
-  document.getElementById("weightInput").value = "";
+  // Le champ profil (weightInput) N'EST PLUS vidé : c'est une info de profil qui doit rester
+  // affichée en permanence comme Taille/Âge/Sexe, pas une saisie du jour qui disparaît toute
+  // seule (plainte récurrente) — renderHealth() → fillBodyCompForm() le remet de toute façon au
+  // dernier poids connu juste après, donc l'y mettre ici évite un clignotement à vide entre-temps.
+  document.getElementById("weightInput").value = w > 0 ? w : _lastKnownWeight();
   if (document.getElementById("weightBodyCompInput")) document.getElementById("weightBodyCompInput").value = "";
   document.getElementById("bodyFatInput").value = "";
   document.getElementById("muscleMassInput").value = "";
@@ -11372,6 +11376,14 @@ function saveBodyComp() {
     _autoCalcKcal(steps, false);
   }
 }
+// Dernier poids connu (n'importe quel jour passé, pas forcément aujourd'hui) — c'est ce que le
+// champ "Poids" du profil (à côté de Taille/Âge/Sexe) doit toujours afficher : une info de
+// profil qui reste en mémoire, pas une saisie du jour qui se vide toute seule.
+function _lastKnownWeight() {
+  const days = Object.keys(state.history).filter(k => state.history[k]?.weight > 0).sort();
+  const last = days[days.length - 1];
+  return last ? state.history[last].weight : "";
+}
 function fillBodyCompForm(dateKey) {
   const wIn = document.getElementById("weightInput");
   const wcIn = document.getElementById("weightBodyCompInput");
@@ -11381,9 +11393,10 @@ function fillBodyCompForm(dateKey) {
   // (sync cloud, etc.) efface le poids pendant qu'on est en train de le taper.
   if ([wIn, wcIn, fIn, mIn].includes(document.activeElement)) return;
   const entry = state.history[dateKey || todayKey()];
-  const w = entry?.weight || "";
-  if (wIn) wIn.value = w;
-  if (wcIn) wcIn.value = w;
+  // wIn (profil) : toujours le dernier poids connu, quel que soit le jour affiché dans le
+  // graphique. wcIn (formulaire détaillé) : lié au jour précis consulté, vide si rien ce jour-là.
+  if (wIn) wIn.value = _lastKnownWeight();
+  if (wcIn) wcIn.value = entry?.weight || "";
   if (fIn) fIn.value = entry?.bodyFat || "";
   if (mIn) mIn.value = entry?.muscleMass || "";
 }
