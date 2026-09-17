@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1266</title>
+<title>Mon Tableau de Vie 🌿 · v1267</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4573,6 +4573,7 @@
       <div id="aiConfigBlock" style="margin-top:10px;">
         <label>Assistant</label>
         <select id="aiProviderSelect" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;margin-bottom:8px;">
+          <option value="groq">Groq (Llama — gratuit, très rapide)</option>
           <option value="gemini">Gemini (Google — gratuit)</option>
           <option value="anthropic">Claude (Anthropic — payant)</option>
           <option value="openai">ChatGPT (OpenAI — payant)</option>
@@ -5952,7 +5953,7 @@ function migrate(s) {
   if (s.features.energyBalance === undefined) s.features.energyBalance = false;
   // Assistant IA : fournisseur + clés API — synchronisées comme le reste des données (même
   // protection que tout le reste : accessible uniquement depuis le compte de l'utilisatrice).
-  if (!s.aiAssistant) s.aiAssistant = { provider: "gemini", keys: {} };
+  if (!s.aiAssistant) s.aiAssistant = { provider: "groq", keys: {} };
   if (!s.aiAssistant.keys) s.aiAssistant.keys = {};
   // Jeton d'import automatique des pas (Raccourcis/Tasker) — généré à la demande, voir
   // _ensureStepsToken(). Synchronisé comme le reste : retrouvé automatiquement sur les autres
@@ -21652,6 +21653,14 @@ async function importRecipeFromUrl() {
 // Bouton accessible depuis l'en-tête sur tous les onglets. Peut répondre en texte (questions,
 // explications) ou effectuer une action concrète dans l'app via les outils déclarés dans _AI_TOOLS.
 const _AI_KEY_HELP = {
+  groq: `
+    <ol style="margin:0;padding-left:18px;">
+      <li>Va sur <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> et crée un compte gratuit (avec ton email, ou directement avec Google/GitHub), ou connecte-toi si tu en as déjà un.</li>
+      <li>Clique sur le bouton <strong>« Create API Key »</strong> (créer une clé API), donne-lui un nom si demandé.</li>
+      <li>Un code apparaît, commençant par <code>gsk_…</code>. <strong>Copie-le tout de suite</strong> — il ne sera plus jamais réaffiché ensuite.</li>
+      <li>Reviens ici et colle-le dans le champ juste au-dessus.</li>
+    </ol>
+    <p style="margin:8px 0 0;">✅ Gratuit, aucune carte bancaire à ajouter — et nettement plus rapide que les autres options gratuites (matériel spécialisé pour l'IA).</p>`,
   gemini: `
     <ol style="margin:0;padding-left:18px;">
       <li>Va sur <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> et connecte-toi avec un compte Google (le tien, celui de ta boîte mail Gmail par exemple).</li>
@@ -21688,7 +21697,7 @@ function _onAiKeyInput() {
   const has = !!document.getElementById("aiApiKeyInput").value.trim();
   document.getElementById("aiKeyHelpDetails").open = !has;
 }
-const _AI_PROVIDER_LABELS = { gemini: "Gemini", anthropic: "Claude", openai: "ChatGPT" };
+const _AI_PROVIDER_LABELS = { groq: "Groq", gemini: "Gemini", anthropic: "Claude", openai: "ChatGPT" };
 // Replié par défaut dès qu'une clé existe déjà : sur téléphone, ce bloc (dropdown + champ +
 // explication) pouvait à lui seul pousser les boutons "Fermer"/"Envoyer" hors de l'écran,
 // obligeant à faire défiler DANS la fenêtre pour les atteindre — repliable, il ne prend que
@@ -21700,7 +21709,7 @@ function _updateAiConfigSummary() {
   summary.textContent = hasKey ? `🔑 ${_AI_PROVIDER_LABELS[provider] || provider} configuré · Changer` : "🔑 Configurer l'assistant";
 }
 function openAiRecipeModal() {
-  const provider = state.aiAssistant?.provider || "gemini";
+  const provider = state.aiAssistant?.provider || "groq";
   document.getElementById("aiProviderSelect").value = provider;
   const key = state.aiAssistant?.keys?.[provider] || "";
   document.getElementById("aiApiKeyInput").value = key;
@@ -21885,6 +21894,26 @@ async function _callClaude(key, history) {
   const textBlock = (data.content || []).find(b => b.type === "text");
   return { toolName: toolBlock?.name || null, toolInput: toolBlock?.input || null, text: textBlock?.text || "" };
 }
+// Groq expose une API compatible OpenAI (mêmes formats de requête/réponse), juste une autre
+// adresse et d'autres noms de modèles — matériel spécialisé, nettement plus rapide.
+async function _callGroq(key, history) {
+  const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: { "content-type": "application/json", "authorization": "Bearer " + key },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile", temperature: 0.3,
+      messages: [{ role: "system", content: _aiSystemPrompt() }, ...history.map(m => ({ role: m.role, content: m.content }))],
+      tools: _AI_TOOLS.map(t => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.input_schema } })),
+    }),
+  });
+  if (!resp.ok) throw new Error("Groq a répondu une erreur (" + resp.status + ") — vérifie ta clé API.");
+  const data = await resp.json();
+  const msg = data.choices?.[0]?.message || {};
+  const call = (msg.tool_calls || [])[0];
+  let toolInput = null;
+  if (call) { try { toolInput = JSON.parse(call.function.arguments); } catch (e) {} }
+  return { toolName: call?.function?.name || null, toolInput, text: msg.content || "" };
+}
 async function _callOpenAI(key, history) {
   const resp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -22064,7 +22093,7 @@ async function runAiAssistant() {
   const setError = (msg) => { statusEl.textContent = msg; statusEl.style.padding = msg ? "8px 12px" : "0"; };
   if (!key) { setError("⚠️ Ajoute ta clé API ci-dessus pour continuer (voir l'explication juste en dessous)."); return; }
   if (!text) { setError("⚠️ Écris ou dicte d'abord ce que tu veux faire."); return; }
-  if (!state.aiAssistant) state.aiAssistant = { provider: "gemini", keys: {} };
+  if (!state.aiAssistant) state.aiAssistant = { provider: "groq", keys: {} };
   state.aiAssistant.provider = provider;
   state.aiAssistant.keys[provider] = key;
   saveState(); // synchronisée comme le reste des données, pour retrouver la clé sur les autres appareils
@@ -22077,7 +22106,8 @@ async function runAiAssistant() {
   try {
     const result = provider === "anthropic" ? await _callClaude(key, _aiHistory)
       : provider === "openai" ? await _callOpenAI(key, _aiHistory)
-      : await _callGemini(key, _aiHistory);
+      : provider === "gemini" ? await _callGemini(key, _aiHistory)
+      : await _callGroq(key, _aiHistory);
     let reply;
     if (result.toolName) {
       reply = _executeAiTool(result.toolName, result.toolInput || {});
@@ -25487,7 +25517,7 @@ function _mergeFromCloud(remote) {
   // Clés API de l'Assistant IA : fusionnées (union), jamais remplacées en bloc — une clé
   // saisie sur un appareil ne doit pas disparaître parce qu'un autre appareil, pas encore à
   // jour, a resauvegardé sa version locale sans cette clé entre-temps.
-  merged.aiAssistant = merged.aiAssistant || { provider: "gemini", keys: {} };
+  merged.aiAssistant = merged.aiAssistant || { provider: "groq", keys: {} };
   merged.aiAssistant.keys = { ...(merged.aiAssistant.keys || {}), ...(state.aiAssistant?.keys || {}) };
   if (state.aiAssistant?.provider) merged.aiAssistant.provider = state.aiAssistant.provider;
   // (Pas de filet "garder le local si le cloud est vide" pour les raccourcis, contrairement aux
@@ -25820,7 +25850,7 @@ async function _fbSaveNow() {
       // une copie locale qui ne la connaît pas encore.
       const remoteAiKeys = cachedRemote.aiAssistant?.keys || {};
       if (Object.keys(remoteAiKeys).some(k => !state.aiAssistant?.keys?.[k])) {
-        if (!state.aiAssistant) state.aiAssistant = { provider: "gemini", keys: {} };
+        if (!state.aiAssistant) state.aiAssistant = { provider: "groq", keys: {} };
         state.aiAssistant.keys = { ...remoteAiKeys, ...state.aiAssistant.keys };
         mergedSomething = true;
       }
