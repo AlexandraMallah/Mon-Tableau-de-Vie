@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1269</title>
+<title>Mon Tableau de Vie 🌿 · v1270</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1854,6 +1854,7 @@
     font-family: inherit; transition: background .15s;
   }
   .note-tb-btn:hover { background: var(--lavender-soft); }
+  .rte-sticky-bar { position: sticky; top: var(--sticky-stack-bottom, 74px); z-index: 5; background: var(--card); }
   .note-group-item {
     border-radius: 10px; margin-bottom: 4px; overflow: hidden;
     border: 1.5px solid transparent;
@@ -2813,7 +2814,7 @@
               style="font-size:18px;font-weight:700;border:none;outline:none;color:var(--ink);font-family:inherit;width:100%;background:transparent;resize:none;overflow:hidden;line-height:1.3;padding:0;box-sizing:border-box;"
               oninput="scheduleNoteSave();_autoResizeNoteTitle(this)"
               onkeydown="if(event.key==='Enter'){event.preventDefault();}"></textarea>
-            <div style="display:flex;gap:4px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+            <div class="rte-sticky-bar" style="display:flex;gap:4px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
               <button onmousedown="event.preventDefault();noteCmd('bold')" title="Gras" class="note-tb-btn"><b>B</b></button>
               <button onmousedown="event.preventDefault();noteCmd('italic')" title="Italique" class="note-tb-btn"><i>I</i></button>
               <button onmousedown="event.preventDefault();noteCmd('underline')" title="Souligné" class="note-tb-btn"><u>U</u></button>
@@ -7514,7 +7515,7 @@ function _projNoteHtml(n) {
 function _projNoteToolbar() {
   const b = (cmd, title, label, extra) => `<button onmousedown="event.preventDefault();_projNoteCmd(this,'${cmd}')" title="${title}" class="note-tb-btn"${extra ? ` style="${extra}"` : ""}>${label}</button>`;
   const sep = `<div style="width:1px;background:var(--line);margin:0 2px;"></div>`;
-  return `<div style="display:flex;gap:4px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:8px;">`
+  return `<div class="rte-sticky-bar" style="display:flex;gap:4px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:8px;">`
     + b("bold","Gras","<b>B</b>") + b("italic","Italique","<i>I</i>") + b("underline","Souligné","<u>U</u>") + sep
     + b("p","Texte courant (paragraphe)","Texte","font-size:11px;") + b("h1","Titre 1","T1","font-weight:800;") + b("h2","Titre 2","T2","font-weight:700;") + b("h3","Titre 3","T3","font-weight:600;font-size:11px;") + sep
     + b("ul","Liste à puces","• —") + b("ol","Liste numérotée","1.") + sep
