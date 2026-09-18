@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1267</title>
+<title>Mon Tableau de Vie 🌿 · v1268</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1878,13 +1878,15 @@
   .note-item.active { background: var(--lavender-soft); font-weight: 600; }
   #noteContentInput:empty:before { content: attr(data-placeholder); color: var(--ink-softer); pointer-events: none; }
   #refNoteContent:empty:before { content: attr(data-placeholder); color: var(--ink-softer); pointer-events: none; }
-  #noteContentInput h1 { font-size: 19px; font-weight: 800; margin: 16px 0 6px; }
-  #noteContentInput h2 { font-size: 16px; font-weight: 700; margin: 14px 0 4px; }
-  #noteContentInput h3 { font-size: 14px; font-weight: 600; margin: 10px 0 3px; }
-  #noteContentInput ul, #noteContentInput ol { padding-left: 20px; margin: 4px 0; }
-  #noteContentInput li { margin: 2px 0; }
-  #noteContentInput blockquote { border-left: 3px solid var(--lilac); margin: 8px 0; padding: 4px 12px; color: var(--ink-soft); font-style: italic; background: var(--lavender-soft); border-radius: 0 6px 6px 0; }
-  #noteContentInput hr { border: none; border-top: 1px solid var(--line); margin: 10px 0; }
+  #noteContentInput h1, .proj-rte h1 { font-size: 19px; font-weight: 800; margin: 16px 0 6px; }
+  #noteContentInput h2, .proj-rte h2 { font-size: 16px; font-weight: 700; margin: 14px 0 4px; }
+  #noteContentInput h3, .proj-rte h3 { font-size: 14px; font-weight: 600; margin: 10px 0 3px; }
+  #noteContentInput ul, #noteContentInput ol, .proj-rte ul, .proj-rte ol { padding-left: 20px; margin: 4px 0; }
+  #noteContentInput li, .proj-rte li { margin: 2px 0; }
+  #noteContentInput blockquote, .proj-rte blockquote { border-left: 3px solid var(--lilac); margin: 8px 0; padding: 4px 12px; color: var(--ink-soft); font-style: italic; background: var(--lavender-soft); border-radius: 0 6px 6px 0; }
+  #noteContentInput hr, .proj-rte hr { border: none; border-top: 1px solid var(--line); margin: 10px 0; }
+  .proj-rte:empty:before { content: attr(data-placeholder); color: var(--ink-softer); pointer-events: none; }
+  .proj-rte { outline: none; cursor: text; overflow-wrap: anywhere; }
 
   /* ---- Notes responsive (mobile) ---- */
   .notes-layout {
@@ -7465,11 +7467,11 @@ function _renderProjFicheNotes(projId) {
   if (!p.ficheNotesList) p.ficheNotesList = [];
   const noteStyle = "border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;background:white;";
   const titleStyle = "width:100%;border:none;outline:none;font-family:inherit;font-size:14px;font-weight:600;color:var(--ink);background:transparent;padding:0 0 6px;border-bottom:1px solid var(--line);margin-bottom:8px;";
-  const taStyle = "width:100%;border:none;outline:none;font-family:inherit;font-size:13px;color:var(--ink);line-height:1.7;background:transparent;resize:vertical;min-height:60px;box-sizing:border-box;";
+  const rteStyle = "font-family:inherit;font-size:13px;color:var(--ink);line-height:1.7;min-height:60px;";
+  const subRteStyle = "font-family:inherit;font-size:13px;color:var(--ink-soft);line-height:1.7;min-height:40px;";
   const subStyle = "margin-left:16px;padding-left:12px;border-left:3px solid var(--lavender-soft);margin-top:8px;";
-  const subTaStyle = "width:100%;border:none;outline:none;font-family:inherit;font-size:13px;color:var(--ink-soft);background:transparent;resize:vertical;min-height:40px;box-sizing:border-box;";
 
-  let html = `<p style="font-size:11px;color:var(--ink-softer);margin:0 0 10px;line-height:1.5;">💡 Ces notes sont propres à ce projet et restent simples (texte libre). Pour des notes mises en forme (titres, gras, listes…) valables sur plusieurs projets, utilise plutôt l'onglet <strong>📓 Notes</strong>.</p>
+  let html = `<p style="font-size:11px;color:var(--ink-softer);margin:0 0 10px;line-height:1.5;">💡 Ces notes sont propres à ce projet. Pour des notes valables sur plusieurs projets, utilise plutôt l'onglet <strong>📓 Notes</strong>.</p>
   <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
     <button onclick="_addProjNote('${projId}')" style="font-size:12px;padding:5px 12px;border-radius:8px;border:1.5px dashed var(--lavender);background:var(--lavender-soft);color:var(--ink);cursor:pointer;font-family:inherit;">+ Nouvelle note</button>
   </div>`;
@@ -7482,17 +7484,18 @@ function _renderProjFicheNotes(projId) {
         <div style="${subStyle}">
           <input value="${escapeHtml(sn.title||"")}" placeholder="Titre de la sous-note…" style="${titleStyle}font-size:13px;font-weight:500;"
             onchange="_saveProjNoteField('${projId}',${ni},'title',this.value,${si})" onblur="_saveProjNoteField('${projId}',${ni},'title',this.value,${si})">
-          <textarea placeholder="Contenu…" style="${subTaStyle}"
-            onchange="_saveProjNoteField('${projId}',${ni},'content',this.value,${si})" onblur="_saveProjNoteField('${projId}',${ni},'content',this.value,${si})">${escapeHtml(sn.content||"")}</textarea>
+          <div class="proj-rte" contenteditable="true" data-proj="${projId}" data-ni="${ni}" data-si="${si}" data-placeholder="Contenu…"
+            style="${subRteStyle}" oninput="_projRteInput(this)">${_projNoteHtml(sn)}</div>
           <button onclick="_deleteProjSubNote('${projId}',${ni},${si})" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;padding:0;">✕ Supprimer</button>
         </div>`).join("");
-      html += `<div style="${noteStyle}">
+      html += `<div class="proj-note-card" style="${noteStyle}">
         <div style="display:flex;align-items:flex-start;gap:8px;">
-          <div style="flex:1;">
+          <div style="flex:1;min-width:0;">
             <input value="${escapeHtml(note.title||"")}" placeholder="Titre de la note…" style="${titleStyle}"
               onchange="_saveProjNoteField('${projId}',${ni},'title',this.value)" onblur="_saveProjNoteField('${projId}',${ni},'title',this.value)">
-            <textarea placeholder="Contenu de la note…" style="${taStyle}"
-              onchange="_saveProjNoteField('${projId}',${ni},'content',this.value)" onblur="_saveProjNoteField('${projId}',${ni},'content',this.value)">${escapeHtml(note.content||"")}</textarea>
+            ${_projNoteToolbar()}
+            <div class="proj-rte" contenteditable="true" data-proj="${projId}" data-ni="${ni}" data-si="" data-placeholder="Contenu de la note…"
+              style="${rteStyle}" oninput="_projRteInput(this)">${_projNoteHtml(note)}</div>
           </div>
           <button onclick="_deleteProjNote('${projId}',${ni})" title="Supprimer" style="flex-shrink:0;background:none;border:none;cursor:pointer;font-size:14px;color:var(--ink-softer);padding:0 2px;">🗑</button>
         </div>
@@ -7503,6 +7506,80 @@ function _renderProjFicheNotes(projId) {
   }
   container.innerHTML = html;
 }
+
+// Anciennes notes = texte brut ; une fois modifiées avec la barre d'outils elles passent en HTML (n.rich)
+function _projNoteHtml(n) {
+  return n.rich ? (n.content || "") : escapeHtml(n.content || "").replace(/\r?\n/g, "<br>");
+}
+function _projNoteToolbar() {
+  const b = (cmd, title, label, extra) => `<button onmousedown="event.preventDefault();_projNoteCmd(this,'${cmd}')" title="${title}" class="note-tb-btn"${extra ? ` style="${extra}"` : ""}>${label}</button>`;
+  const sep = `<div style="width:1px;background:var(--line);margin:0 2px;"></div>`;
+  return `<div style="display:flex;gap:4px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:8px;">`
+    + b("bold","Gras","<b>B</b>") + b("italic","Italique","<i>I</i>") + b("underline","Souligné","<u>U</u>") + sep
+    + b("p","Texte courant (paragraphe)","Texte","font-size:11px;") + b("h1","Titre 1","T1","font-weight:800;") + b("h2","Titre 2","T2","font-weight:700;") + b("h3","Titre 3","T3","font-weight:600;font-size:11px;") + sep
+    + b("ul","Liste à puces","• —") + b("ol","Liste numérotée","1.") + sep
+    + b("quote","Citation","❝") + b("hr","Séparateur","—") + b("removeFormat","Effacer la mise en page","✕","color:var(--ink-soft);")
+    + `</div>`;
+}
+let _projRteSel = null;
+document.addEventListener("selectionchange", () => {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const r = sel.getRangeAt(0);
+  const n = r.commonAncestorContainer;
+  const el = (n.nodeType === 1 ? n : n.parentElement)?.closest?.(".proj-rte");
+  if (el) _projRteSel = { el, range: r.cloneRange() };
+});
+function _projNoteCmd(btn, cmd) {
+  const card = btn.closest(".proj-note-card");
+  if (!card) return;
+  let el;
+  if (_projRteSel && card.contains(_projRteSel.el) && document.contains(_projRteSel.el)) {
+    el = _projRteSel.el;
+    el.focus();
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(_projRteSel.range);
+  } else {
+    el = card.querySelector(".proj-rte");
+    el.focus();
+    const r = document.createRange();
+    r.selectNodeContents(el); r.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(r);
+  }
+  if (cmd === "p")          document.execCommand("formatBlock", false, "p");
+  else if (cmd === "h1" || cmd === "h2" || cmd === "h3") document.execCommand("formatBlock", false, cmd);
+  else if (cmd === "ul")    document.execCommand("insertUnorderedList");
+  else if (cmd === "ol")    document.execCommand("insertOrderedList");
+  else if (cmd === "quote") document.execCommand("formatBlock", false, "blockquote");
+  else if (cmd === "hr")    document.execCommand("insertHTML", false, "<hr>");
+  else if (cmd === "removeFormat") { document.execCommand("removeFormat"); document.execCommand("formatBlock", false, "p"); }
+  else                      document.execCommand(cmd);
+  _projRteInput(el);
+}
+let _projRteTimer = null, _projRtePending = false;
+function _projRteInput(el) {
+  if (el.innerHTML === "<br>") el.innerHTML = "";
+  const p = (state.work.postdocProjects || []).find(pp => pp.id === el.dataset.proj);
+  const note = p?.ficheNotesList?.[+el.dataset.ni];
+  const target = el.dataset.si === "" ? note : note?.subnotes?.[+el.dataset.si];
+  if (!target) return;
+  if (target.rich && target.content === el.innerHTML) return;
+  target.content = el.innerHTML;
+  target.rich = true;
+  _projRtePending = true;
+  clearTimeout(_projRteTimer);
+  _projRteTimer = setTimeout(_projRteFlush, 500);
+}
+function _projRteFlush() {
+  clearTimeout(_projRteTimer);
+  if (!_projRtePending) return;
+  _projRtePending = false;
+  saveState();
+}
+window.addEventListener("pagehide", _projRteFlush);
+window.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") _projRteFlush(); });
 
 function _addProjNote(projId) {
   const p = (state.work.postdocProjects||[]).find(pp=>pp.id===projId);
