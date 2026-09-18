@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1268</title>
+<title>Mon Tableau de Vie 🌿 · v1269</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7568,6 +7568,8 @@ function _projRteInput(el) {
   if (target.rich && target.content === el.innerHTML) return;
   target.content = el.innerHTML;
   target.rich = true;
+  state.lastModified = Date.now();
+  window._lastLocalSave = Date.now(); // protège la frappe en cours contre un réaffichage par la synchro cloud
   _projRtePending = true;
   clearTimeout(_projRteTimer);
   _projRteTimer = setTimeout(_projRteFlush, 500);
