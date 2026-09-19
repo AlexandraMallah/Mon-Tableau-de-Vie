@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1278</title>
+<title>Mon Tableau de Vie 🌿 · v1279</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -262,6 +262,18 @@
      - html.is-scrolling : ajouté en JS pendant le défilement → les survols (cartes qui se soulèvent
        sous la souris) sont suspendus, sinon ils sautillent en continu pendant que le contenu défile. */
   html { scrollbar-gutter: stable; }
+  /* Jamais de mot seul sur une ligne : text-wrap:pretty évite les dernières lignes d'un seul mot,
+     balance équilibre les titres courts (le reste est géré par le script de typographie). */
+  body { text-wrap: pretty; }
+  h1, h2, h3, h4, summary, .card h2, .modal h2, .modal h3 { text-wrap: balance; }
+  .sav-row { display: grid; grid-template-columns: 90px 1fr 90px 52px; align-items: center; gap: 8px; }
+  .cl-sec-header { flex-wrap: wrap; row-gap: 4px; }
+  @media (max-width: 480px) {
+    /* un nom long ne doit pas être écrasé en une colonne étroite : il prend toute la largeur, le reste passe dessous */
+    .sav-row { grid-template-columns: minmax(40px, 1fr) auto auto; row-gap: 4px; }
+    .sav-row > .sav-name { grid-column: 1 / -1; }
+    .cl-sec-header .cl-sec-name { flex: 1 1 calc(100% - 70px) !important; min-width: 0; }
+  }
   div[style*="backdrop-filter"] {
     backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
     will-change: auto !important; transform: none !important;
@@ -1961,6 +1973,8 @@
     .ring-card { min-width: 0; }
   }
   @media (max-width: 400px) {
+    /* tuiles de statistiques à 3 colonnes : elles passent sur 2 lignes plutôt que de déborder */
+    .stat-grid[style*="repeat(3"] { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)) !important; }
     /* très petits écrans (320-400 px) : les rangées d'en-tête / de boutons passent à la ligne au lieu de déborder */
     .card-row, .work-header, .card div[style*="display:flex"], .modal div[style*="display:flex"], .type-toggle { flex-wrap: wrap; }
     .type-toggle button { flex: 1 1 auto; }
@@ -5524,16 +5538,33 @@ document.addEventListener('mousedown', e => {
     a.blur();
   }, true);
 })();
-/* Typographie : un « : » ne doit jamais rester seul au bout d'une ligne avec sa valeur à la ligne d'après
-   (« Cumulé épargné : » / « +29825,02 € »). On colle le « : » au mot précédent et au mot suivant avec des
-   espaces insécables. Traité au moment de l'AFFICHAGE, sur les nœuds de texte uniquement (jamais dans le
-   code, ni dans les champs de saisie / zones éditables), y compris pour tout ce qui est ajouté plus tard. */
+/* Typographie : jamais de mot « seul » sur une ligne. Traité au moment de l'AFFICHAGE, sur les nœuds de
+   texte uniquement (jamais dans le code, ni dans les champs de saisie / zones éditables), y compris pour
+   tout ce qui est ajouté plus tard, avec des espaces insécables :
+   - « libellé : valeur » court (≤ 32 caractères) = un seul bloc indivisible (« Cumulé épargné : +2000 € ») ;
+     plus long : le « : » reste au moins collé au mot d'avant et au mot d'après ;
+   - les deux derniers mots d'un texte restent ensemble (pas de dernière ligne d'un seul mot) ;
+   - un emoji reste collé au mot voisin. */
 (function() {
+  const NB = ' ';
   const SKIP = /^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|OPTION|CODE|PRE|NOSCRIPT|TITLE)$/;
+  const glue = t => {
+    let n = t;
+    if (n.indexOf(':') !== -1) {
+      n = n.replace(/([^\s·|—,;:()]+(?: [^\s·|—,;:()]+){0,2}) : ([^\s·|—,;()]+)/g,
+        (m, a, b) => (a.length + b.length + 3 <= 32) ? a.replace(/ /g, NB) + NB + ':' + NB + b : a + NB + ':' + NB + b);
+      n = n.replace(/(\S) : (?=\S)/g, '$1' + NB + ':' + NB).replace(/(\S) :(?=\s|$)/g, '$1' + NB + ':');
+    }
+    // libellé très court (≤ 20 caractères, ≤ 3 mots) : jamais coupé
+    n = n.replace(/^(\s*)(\S[^\n]{0,19}?)(\s*)$/, (m, l, core, r) => (core.split(' ').length <= 3 ? l + core.replace(/ /g, NB) + r : m));
+    // un emoji reste collé au mot voisin (jamais seul en début ou en fin de ligne)
+    n = n.replace(/^(\s*\p{Extended_Pictographic}\uFE0F?) (?=\S)/u, '$1' + NB).replace(/(\S) (\p{Extended_Pictographic}\uFE0F?)(\s*)$/u, '$1' + NB + '$2$3');
+    return n.replace(/([^\s]{1,14}) ([^\s]{1,14})(\s*)$/, (m, a, b, sp) => a + NB + b + sp);
+  };
   const fix = node => {
     const t = node.nodeValue;
-    if (!t || t.indexOf(':') === -1) return;
-    const n = t.replace(/(\S) : (?=\S)/g, '$1\u00a0:\u00a0').replace(/(\S) :(?=\s|$)/g, '$1\u00a0:');
+    if (!t || t.length < 3) return;
+    const n = glue(t);
     if (n !== t) node.nodeValue = n;
   };
   const ok = node => { for (let e = node.parentElement; e; e = e.parentElement) { if (SKIP.test(e.tagName) || e.isContentEditable) return false; } return true; };
@@ -7542,7 +7573,7 @@ function _renderProjFicheTemps(projId) {
   });
   const fmt = h => h < 1 ? `${Math.round(h*60)} min` : `${Math.floor(h)}h${h%1 ? Math.round((h%1)*60).toString().padStart(2,"0") : ""}`;
   container.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:12px;margin-bottom:16px;">
       <div style="background:var(--bg-1);border-radius:12px;padding:14px;text-align:center;">
         <div style="font-size:11px;color:var(--ink-soft);margin-bottom:4px;">Cette semaine</div>
         <div style="font-size:22px;font-weight:800;color:var(--ink);">${fmt(thisWeekH)}</div>
@@ -16808,8 +16839,8 @@ function renderSavings() {
       const color = COLORS[i % COLORS.length];
       const locked = !!lockedMap[cat];
       const startVal = (breakdown[cat] !== undefined) ? breakdown[cat] : (cat === defaultCat ? (state.accounts.epargneStart || 0) : 0);
-      return `<div style="display:grid;grid-template-columns:90px 1fr 90px 52px;align-items:center;gap:8px;">
-        <span onclick="openSavingsAccountModal('${escapeHtml(cat)}')" style="font-size:12.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" title="Voir les mouvements">${escapeHtml(cat)}</span>
+      return `<div class="sav-row">
+        <span class="sav-name" onclick="openSavingsAccountModal('${escapeHtml(cat)}')" style="font-size:12.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" title="Voir les mouvements">${escapeHtml(cat)}</span>
         <div onclick="openSavingsAccountModal('${escapeHtml(cat)}')" style="height:6px;background:var(--line);border-radius:3px;overflow:hidden;cursor:pointer;">
           <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;transition:width .4s;"></div>
         </div>
@@ -21186,7 +21217,7 @@ function _clRenderAllLists(ctx) {
           <div class="cl-sec-header" style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
             <span draggable="true" ondragstart="_clDragStart(event,'${ctx}',${li},'${childPathJSON}')" ondragend="_clDragEnd(event)" style="font-size:13px;color:var(--ink-softer);cursor:grab;user-select:none;opacity:.55;" title="Glisser pour déplacer">⠿</span>
             <span style="font-size:13px;">${sec.emoji||'📂'}</span>
-            <span style="font-weight:700;font-size:13px;color:var(--ink-soft);flex:1;">${escapeHtml(sec.name)}</span>
+            <span class="cl-sec-name" style="font-weight:700;font-size:13px;color:var(--ink-soft);flex:1;">${escapeHtml(sec.name)}</span>
             <span style="font-size:11px;color:var(--ink-softer);">${allSecItems.filter(i=>i.done).length}/${allSecItems.length}</span>
             <button onclick="addCLSection('${ctx}',${li},'${childPathJSON}')" class="cl-add-sub-pill" title="Ajouter une sous-liste">+ sous-liste</button>
             <button onclick="moveCLSection('${ctx}',${li},'${childPathJSON}',-1)" ${si===0?'disabled':''} style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:12px;padding:0 1px;">▲</button>
