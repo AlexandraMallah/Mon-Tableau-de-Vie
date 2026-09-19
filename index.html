@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1276</title>
+<title>Mon Tableau de Vie 🌿 · v1277</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2794,7 +2794,7 @@
         <div id="timeCatsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:8px;"></div>
         <div style="padding:8px 12px;background:linear-gradient(135deg,var(--butter-soft),white);border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:13px;color:var(--ink-soft);">Total du jour</span>
-          <strong id="timeDayTotal" style="font-size:16px;color:var(--ink);">0 h</strong>
+          <strong id="timeDayTotal" style="font-size:16px;color:var(--ink);">0 h</strong>
         </div>
       </div>
       <div class="grid-two-eq" style="margin-bottom:18px;">
@@ -3084,7 +3084,7 @@
     <div class="card" id="healthStepsCard" style="margin-top:18px;">
       <div class="card-row">
         <h2>🚶 Pas</h2>
-        <span id="stepsGoalText" style="font-size:13px;color:var(--ink-soft);">Objectif : <strong>9000 pas</strong> · orange dès 7000</span>
+        <span id="stepsGoalText" style="font-size:13px;color:var(--ink-soft);">Objectif : <strong>9000 pas</strong> · orange dès 7000</span>
         <button onclick="openStepsImportModal()" class="help-btn" style="margin-left:auto;" title="Récupérer automatiquement tes pas depuis l'app Santé/Fit de ton téléphone">🔗 Import auto</button>
       </div>
       <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
@@ -3222,18 +3222,18 @@
       <div class="money-accounts-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
         <div class="money-stat" id="accountCourantCard" style="background:linear-gradient(135deg,white 0%,var(--sky-soft) 100%);position:relative;">
           <div class="label" id="accountCourantLabel">💳 Compte courant</div>
-          <div class="value" id="accountCourant">0,00 €</div>
+          <div class="value" id="accountCourant">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="accountCourantDetail"></div>
         </div>
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,#fff8e1 100%);position:relative;">
           <div class="label" id="cashAccountLabel">💵 Espèces en poche</div>
-          <div class="value" id="cashBalanceDisplay" style="color:#b8860b;">0,00 €</div>
+          <div class="value" id="cashBalanceDisplay" style="color:#b8860b;">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="cashSubLabel"></div>
         </div>
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,var(--lavender-soft) 100%);position:relative;">
           <button onclick="openSavingsAccountsManager()" title="Gérer l'épargne" class="help-btn" style="position:absolute;top:8px;right:8px;font-size:11px;padding:3px 9px;">✦</button>
           <div class="label">🏦 Épargne totale</div>
-          <div class="value" id="accountEpargne" style="color:#6b4d99;">0,00 €</div>
+          <div class="value" id="accountEpargne" style="color:#6b4d99;">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="accountEpargneDetail"></div>
         </div>
       </div>
@@ -3318,7 +3318,7 @@
           </label>
           <label id="txExceptionalWrap" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;">
             <input type="checkbox" id="txExceptional" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;" />
-            ✨ Dépense exceptionnelle lissée (cours, matériel…)
+            ✨ Dépense exceptionnelle lissée
           </label>
         </div>
         <div id="txMissionWrap" style="display:none;margin-bottom:6px;">
@@ -3365,12 +3365,9 @@
       <div id="budgetGauge"></div>
     </div>
     <div class="card" id="externalCard" style="margin-bottom:18px;display:none;">
-      <div style="display:flex;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
-        <h2 style="margin:0;white-space:nowrap;font-size:15px;" id="externalCardTitle">🏦 Comptes tiers</h2>
-        <div style="display:flex;gap:6px;align-items:center;margin-left:auto;">
-          <span id="externalTotal" style="font-size:14px;font-weight:700;color:var(--ink-soft);white-space:nowrap;"></span>
-          <button id="externalEditAccountsBtn" onclick="openSecondaryAccountsManager()" class="help-btn">✦ Gérer</button>
-        </div>
+      <div style="display:flex;align-items:center;margin-bottom:8px;gap:10px;flex-wrap:wrap;">
+        <button id="externalEditAccountsBtn" onclick="openSecondaryAccountsManager()" class="help-btn" style="flex-shrink:0;">✦ Gérer</button>
+        <h2 style="margin:0;font-size:15px;min-width:0;overflow-wrap:anywhere;" id="externalCardTitle">🏦 Comptes tiers</h2>
       </div>
       <div id="externalAccountTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
       <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;">
@@ -3388,11 +3385,11 @@
       <div style="display:flex;gap:24px;margin-bottom:14px;flex-wrap:wrap;">
         <div>
           <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Total</div>
-          <strong id="savingsTotal" style="color:#6b4d99;font-size:22px;font-weight:700;">0,00 €</strong>
+          <strong id="savingsTotal" style="color:#6b4d99;font-size:22px;font-weight:700;">0,00 €</strong>
         </div>
         <div>
           <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Ce mois</div>
-          <strong id="savingsMonth" style="color:#6b4d99;font-size:22px;font-weight:700;">+0,00 €</strong>
+          <strong id="savingsMonth" style="color:#6b4d99;font-size:22px;font-weight:700;">+0,00 €</strong>
         </div>
       </div>
       <div id="savingsBreakdown" style="margin-bottom:14px;"></div>
@@ -3485,7 +3482,7 @@
       </div>
       <div class="sub-total-banner">
         <span>Total équivalent mensuel</span>
-        <strong id="subTotal">0,00 €</strong>
+        <strong id="subTotal">0,00 €</strong>
       </div>
       <div id="subList"></div>
     </div>
@@ -4153,7 +4150,7 @@
       </div>
       <div>
         <label style="font-size:12px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px;">Notes d'arrosage <span style="font-weight:400;font-style:italic;">(méthode, quantité, conseils…)</span></label>
-        <textarea id="plantFormNotes" placeholder="ex : Arroser par le bas, laisser tremper 10 min. Éviter de mouiller les feuilles. Quantité : 200 ml." rows="4" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;resize:vertical;line-height:1.6;"></textarea>
+        <textarea id="plantFormNotes" placeholder="ex : Arroser par le bas, laisser tremper 10 min. Éviter de mouiller les feuilles. Quantité : 200 ml." rows="4" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;resize:vertical;line-height:1.6;"></textarea>
       </div>
     </div>
     <div style="margin-top:18px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
@@ -4263,7 +4260,7 @@
         style="padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--bg-1);cursor:pointer;font-family:inherit;text-align:left;">
         <div style="font-size:20px;margin-bottom:4px;">🔢</div>
         <div style="font-size:13px;font-weight:700;color:var(--ink);">Objectif chiffré</div>
-        <div style="font-size:11px;color:var(--ink-soft);">ex : 8000 pas, 2 L d'eau</div>
+        <div style="font-size:11px;color:var(--ink-soft);">ex : 8000 pas, 2 L d'eau</div>
       </button>
     </div>
     <div id="habitNumericRow" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
@@ -4462,7 +4459,7 @@
         style="padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--bg-1);cursor:pointer;font-family:inherit;text-align:left;">
         <div style="font-size:20px;margin-bottom:4px;">🔢</div>
         <div style="font-size:13px;font-weight:700;color:var(--ink);">Nombre + unité</div>
-        <div style="font-size:11px;color:var(--ink-soft);">ex : 37.5 °C, 130 mmHg</div>
+        <div style="font-size:11px;color:var(--ink-soft);">ex : 37.5 °C, 130 mmHg</div>
       </button>
     </div>
     <div id="symUnitRow" style="display:none;margin-bottom:14px;">
@@ -4633,7 +4630,7 @@
     <div id="aiChatHistory" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;margin-bottom:2px;"></div>
     <label>Que veux-tu faire ?</label>
     <div style="display:flex;gap:6px;align-items:flex-start;">
-      <textarea id="aiRecipeInput" rows="3" placeholder="Ex : « J'ai marché 9000 pas aujourd'hui » · « Ajoute une recette de tarte aux pommes » · « Comment j'active le suivi du cycle ? »"
+      <textarea id="aiRecipeInput" rows="3" placeholder="Ex : « J'ai marché 9000 pas aujourd'hui » · « Ajoute une recette de tarte aux pommes » · « Comment j'active le suivi du cycle ? »"
         style="flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;"
         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();runAiAssistant();}"></textarea>
       <button type="button" id="aiMicBtn" onclick="_toggleAiMic()" title="Dicter à la voix" style="display:none;flex-shrink:0;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:white;cursor:pointer;font-size:16px;">🎤</button>
@@ -4748,7 +4745,7 @@
     <div class="emoji-picker-grid" id="projectModalEmojiPicker"></div>
     <label>Nom du projet</label>
     <input type="text" id="projectModalName" placeholder="Ex : Article de recherche, Candidatures, Cours…" />
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px;">
+    <div id="projectNameSuggestions" style="display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px;">
       <span onclick="_projectNameSuggest(this)" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">Article de recherche</span>
       <span onclick="_projectNameSuggest(this)" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">Candidatures</span>
       <span onclick="_projectNameSuggest(this)" style="cursor:pointer;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg-2);color:var(--ink-soft);">Cours présentiel</span>
@@ -5654,7 +5651,7 @@ const DEFAULT_STATE = {
   name: "",
   features: { pill: false, cycle: false, cycleDetailed: false, pas: true, calories: false },
   habits: [
-    { id: "h-pas", name: "9000 pas", type: "numeric", target: 9000, unit: "pas" },
+    { id: "h-pas", name: "9000 pas", type: "numeric", target: 9000, unit: "pas" },
   ],
   activities: [],
   categories: ["Alimentation", "Logement", "Transport", "Loisirs", "Santé", "Autre"],
@@ -5823,7 +5820,7 @@ function migrate(s) {
           _ing("85", "g", "Pépites de chocolat blanc", 459),
           _ing("1", "pincée", "Sel", 0),
         ],
-        notes: "1. Préchauffe le four à 220 °C (425 °F). Prépare le moule à muffins (caissettes ou beurré).\n2. Dans un saladier, fouette le beurre fondu, l'huile et le sucre.\n3. Ajoute l'œuf et fouette 2-3 min jusqu'à ce que le mélange pâlisse.\n4. Ajoute le babeurre, la vanille et la crème aigre ; mélange.\n5. Dans un autre bol, mélange les ingrédients secs (farine, levure, bicarbonate, sel). Réserve 2 c. à soupe de ce mélange sec pour enrober les fraises.\n6. Incorpore les secs au mélange humide, sans trop travailler. Enrobe les fraises dans les 2 c. à soupe réservées, puis ajoute fraises + pépites de chocolat blanc. Ne pas trop mélanger.\n7. Laisse reposer la pâte 30 min à température ambiante — ne la remélange pas.\n8. Répartis la pâte dans les caissettes. Enfourne 5 min, puis baisse à 190 °C (375 °F) SANS ouvrir la porte et poursuis ~15 min (cure-dent propre).\n9. Laisse tiédir 5 min dans le moule, puis sur une grille.",
+        notes: "1. Préchauffe le four à 220 °C (425 °F). Prépare le moule à muffins (caissettes ou beurré).\n2. Dans un saladier, fouette le beurre fondu, l'huile et le sucre.\n3. Ajoute l'œuf et fouette 2-3 min jusqu'à ce que le mélange pâlisse.\n4. Ajoute le babeurre, la vanille et la crème aigre ; mélange.\n5. Dans un autre bol, mélange les ingrédients secs (farine, levure, bicarbonate, sel). Réserve 2 c. à soupe de ce mélange sec pour enrober les fraises.\n6. Incorpore les secs au mélange humide, sans trop travailler. Enrobe les fraises dans les 2 c. à soupe réservées, puis ajoute fraises + pépites de chocolat blanc. Ne pas trop mélanger.\n7. Laisse reposer la pâte 30 min à température ambiante — ne la remélange pas.\n8. Répartis la pâte dans les caissettes. Enfourne 5 min, puis baisse à 190 °C (375 °F) SANS ouvrir la porte et poursuis ~15 min (cure-dent propre).\n9. Laisse tiédir 5 min dans le moule, puis sur une grille.",
       },
       {
         id: "recseed-bruschetta-roquette-poivron", name: "Bruschettas roquette & poivrons", emoji: "🥖",
@@ -5839,7 +5836,7 @@ function migrate(s) {
           _ing("1", "c. à soupe", "Sauce balsamique", 14),
           _ing("", "", "Sel", 0),
         ],
-        notes: "1. Coupe la baguette en tranches, dispose-les sur une plaque, arrose d'huile d'olive et enfourne à 200 °C pendant 5-6 min.\n2. Coupe les poivrons cuits, pelés et épépinés en fines lanières ; mets-les dans un bol avec le vinaigre, le sel, 1 c. à soupe d'huile d'olive et l'ail écrasé.\n3. Tartine chaque tranche de fromage frais, ajoute quelques feuilles de roquette puis les poivrons, et arrose d'un filet de sauce balsamique.",
+        notes: "1. Coupe la baguette en tranches, dispose-les sur une plaque, arrose d'huile d'olive et enfourne à 200 °C pendant 5-6 min.\n2. Coupe les poivrons cuits, pelés et épépinés en fines lanières ; mets-les dans un bol avec le vinaigre, le sel, 1 c. à soupe d'huile d'olive et l'ail écrasé.\n3. Tartine chaque tranche de fromage frais, ajoute quelques feuilles de roquette puis les poivrons, et arrose d'un filet de sauce balsamique.",
       },
       {
         id: "recseed-bruschetta-saumon", name: "Bruschettas au saumon", emoji: "🐟",
@@ -5850,13 +5847,13 @@ function migrate(s) {
           _ing("100", "g", "Fromage frais (type cream cheese)", 250),
           _ing("2", "", "Concombres", 60),
         ],
-        notes: "⚠️ Aucune préparation n'était fournie pour cette recette — méthode reconstruite, à ajuster selon ton goût.\n\n1. Coupe la baguette en tranches et fais-les griller légèrement (four 200 °C, 5-6 min, ou grille-pain).\n2. Tartine chaque tranche de fromage frais.\n3. Ajoute de fines tranches de concombre, puis le saumon.\n4. Sers frais (optionnel : un filet de citron, un peu d'aneth).",
+        notes: "⚠️ Aucune préparation n'était fournie pour cette recette — méthode reconstruite, à ajuster selon ton goût.\n\n1. Coupe la baguette en tranches et fais-les griller légèrement (four 200 °C, 5-6 min, ou grille-pain).\n2. Tartine chaque tranche de fromage frais.\n3. Ajoute de fines tranches de concombre, puis le saumon.\n4. Sers frais (optionnel : un filet de citron, un peu d'aneth).",
       },
       {
         id: "recseed-bouchees-thon", name: "Bouchées au thon (toasts)", emoji: "🥪",
         servings: 6, category: catApero,
         ingredients: [
-          _ing("1", "boîte", "Thon (~120 g égoutté)", 150),
+          _ing("1", "boîte", "Thon (~120 g égoutté)", 150),
           _ing("2", "c. à soupe", "Mayonnaise", 180),
           _ing("¼", "tasse", "Oignon rouge haché", 16),
           _ing("½", "", "Jus de citron", 5),
@@ -6096,7 +6093,7 @@ function migrate(s) {
     if (s.features.calories === true && !hasFoodData) s.features.calories = false;
     if (s.features.energyBalance === true && !hasFoodData) s.features.energyBalance = false;
   }
-  // Migration : s'assurer que h-cal-dep existe dans les habitudes (target 2000 kcal)
+  // Migration : s'assurer que h-cal-dep existe dans les habitudes (target 2000 kcal)
   if (!Array.isArray(s.habits)) s.habits = [];
   if (!s.habits.find(h => h.id === 'h-cal-dep')) {
     s.habits.push({ id: "h-cal-dep", name: "Calories dépensées", type: "numeric", target: 2000, unit: "kcal" });
@@ -6523,7 +6520,7 @@ function renderRings() {
   const cards = [
     { label: "Habitudes", val: `${habitsDone}/${state.habits.length}`, sub: `${Math.round(habitsPct * 100)}%`, pct: habitsPct },
     { label: "Humeur", val: today.mood ? `${today.mood}/5` : "—", sub: today.mood ? labelFor("mood", today.mood) : "à saisir", pct: moodPct },
-    { label: "Sommeil", val: today.sleep != null ? `${today.sleep} h` : "—", sub: today.sleep != null ? sleepLabel(today.sleep) : "à saisir", pct: sleepPct },
+    { label: "Sommeil", val: today.sleep != null ? `${today.sleep} h` : "—", sub: today.sleep != null ? sleepLabel(today.sleep) : "à saisir", pct: sleepPct },
     { label: "Énergie", val: energyVal, sub: energySub, pct: energyPct },
   ];
   document.getElementById("rings").innerHTML = cards.map((c, i) => `
@@ -6659,7 +6656,7 @@ function _emDrop(e, toIdx) {
   saveState(); renderEmotionGrid();
 }
 
-/* Retourne le snapshot actif (< 10 min) ou null */
+/* Retourne le snapshot actif (< 10 min) ou null */
 function _emotionCurrentEntry(log) {
   if (!log || !log.length) return null;
   const last = log[log.length - 1];
@@ -7187,7 +7184,7 @@ function _autoCalcKcal(steps, forceOverwrite) {
   else if (sex === "m") bmr = base + 5;
   else                  bmr = base - 78; // moyenne F/M
 
-  // ── Calories des pas : Margaria — 1.036 kcal/kg/km ──
+  // ── Calories des pas : Margaria — 1.036 kcal/kg/km ──
   const strideMeter = heightCm * 0.00415;
   const distanceKm  = (steps * strideMeter) / 1000;
   const stepKcal    = distanceKm * weightKg * 1.036;
@@ -7518,7 +7515,7 @@ function _renderProjFicheTemps(projId) {
     if (d >= weekStart) thisWeekH += h;
     if (d >= monthStart) thisMonthH += h;
   });
-  const fmt = h => h < 1 ? `${Math.round(h*60)} min` : `${Math.floor(h)}h${h%1 ? Math.round((h%1)*60).toString().padStart(2,"0") : ""}`;
+  const fmt = h => h < 1 ? `${Math.round(h*60)} min` : `${Math.floor(h)}h${h%1 ? Math.round((h%1)*60).toString().padStart(2,"0") : ""}`;
   container.innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
       <div style="background:var(--bg-1);border-radius:12px;padding:14px;text-align:center;">
@@ -8207,7 +8204,7 @@ function admFormatEur(v) {
   if (v === null || v === undefined || v === "") return "-";
   var n = Number(v);
   if (isNaN(n)) return "-";
-  return n.toFixed(2).replace(".", ",") + " €";
+  return n.toFixed(2).replace(".", ",") + " €";
 }
 
 function admFormatDate(d) {
@@ -8987,11 +8984,11 @@ function renderTeachingHistory() {
       <td>${escapeHtml(c.name || "")}</td>
       <td>${escapeHtml(c.level || "")}</td>
       <td>${escapeHtml(c.type || "")}</td>
-      <td style="text-align:right;">${c.hours} h</td>
+      <td style="text-align:right;">${c.hours} h</td>
       <td><button onclick="deleteCourse('${c.id}')" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);font-size:13px;padding:2px 6px;border-radius:6px;" title="Supprimer">✕</button></td>
     </tr>`).join("");
   const total = courses.reduce((s, c) => s + (Number(c.hours) || 0), 0);
-  if (totalEl) totalEl.textContent = `Total : ${total} h`;
+  if (totalEl) totalEl.textContent = `Total : ${total} h`;
 }
 function openAddCourseForm() {
   const f = document.getElementById("addCourseForm");
@@ -9081,7 +9078,7 @@ function renderAutreView() {
     html += `<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Heures saisies dans l'onglet Temps</div>`;
     html += `<div style="margin-bottom:10px;padding:10px 14px;background:var(--bg-2);border-radius:12px;display:flex;justify-content:space-between;align-items:center;">
       <span style="font-size:13px;color:var(--ink-soft);">Total</span>
-      <strong style="font-size:16px;color:#64748b;">${totalH.toFixed(1).replace(".", ",")} h</strong>
+      <strong style="font-size:16px;color:#64748b;">${totalH.toFixed(1).replace(".", ",")} h</strong>
     </div>`;
     html += `<div class="adm-table-wrap"><table class="adm-table"><thead><tr>
       <th>Date</th><th style="text-align:right;">Heures</th><th>Description</th>
@@ -9091,7 +9088,7 @@ function renderAutreView() {
       const dateFr = d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long", year: "numeric" });
       html += `<tr>
         <td style="white-space:nowrap;">${dateFr}</td>
-        <td style="text-align:right;font-weight:700;color:#64748b;">${e.heures.toFixed(1).replace(".", ",")} h</td>
+        <td style="text-align:right;font-weight:700;color:#64748b;">${e.heures.toFixed(1).replace(".", ",")} h</td>
         <td style="color:var(--ink-soft);">${escapeHtml(e.note) || "&mdash;"}</td>
       </tr>`;
     }
@@ -9289,6 +9286,7 @@ function openProjectModal(id) {
   document.getElementById("projectModalTitle").textContent = isEdit ? "Modifier projet" : "Nouveau projet";
   document.getElementById("projectModalId").value = id || "";
   document.getElementById("projectModalDelete").style.display = isEdit ? "" : "none";
+  document.getElementById("projectNameSuggestions").style.display = isEdit ? "none" : "flex";
   const defaultEmoji = "📁";
   let em = defaultEmoji;
   if (isEdit) {
@@ -10390,7 +10388,7 @@ function toggleActivityDay(actId, dateKey) {
       durInput.oninput = () => {
         const min = Number(durInput.value) || 0;
         const kcal = min > 0 ? _calcSportKcal(act.met, min) : 0;
-        document.getElementById('actTimeKcalPreview').textContent = kcal > 0 ? `≈ ${kcal} kcal` : '';
+        document.getElementById('actTimeKcalPreview').textContent = kcal > 0 ? `≈ ${kcal} kcal` : '';
       };
     }
     document.getElementById('actTimeModal').classList.add('open');
@@ -10667,8 +10665,8 @@ function _selectSport(met, emoji, name) {
   document.getElementById("actModalSportPreviewName").textContent = name;
   const _w = _getRecentWeight();
   const _hasWeight = Object.values(state.history||{}).some(d => Number(d?.weight) > 0);
-  const _wLabel = _hasWeight ? `ton poids (${_w} kg)` : `60 kg (poids estimé — renseigne le tien dans Santé)`;
-  document.getElementById("actModalSportPreviewMet").textContent = `MET ${met} · ≈ ${_calcSportKcal(Number(met), 60)} kcal/heure pour ${_wLabel}`;
+  const _wLabel = _hasWeight ? `ton poids (${_w} kg)` : `60 kg (poids estimé — renseigne le tien dans Santé)`;
+  document.getElementById("actModalSportPreviewMet").textContent = `MET ${met} · ≈ ${_calcSportKcal(Number(met), 60)} kcal/heure pour ${_wLabel}`;
 }
 function _applyMetPreset() { /* remplacé par _selectSport */ }
 
@@ -10704,7 +10702,7 @@ function _openActivityModal(id) {
       document.getElementById("actModalSportPreview").style.display = "flex";
       document.getElementById("actModalSportPreviewEmoji").textContent = found.emoji;
       document.getElementById("actModalSportPreviewName").textContent = found.name;
-      { const _w2 = _getRecentWeight(); const _hw2 = Object.values(state.history||{}).some(d=>Number(d?.weight)>0); const _wl2 = _hw2?`ton poids (${_w2} kg)`:`60 kg (estimé — renseigne dans Santé)`; document.getElementById("actModalSportPreviewMet").textContent = `MET ${found.met} · ≈ ${_calcSportKcal(found.met, 60)} kcal/heure pour ${_wl2}`; }
+      { const _w2 = _getRecentWeight(); const _hw2 = Object.values(state.history||{}).some(d=>Number(d?.weight)>0); const _wl2 = _hw2?`ton poids (${_w2} kg)`:`60 kg (estimé — renseigne dans Santé)`; document.getElementById("actModalSportPreviewMet").textContent = `MET ${found.met} · ≈ ${_calcSportKcal(found.met, 60)} kcal/heure pour ${_wl2}`; }
     }
   }
   _renderSportGrid(_selectedSportKey);
@@ -11014,7 +11012,7 @@ function renderHormones() {
     return `M${CX},${CY} L${x1},${y1} A${r.toFixed(2)},${r.toFixed(2)} 0 0,1 ${x2},${y2} Z`;
   }
 
-  // Cercles de référence (25 / 50 / 75 / 100 %)
+  // Cercles de référence (25 / 50 / 75 / 100 %)
   const refRings = [0.25, 0.5, 0.75, 1].map(f =>
     `<circle cx="${CX}" cy="${CY}" r="${(MAX_R*f).toFixed(1)}" fill="none" stroke="#efeaf5" stroke-width="${f===1?1.5:1}"/>`
   ).join("");
@@ -11762,7 +11760,7 @@ function setWater(n) {
   const next = current === n ? n - 1 : n;
   setWaterGlasses(next);
   renderWater();
-  renderTodayView(); // synchronise l'habitude "1 L d'eau" dans Aujourd'hui
+  renderTodayView(); // synchronise l'habitude "1 L d'eau" dans Aujourd'hui
   renderRings();
 }
 let bodyChart, wellbeingChart, stepsChart, calorieChart;
@@ -11791,7 +11789,7 @@ function _renderKmField(h, num) {
     + '<span style="font-size:11px;color:var(--ink-softer);">km</span>';
 }
 function _syncPasKm(val, fromKm) {
-  const PAS_PER_KM = 1333; // 1 km ≈ 1333 pas (0.75m/pas)
+  const PAS_PER_KM = 1333; // 1 km ≈ 1333 pas (0.75m/pas)
   if (fromKm) {
     const km = parseFloat(val) || 0;
     const pas = Math.round(km * PAS_PER_KM);
@@ -12502,8 +12500,8 @@ async function searchFoodCalories(query) {
         const name = p.product_name || searchName;
         const kcalPortion = grams ? Math.round(kcal100 * grams / 100) : null;
         const calLabel = kcalPortion
-          ? `<span style="color:var(--green);font-weight:700;">${kcalPortion} kcal</span><span style="color:var(--ink-softer);font-size:11px;"> pour ${grams}g</span>`
-          : `<span style="color:var(--orange);">${kcal100} kcal/100g</span>`;
+          ? `<span style="color:var(--green);font-weight:700;">${kcalPortion} kcal</span><span style="color:var(--ink-softer);font-size:11px;"> pour ${grams}g</span>`
+          : `<span style="color:var(--orange);">${kcal100} kcal/100g</span>`;
         const calToApply = kcalPortion || kcal100;
         return `<div onclick="applyCal('${escapeHtml(name.slice(0,50))}', ${calToApply})"
           style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--line);"
@@ -12618,7 +12616,7 @@ function updateRecipePickPreview() {
   const per = recipeKcal(rec).per;
   const portions = parseFloat(document.getElementById("recipePickPortions").value) || 0;
   if (per <= 0) { el.innerHTML = `<strong>${escapeHtml(rec.name)}</strong> — ⚠️ calories non renseignées dans la recette.`; return; }
-  el.innerHTML = `<strong>${escapeHtml(rec.name)}</strong><br>${per} kcal/portion × ${portions} = 🔥 <strong>${Math.round(per * portions)} kcal</strong>`;
+  el.innerHTML = `<strong>${escapeHtml(rec.name)}</strong><br>${per} kcal/portion × ${portions} = 🔥 <strong>${Math.round(per * portions)} kcal</strong>`;
 }
 function addRecipeToFood() {
   const rec = _rpCurrentRecipe();
@@ -12676,7 +12674,7 @@ function renderFoodLog() {
   const totalEl = document.getElementById("foodCalDayTotal");
   if (totalEl && totalCal > 0) {
     const color = totalCal > calLimit ? "#dc2626" : totalCal > calLimit*0.85 ? "#f59e0b" : "var(--green)";
-    totalEl.innerHTML = `— <strong style="color:${color};">${totalCal} kcal</strong> / ${calLimit} kcal`;
+    totalEl.innerHTML = `— <strong style="color:${color};">${totalCal} kcal</strong> / ${calLimit} kcal`;
   } else if (totalEl) totalEl.textContent = "";
 
   // Alerte dépassement
@@ -12686,13 +12684,13 @@ function renderFoodLog() {
       const over = totalCal - calLimit;
       alertEl.style.display = "block";
       alertEl.innerHTML = `<div style="background:#fee2e2;border:1.5px solid #dc2626;border-radius:10px;padding:8px 12px;font-size:13px;color:#dc2626;margin-bottom:10px;">
-        ⚠️ <strong>Limite de ${calLimit} kcal atteinte</strong> — tu dépasses de ${over} kcal.
+        ⚠️ <strong>Limite de ${calLimit} kcal atteinte</strong> — tu dépasses de ${over} kcal.
         <button onclick="editCalLimit()" style="float:right;background:none;border:none;cursor:pointer;font-size:11px;color:#dc2626;text-decoration:underline;">Modifier l'objectif</button>
       </div>`;
     } else if (totalCal > calLimit * 0.85) {
       alertEl.style.display = "block";
       alertEl.innerHTML = `<div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:10px;padding:8px 12px;font-size:13px;color:#92400e;margin-bottom:10px;">
-        ⚡ Il te reste <strong>${calLimit - totalCal} kcal</strong> pour la journée.
+        ⚡ Il te reste <strong>${calLimit - totalCal} kcal</strong> pour la journée.
       </div>`;
     } else alertEl.style.display = "none";
   }
@@ -12704,7 +12702,7 @@ function renderFoodLog() {
       <div style="flex:1;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <span style="font-size:13px;font-weight:500;">${escapeHtml(e.name)}</span>
-          ${e.calories > 0 ? `<span style="font-size:11px;background:var(--butter-soft);color:var(--orange);border-radius:8px;padding:1px 6px;font-weight:600;">${e.calories} kcal</span>` : ""}
+          ${e.calories > 0 ? `<span style="font-size:11px;background:var(--butter-soft);color:var(--orange);border-radius:8px;padding:1px 6px;font-weight:600;">${e.calories} kcal</span>` : ""}
         </div>
         ${e.reason ? `<span style="font-size:11px;background:var(--mint-soft);border-radius:10px;padding:1px 7px;">${escapeHtml(e.reason)}</span>` : ""}
         ${e.note ? `<div style="font-size:12px;color:var(--ink-softer);margin-top:2px;font-style:italic;">${escapeHtml(e.note)}</div>` : ""}
@@ -12716,7 +12714,7 @@ function editCalLimit() {
   const current = state.health?.dailyCalLimit || 1500;
   _showPrompt("Objectif calorique journalier (kcal)", current, v => {
     const n = parseInt(v);
-    if (isNaN(n) || n < 500 || n > 10000) { showToast("⚠️ Valeur invalide (500-10000 kcal)"); return; }
+    if (isNaN(n) || n < 500 || n > 10000) { showToast("⚠️ Valeur invalide (500-10000 kcal)"); return; }
     if (!state.health) state.health = {};
     state.health.dailyCalLimit = n;
     saveState(); renderFoodLog();
@@ -12753,8 +12751,8 @@ function renderWeightGoalStatus() {
   const current = entries[0][1].weight;
   const diff = current - goal;
   if (Math.abs(diff) < 0.5) el.textContent = "🎉 Objectif atteint !";
-  else if (diff > 0) el.textContent = `📉 ${current} kg · encore ${diff.toFixed(1)} kg`;
-  else el.textContent = `✅ ${current} kg · objectif dépassé de ${Math.abs(diff).toFixed(1)} kg`;
+  else if (diff > 0) el.textContent = `📉 ${current} kg · encore ${diff.toFixed(1)} kg`;
+  else el.textContent = `✅ ${current} kg · objectif dépassé de ${Math.abs(diff).toFixed(1)} kg`;
 }
 
 function _toggleFeature(key) {
@@ -12894,7 +12892,7 @@ function renderPill() {
   const streak = _pillStreak();
   if (sl) {
     if (isPause) sl.textContent = "Pause, pas de prise aujourd'hui";
-    else if (dayInfo) sl.textContent = `${streak > 1 ? `🔥 ${streak} j` : taken ? "C'est bon !" : "Pense à la prendre 💜"} · jour ${dayInfo.packDay}/${dayInfo.activeDays}`;
+    else if (dayInfo) sl.textContent = `${streak > 1 ? `🔥 ${streak} j` : taken ? "C'est bon !" : "Pense à la prendre 💜"} · jour ${dayInfo.packDay}/${dayInfo.activeDays}`;
     else sl.textContent = streak > 1 ? `🔥 ${streak} jours de suite` : taken ? "C'est bon pour aujourd'hui !" : "Pense à la prendre 💜";
   }
 }
@@ -13192,7 +13190,7 @@ function _cyclePredictionText(stats) {
   if (!stats) return "💡 Enregistre ton flux au fil des jours pour activer les prédictions.";
   if (!stats.avgCycleLength) return `💡 1 cycle enregistré pour l'instant — encore un pour estimer la durée moyenne et prédire tes prochaines règles.`;
   const parts = [];
-  parts.push(`🔮 Prochaines règles estimées : <strong>~${_fmtCycleDate(stats.predictedNextStart)}</strong> (± ${stats.uncertainty ?? 2} j)`);
+  parts.push(`🔮 Prochaines règles estimées : <strong>~${_fmtCycleDate(stats.predictedNextStart)}</strong> (± ${stats.uncertainty ?? 2} j)`);
   if (stats.fertileStart) parts.push(`🌱 Fenêtre de fertilité estimée : ${_fmtCycleDate(stats.fertileStart)} → ${_fmtCycleDate(stats.fertileEnd)}`);
   parts.push(`📊 Cycle moyen : ${stats.avgCycleLength} j · Règles : ~${stats.avgPeriodLength} j · ${stats.periodsCount} cycle${stats.periodsCount > 1 ? "s" : ""} enregistré${stats.periodsCount > 1 ? "s" : ""}`);
   return parts.join("<br>");
@@ -13887,7 +13885,7 @@ function renderStepsStats() {
   const mTile = document.getElementById("stepsMonthlyTile");
   const bTile = document.getElementById("stepsBestTile");
   const goalText = document.getElementById("stepsGoalText");
-  if (goalText) goalText.innerHTML = `Objectif : <strong>${targetSteps.toLocaleString("fr-FR")} pas</strong> · orange dès 7000`;
+  if (goalText) goalText.innerHTML = `Objectif : <strong>${targetSteps.toLocaleString("fr-FR")} pas</strong> · orange dès 7000`;
   const legendText = document.getElementById("stepsLegendText");
   if (legendText) legendText.textContent = `🟢 ≥ ${targetSteps.toLocaleString("fr-FR")} · 🟠 7000-${(targetSteps-1).toLocaleString("fr-FR")} · 🔴 < 7000 · pointillé vert = objectif`;
   const _isS = document.body.classList.contains("t-serieux");
@@ -14012,7 +14010,7 @@ function renderBodyChart(metric) {
               const dk = todayKey(dates[ctx[0].dataIndex]);
               const h = state.history[dk] || {};
               const lines = [];
-              if (h.weight) lines.push(`⚖️ Poids : ${h.weight} kg`);
+              if (h.weight) lines.push(`⚖️ Poids : ${h.weight} kg`);
               if (h.bodyFat) {
                 const pct = h.weight ? ` (${(h.bodyFat/h.weight*100).toFixed(1)}%)` : "";
                 lines.push(`🟠 Masse grasse : ${h.bodyFat} kg${pct}`);
@@ -14112,7 +14110,7 @@ function renderBodyComboChart() {
         ...baseChartOpts().plugins,
         tooltip: {
           callbacks: {
-            label: ctx => ctx.parsed.y != null ? `${ctx.dataset.label} : ${ctx.parsed.y} kg` : null,
+            label: ctx => ctx.parsed.y != null ? `${ctx.dataset.label} : ${ctx.parsed.y} kg` : null,
           }
         }
       }
@@ -14194,7 +14192,7 @@ function renderWellbeingCorrelations() {
     const { A, B, r, n } = row;
     const begin = (ei++ * 0.09).toFixed(2);
     if (r === null || Math.abs(r) < 0.2) {
-      const t = r === null ? `pas assez de données (${n} j)` : "pas de lien net";
+      const t = r === null ? `pas assez de données (${n} j)` : "pas de lien net";
       edges += `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#e4def0" stroke-width="1.5" stroke-dasharray="2 5" stroke-linecap="round"><title>${A.name} ↔ ${B.name} : ${t}</title></line>`;
       continue;
     }
@@ -14203,7 +14201,7 @@ function renderWellbeingCorrelations() {
     const w = (2 + a * 9).toFixed(1);
     const op = (0.35 + a * 0.5).toFixed(2);
     const phrase = `Plus ${A.de}, ${r > 0 ? "plus" : "moins"} ${B.de}`;
-    edges += `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="${col}" stroke-width="${w}" opacity="${op}" stroke-linecap="round" style="cursor:default;"><title>${phrase} — lien ${strengthLabel(a)} (${n} j)</title>`
+    edges += `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="${col}" stroke-width="${w}" opacity="${op}" stroke-linecap="round" style="cursor:default;"><title>${phrase} — lien ${strengthLabel(a)} (${n} j)</title>`
       + `<animate attributeName="opacity" from="0" to="${op}" dur="0.55s" begin="${begin}s" fill="freeze"/>`
       + `<animate attributeName="stroke-width" from="0.5" to="${w}" dur="0.55s" begin="${begin}s" fill="freeze"/></line>`;
   }
@@ -14237,7 +14235,7 @@ function renderWellbeingCorrelations() {
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:5px;">
           <div style="flex:1;background:var(--line);height:7px;border-radius:999px;overflow:hidden;"><div style="width:${barW}%;height:100%;background:${r > 0 ? "#c9b6f0" : "#f7c9a3"};"></div></div>
-          <span style="font-size:11px;color:var(--ink-softer);white-space:nowrap;">lien ${strong} · ${n} j</span>
+          <span style="font-size:11px;color:var(--ink-softer);white-space:nowrap;">lien ${strong} · ${n} j</span>
         </div>
       </div>`;
   }
@@ -14330,8 +14328,8 @@ function renderEnergyBalance() {
   } else if (diff !== null) {
     const statusLabel = isBalanced ? '⚖️ Équilibre' : diff > 0 ? '📉 Déficit calorique' : '📈 Surplus calorique';
     const statusDesc = isBalanced ? 'Apports et dépenses équilibrés ce mois.'
-      : diff > 0 ? `Tu brûles plus que tu n'ingères — ${Math.abs(diff).toLocaleString('fr-FR')} kcal/j de déficit en moyenne.`
-      : `Tu ingères plus que tu ne brûles — ${Math.abs(diff).toLocaleString('fr-FR')} kcal/j de surplus en moyenne.`;
+      : diff > 0 ? `Tu brûles plus que tu n'ingères — ${Math.abs(diff).toLocaleString('fr-FR')} kcal/j de déficit en moyenne.`
+      : `Tu ingères plus que tu ne brûles — ${Math.abs(diff).toLocaleString('fr-FR')} kcal/j de surplus en moyenne.`;
     msgHtml = `<div style="background:var(--bg-2);border-radius:10px;padding:10px 12px;border-left:3px solid ${statusColor};font-size:12px;color:var(--ink-soft);">${statusLabel} — ${statusDesc}</div>`;
   }
 
@@ -14422,7 +14420,7 @@ function renderCalorieChart() {
       return `<div style="background:var(--bg-soft,#faf7ff);border:1px solid var(--line);border-radius:10px;padding:6px 12px;display:flex;align-items:center;gap:8px;">
           <span style="font-size:11px;color:var(--ink-softer);">${emoji} ${label}</span>
           <span style="font-size:15px;font-weight:700;color:${col};">${res.avg.toLocaleString("fr-FR")} <span style="font-size:10px;font-weight:600;">kcal/j</span></span>
-          <span style="font-size:10px;color:var(--ink-softer);margin-left:auto;">${res.n} j</span>
+          <span style="font-size:10px;color:var(--ink-softer);margin-left:auto;">${res.n} j</span>
         </div>`;
     };
     avgEl.innerHTML = card("🗓️", "Moy. du mois", mo);
@@ -14697,7 +14695,6 @@ function setExternalAccountTab(id) {
 function renderExternalSummary() {
   const card = document.getElementById("externalCard");
   const listEl = document.getElementById("externalList");
-  const totalEl = document.getElementById("externalTotal");
   const tabsEl = document.getElementById("externalAccountTabs");
   if (!card || !listEl) return;
   const accounts = state.externalAccounts || [{ id: "ext-default", name: "Autres comptes", emoji: "🧾" }];
@@ -14752,9 +14749,6 @@ function renderExternalSummary() {
     }
     return false;
   }).sort((a, b) => new Date(b.date) - new Date(a.date));
-  const total = txs.reduce((s, tx) => s + tx.amount, 0);
-  if (totalEl) totalEl.textContent = total.toFixed(2) + " € ce mois";
-
   // Cumul des dépenses du mois en cours, par compte (indépendant du filtre d'onglet actif)
   const spentThisMonthByAcc = {};
   state.transactions.forEach(tx => {
@@ -14774,8 +14768,8 @@ function renderExternalSummary() {
     const spentMonth = spentThisMonthByAcc[a.id] || 0;
     const budget = a.balance || 0;
     const right = budget > 0
-      ? `<span style="font-size:13px;font-weight:700;color:${spentMonth > budget ? "#f08080" : "var(--ink)"};">${spentMonth.toFixed(2)} € <span style="font-weight:400;color:var(--ink-soft);">/ ${budget.toFixed(2)} €</span></span>`
-      : `<span style="font-size:13px;font-weight:700;color:var(--ink);">${spentMonth.toFixed(2)} €</span>`;
+      ? `<span style="font-size:13px;font-weight:700;color:${spentMonth > budget ? "#f08080" : "var(--ink)"};">${spentMonth.toFixed(2)} € <span style="font-weight:400;color:var(--ink-soft);">/ ${budget.toFixed(2)} €</span></span>`
+      : `<span style="font-size:13px;font-weight:700;color:var(--ink);">${spentMonth.toFixed(2)} €</span>`;
     return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);">
       <span style="font-size:18px;">${a.emoji}</span>
       <span style="flex:1;font-size:13px;font-weight:600;color:var(--ink);">${escapeHtml(a.name)}</span>
@@ -14794,7 +14788,7 @@ function renderExternalSummary() {
     const accLabel = acc && accounts.length > 1 ? `<span style="font-size:10px;background:var(--lavender-soft);border-radius:4px;padding:1px 5px;color:#6b4d99;">${acc.emoji} ${escapeHtml(acc.name)}</span>` : "";
     return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed #f0eaf8;font-size:12px;">
       <span style="flex:1;color:var(--ink-soft);">${escapeHtml(tx.category)} — ${escapeHtml(tx.note || "—")} ${accLabel}</span>
-      <span style="color:var(--ink);">−${tx.amount.toFixed(2)} €</span>
+      <span style="color:var(--ink);">−${tx.amount.toFixed(2)} €</span>
       <button onclick="openTxModal('${tx.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:11px;cursor:pointer;">✎</button>
       <span style="color:var(--ink-softer);">${d}</span>
     </div>`;
@@ -14902,7 +14896,7 @@ function renderReimbursable() {
   const totalClaimed = Object.values(claimedByMission0).reduce((s, txs) => s + claimedAmtOf(txs), 0);
   const totalOutstanding = totalPending + totalClaimed;
   if (totalEl) totalEl.innerHTML = totalOutstanding > 0
-    ? totalOutstanding.toFixed(2) + " € à récupérer" + (totalClaimed > 0 ? ` <span style="font-size:12px;color:var(--ink-soft);font-weight:400;">(dont ${totalClaimed.toFixed(2)} € en cours)</span>` : "")
+    ? totalOutstanding.toFixed(2) + " € à récupérer" + (totalClaimed > 0 ? ` <span style="font-size:12px;color:var(--ink-soft);font-weight:400;">(dont ${totalClaimed.toFixed(2)} € en cours)</span>` : "")
     : "Tout remboursé ✓";
 
   const fmt = iso => new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
@@ -14932,7 +14926,7 @@ function renderReimbursable() {
             <div style="font-size:13px;font-weight:600;color:var(--ink);">${escapeHtml(tx.category)}</div>
             <div style="font-size:12px;color:var(--ink-soft);">${escapeHtml(tx.note || "—")} · ${fmt(tx.date)}</div>
           </div>
-          <div style="font-size:13px;font-weight:700;color:#dc7014;white-space:nowrap;">−${tx.amount.toFixed(2)} €</div>
+          <div style="font-size:13px;font-weight:700;color:#dc7014;white-space:nowrap;">−${tx.amount.toFixed(2)} €</div>
           <button onclick="openTxModal('${tx.id}')" title="Modifier"
             style="padding:3px 7px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:11px;cursor:pointer;">✎</button>
           <button onclick="toggleReimbForm('${tx.id}')"
@@ -14951,7 +14945,7 @@ function renderReimbursable() {
             <span style="font-size:12px;color:var(--ink-soft);">Montant remboursé :</span>
             <input type="number" id="reimbAmt_${tx.id}" value="${tx.amount.toFixed(2)}" step="0.01" min="0"
               style="width:100px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:12px;" />
-            <span style="font-size:11px;color:var(--ink-soft);">€ (dépensé : ${tx.amount.toFixed(2)} €)</span>
+            <span style="font-size:11px;color:var(--ink-soft);">€ (dépensé : ${tx.amount.toFixed(2)} €)</span>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button onclick="markReimbClaimed('${tx.id}')"
@@ -14972,7 +14966,7 @@ function renderReimbursable() {
         <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--lavender-soft);">
           <div style="flex:1;">
             <div style="font-size:14px;font-weight:700;color:var(--ink);">${key ? '✈️ ' + escapeHtml(key) : '📌 Sans mission'}</div>
-            <div style="font-size:12px;color:var(--ink-soft);">${txs.length} dépense${txs.length > 1 ? 's' : ''} · ${total.toFixed(2)} €</div>
+            <div style="font-size:12px;color:var(--ink-soft);">${txs.length} dépense${txs.length > 1 ? 's' : ''} · ${total.toFixed(2)} €</div>
           </div>
           <button onclick="toggleGroupReimb('${missionDateId}')"
             style="padding:5px 11px;border-radius:8px;border:1.5px solid var(--lilac);background:white;color:var(--lilac);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">
@@ -14989,7 +14983,7 @@ function renderReimbursable() {
             <span style="font-size:12px;color:var(--ink-soft);">Montant remboursé :</span>
             <input type="number" id="${missionDateId}_amt" value="${total.toFixed(2)}" step="0.01" min="0"
               style="width:100px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:12px;" />
-            <span style="font-size:11px;color:var(--ink-soft);">€ (total dépensé : ${total.toFixed(2)} €)</span>
+            <span style="font-size:11px;color:var(--ink-soft);">€ (total dépensé : ${total.toFixed(2)} €)</span>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             <button onclick='markGroupClaimed(${JSON.stringify(txs.map(t => t.id)).replace(/'/g,"&#39;")}, "${missionDateId}")'
@@ -15013,22 +15007,22 @@ function renderReimbursable() {
   // Section EN COURS (remboursement lancé, pas encore reçu) — groupée par mission
   const claimedHtml = claimed.length ? `
     <div style="margin:14px 0;padding:12px 14px;background:#fefce8;border:1.5px solid #fde68a;border-radius:14px;">
-      <div style="font-size:13px;font-weight:700;color:#a16207;margin-bottom:8px;">⏳ En cours de remboursement · ${totalClaimed.toFixed(2)} € attendus</div>
+      <div style="font-size:13px;font-weight:700;color:#a16207;margin-bottom:8px;">⏳ En cours de remboursement · ${totalClaimed.toFixed(2)} € attendus</div>
       ${Object.entries(claimedByMission0).sort((a,b)=>a[0].localeCompare(b[0],"fr")).map(([key,txs])=>{
         const spent = txs.reduce((s,t)=>s+t.amount,0);
         const expected = claimedAmtOf(txs);
         const diff = expected - spent;
-        const diffStr = Math.abs(diff) >= 0.01 ? ` <span style="color:${diff>0?'#16a34a':'#dc2626'};">(${diff>0?'+':'−'}${Math.abs(diff).toFixed(2)} €)</span>` : "";
+        const diffStr = Math.abs(diff) >= 0.01 ? ` <span style="color:${diff>0?'#16a34a':'#dc2626'};">(${diff>0?'+':'−'}${Math.abs(diff).toFixed(2)} €)</span>` : "";
         return `<div style="margin-bottom:10px;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
-            <div style="flex:1;min-width:140px;font-size:12px;font-weight:700;color:var(--ink-soft);">${key?escapeHtml(key):'Sans mission'} · attendu <span onclick='editClaimedAmount(${JSON.stringify(txs.map(t=>t.id)).replace(/'/g,"&#39;")})' title="Modifier le montant remboursé" style="color:#ca8a04;cursor:pointer;text-decoration:underline dotted;">${expected.toFixed(2)} € ✎</span> · dépensé ${spent.toFixed(2)} €${diffStr}</div>
+            <div style="flex:1;min-width:140px;font-size:12px;font-weight:700;color:var(--ink-soft);">${key?escapeHtml(key):'Sans mission'} · attendu <span onclick='editClaimedAmount(${JSON.stringify(txs.map(t=>t.id)).replace(/'/g,"&#39;")})' title="Modifier le montant remboursé" style="color:#ca8a04;cursor:pointer;text-decoration:underline dotted;">${expected.toFixed(2)} € ✎</span> · dépensé ${spent.toFixed(2)} €${diffStr}</div>
             <button onclick='undoGroupClaim(${JSON.stringify(txs.map(t=>t.id)).replace(/'/g,"&#39;")})' title="Tout remettre en attente" style="padding:4px 10px;border-radius:7px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:12px;cursor:pointer;white-space:nowrap;">↩ En attente</button>
             <button onclick='confirmGroupClaimedReceived(${JSON.stringify(txs.map(t=>t.id)).replace(/'/g,"&#39;")}, ${JSON.stringify(key||"").replace(/'/g,"&#39;")})' title="Marquer comme reçu sur ton compte" style="padding:4px 12px;border-radius:7px;border:none;background:#10b981;color:white;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">✅ Remboursement reçu</button>
           </div>
           ${txs.map(tx=>`
             <div style="display:flex;align-items:center;gap:8px;padding:6px 0 6px 8px;border-bottom:1px dashed #fef08a;font-size:12px;">
               <div style="flex:1;color:var(--ink);min-width:0;">${escapeHtml(tx.category)} — ${escapeHtml(tx.note||"—")} · ${fmt(tx.date)}</div>
-              <span style="color:var(--ink-soft);white-space:nowrap;">${tx.amount.toFixed(2)} €</span>
+              <span style="color:var(--ink-soft);white-space:nowrap;">${tx.amount.toFixed(2)} €</span>
               <span style="font-size:11px;color:var(--ink-softer);white-space:nowrap;">lancé ${fmt(tx.reimbClaimedAt)}</span>
               <button onclick="undoClaim('${tx.id}')" title="Remettre en attente" style="padding:2px 6px;border-radius:5px;border:1px solid var(--line);background:white;color:var(--ink-softer);font-size:11px;cursor:pointer;">↩</button>
             </div>`).join("")}
@@ -15046,7 +15040,7 @@ function renderReimbursable() {
   const doneRows = done.length ? `
     <details style="margin-top:14px;">
       <summary style="font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer;user-select:none;list-style:none;display:flex;align-items:center;gap:6px;">
-        <span>▸</span> Remboursés (${done.length}) · ${done.reduce((s,tx) => s + tx.amount, 0).toFixed(2)} €
+        <span>▸</span> Remboursés (${done.length}) · ${done.reduce((s,tx) => s + tx.amount, 0).toFixed(2)} €
       </summary>
       <div style="margin-top:8px;">
         ${Object.entries(doneByMission).sort((a,b) => a[0].localeCompare(b[0],"fr")).map(([key, txs]) => `
@@ -15055,9 +15049,9 @@ function renderReimbursable() {
             ${txs.map(tx => `
               <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed #e8f5e9;font-size:12px;">
                 <div style="flex:1;color:var(--ink);">${escapeHtml(tx.category)} — ${escapeHtml(tx.note || "—")} · ${fmt(tx.date)}</div>
-                <span style="color:#6b7280;white-space:nowrap;">${tx.amount.toFixed(2)} €</span>
+                <span style="color:#6b7280;white-space:nowrap;">${tx.amount.toFixed(2)} €</span>
                 <span style="font-size:11px;background:#f0fdf4;color:#10b981;border-radius:5px;padding:2px 6px;white-space:nowrap;">
-                  ✓ ${fmt(tx.reimbursedAt)}${tx.reimbursedAmount != null && tx.reimbursedAmount !== tx.amount ? ` · <strong>${tx.reimbursedAmount.toFixed(2)} €</strong>` : ''}
+                  ✓ ${fmt(tx.reimbursedAt)}${tx.reimbursedAmount != null && tx.reimbursedAmount !== tx.amount ? ` · <strong>${tx.reimbursedAmount.toFixed(2)} €</strong>` : ''}
                 </span>
                 <button onclick="undoReimbursed('${tx.id}')" title="Annuler" style="padding:2px 6px;border-radius:5px;border:1px solid var(--line);background:white;color:var(--ink-softer);font-size:11px;cursor:pointer;">↩</button>
               </div>`).join("")}
@@ -15271,7 +15265,7 @@ function openPartialReimbModal(id) {
   _reimbModalTxId = id;
   const alreadyReimb = (tx.partialReimbursements || []).reduce((s, r) => s + r.amount, 0);
   const remaining = Math.max(0, tx.amount - alreadyReimb);
-  document.getElementById("partialReimbTxInfo").textContent = `${tx.category} — ${tx.amount.toFixed(2)} €`;
+  document.getElementById("partialReimbTxInfo").textContent = `${tx.category} — ${tx.amount.toFixed(2)} €`;
   document.getElementById("partialReimbAmount").value = remaining.toFixed(2);
   document.getElementById("partialReimbDate").value = new Date().toISOString().slice(0, 10);
   const accountSel = document.getElementById("partialReimbAccount");
@@ -15286,7 +15280,7 @@ function openPartialReimbModal(id) {
       const d = new Date(r.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
       return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 0;border-bottom:1px solid var(--line);">
         <span style="color:var(--ink-soft);">${d} · ${r.account || '—'} · ${escapeHtml(r.note || '')}</span>
-        <span style="font-weight:600;color:#16a34a;">+${r.amount.toFixed(2)} €</span>
+        <span style="font-weight:600;color:#16a34a;">+${r.amount.toFixed(2)} €</span>
         <button onclick="deletePartialReimb('${id}','${r.id}')" style="margin-left:8px;border:none;background:none;color:#dc2626;cursor:pointer;font-size:13px;">✕</button>
       </div>`;
     }).join("");
@@ -15406,8 +15400,8 @@ function balanceEpargne() {
 function renderAccounts() {
   const c = balanceCourant();
   const e = balanceEpargne();
-  document.getElementById("accountCourant").textContent = c.toFixed(2) + " €";
-  document.getElementById("accountEpargne").textContent = e.toFixed(2) + " €";
+  document.getElementById("accountCourant").textContent = c.toFixed(2) + " €";
+  document.getElementById("accountEpargne").textContent = e.toFixed(2) + " €";
   const lbl = document.getElementById("accountCourantLabel");
   if (lbl) lbl.textContent = (state.accounts?.courantEmoji || "💳") + " " + _courantName();
   const cashLbl = document.getElementById("cashAccountLabel");
@@ -15421,9 +15415,9 @@ function renderAccounts() {
     <a href="#" onclick="event.preventDefault();editAccountStart('${acc}')" style="color:#6b4d99;text-decoration:underline;cursor:pointer;font-weight:600;margin-right:10px;">✏️ Modifier départ</a>
     <a href="#" onclick="event.preventDefault();setCurrentBalance('${acc}')" style="color:#6b4d99;text-decoration:underline;cursor:pointer;font-weight:600;">📍 Caler sur solde actuel</a>`;
   document.getElementById("accountCourantDetail").innerHTML =
-    `Solde de départ : ${startC.toFixed(2)} € · Variation : ${(c - startC >= 0 ? "+" : "")}${(c - startC).toFixed(2)} €<br>${editLinks("courant")}`;
+    `Solde de départ : ${startC.toFixed(2)} € · Variation : ${(c - startC >= 0 ? "+" : "")}${(c - startC).toFixed(2)} €<br>${editLinks("courant")}`;
   document.getElementById("accountEpargneDetail").innerHTML =
-    `Solde de départ : ${startE.toFixed(2)} € · Cumulé épargné : ${(e - startE >= 0 ? "+" : "")}${(e - startE).toFixed(2)} €<br>${editLinks("epargne")}`;
+    `Solde de départ : ${startE.toFixed(2)} € · Cumulé épargné : ${(e - startE >= 0 ? "+" : "")}${(e - startE).toFixed(2)} €<br>${editLinks("epargne")}`;
   const cashSub = document.getElementById("cashSubLabel");
   if (cashSub) {
     cashSub.innerHTML =
@@ -15787,7 +15781,7 @@ function renderCash() {
   const disp = document.getElementById("cashBalanceDisplay");
   const total = document.getElementById("totalDisponible");
   const logEl = document.getElementById("cashLog");
-  if (disp) disp.textContent = bal.toFixed(2) + " €";
+  if (disp) disp.textContent = bal.toFixed(2) + " €";
   if (logEl) {
     const log = (state.accounts.cashLog || []).slice().reverse();
     logEl.innerHTML = log.length ? log.map((e, i) => {
@@ -15796,7 +15790,7 @@ function renderCash() {
       const col  = e.dir === "in" ? "#2d6a35" : "#a33";
       return `<div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:2px 0;">
         <span style="color:var(--ink-softer);min-width:70px;">${e.date}</span>
-        <span style="color:${col};font-weight:600;min-width:60px;">${sign}${Math.abs(e.amount).toFixed(2)} €</span>
+        <span style="color:${col};font-weight:600;min-width:60px;">${sign}${Math.abs(e.amount).toFixed(2)} €</span>
         <span style="color:var(--ink-soft);flex:1;">${escapeHtml(e.note||'')}</span>
         <button onclick="deleteCashEntry(${ri})" style="background:none;border:none;color:var(--ink-softer);cursor:pointer;font-size:12px;padding:0 4px;">✕</button>
       </div>`;
@@ -15829,7 +15823,7 @@ function promptAddCash() {
     state.accounts.cashLog.push({ date, amount: n, dir: "in", note: "Ajout manuel" });
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) + n;
     saveState(); renderCash(); renderAccounts();
-    showToast(`💵 +${n.toFixed(2)} € ajoutés aux espèces`);
+    showToast(`💵 +${n.toFixed(2)} € ajoutés aux espèces`);
   }, "number");
 }
 function setCashBalance() {
@@ -16373,7 +16367,7 @@ function renderTxList() {
           <div class="tx-cat" style="color:#6b4d99;">⇄ ${escapeHtml(from)} → ${escapeHtml(to)}</div>
           <div class="tx-note">${escapeHtml(label)}</div>
         </div>
-        <div class="tx-amount savings" style="color:#6b4d99;">${Math.abs(tx.amount).toFixed(2)} €</div>
+        <div class="tx-amount savings" style="color:#6b4d99;">${Math.abs(tx.amount).toFixed(2)} €</div>
         <div class="tx-date">${d}</div>
         <button class="tx-edit" style="visibility:hidden;">✎</button>
         <button class="tx-del" onclick="deleteVirement('${tx.virementId}')" title="Supprimer">✕</button>
@@ -16396,10 +16390,10 @@ function renderTxList() {
       <div class="tx-row">
         <div class="tx-dot" style="background:${dotColor}"></div>
         <div class="tx-info">
-          <div class="tx-cat">${tx.type === "cash-withdrawal" ? `💵 Retrait espèces depuis ${escapeHtml(tx.category)}` : escapeHtml(tx.category)}${tx.reimbursable ? ' <span style="font-size:11px;background:#fff3e0;color:#dc7014;border-radius:6px;padding:1px 5px;font-weight:600;">💼 frais pro</span>' : ''}${tx.fixedCharge ? ' <span style="font-size:11px;background:#f0eeff;color:#7c5cbf;border-radius:6px;padding:1px 5px;font-weight:600;">🏠 fixe</span>' : ''}${tx.exceptional ? ' <span style="font-size:11px;background:#fef9ec;color:#b45309;border-radius:6px;padding:1px 5px;font-weight:600;">✨ lissée</span>' : ''}${(tx.partialReimbursements && tx.partialReimbursements.length) ? ` <span style="font-size:11px;background:#dcfce7;color:#16a34a;border-radius:6px;padding:1px 5px;font-weight:600;">💸 remb. ${(tx.amount - txNetAmount(tx)).toFixed(0)} €</span>` : ''}</div>
+          <div class="tx-cat">${tx.type === "cash-withdrawal" ? `💵 Retrait espèces depuis ${escapeHtml(tx.category)}` : escapeHtml(tx.category)}${tx.reimbursable ? ' <span style="font-size:11px;background:#fff3e0;color:#dc7014;border-radius:6px;padding:1px 5px;font-weight:600;">💼 frais pro</span>' : ''}${tx.fixedCharge ? ' <span style="font-size:11px;background:#f0eeff;color:#7c5cbf;border-radius:6px;padding:1px 5px;font-weight:600;">🏠 fixe</span>' : ''}${tx.exceptional ? ' <span style="font-size:11px;background:#fef9ec;color:#b45309;border-radius:6px;padding:1px 5px;font-weight:600;">✨ lissée</span>' : ''}${(tx.partialReimbursements && tx.partialReimbursements.length) ? ` <span style="font-size:11px;background:#dcfce7;color:#16a34a;border-radius:6px;padding:1px 5px;font-weight:600;">💸 remb. ${(tx.amount - txNetAmount(tx)).toFixed(0)} €</span>` : ''}</div>
           <div class="tx-note">${escapeHtml(tx.note || "—")}${tx.reimbursedAt ? ' ✅' : ''}</div>
         </div>
-        <div class="tx-amount ${tx.type}">${sign} ${Math.abs(tx.type === "expense" ? txNetAmount(tx) : tx.amount).toFixed(2)} €</div>
+        <div class="tx-amount ${tx.type}">${sign} ${Math.abs(tx.type === "expense" ? txNetAmount(tx) : tx.amount).toFixed(2)} €</div>
         <div class="tx-date">${dateStr}</div>
         ${tx.type === "expense" ? `<button class="tx-edit" onclick="openPartialReimbModal('${tx.id}')" title="Saisir un remboursement" style="color:#16a34a;border-color:#bbf7d0;font-size:13px;">💸</button>` : ''}
         <button class="tx-edit" onclick="openTxModal('${tx.id}')" title="Modifier">✎</button>
@@ -16515,8 +16509,8 @@ function renderDailyExpenseChart() {
         tooltip: {
           callbacks: {
             label: ctx => {
-              if (ctx.dataset.label === "Cumul sorties") return `Cumul sorties : ${(ctx.raw || 0).toFixed(2)} €`;
-              return `${ctx.dataset.label === "Rentre" ? "↓ Rentre" : "↑ Sort"} : ${(ctx.raw || 0).toFixed(2)} €`;
+              if (ctx.dataset.label === "Cumul sorties") return `Cumul sorties : ${(ctx.raw || 0).toFixed(2)} €`;
+              return `${ctx.dataset.label === "Rentre" ? "↓ Rentre" : "↑ Sort"} : ${(ctx.raw || 0).toFixed(2)} €`;
             },
           },
         },
@@ -16530,13 +16524,13 @@ function renderDailyExpenseChart() {
         },
         y: {
           position: "left",
-          ticks: { color: "#8a8499", font: { size: 10 }, callback: v => v + " €" },
+          ticks: { color: "#8a8499", font: { size: 10 }, callback: v => v + " €" },
           grid: { color: "#efeaf5" },
           beginAtZero: true,
         },
         yCumul: {
           position: "right",
-          ticks: { color: "#c9b6f0", font: { size: 10 }, callback: v => v + " €" },
+          ticks: { color: "#c9b6f0", font: { size: 10 }, callback: v => v + " €" },
           grid: { display: false },
           beginAtZero: true,
         },
@@ -16555,7 +16549,7 @@ function openDayDetail(d) {
   document.getElementById("catDetailDot").style.background = "transparent";
   document.getElementById("catDetailTitle").textContent = dateLabel;
   document.getElementById("catDetailTotal").textContent =
-    totalOut > 0 ? `−${totalOut.toFixed(2)} €` : totalIn > 0 ? `+${totalIn.toFixed(2)} €` : "0 €";
+    totalOut > 0 ? `−${totalOut.toFixed(2)} €` : totalIn > 0 ? `+${totalIn.toFixed(2)} €` : "0 €";
   document.getElementById("catDetailTotal").style.color = totalOut > totalIn ? "var(--rose)" : "var(--mint)";
   if (!txs.length) {
     document.getElementById("catDetailList").innerHTML = `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:16px 0;">Aucune transaction ce jour.</p>`;
@@ -16570,7 +16564,7 @@ function openDayDetail(d) {
           <div style="font-size:13px;font-weight:600;color:var(--ink);">${escapeHtml(tx.note || tx.category || "—")}</div>
           <div style="font-size:11px;color:var(--ink-soft);">${escapeHtml(tx.category)}${tx.reimbursable ? ' · 💼' : ''}${isExternal ? ' · hors compte' : ''}</div>
         </div>
-        <span style="font-size:13px;font-weight:700;color:${color};white-space:nowrap;">${sign}${tx.amount.toFixed(2)} €</span>
+        <span style="font-size:13px;font-weight:700;color:${color};white-space:nowrap;">${sign}${tx.amount.toFixed(2)} €</span>
         <button onclick="openTxModal('${tx.id}')" style="padding:3px 7px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:11px;cursor:pointer;">✎</button>
       </div>`;
     }).join("");
@@ -16621,7 +16615,7 @@ function renderMoneyFlowChart() {
       },
       scales: {
         x: { grid: { display: false }, ticks: { color: "#8a8499" } },
-        y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " €" } },
+        y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " €" } },
       },
     },
   });
@@ -16714,7 +16708,7 @@ function renderBalanceEvolutionChart() {
               const d = days[items[0].dataIndex];
               return d ? d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }) : "";
             },
-            label: ctx => " " + ctx.parsed.y.toFixed(2).replace(".", ",") + " €",
+            label: ctx => " " + ctx.parsed.y.toFixed(2).replace(".", ",") + " €",
           },
         },
       },
@@ -16722,7 +16716,7 @@ function renderBalanceEvolutionChart() {
         x: { grid: { display: false }, ticks: { color: "#8a8499", maxRotation: 0 } },
         y: {
           grid: { color: "#f3eef9" },
-          ticks: { color: "#8a8499", callback: v => v.toFixed(0) + " €" },
+          ticks: { color: "#8a8499", callback: v => v.toFixed(0) + " €" },
           min: Math.floor((Math.min(...balances) - 100) / 50) * 50,
           max: Math.ceil((Math.max(...balances) + 100) / 50) * 50,
         },
@@ -16740,8 +16734,8 @@ function renderSavings() {
   const thisMonthIn  = all.filter(t => { const d = new Date(t.date); return d >= start && d < end; }).reduce((s, t) => s + t.amount, 0);
   const thisMonthOut = allOut.filter(t => { const d = new Date(t.date); return d >= start && d < end; }).reduce((s, t) => s + t.amount, 0);
   const thisMonth = thisMonthIn - thisMonthOut;
-  document.getElementById("savingsTotal").textContent = total.toFixed(2) + " €";
-  document.getElementById("savingsMonth").textContent = (thisMonth >= 0 ? "+" : "") + thisMonth.toFixed(2) + " €";
+  document.getElementById("savingsTotal").textContent = total.toFixed(2) + " €";
+  document.getElementById("savingsMonth").textContent = (thisMonth >= 0 ? "+" : "") + thisMonth.toFixed(2) + " €";
 
   // Répartition par compte
   const breakdown = state.accounts.savingsBreakdown || {};
@@ -16794,7 +16788,7 @@ function renderSavings() {
         <div onclick="openSavingsAccountModal('${escapeHtml(cat)}')" style="height:6px;background:var(--line);border-radius:3px;overflow:hidden;cursor:pointer;">
           <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;transition:width .4s;"></div>
         </div>
-        <span onclick="openSavingsAccountModal('${escapeHtml(cat)}')" style="font-size:13px;font-weight:700;color:${color};text-align:right;font-variant-numeric:tabular-nums;cursor:pointer;">${bal.toFixed(2)} €</span>
+        <span onclick="openSavingsAccountModal('${escapeHtml(cat)}')" style="font-size:13px;font-weight:700;color:${color};text-align:right;font-variant-numeric:tabular-nums;cursor:pointer;">${bal.toFixed(2)} €</span>
         <div style="display:flex;gap:2px;">
           <button onclick="updateSavingsBalance('${escapeHtml(cat)}')" title="Mettre à jour le solde réel" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.55;padding:0;line-height:1;">📊</button>
           <button onclick="toggleSavingsLock('${escapeHtml(cat)}')" title="${locked ? 'Déverrouiller ce compte' : 'Verrouiller ce compte (aucun retrait possible)'}" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;line-height:1;opacity:${locked ? '1' : '0.3'};">${locked ? '🔒' : '🔓'}</button>
@@ -16837,7 +16831,7 @@ function openSavingsAccountModal(cat) {
 
   document.getElementById("savingsAccountModalTitle").innerHTML =
     `<span style="color:${color};">●</span> ${escapeHtml(cat)}${lockedMap[cat] ? ' 🔒' : ''}`;
-  document.getElementById("savingsAccountModalBalance").textContent = bal.toFixed(2) + " €";
+  document.getElementById("savingsAccountModalBalance").textContent = bal.toFixed(2) + " €";
   document.getElementById("savingsAccountModalBalance").style.color = color;
   document.getElementById("savingsAccountUpdateBtn").onclick = () => updateSavingsBalance(cat);
 
@@ -16851,7 +16845,7 @@ function openSavingsAccountModal(cat) {
       <div>
         <div style="font-size:12px;font-weight:600;color:var(--ink);">Solde initial déclaré</div>
       </div>
-      <span style="font-size:13px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums;">${startVal.toFixed(2)} €</span>
+      <span style="font-size:13px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums;">${startVal.toFixed(2)} €</span>
     </div>` : '';
 
     const txsHtml = txs.map(t => {
@@ -16864,7 +16858,7 @@ function openSavingsAccountModal(cat) {
       else if ((t.type === "expense" || t.type === "external") && t.fromSavingsAccount === cat) { sign = -1; typeLabel = "Dépense prélevée"; }
       else if (t.virFrom === cat) { sign = -1; typeLabel = "Virement vers " + (t.virTo || "?"); }
       else if (t.virTo === cat) { sign = 1; typeLabel = "Virement depuis " + (t.virFrom || "?"); }
-      const amtStr = (sign >= 0 ? "+" : "−") + Math.abs(t.amount).toFixed(2) + " €";
+      const amtStr = (sign >= 0 ? "+" : "−") + Math.abs(t.amount).toFixed(2) + " €";
       const amtColor = sign >= 0 ? "#5bbcb8" : "#e07bbd";
       const dateStr = t.date ? new Date(t.date).toLocaleDateString("fr-FR", {day:"numeric",month:"short",year:"numeric"}) : "";
       const mainLabel = label && label !== cat ? label : typeLabel;
@@ -16908,7 +16902,7 @@ function updateSavingsBalance(cat) {
   _savingsUpdateCurrentBal = (breakdown[cat] || 0) + (txDelta[cat] || 0);
 
   document.getElementById("savingsUpdateTitle").textContent = "📊 " + cat + " — mise à jour";
-  document.getElementById("savingsUpdateCurrent").textContent = _savingsUpdateCurrentBal.toFixed(2) + " €";
+  document.getElementById("savingsUpdateCurrent").textContent = _savingsUpdateCurrentBal.toFixed(2) + " €";
   const input = document.getElementById("savingsUpdateNewBal");
   input.value = _savingsUpdateCurrentBal.toFixed(2);
   document.getElementById("savingsUpdateNote").value = "";
@@ -16922,7 +16916,7 @@ function updateSavingsBalance(cat) {
     if (isNaN(nv)) { diffEl.textContent = ""; return; }
     const d = Math.round((nv - _savingsUpdateCurrentBal) * 100) / 100;
     if (d === 0) { diffEl.textContent = "Aucun changement"; diffEl.style.color = "var(--ink-soft)"; return; }
-    diffEl.textContent = (d > 0 ? "+" : "−") + Math.abs(d).toFixed(2) + " € seront enregistrés";
+    diffEl.textContent = (d > 0 ? "+" : "−") + Math.abs(d).toFixed(2) + " € seront enregistrés";
     diffEl.style.color = d > 0 ? "#5bbcb8" : "#e07bbd";
   };
 }
@@ -16950,7 +16944,7 @@ function confirmSavingsUpdate() {
   renderAccounts();
   closeSavingsUpdateModal();
   openSavingsAccountModal(_savingsUpdateCat);
-  showToast(`✅ ${_savingsUpdateCat} mis à jour : ${delta > 0 ? "+" : ""}${delta.toFixed(2)} € enregistré`);
+  showToast(`✅ ${_savingsUpdateCat} mis à jour : ${delta > 0 ? "+" : ""}${delta.toFixed(2)} € enregistré`);
 }
 function editSavingsTxDesc(txId, cat) {
   const tx = state.transactions.find(t => t.id === txId);
@@ -17018,7 +17012,7 @@ function renderSavingsChart() {
             const saved = ctx.parsed.y;
             const income = incomeData[ctx.dataIndex];
             const pct = income > 0 ? Math.round((saved / income) * 100) : 0;
-            return [`${saved.toFixed(0)} € mis de côté`, income > 0 ? `${pct}% des revenus (${income.toFixed(0)} €)` : "Revenus non enregistrés"];
+            return [`${saved.toFixed(0)} € mis de côté`, income > 0 ? `${pct}% des revenus (${income.toFixed(0)} €)` : "Revenus non enregistrés"];
           },
           footer: () => "Cliquer pour le détail",
         }},
@@ -17027,7 +17021,7 @@ function renderSavingsChart() {
       },
       scales: {
         x: { grid: { display: false }, ticks: { color: "#8a8499", autoSkip: true, maxTicksLimit: 6, maxRotation: 0 } },
-        y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " €" }, beginAtZero: true },
+        y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " €" }, beginAtZero: true },
       },
       animation: { onComplete: function() {
         const chart = this;
@@ -17198,7 +17192,7 @@ function _showSavingsDetail({ start, end, label }) {
         <span style="font-size:13px;font-weight:500;">${escapeHtml(t.note || t.category || "—")}</span>
         <br/>${from_to}
       </div>
-      <span style="font-size:14px;font-weight:700;color:${color};white-space:nowrap;">${sign}${t.amount.toFixed(0)} €</span>
+      <span style="font-size:14px;font-weight:700;color:${color};white-space:nowrap;">${sign}${t.amount.toFixed(0)} €</span>
     </div>`;
   }).join("");
   panel.style.display = "block";
@@ -17241,7 +17235,7 @@ function renderMoneyCatChart() {
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const depTotal = entries.reduce((s,[,v]) => s+v, 0);
   const depEl = document.getElementById("catChartDepTotal");
-  if (depEl) depEl.textContent = depTotal > 0 ? ": " +depTotal.toFixed(0) + " €" : "";
+  if (depEl) depEl.textContent = depTotal > 0 ? ": " +depTotal.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>ce mois"); return; }
@@ -17267,7 +17261,7 @@ function renderMoneyCatChart() {
         tooltip: { callbacks: { label: ctx => {
           const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
           const pct = total > 0 ? Math.round((ctx.raw / total) * 100) : 0;
-          return ` ${ctx.raw.toFixed(2)} € (${pct}%)`;
+          return ` ${ctx.raw.toFixed(2)} € (${pct}%)`;
         }}},
         datalabels: {
           color: '#fff',
@@ -17304,7 +17298,7 @@ function renderMoneyCatChartNoFixed() {
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
   const el = document.getElementById("catChartNoFixTotal");
-  if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
+  if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatNoFixLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>courante"); return; }
@@ -17324,7 +17318,7 @@ function renderMoneyCatChartNoFixed() {
         tooltip: { callbacks: { label: ctx => {
           const t = ctx.dataset.data.reduce((s, v) => s + v, 0);
           const pct = t > 0 ? Math.round((ctx.raw / t) * 100) : 0;
-          return ` ${ctx.raw.toFixed(2)} € (${pct}%)`;
+          return ` ${ctx.raw.toFixed(2)} € (${pct}%)`;
         }}},
         datalabels: {
           color: '#fff',
@@ -17348,7 +17342,7 @@ function openCatDetailAllTime(cat, type = "expense") {
     .sort((a, b) => new Date(b.date) - new Date(a.date));
   const total = txs.reduce((s, tx) => s + (type === "expense" ? txNetAmount(tx) : tx.amount), 0);
   document.getElementById("catDetailTitle").textContent = cat + " · Depuis le " + APP_START_LABEL;
-  document.getElementById("catDetailTotal").textContent = total.toFixed(2) + " €";
+  document.getElementById("catDetailTotal").textContent = total.toFixed(2) + " €";
   document.getElementById("catDetailDot").style.background = catColor(cat);
   document.getElementById("catDetailList").innerHTML = txs.length ? txs.map(tx => {
     const d = new Date(tx.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
@@ -17358,7 +17352,7 @@ function openCatDetailAllTime(cat, type = "expense") {
         <div style="font-size:14px;color:var(--ink);">${escapeHtml(tx.note || "—")}</div>
         <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${d}</div>
       </div>
-      <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${amount.toFixed(2)} €</div>
+      <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${amount.toFixed(2)} €</div>
       <button onclick="openTxModal('${tx.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:11px;cursor:pointer;flex-shrink:0;">✎</button>
     </div>`;
   }).join("") : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px 0;">${type === "expense" ? "Aucune dépense" : "Aucun revenu"} dans cette catégorie.</p>`;
@@ -17372,7 +17366,7 @@ function openCatDetail(cat, type = "expense") {
   const total = txs.reduce((s, tx) => s + tx.amount, 0);
 
   document.getElementById("catDetailTitle").textContent = cat;
-  document.getElementById("catDetailTotal").textContent = total.toFixed(2) + " €";
+  document.getElementById("catDetailTotal").textContent = total.toFixed(2) + " €";
   document.getElementById("catDetailDot").style.background = catColor(cat);
 
   document.getElementById("catDetailList").innerHTML = txs.length ? txs.map(tx => {
@@ -17383,7 +17377,7 @@ function openCatDetail(cat, type = "expense") {
           <div style="font-size:14px;color:var(--ink);">${escapeHtml(tx.note || "—")}</div>
           <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${d}</div>
         </div>
-        <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${tx.amount.toFixed(2)} €</div>
+        <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${tx.amount.toFixed(2)} €</div>
         <button onclick="openTxModal('${tx.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:11px;cursor:pointer;flex-shrink:0;">✎</button>
       </div>`;
   }).join("") : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px 0;">${type === "expense" ? "Aucune dépense" : "Aucun revenu"} dans cette catégorie.</p>`;
@@ -17465,36 +17459,36 @@ function renderBudgetGauge() {
   let alertHtml = "";
   if (remaining < 0) {
     alertHtml = `<div style="margin-bottom:14px;padding:10px 14px;border-radius:12px;background:#fee2e2;border:1.5px solid #dc2626;font-size:13px;color:#dc2626;font-weight:600;">
-      🚨 Budget dépassé de ${Math.abs(remaining).toFixed(0)} € — il reste ${daysLeft} jours</div>`;
+      🚨 Budget dépassé de ${Math.abs(remaining).toFixed(0)} € — il reste ${daysLeft} jours</div>`;
   } else if (ratio >= 1.5) {
     alertHtml = `<div style="margin-bottom:14px;padding:10px 14px;border-radius:12px;background:#fee2e2;border:1.5px solid #dc2626;font-size:13px;color:#dc2626;">
-      🔴 Rythme trop élevé (${dailyActual.toFixed(0)} €/j) — il te reste <strong>${remaining.toFixed(0)} € pour ${daysLeft} jours</strong> (${dailyLeft.toFixed(0)} €/j max)</div>`;
+      🔴 Rythme trop élevé (${dailyActual.toFixed(0)} €/j) — il te reste <strong>${remaining.toFixed(0)} € pour ${daysLeft} jours</strong> (${dailyLeft.toFixed(0)} €/j max)</div>`;
   } else if (ratio >= 1.1) {
     alertHtml = `<div style="margin-bottom:14px;padding:10px 14px;border-radius:12px;background:#fef3c7;border:1.5px solid #f59e0b;font-size:13px;color:#92400e;">
-      ⚠️ Rythme un peu élevé (${dailyActual.toFixed(0)} €/j vs ${dailyIdeal.toFixed(0)} €/j idéal) — il te reste <strong>${remaining.toFixed(0)} € pour ${daysLeft} jours</strong></div>`;
+      ⚠️ Rythme un peu élevé (${dailyActual.toFixed(0)} €/j vs ${dailyIdeal.toFixed(0)} €/j idéal) — il te reste <strong>${remaining.toFixed(0)} € pour ${daysLeft} jours</strong></div>`;
   }
 
   el.innerHTML = `
     ${alertHtml}
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-      <span style="font-size:13px;color:var(--ink-soft);"><strong onclick="openBudgetDetail()" style="color:var(--ink);font-size:16px;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">${spent.toFixed(0)} €</strong> dépensés sur ${budget.toFixed(0)} €</span>
-      <span style="font-size:13px;font-weight:600;color:${color};">${remaining >= 0 ? "+" + remaining.toFixed(0) : "−" + Math.abs(remaining).toFixed(0)} € restants</span>
+      <span style="font-size:13px;color:var(--ink-soft);"><strong onclick="openBudgetDetail()" style="color:var(--ink);font-size:16px;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">${spent.toFixed(0)} €</strong> dépensés sur ${budget.toFixed(0)} €</span>
+      <span style="font-size:13px;font-weight:600;color:${color};">${remaining >= 0 ? "+" + remaining.toFixed(0) : "−" + Math.abs(remaining).toFixed(0)} € restants</span>
     </div>
     <div style="height:16px;border-radius:999px;background:#f0f0f5;overflow:hidden;margin-bottom:10px;">
       <div style="height:100%;width:${pct}%;background:${color};border-radius:999px;transition:width 0.4s;"></div>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);">
       <span>Jour <strong>${daysElapsed}</strong>/${totalDays} · <strong>${daysLeft}</strong> jours restants</span>
-      <span>Idéal : ${dailyIdeal.toFixed(0)} €/j · Rythme actuel : <strong style="color:${dailyActual > dailyIdeal * 1.1 ? "#f59e0b" : "var(--ink)"};">${dailyActual.toFixed(0)} €/j</strong></span>
+      <span>Idéal : ${dailyIdeal.toFixed(0)} €/j · Rythme actuel : <strong style="color:${dailyActual > dailyIdeal * 1.1 ? "#f59e0b" : "var(--ink)"};">${dailyActual.toFixed(0)} €/j</strong></span>
     </div>
-    ${(fixedTotal > 0 || exceptionalTotal > 0) ? `<div style="margin-top:8px;font-size:12px;color:var(--ink-softer);border-top:1px solid var(--line);padding-top:8px;">${fixedTotal > 0 ? `🏠 Charges fixes : <strong>${fixedTotal.toFixed(0)} €</strong>` : ""}${fixedTotal > 0 && exceptionalTotal > 0 ? " · " : ""}${exceptionalTotal > 0 ? `✨ Dépenses lissées : <strong>${exceptionalTotal.toFixed(0)} €</strong>` : ""} · Total réel ce mois : ${spentRaw.toFixed(0)} €</div>` : ""}
+    ${(fixedTotal > 0 || exceptionalTotal > 0) ? `<div style="margin-top:8px;font-size:12px;color:var(--ink-softer);border-top:1px solid var(--line);padding-top:8px;">${fixedTotal > 0 ? `🏠 Charges fixes : <strong>${fixedTotal.toFixed(0)} €</strong>` : ""}${fixedTotal > 0 && exceptionalTotal > 0 ? " · " : ""}${exceptionalTotal > 0 ? `✨ Dépenses lissées : <strong>${exceptionalTotal.toFixed(0)} €</strong>` : ""} · Total réel ce mois : ${spentRaw.toFixed(0)} €</div>` : ""}
     ${isCurrent ? `<details style="margin-top:8px;font-size:12px;color:var(--ink-softer);border-top:1px solid var(--line);padding-top:8px;">
       <summary style="cursor:pointer;">Comment ce chiffre est calculé ?</summary>
       <div style="margin-top:6px;line-height:1.7;">
-        Dépensé ce mois (hors charges fixes/lissées) : <strong>${spent.toFixed(2)} €</strong><br>
-        + Solde compte courant actuel : <strong>${balanceCourant().toFixed(2)} €</strong><br>
-        + Espèces en poche : <strong>${(state.accounts?.cashBalance || 0).toFixed(2)} €</strong><br>
-        = Budget total : <strong>${budget.toFixed(2)} €</strong><br>
+        Dépensé ce mois (hors charges fixes/lissées) : <strong>${spent.toFixed(2)} €</strong><br>
+        + Solde compte courant actuel : <strong>${balanceCourant().toFixed(2)} €</strong><br>
+        + Espèces en poche : <strong>${(state.accounts?.cashBalance || 0).toFixed(2)} €</strong><br>
+        = Budget total : <strong>${budget.toFixed(2)} €</strong><br>
         <span style="color:var(--ink-soft);">Le "budget" n'est pas un montant fixe : il reflète ton solde réel, donc il bouge à chaque revenu ou dépense sur le compte courant — pas seulement ceux de ce mois.</span>
       </div>
     </details>` : ""}`;
@@ -17549,10 +17543,10 @@ function renderBudgetFeedback() {
 
     const spentLabel = target > 0
       ? `<span style="font-size:12px;color:${over ? '#ef4444' : warn ? '#b45309' : 'var(--ink-soft)'};">
-           ${spent.toFixed(0)} / ${target} €${over ? " ⚠️" : warn ? " ⚡" : ""}
+           ${spent.toFixed(0)} / ${target} €${over ? " ⚠️" : warn ? " ⚡" : ""}
          </span>`
       : spent > 0
-        ? `<span style="font-size:12px;color:var(--ink-soft);">${spent.toFixed(0)} € dépensés</span>`
+        ? `<span style="font-size:12px;color:var(--ink-soft);">${spent.toFixed(0)} € dépensés</span>`
         : `<span style="font-size:11px;color:var(--ink-softer);">pas encore de dépense</span>`;
 
     return `
@@ -17578,7 +17572,7 @@ function renderBudgetFeedback() {
         <div class="budget-bar-wrap">
           <div class="budget-bar" style="width:${pct}%;background:${barColor};"></div>
         </div>
-        <div class="budget-pct-label">${pct}%${over ? ` — dépassé de ${(spent - target).toFixed(0)} €` : ""}</div>` : ""}
+        <div class="budget-pct-label">${pct}%${over ? ` — dépassé de ${(spent - target).toFixed(0)} €` : ""}</div>` : ""}
       </div>`;
   }).join("");
 
@@ -17677,9 +17671,9 @@ function renderForecast() {
         <span style="width:8px;height:8px;border-radius:50%;background:${catColor(cat)};flex-shrink:0;display:inline-block;"></span>
         <span style="flex:1;font-size:13px;">${escapeHtml(cat)}</span>
         <span style="font-size:12px;color:${trendColor};font-weight:700;min-width:14px;">${trend}</span>
-        <span style="font-size:13px;font-weight:600;color:${over ? "#dc2626" : "var(--ink)"};">~${avg.toFixed(0)} €</span>
+        <span style="font-size:13px;font-weight:600;color:${over ? "#dc2626" : "var(--ink)"};">~${avg.toFixed(0)} €</span>
         ${budget
-          ? `<span style="font-size:11px;color:${over ? "#dc2626" : warn ? "#c08a4d" : "var(--ink-softer)"};">/ ${budget} €${over ? " ⚠️" : warn ? " ⚡" : ""}</span>`
+          ? `<span style="font-size:11px;color:${over ? "#dc2626" : warn ? "#c08a4d" : "var(--ink-softer)"};">/ ${budget} €${over ? " ⚠️" : warn ? " ⚡" : ""}</span>`
           : ""}
       </div>`;
   }).join("");
@@ -17688,19 +17682,19 @@ function renderForecast() {
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
       <div style="flex:1;min-width:100px;background:var(--mint-soft);border-radius:12px;padding:12px 14px;">
         <div style="font-size:10px;color:var(--ink-softer);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:5px;">Revenus attendus</div>
-        <div style="font-size:19px;font-weight:700;color:#16a34a;">+${avgIncome.toFixed(0)} €</div>
+        <div style="font-size:19px;font-weight:700;color:#16a34a;">+${avgIncome.toFixed(0)} €</div>
       </div>
       <div style="flex:1;min-width:100px;background:var(--rose-soft);border-radius:12px;padding:12px 14px;">
         <div style="font-size:10px;color:var(--ink-softer);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:5px;">Dépenses prévues</div>
-        <div style="font-size:19px;font-weight:700;color:#dc2626;">−${totalExpense.toFixed(0)} €</div>
+        <div style="font-size:19px;font-weight:700;color:#dc2626;">−${totalExpense.toFixed(0)} €</div>
       </div>
       <div style="flex:1;min-width:100px;background:${balance >= 0 ? "var(--mint-soft)" : "var(--rose-soft)"};border-radius:12px;padding:12px 14px;">
         <div style="font-size:10px;color:var(--ink-softer);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:5px;">Solde estimé</div>
-        <div style="font-size:19px;font-weight:700;color:${balance >= 0 ? "#16a34a" : "#dc2626"};">${balance >= 0 ? "+" : ""}${balance.toFixed(0)} €</div>
+        <div style="font-size:19px;font-weight:700;color:${balance >= 0 ? "#16a34a" : "#dc2626"};">${balance >= 0 ? "+" : ""}${balance.toFixed(0)} €</div>
       </div>
     </div>
     ${subTotal > 0 ? `<p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">
-      dont ~<strong>${subTotal.toFixed(0)} € d'abonnements fixes</strong> déjà intégrés dans les dépenses
+      dont ~<strong>${subTotal.toFixed(0)} € d'abonnements fixes</strong> déjà intégrés dans les dépenses
     </p>` : ""}
     <div style="margin-bottom:6px;">${catRows}</div>
     <div style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -17743,7 +17737,7 @@ function renderMoneyIncomeCatChart() {
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const incTotal = entries.reduce((s,[,v]) => s+v, 0);
   const incEl = document.getElementById("catChartIncTotal");
-  if (incEl) incEl.textContent = incTotal > 0 ? ": " +incTotal.toFixed(0) + " €" : "";
+  if (incEl) incEl.textContent = incTotal > 0 ? ": " +incTotal.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyIncomeLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries, "income");
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucun revenu<br>ce mois"); return; }
@@ -17759,7 +17753,7 @@ function renderMoneyIncomeCatChart() {
         tooltip: { callbacks: { label: ctx => {
           const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
           const pct = total > 0 ? Math.round((ctx.raw / total) * 100) : 0;
-          return ` ${ctx.raw.toFixed(2)} € (${pct}%)`;
+          return ` ${ctx.raw.toFixed(2)} € (${pct}%)`;
         }}},
       },
     },
@@ -17801,7 +17795,7 @@ function renderMoneyCatAllChart() {
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
   const el = document.getElementById("catAllChartDepTotal");
-  if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
+  if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatAllLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries, "expense", true);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense"); return; }
@@ -17818,7 +17812,7 @@ function renderMoneyCatAllChart() {
         legend: { display: false },
         tooltip: { callbacks: { label: ctx => {
           const t = ctx.dataset.data.reduce((s, v) => s + v, 0);
-          return ` ${ctx.raw.toFixed(2)} € (${t > 0 ? Math.round(ctx.raw/t*100) : 0}%)`;
+          return ` ${ctx.raw.toFixed(2)} € (${t > 0 ? Math.round(ctx.raw/t*100) : 0}%)`;
         }}},
         datalabels: {
           color: '#fff', font: { size: 11, weight: '700' },
@@ -17849,7 +17843,7 @@ function renderMoneyCatAllNoFixChart() {
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
   const el = document.getElementById("catAllChartNoFixTotal");
-  if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
+  if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatAllNoFixLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries, "expense", true);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>courante"); return; }
@@ -17866,7 +17860,7 @@ function renderMoneyCatAllNoFixChart() {
         legend: { display: false },
         tooltip: { callbacks: { label: ctx => {
           const t = ctx.dataset.data.reduce((s, v) => s + v, 0);
-          return ` ${ctx.raw.toFixed(2)} € (${t > 0 ? Math.round(ctx.raw/t*100) : 0}%)`;
+          return ` ${ctx.raw.toFixed(2)} € (${t > 0 ? Math.round(ctx.raw/t*100) : 0}%)`;
         }}},
         datalabels: {
           color: '#fff', font: { size: 11, weight: '700' },
@@ -17898,7 +17892,7 @@ function renderMoneyIncomeAllChart() {
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
   const el = document.getElementById("catAllChartIncTotal");
-  if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
+  if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyIncomeAllLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries, "income", true);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucun revenu"); return; }
@@ -17912,7 +17906,7 @@ function renderMoneyIncomeAllChart() {
         legend: { display: false },
         tooltip: { callbacks: { label: ctx => {
           const t = ctx.dataset.data.reduce((s, v) => s + v, 0);
-          return ` ${ctx.raw.toFixed(2)} € (${t > 0 ? Math.round(ctx.raw/t*100) : 0}%)`;
+          return ` ${ctx.raw.toFixed(2)} € (${t > 0 ? Math.round(ctx.raw/t*100) : 0}%)`;
         }}},
       },
     },
@@ -17945,7 +17939,7 @@ function renderSubs() {
   const list = state.subscriptions || [];
   document.getElementById("subCount").textContent = list.length ? `(${list.length})` : "";
   const total = list.reduce((s, sub) => s + monthlyEquivalent(sub.amount, sub.frequency), 0);
-  document.getElementById("subTotal").textContent = total.toFixed(2) + " €";
+  document.getElementById("subTotal").textContent = total.toFixed(2) + " €";
   if (!list.length) {
     document.getElementById("subList").innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:18px;">Aucun abonnement enregistré. Clique sur "+ Ajouter" pour suivre tes paiements récurrents (Netflix, salle, Navigo, assurance…).</p>`;
     return;
@@ -17953,7 +17947,7 @@ function renderSubs() {
   const sorted = [...list].sort((a, b) => (a.nextRenewal || "9999-12-31").localeCompare(b.nextRenewal || "9999-12-31"));
   document.getElementById("subList").innerHTML = sorted.map(s => {
     const me = monthlyEquivalent(s.amount, s.frequency);
-    const meText = (s.frequency !== "monthly") ? ` · ${me.toFixed(2)} €/mois équiv.` : "";
+    const meText = (s.frequency !== "monthly") ? ` · ${me.toFixed(2)} €/mois équiv.` : "";
     let renewalText = "Pas de date";
     let renewalClass = "";
     if (s.nextRenewal) {
@@ -17970,7 +17964,7 @@ function renderSubs() {
           <div class="sub-meta">${escapeHtml(s.category || "—")}${meText}</div>
         </div>
         <span class="sub-freq-badge sub-freq-${s.frequency}">${FREQ_LABEL[s.frequency] || ""}</span>
-        <div class="sub-amount">${s.amount.toFixed(2)} €</div>
+        <div class="sub-amount">${s.amount.toFixed(2)} €</div>
         <div class="sub-renewal ${renewalClass}">📅 ${renewalText}</div>
         <div class="sub-actions">
           <button onclick="openSubModal('${s.id}')" title="Modifier">✎</button>
@@ -18234,7 +18228,7 @@ const PILLAR_DEFS = [
     id: "finances", name: "Finances", emoji: "💰", color: "#f7c9a3", bg: "var(--peach-soft)",
     metrics: [
       { type: "tx-tracked", target: 5, label: "Dépenses tracées/sem" },
-      { type: "savings-month", target: 1000, label: "Épargne du mois (obj. 1 000 €)" },
+      { type: "savings-month", target: 1000, label: "Épargne du mois (obj. 1 000 €)" },
       { type: "budget-on-track", label: "Budget respecté" },
     ]
   },
@@ -18520,7 +18514,7 @@ function computeMetric(m, override) {
   }
   if (m.type === "journal-pct") {
     const filled = _last7Days().filter(d => (state.history[todayKey(d)]?.journal || "").trim().length > 0).length;
-    return { score: Math.min(1, filled / m.target), value: filled + "/7 j", label: m.label };
+    return { score: Math.min(1, filled / m.target), value: filled + "/7 j", label: m.label };
   }
   if (m.type === "tasks-done") {
     const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
@@ -18537,7 +18531,7 @@ function computeMetric(m, override) {
     }
     const holidays = countHolidaysInWeek(weekDates);
     const adjustedTarget = Math.max(8, m.target - holidays * 8); // min 8h même avec plusieurs fériés
-    const holidayNote = holidays > 0 ? ` (−${holidays} j. férié${holidays > 1 ? "s" : ""} → obj. ${adjustedTarget}h)` : "";
+    const holidayNote = holidays > 0 ? ` (−${holidays} j. férié${holidays > 1 ? "s" : ""} → obj. ${adjustedTarget}h)` : "";
     return {
       score: Math.min(1, total / adjustedTarget),
       value: total.toFixed(1) + " h",
@@ -18554,7 +18548,7 @@ function computeMetric(m, override) {
     const savings    = state.transactions.filter(t => { const d = new Date(t.date); return d >= start && d < end && t.type === "savings"; }).reduce((s, t) => s + t.amount, 0);
     const savingsOut = state.transactions.filter(t => { const d = new Date(t.date); return d >= start && d < end && t.type === "savings-out"; }).reduce((s, t) => s + t.amount, 0);
     const net = savings - savingsOut;
-    return { score: Math.min(1, Math.max(0, net) / m.target), value: net.toFixed(0) + " € net", label: m.label };
+    return { score: Math.min(1, Math.max(0, net) / m.target), value: net.toFixed(0) + " € net", label: m.label };
   }
   if (m.type === "groceries-done") {
     const groceries = state.domestique?.groceries || [];
@@ -18679,13 +18673,13 @@ function computeMetricDetails(m) {
   } else if (m.type === "tasks-done") {
     state.work.postdocTasks.filter(t => t.done && t.completedAt && t.completedAt >= k7).forEach(t => lines.push(`✓ ${t.title || "tâche"} (${t.completedAt})`));
   } else if (m.type === "worktime-sum") {
-    for (const d of days) { const wt = state.history[todayKey(d)]?.workTime || {}; const tot = Object.values(wt).reduce((s, v) => s + (Number(v) || 0), 0); if (tot) lines.push(`${_fmtDayFr(d)} — ${tot.toFixed(1)} h`); }
+    for (const d of days) { const wt = state.history[todayKey(d)]?.workTime || {}; const tot = Object.values(wt).reduce((s, v) => s + (Number(v) || 0), 0); if (tot) lines.push(`${_fmtDayFr(d)} — ${tot.toFixed(1)} h`); }
   } else if (m.type === "tx-tracked") {
-    state.transactions.filter(t => new Date(t.date) >= sevenAgo).forEach(t => lines.push(`${t.date} — ${t.label || t.category || t.note || "transaction"} : ${t.amount} €`));
+    state.transactions.filter(t => new Date(t.date) >= sevenAgo).forEach(t => lines.push(`${t.date} — ${t.label || t.category || t.note || "transaction"} : ${t.amount} €`));
   } else if (m.type === "savings-month") {
     const [start, end] = currentMonthRange();
     state.transactions.filter(t => { const d = new Date(t.date); return d >= start && d < end && (t.type === "savings" || t.type === "savings-out"); })
-      .forEach(t => lines.push(`${t.date} — ${t.type === "savings" ? "➕" : "➖"} ${t.amount} € ${t.label || t.category || ""}`));
+      .forEach(t => lines.push(`${t.date} — ${t.type === "savings" ? "➕" : "➖"} ${t.amount} € ${t.label || t.category || ""}`));
   } else if (m.type === "meal-events-count") {
     (state.domestique?.mealEvents || []).filter(e => (e.date || "") >= k7).forEach(e => lines.push(`${e.date} — ${e.title || e.name || "repas"}`));
   } else if (m.type === "cal-keywords-count") {
@@ -19174,7 +19168,7 @@ function getAllCalEvents() {
   }
   // Subscriptions
   for (const s of state.subscriptions) {
-    if (s.nextRenewal) { const effDate = nextOccurrence(s.nextRenewal, s.frequency); events.push({ date: effDate, type: "sub", title: `${s.name} (${s.amount} €)`, source: "Abonnement" }); }
+    if (s.nextRenewal) { const effDate = nextOccurrence(s.nextRenewal, s.frequency); events.push({ date: effDate, type: "sub", title: `${s.name} (${s.amount} €)`, source: "Abonnement" }); }
   }
   // Plantes — prochain arrosage
   for (const p of (state.domestique?.plants || [])) {
@@ -19725,9 +19719,9 @@ function renderGcalStatus() {
     const minutes = Math.round((Date.now() - last.getTime()) / 60000);
     let ago;
     if (minutes < 1) ago = "à l'instant";
-    else if (minutes < 60) ago = `il y a ${minutes} min`;
-    else if (minutes < 24*60) ago = `il y a ${Math.round(minutes/60)} h`;
-    else ago = `il y a ${Math.round(minutes/(60*24))} j`;
+    else if (minutes < 60) ago = `il y a ${minutes} min`;
+    else if (minutes < 24*60) ago = `il y a ${Math.round(minutes/60)} h`;
+    else ago = `il y a ${Math.round(minutes/(60*24))} j`;
     txt.innerHTML = `🟢 Google Agenda connecté · ${state.calEvents.length} événements · dernière sync : <strong>${ago}</strong>`;
   } else {
     txt.innerHTML = "🟡 Google Agenda configuré mais pas encore synchronisé";
@@ -20074,7 +20068,7 @@ function _renderTimeStats(target, datesOrDays, periodLabel, totalNote) {
     return;
   }
   const noteHtml = totalNote ? `<span style="font-size:15px;color:var(--ink);font-weight:700;white-space:nowrap;">${totalNote}</span>` : "";
-  let html = `<div style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="color:var(--ink-soft);font-size:13px;">Total</span><span style="display:flex;align-items:baseline;gap:8px;">${noteHtml}<strong style="font-size:18px;">${grandTotal.toFixed(1).replace(".", ",")} h</strong></span></div>`;
+  let html = `<div style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="color:var(--ink-soft);font-size:13px;">Total</span><span style="display:flex;align-items:baseline;gap:8px;">${noteHtml}<strong style="font-size:18px;">${grandTotal.toFixed(1).replace(".", ",")} h</strong></span></div>`;
   for (const c of TIME_CATS) {
     const v = totals[c.key];
     const pct = grandTotal > 0 ? Math.round((v / grandTotal) * 100) : 0;
@@ -20082,7 +20076,7 @@ function _renderTimeStats(target, datesOrDays, periodLabel, totalNote) {
       <div style="margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;">
           <span>${c.emoji} ${c.label}</span>
-          <span style="color:var(--ink-soft);"><strong style="color:${c.color};">${v.toFixed(1).replace(".", ",")} h</strong> · ${pct}%</span>
+          <span style="color:var(--ink-soft);"><strong style="color:${c.color};">${v.toFixed(1).replace(".", ",")} h</strong> · ${pct}%</span>
         </div>
         <div style="background:${c.bg};height:8px;border-radius:999px;overflow:hidden;">
           <div style="width:${pct}%;height:100%;background:${c.color};transition:width 0.4s;"></div>
@@ -20120,7 +20114,7 @@ function renderTimeStatsWeek() {
   let note;
   if (allConge && grand > 0) note = `⛱️ Congés · ${grand.toFixed(1).replace(".", ",")} h de rattrapage`;
   else if (allConge) note = "⛱️ Semaine de congés";
-  else note = grand > 0 ? `≈ ${perDay.toFixed(1).replace(".", ",")} h/j` : "";
+  else note = grand > 0 ? `≈ ${perDay.toFixed(1).replace(".", ",")} h/j` : "";
   if (t) _renderTimeStats(t, dates, _timeWeekOffset === 0 ? "cette semaine" : "cette période", note);
   const title = document.getElementById("timeWeekTitle");
   if (title) {
@@ -20256,7 +20250,7 @@ function renderTimeStatsMonth() {
     for (const c of TIME_CATS) totalHours += Number(wt[c.key]) || 0;
   }
   const nbWeeksExact = elapsedDays / 7;
-  const note = nbWeeksExact > 0 ? `≈ ${(totalHours / nbWeeksExact).toFixed(1).replace(".", ",")} h/sem.` : "";
+  const note = nbWeeksExact > 0 ? `≈ ${(totalHours / nbWeeksExact).toFixed(1).replace(".", ",")} h/sem.` : "";
   _renderTimeStats(t, dates, _timeMonthOffset === 0 ? "ce mois" : "ce mois-là", note);
   // Titre + bouton suivant
   const title = document.getElementById("timeMonthTitle");
@@ -20307,7 +20301,7 @@ function renderTimeGlobalAvg() {
   const workWeeks = workDays / 5; // pour l'affichage "X sem."
   const nbWeeks = Math.max(1, workDays) / 5;
   const avgPerWeek = (totalH / nbWeeks).toFixed(1).replace('.', ',');
-  if (el) el.innerHTML = `Moyenne depuis toujours : <strong style="color:var(--ink);">${avgPerWeek} h/sem.</strong> <span style="color:var(--ink-softer);">(${totalH.toFixed(1).replace('.',',')} h au total)</span>`;
+  if (el) el.innerHTML = `Moyenne depuis toujours : <strong style="color:var(--ink);">${avgPerWeek} h/sem.</strong> <span style="color:var(--ink-softer);">(${totalH.toFixed(1).replace('.',',')} h au total)</span>`;
   if (review) {
     const rows = Object.entries(projects)
       .filter(([,h]) => h > 0)
@@ -20324,7 +20318,7 @@ function renderTimeGlobalAvg() {
     review.innerHTML = `
       <div style="font-size:11px;font-weight:700;color:var(--ink-softer);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Depuis toujours</div>
       <div style="background:var(--lavender);border-radius:10px;padding:8px 12px;margin-bottom:12px;text-align:center;">
-        <div style="font-size:22px;font-weight:800;color:var(--ink);">${avgPerWeek} h<span style="font-size:13px;font-weight:500;">/sem.</span></div>
+        <div style="font-size:22px;font-weight:800;color:var(--ink);">${avgPerWeek} h<span style="font-size:13px;font-weight:500;">/sem.</span></div>
         <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">${totalH.toFixed(1).replace('.',',')} h au total · ${Math.round(nbWeeks)} sem.</div>
       </div>
       <div style="font-size:11px;color:var(--ink-softer);margin-bottom:6px;">${workWeeks} sem. de travail · heures vacances incluses</div>
@@ -20667,7 +20661,7 @@ function renderPersoProjects() {
 
     const dateStr = pp.date ? new Date(pp.date+'T00:00:00').toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}) : "";
     const daysStr = daysLeft != null ? (" · " + (daysLeft > 0 ? "J−" + daysLeft : "Passé")) : "";
-    const budgetStr = pp.budget ? (" · " + spent.toFixed(0) + " € dépensé (" + (budgetPct||0) + "%)") : "";
+    const budgetStr = pp.budget ? (" · " + spent.toFixed(0) + " € dépensé (" + (budgetPct||0) + "%)") : "";
     const colorDark = color.replace(/#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i, function(m,r,g,b){return '#'+Math.max(0,parseInt(r,16)-30).toString(16).padStart(2,'0')+Math.max(0,parseInt(g,16)-30).toString(16).padStart(2,'0')+Math.max(0,parseInt(b,16)-30).toString(16).padStart(2,'0');});
     const budgetBarW = pp.budget ? Math.min(100, Math.round(spent/pp.budget*100)) : 0;
 
@@ -20681,7 +20675,7 @@ function renderPersoProjects() {
       + '<h2 style="margin:0;font-size:18px;">' + escapeHtml(pp.name) + '</h2>'
       + '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;font-size:12px;color:var(--ink-soft);">'
       + (pp.date ? '<span>📅 ' + dateStr + daysStr + '</span>' : '')
-      + (pp.budget ? '<span>💰 Budget : ' + pp.budget.toLocaleString("fr-FR") + ' €' + budgetStr + '</span>' : '')
+      + (pp.budget ? '<span>💰 Budget : ' + pp.budget.toLocaleString("fr-FR") + ' €' + budgetStr + '</span>' : '')
       + (donePct != null ? '<span>✅ ' + donePct + '% des tâches</span>' : '')
       + '</div></div>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
@@ -20835,7 +20829,7 @@ function _renderPersoBudget(pp) {
 
   function _fmtAmt(n) {
     const v = Math.abs(n);
-    return (v % 1 === 0 ? v.toFixed(0) : v.toFixed(2)) + ' €';
+    return (v % 1 === 0 ? v.toFixed(0) : v.toFixed(2)) + ' €';
   }
   function _statusColor(pct, over) {
     if (over || pct >= 100) return "#dc2626";
@@ -21739,7 +21733,7 @@ function _renderRecipeList() {
       <div style="flex:1;min-width:0;">
         <div style="font-weight:600;font-size:14px;">${recipeEmoji(r)} ${escapeHtml(r.name)}</div>
         <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">
-          👥 ${r.servings} portion${r.servings>1?"s":""} · ${(r.ingredients||[]).length} ingrédient${(r.ingredients||[]).length>1?"s":""}${recipeKcal(r).total>0?` · 🔥 ${recipeKcal(r).per} kcal/portion`:""}
+          👥 ${r.servings} portion${r.servings>1?"s":""} · ${(r.ingredients||[]).length} ingrédient${(r.ingredients||[]).length>1?"s":""}${recipeKcal(r).total>0?` · 🔥 ${recipeKcal(r).per} kcal/portion`:""}
         </div>
         ${r.ingredients&&r.ingredients.length ? `<div style="font-size:12px;color:var(--ink-softer);margin-top:3px;">${r.ingredients.slice(0,4).map(i=>escapeHtml(i.quantity+" "+i.unit+" "+i.name)).join(", ")}${r.ingredients.length>4?"…":""}</div>` : ""}
       </div>
@@ -21914,7 +21908,7 @@ function updateRecipeTotals() {
   const servings = parseInt(document.getElementById("recipeModalServings").value) || 1;
   if (total <= 0) { el.textContent = ""; return; }
   const per = Math.round(total / servings);
-  el.innerHTML = `🔥 <strong>${total} kcal</strong> au total · <strong>${per} kcal / portion</strong> (${servings} portion${servings>1?"s":""})`;
+  el.innerHTML = `🔥 <strong>${total} kcal</strong> au total · <strong>${per} kcal / portion</strong> (${servings} portion${servings>1?"s":""})`;
 }
 
 function saveRecipe() {
@@ -21951,13 +21945,13 @@ function deleteRecipe() {
 
 /* ---- Import de recette (URL ou IA) — remplit le formulaire déjà ouvert ---- */
 
-// Découpe une ligne d'ingrédient en texte libre ("200 g de farine") en quantité/unité/nom.
+// Découpe une ligne d'ingrédient en texte libre ("200 g de farine") en quantité/unité/nom.
 // Heuristique best-effort : à vérifier/corriger à la main après import, comme tout import auto.
 //
 // Les deux cases du formulaire recette ont un sens précis (voir addRecipeIngredient et
 // _autoFillRecipeIngKcal) : la case "quantité" est un poids en GRAMMES, la case "unité" est un
 // NOMBRE DE PIÈCES (ex : "1 unité" = 1 poivron). Donc :
-//   - "200 g de farine", "50 cl de crème" → un poids connu → converti en grammes, case unité vide.
+//   - "200 g de farine", "50 cl de crème" → un poids connu → converti en grammes, case unité vide.
 //   - "1 oignon", "3 jaunes d'oeuf" → un aliment compté à la pièce → le nombre va dans la case
 //     unité, la case grammes reste vide (le nom garde le mot descriptif s'il y en avait un,
 //     ex : "gousses d'ail").
@@ -22029,7 +22023,7 @@ async function importRecipeFromUrl() {
       notes: data.instructions || "",
     });
     statusEl.textContent = data.kcalPerServing
-      ? `✅ Recette importée — le site indique ~${data.kcalPerServing} kcal/portion (vérifie les kcal par ingrédient ci-dessous).`
+      ? `✅ Recette importée — le site indique ~${data.kcalPerServing} kcal/portion (vérifie les kcal par ingrédient ci-dessous).`
       : "✅ Recette importée — vérifie et complète les kcal si besoin.";
     urlInput.value = "";
   } catch (e) {
@@ -22610,7 +22604,7 @@ function renderFoodKcal() {
         ${ingHtml}
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:10px;flex-shrink:0;">
-        <span style="font-size:14px;font-weight:700;color:#e07bbd;">${f.kcal} kcal</span>
+        <span style="font-size:14px;font-weight:700;color:#e07bbd;">${f.kcal} kcal</span>
         <button onclick="openFoodKcalForm('${f.id}')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--ink-soft);opacity:0.5;padding:0;">✏️</button>
         <button onclick="deleteFoodKcal('${f.id}')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--ink-soft);opacity:0.5;padding:0;">🗑️</button>
       </div>
@@ -23554,14 +23548,14 @@ function frequencyLabel(days) {
   if (days === 14) return "Bimensuel";
   if (days === 30) return "Mensuel";
   if (days === 90) return "Trimestriel";
-  return `Tous les ${days} j`;
+  return `Tous les ${days} j`;
 }
 function choreStatus(c) {
   if (!c.lastDone) return { cls: "dom-status-late", label: "Jamais fait", state: "late" };
   const since = daysSince(c.lastDone);
-  if (since < c.frequencyDays * 0.7) return { cls: "dom-status-ok", label: `Il y a ${since} j`, state: "ok" };
+  if (since < c.frequencyDays * 0.7) return { cls: "dom-status-ok", label: `Il y a ${since} j`, state: "ok" };
   if (since < c.frequencyDays) return { cls: "dom-status-soon", label: `Il y a ${since} j (bientôt)`, state: "soon" };
-  return { cls: "dom-status-late", label: `En retard de ${since - c.frequencyDays} j`, state: "late" };
+  return { cls: "dom-status-late", label: `En retard de ${since - c.frequencyDays} j`, state: "late" };
 }
 function renderChores() {
   const list = state.domestique.chores;
@@ -23735,14 +23729,14 @@ function _runPlantDetection(result) {
 
       // Construit la liste dans la modal
       const FREQ_OPTS = [
-        { v: "2", l: "Tous les 2 j" },
-        { v: "3", l: "Tous les 3 j" },
-        { v: "5", l: "Tous les 5 j" },
-        { v: "7", l: "Hebdo (7 j)" },
-        { v: "10", l: "Tous les 10 j" },
-        { v: "14", l: "Bimensuel (14 j)" },
+        { v: "2", l: "Tous les 2 j" },
+        { v: "3", l: "Tous les 3 j" },
+        { v: "5", l: "Tous les 5 j" },
+        { v: "7", l: "Hebdo (7 j)" },
+        { v: "10", l: "Tous les 10 j" },
+        { v: "14", l: "Bimensuel (14 j)" },
         { v: "21", l: "Toutes les 3 sem" },
-        { v: "30", l: "Mensuel (30 j)" },
+        { v: "30", l: "Mensuel (30 j)" },
       ];
       const listEl = document.getElementById("plantsDetectList");
       listEl.innerHTML = _pendingDetectedPlants.map((p, i) => {
@@ -23813,9 +23807,9 @@ function confirmImportPlants() {
 function plantStatus(p) {
   if (!p.lastWatered) return { cls: "dom-status-late", label: "Jamais arrosée", state: "late" };
   const since = daysSince(p.lastWatered);
-  if (since < p.wateringDays * 0.7) return { cls: "dom-status-ok", label: `Arrosée il y a ${since} j`, state: "ok" };
-  if (since < p.wateringDays) return { cls: "dom-status-soon", label: `Bientôt — ${since} j`, state: "soon" };
-  return { cls: "dom-status-late", label: `À soif ! +${since - p.wateringDays} j`, state: "late" };
+  if (since < p.wateringDays * 0.7) return { cls: "dom-status-ok", label: `Arrosée il y a ${since} j`, state: "ok" };
+  if (since < p.wateringDays) return { cls: "dom-status-soon", label: `Bientôt — ${since} j`, state: "soon" };
+  return { cls: "dom-status-late", label: `À soif ! +${since - p.wateringDays} j`, state: "late" };
 }
 function renderPlants() {
   const list = state.domestique.plants;
@@ -23915,8 +23909,8 @@ function openPlantDetail(id) {
     const days = Math.floor((Date.now() - new Date(lastW)) / 86400000);
     const next = p.wateringDays - days;
     if (next <= 0) statusHtml = `<span style="background:#fee2e2;color:#dc2626;padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;">🔴 A soif ! (${Math.abs(next)} j de retard)</span>`;
-    else if (next <= 2) statusHtml = `<span style="background:#fef3c7;color:#d97706;padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;">🟠 À arroser dans ${next} j</span>`;
-    else statusHtml = `<span style="background:#dcfce7;color:#16a34a;padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;">🟢 Arrosée il y a ${days} j</span>`;
+    else if (next <= 2) statusHtml = `<span style="background:#fef3c7;color:#d97706;padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;">🟠 À arroser dans ${next} j</span>`;
+    else statusHtml = `<span style="background:#dcfce7;color:#16a34a;padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;">🟢 Arrosée il y a ${days} j</span>`;
     statusHtml += `<div style="font-size:12px;color:var(--ink-softer);margin-top:6px;">Dernière fois : ${new Date(lastW).toLocaleDateString("fr-FR", {day:"numeric",month:"long"})}</div>`;
   } else {
     statusHtml = `<span style="background:#fef3c7;color:#d97706;padding:5px 12px;border-radius:20px;font-size:13px;">Jamais arrosée</span>`;
@@ -24467,11 +24461,11 @@ function applyPatch(p) {
       }
     }
     if (dailyData.mood !== undefined) { t.mood = dailyData.mood; summary.push(`Humeur : ${dailyData.mood}/5`); }
-    if (dailyData.sleep !== undefined) { t.sleep = dailyData.sleep; summary.push(`Sommeil : ${dailyData.sleep} h`); }
+    if (dailyData.sleep !== undefined) { t.sleep = dailyData.sleep; summary.push(`Sommeil : ${dailyData.sleep} h`); }
     if (dailyData.energy !== undefined) { t.energy = dailyData.energy; summary.push(`Énergie : ${dailyData.energy}/5`); }
-    if (dailyData.weight !== undefined) { t.weight = dailyData.weight; summary.push(`Poids : ${dailyData.weight} kg`); }
-    if (dailyData.bodyFat !== undefined) { t.bodyFat = dailyData.bodyFat; summary.push(`Masse grasse : ${dailyData.bodyFat} kg`); }
-    if (dailyData.muscleMass !== undefined) { t.muscleMass = dailyData.muscleMass; summary.push(`Masse musculaire : ${dailyData.muscleMass} kg`); }
+    if (dailyData.weight !== undefined) { t.weight = dailyData.weight; summary.push(`Poids : ${dailyData.weight} kg`); }
+    if (dailyData.bodyFat !== undefined) { t.bodyFat = dailyData.bodyFat; summary.push(`Masse grasse : ${dailyData.bodyFat} kg`); }
+    if (dailyData.muscleMass !== undefined) { t.muscleMass = dailyData.muscleMass; summary.push(`Masse musculaire : ${dailyData.muscleMass} kg`); }
     if (dailyData.steps !== undefined) {
       const stepsH = getStepsHabit();
       if (stepsH) {
@@ -24573,7 +24567,7 @@ function applyPatch(p) {
         note: tx.note || ""
       });
       const signMap = { income: "+", savings: "💰", expense: "−" };
-      summary.push(`${signMap[validType]} ${Math.abs(Number(tx.amount)).toFixed(2)} € — ${tx.category || "Autre"}`);
+      summary.push(`${signMap[validType]} ${Math.abs(Number(tx.amount)).toFixed(2)} € — ${tx.category || "Autre"}`);
     }
   }
 
@@ -24626,9 +24620,9 @@ function loadInitialData() {
 
   // ===== HABITUDES (remplace les défauts) =====
   state.habits = [
-    { id: "h-pas", name: "9000 pas", type: "numeric", target: 9000, unit: "pas" },
-    { id: "h-eau", name: "1 L d'eau", type: "numeric", target: 4, unit: "verres" },
-    { id: "h-lecture", name: "Lire 30 min" },
+    { id: "h-pas", name: "9000 pas", type: "numeric", target: 9000, unit: "pas" },
+    { id: "h-eau", name: "1 L d'eau", type: "numeric", target: 4, unit: "verres" },
+    { id: "h-lecture", name: "Lire 30 min" },
   ];
 
   // ===== CATÉGORIES — merge in any missing defaults =====
@@ -24654,7 +24648,7 @@ function loadInitialData() {
       id: "p-seed-enseignement",
       name: "Enseignement",
       progress: 95,
-      notes: "294 h équivalent TD cumulé sur 5 ans (depuis 2021) — Université Paris 1 Panthéon-Sorbonne, EHESS, CNAM, Univ. Catholique de l'Ouest d'Angers, UPEC.\n\nEn cours (2025-2026) : TD « Cartographie et graphique » (L1, Paris 1, 24h, S2).\n\n✓ Copies corrigées — il reste juste à les rendre au secrétariat.\n\nThèmes : cartographie, analyse statistique, protocoles de recherche, diagnostic de terrain, géographie sociale, mémoire, matrimoine."
+      notes: "294 h équivalent TD cumulé sur 5 ans (depuis 2021) — Université Paris 1 Panthéon-Sorbonne, EHESS, CNAM, Univ. Catholique de l'Ouest d'Angers, UPEC.\n\nEn cours (2025-2026) : TD « Cartographie et graphique » (L1, Paris 1, 24h, S2).\n\n✓ Copies corrigées — il reste juste à les rendre au secrétariat.\n\nThèmes : cartographie, analyse statistique, protocoles de recherche, diagnostic de terrain, géographie sociale, mémoire, matrimoine."
     },
     {
       id: "p-seed-autre",
@@ -25191,7 +25185,7 @@ const HELP_TEXTS = {
         <li><strong>Mode édition ✏️</strong> — Ajoute de nouvelles activités. Choisis "Sport" pour activer le calcul de calories, ou "Loisir / Routine" pour tout le reste.</li>
       </ul>
       <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
-        💡 <strong>Exemple :</strong> Tu as fait 45 min de course → clique sur le point du jour à côté de "Course à pied", entre 45 min → l'app calcule automatiquement les kcal et les ajoute à ton total Aujourd'hui.
+        💡 <strong>Exemple :</strong> Tu as fait 45 min de course → clique sur le point du jour à côté de "Course à pied", entre 45 min → l'app calcule automatiquement les kcal et les ajoute à ton total Aujourd'hui.
       </div>
       <div style="background:var(--lavender-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
         <strong>🔢 C'est quoi le MET ?</strong><br>
@@ -25286,7 +25280,7 @@ const HELP_TEXTS = {
       <p>Vue mensuelle de tous tes événements :</p>
       <ul style="padding-left:18px;margin:10px 0;">
         <li><strong>+ Événement</strong> — Ajoute manuellement un événement (date, heure, lieu, couleur).</li>
-        <li><strong>🔗 Google Agenda</strong> — Connecte ton Google Agenda via l'URL iCal privée. Pour l'obtenir : Google Agenda → ⚙️ Paramètres → clique sur ton agenda → "Adresse secrète au format iCal" → bouton Copier. La sync se fait automatiquement toutes les 30 min.</li>
+        <li><strong>🔗 Google Agenda</strong> — Connecte ton Google Agenda via l'URL iCal privée. Pour l'obtenir : Google Agenda → ⚙️ Paramètres → clique sur ton agenda → "Adresse secrète au format iCal" → bouton Copier. La sync se fait automatiquement toutes les 30 min.</li>
         <li><strong>📁 Importer ICS</strong> — Importe un fichier .ics manuellement (si la sync auto ne fonctionne pas).</li>
         <li><strong>Couleurs</strong> — Chaque source de calendrier a sa propre couleur. Les événements individuels héritent de la couleur Google Agenda.</li>
         <li><strong>⚠️ Sync sens unique</strong> — Tout ce que tu mets dans Google Agenda apparaît ici automatiquement. En revanche, les événements que tu crées directement dans l'app <em>ne remontent pas</em> vers Google Agenda. La connexion fonctionne dans un seul sens : Google Agenda → App.</li>
@@ -25342,7 +25336,7 @@ const HELP_TEXTS = {
         <li><strong>🌴 Congés</strong> — Déclare tes périodes de congés. Ces jours sont exclus du calcul d'heures pour ne pas biaiser ta moyenne.</li>
       </ul>
       <div style="background:var(--mint-soft);border-radius:10px;padding:12px;margin-top:10px;font-size:13px;">
-        💡 <strong>Astuce :</strong> Saisir 0,5 = 30 min. Exemple : 1,75 = 1h45. Les données alimentent le pilier Travail (objectif heures/semaine).
+        💡 <strong>Astuce :</strong> Saisir 0,5 = 30 min. Exemple : 1,75 = 1h45. Les données alimentent le pilier Travail (objectif heures/semaine).
       </div>`
   },
   "work-postdoc": {
@@ -25677,7 +25671,7 @@ try {
       </button>
     </div>`;
 }
-// Synchro Google Agenda automatique au démarrage (si URL configurée et dernière sync > 30 min)
+// Synchro Google Agenda automatique au démarrage (si URL configurée et dernière sync > 30 min)
 function autoSyncCalIfNeeded() {
   const url = state.googleCal?.url;
   if (!url) return;
@@ -25686,7 +25680,7 @@ function autoSyncCalIfNeeded() {
   if (minutesSinceLast > 30) syncGoogleCal(true); // silencieux
 }
 setTimeout(autoSyncCalIfNeeded, 2000); // attends 2s après le chargement
-setInterval(() => { if (state.googleCal?.url) syncGoogleCal(true); }, 30 * 60 * 1000); // sync toutes les 30 min si page ouverte
+setInterval(() => { if (state.googleCal?.url) syncGoogleCal(true); }, 30 * 60 * 1000); // sync toutes les 30 min si page ouverte
 
 // Compte propriétaire de l'app : seul ce compte voit le panneau "🛠 Gestion" (infos dev/config
 // destinées à Claude — chemin de fichier local, liens GitHub — sans intérêt pour un autre utilisateur).
@@ -26347,9 +26341,9 @@ function openBudgetDetail() {
       const reimbTag = net < tx.amount ? `<span style="font-size:10px;background:#dcfce7;color:#16a34a;border-radius:6px;padding:1px 5px;margin-left:4px;">💸 remb. ${(tx.amount - net).toFixed(0)}€</span>` : "";
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;">
         <div><span style="color:var(--ink-soft);min-width:52px;display:inline-block;">${d}</span> ${escapeHtml(tx.note || tx.category)}${tag}${reimbTag}</div>
-        <strong style="color:#c75b4d;white-space:nowrap;margin-left:8px;">−${net.toFixed(2)} €</strong>
+        <strong style="color:#c75b4d;white-space:nowrap;margin-left:8px;">−${net.toFixed(2)} €</strong>
       </div>`;
-    }).join("") + `<div style="text-align:right;padding-top:8px;font-size:13px;font-weight:600;">Total : ${total.toFixed(2)} €</div>`;
+    }).join("") + `<div style="text-align:right;padding-top:8px;font-size:13px;font-weight:600;">Total : ${total.toFixed(2)} €</div>`;
   }
   document.getElementById("budgetDetailModal").classList.add("open");
 }
