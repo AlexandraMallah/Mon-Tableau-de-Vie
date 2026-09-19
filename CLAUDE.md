@@ -395,6 +395,7 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 | SW bloqué en cache HTTP | `{ updateViaCache: 'none' }` + `reg.update()` |
 | SW sert une vieille version après mise à jour | `index.html` exclu du précache dans `sw.js` — il ne faut JAMAIS l'ajouter dans `ASSETS` |
 | Fenêtre/page qui clignote et saute au défilement (ordinateur) | Pas de `backdrop-filter`, `will-change` ni `translateZ` sur `.modal-bg`, `.modal` et `.sticky-header-group` (flou recalculé à chaque image). Défilement de la page verrouillé tant qu'une modale est ouverte (`html.modal-lock`, posé en JS), survols suspendus pendant le scroll (`html.is-scrolling`), animation `fadeIn` en opacité seule (pas de `transform`), `scrollbar-gutter: stable`. Ne pas réintroduire ces effets. |
+| Contenu qui déborde / est coupé sur téléphone (320-430 px) | Audité sur 5 largeurs (320, 360, 375, 390, 412, 430) en mode normal + édition + toutes les fenêtres : plus aucun débordement. Bloc « ANTI-DÉBORDEMENT MOBILE » à la fin du CSS : champs `min-width:0`, grilles `minmax(0,1fr)`, `canvas{max-width:100%}`, boutons de pied de fenêtre qui passent à la ligne, libellés `…` qui passent à la ligne, toasts/pastille bornés à `100vw`. Pour toute nouvelle grille : `minmax(0,1fr)` (jamais `1fr` seul), et `min-width:0` sur les enfants de flex/grid contenant du texte ou des champs. |
 
 ---
 

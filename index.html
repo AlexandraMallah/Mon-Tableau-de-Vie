@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1274</title>
+<title>Mon Tableau de Vie 🌿 · v1275</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1448,6 +1448,7 @@
   .cl-item-grip { flex-shrink: 0; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
     color: var(--ink-softer); opacity: .55; font-size: 14px; line-height: 1; padding: 6px 4px; margin: -6px -2px -6px -4px; }
   .cl-item-grip:hover { opacity: 1; }
+  @media (pointer: coarse), (max-width: 640px) { .cl-item-grip { font-size: 18px; padding: 10px 9px; margin: -10px -3px -10px -7px; opacity: .7; } }
   .cl-item-row.cl-dragging { opacity: .35; }
   .cl-item-row.cl-drop-before { box-shadow: inset 0 3px 0 0 var(--lilac); }
   .cl-item-row.cl-drop-after  { box-shadow: inset 0 -3px 0 0 var(--lilac); }
@@ -1534,7 +1535,7 @@
     background: #fff3cd; color: #8a6700; border: 1.5px solid #f5c842;
     padding: 8px 18px; border-radius: 999px; font-size: 12px; font-weight: 600;
     box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 9999; pointer-events: none;
-    white-space: nowrap;
+    white-space: normal; width: max-content; max-width: calc(100vw - 24px); box-sizing: border-box; text-align: center;
   }
   @media (max-width: 640px) { body.edit-mode::after { font-size: 11px; padding: 7px 12px; bottom: 8px; } }
   body.edit-mode:has(.modal-bg.open)::after { display: none; }
@@ -1941,6 +1942,42 @@
     .note-tb-btn { padding: 5px 8px; font-size: 13px; min-width: 32px; }
     /* Contenu éditeur moins haut */
     #noteContentInput { min-height: 180px !important; }
+  }
+  /* ========= ANTI-DÉBORDEMENT MOBILE (Android + iPhone) =========
+     Règle : sur téléphone, rien ne sort de l'écran et rien n'est rogné.
+     - champs : jamais plus larges que leur conteneur (les <input type=date> déborderaient sinon)
+     - blocs de grille / graphiques : peuvent rétrécir (sinon un graphique garde la largeur d'avant)
+     - fenêtres : boutons du pied qui passent à la ligne, hauteur en dvh (barre d'adresse iPhone)
+     - libellés tronqués par « … » : passent à la ligne sur téléphone */
+  input, select, textarea { min-width: 0; max-width: 100%; }
+  input[type="date"], input[type="time"], input[type="month"], input[type="datetime-local"] { min-width: 0; max-width: 100%; box-sizing: border-box; }
+  .money-charts-grid > *, .chart-wrap { min-width: 0; }
+  code, pre { overflow-wrap: anywhere; }
+  .modal { overflow-wrap: break-word; }
+  .modal code, .modal pre { white-space: pre-wrap; max-width: 100%; }
+  canvas { max-width: 100%; }
+  @media (max-width: 880px) {
+    .rings, .grid-three, .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ring-card { min-width: 0; }
+  }
+  @media (max-width: 400px) {
+    /* très petits écrans (320-400 px) : les rangées d'en-tête / de boutons passent à la ligne au lieu de déborder */
+    .card-row, .work-header, .card div[style*="display:flex"], .modal div[style*="display:flex"], .type-toggle { flex-wrap: wrap; }
+    .type-toggle button { flex: 1 1 auto; }
+  }
+  @media (max-width: 640px) {
+    .notes-layout { grid-template-columns: minmax(0, 1fr); }
+    .notes-layout > *, #notesSidebar { min-width: 0; }
+    .modal { max-height: 95vh; max-height: 95dvh; }
+    .modal .actions { flex-wrap: wrap; }
+    .modal .actions .spacer { display: none; }
+    .modal .actions button { flex: 1 1 auto; }
+    .modal [style*="display:grid"] > *, .modal [style*="display: grid"] > * { min-width: 0; }
+    [style*="text-overflow:ellipsis"]:not(#syncUserAvatar *):not(.cal-event),
+    .milestone-label, .note-group-name, .note-item span, .money-stat .label {
+      white-space: normal !important; overflow: visible !important; text-overflow: clip !important; overflow-wrap: anywhere;
+    }
+    .money-stat .value { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
   }
 </style>
 <!-- PWA -->
@@ -2734,7 +2771,7 @@
           <h2>⏱️ Saisie du temps de travail</h2>
           <span style="font-size:13px;color:var(--ink-soft);">En heures (ex: 3.5 = 3h30)</span>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;background:#faf8fd;padding:10px 12px;border-radius:12px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;background:#faf8fd;padding:10px 12px;border-radius:12px;">
           <label style="font-size:13px;color:var(--ink-soft);white-space:nowrap;">📅 Date :</label>
           <input type="date" id="timeWorkDate" style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:white;color:var(--ink);" />
           <button class="btn-soft" onclick="resetTimeDateToToday()" style="font-size:12px;padding:7px 12px;">Aujourd'hui</button>
@@ -21371,6 +21408,7 @@ let _clItemDrag = null;
 function _clItemDragStart(e, ctx, li, pathJSON, ii) {
   if (e.button !== undefined && e.button > 0) return;
   e.preventDefault();
+  if (_clItemDrag) _clItemDragCleanup();
   const grip = e.currentTarget, row = grip.closest('.cl-item-row');
   const node = _clNode(ctx, li, JSON.parse(pathJSON));
   if (!node || !row || !node.items[ii]) return;
@@ -24517,7 +24555,7 @@ function showToast(message) {
   if (!toast) {
     toast = document.createElement("div");
     toast.id = "appToast";
-    toast.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--ink);padding:14px 22px;border-radius:14px;box-shadow:0 10px 30px rgba(120,100,160,0.25);z-index:200;font-size:14px;font-weight:500;border:1px solid var(--mint);opacity:0;transition:opacity 0.3s, transform 0.3s;";
+    toast.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center;background:var(--card);color:var(--ink);padding:14px 22px;border-radius:14px;box-shadow:0 10px 30px rgba(120,100,160,0.25);z-index:200;font-size:14px;font-weight:500;border:1px solid var(--mint);opacity:0;transition:opacity 0.3s, transform 0.3s;";
     document.body.appendChild(toast);
   }
   toast.textContent = message;
@@ -26438,7 +26476,7 @@ if ("serviceWorker" in navigator) {
       _noteFlushToLocalStorage && _noteFlushToLocalStorage();
       // Petit toast avant rechargement
       const t = document.createElement("div");
-      t.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--ink);padding:12px 20px;border-radius:14px;box-shadow:0 8px 28px rgba(120,100,160,0.22);z-index:9999;font-size:13px;font-weight:500;border:1px solid var(--lavender);";
+      t.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center;background:var(--card);color:var(--ink);padding:12px 20px;border-radius:14px;box-shadow:0 8px 28px rgba(120,100,160,0.22);z-index:9999;font-size:13px;font-weight:500;border:1px solid var(--lavender);";
       t.textContent = "🔄 Mise à jour — rechargement…";
       document.body.appendChild(t);
       setTimeout(() => { window.location.href = "/Mon-Tableau-de-Vie/?_r=" + Date.now(); }, 1200);
