@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1270</title>
+<title>Mon Tableau de Vie 🌿 · v1271</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1453,6 +1453,8 @@
     cursor: pointer; font-family: inherit; font-size: 12px; color: var(--ink);
   }
   .cl-add-row-btn:hover { border-color: var(--lavender); }
+  .fin-cat-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; }
+  @media (max-width:640px) { .fin-cat-grid { grid-template-columns:minmax(0,1fr); } }
   .modal-hint { font-size:12px;color:var(--ink-soft);margin:-10px 0 14px;line-height:1.5;text-align:left; }
   .modal label { font-size: 13px; color: var(--ink-soft); display: block; margin-bottom: 6px; margin-top: 12px; }
   .modal input[type="text"], .modal input[type="number"], .modal input[type="date"], .modal input[type="url"],
@@ -3179,13 +3181,13 @@
       <!-- Panneau de gestion des catégories — visible uniquement en mode édition -->
       <div class="edit-only block" style="margin-bottom:14px;padding:14px;background:var(--butter-soft);border-radius:14px;border:1.5px dashed #f5c842;">
         <div style="font-size:13px;font-weight:700;color:#8a6700;margin-bottom:10px;">✏️ Gérer les catégories de dépenses et revenus</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex-wrap:wrap;">
+        <div class="fin-cat-grid">
           <div>
             <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;">💸 Dépenses</div>
             <div id="financeCatList" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;"></div>
             <div style="display:flex;gap:6px;">
               <input type="text" id="newFinanceCatInput" placeholder="Nouvelle catégorie…" maxlength="40"
-                style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);"
+                style="flex:1;min-width:0;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);"
                 onkeydown="if(event.key==='Enter')_addFinanceCat()" />
               <button onclick="_addFinanceCat()" style="padding:6px 12px;border-radius:8px;border:none;background:var(--lavender);color:white;font-size:13px;cursor:pointer;font-family:inherit;">+</button>
             </div>
@@ -3196,7 +3198,7 @@
             <p style="font-size:11px;color:var(--ink-soft);margin:0 0 6px;">⭐ = salaire principal : redémarre le mois financier (Budget de vie, catégories…) à chaque fois que tu enregistres un revenu de cette catégorie. Clique l'étoile pour l'activer/désactiver.</p>
             <div style="display:flex;gap:6px;">
               <input type="text" id="newFinanceIncomeCatInput" placeholder="Nouvelle catégorie…" maxlength="40"
-                style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);"
+                style="flex:1;min-width:0;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);"
                 onkeydown="if(event.key==='Enter')_addFinanceIncomeCat()" />
               <button onclick="_addFinanceIncomeCat()" style="padding:6px 12px;border-radius:8px;border:none;background:var(--mint);color:white;font-size:13px;cursor:pointer;font-family:inherit;">+</button>
             </div>
