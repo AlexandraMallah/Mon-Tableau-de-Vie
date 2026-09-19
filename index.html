@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1273</title>
+<title>Mon Tableau de Vie 🌿 · v1274</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1445,6 +1445,18 @@
   .cl-item-num { color: var(--ink-softer); font-size: 12px; font-variant-numeric: tabular-nums; min-width: 16px; text-align: right; flex-shrink: 0; }
   /* Listes Domestique + listes de projets perso — design unifié, compact */
   .cl-item-row { border-radius: 8px; transition: background .1s; }
+  .cl-item-grip { flex-shrink: 0; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+    color: var(--ink-softer); opacity: .55; font-size: 14px; line-height: 1; padding: 6px 4px; margin: -6px -2px -6px -4px; }
+  .cl-item-grip:hover { opacity: 1; }
+  .cl-item-row.cl-dragging { opacity: .35; }
+  .cl-item-row.cl-drop-before { box-shadow: inset 0 3px 0 0 var(--lilac); }
+  .cl-item-row.cl-drop-after  { box-shadow: inset 0 -3px 0 0 var(--lilac); }
+  .cl-add-row.cl-drop-end { outline: 2px dashed var(--lilac); outline-offset: 2px; border-radius: 8px; }
+  .cl-drag-ghost { position: fixed; z-index: 9999; pointer-events: none; background: var(--card); border: 1.5px solid var(--lavender);
+    border-radius: 8px; padding: 5px 10px; font-size: 13px; color: var(--ink); box-shadow: var(--shadow-hover);
+    max-width: 70vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  html.dnd-active, html.dnd-active * { cursor: grabbing !important; -webkit-user-select: none; user-select: none; }
+  html.dnd-active .view { pointer-events: auto !important; }
   .cl-item-row:hover { background: var(--bg-2); }
   .cl-item-row.done { background: var(--bg-1); }
   .cl-sec-header button { opacity: .55; transition: opacity .1s; }
@@ -21032,16 +21044,18 @@ function _clRenderAllLists(ctx) {
   if (!lists.length) return '<p style="color:var(--ink-soft);font-size:13px;margin:0;">Aucune liste — clique sur "+ Nouvelle liste" pour commencer.</p>';
   const ck = _ctxKey(ctx);
   const itemRow = (it, li, pathJSON, ii, numbered) => `
-    <div class="cl-item-row${it.done?' done':''}" style="display:flex;align-items:center;gap:8px;padding:5px 6px;" id="clrow_${ck}_${li}_${_clDomKey(pathJSON)}_${ii}">
+    <div class="cl-item-row${it.done?' done':''}" style="display:flex;align-items:center;gap:8px;padding:5px 6px;" id="clrow_${ck}_${li}_${_clDomKey(pathJSON)}_${ii}"
+      data-ctx="${ctx}" data-li="${li}" data-path="${pathJSON}" data-ii="${ii}">
+      <span class="cl-item-grip" title="Glisser pour réorganiser" onpointerdown="_clItemDragStart(event,'${ctx}',${li},'${pathJSON}',${ii})">⠿</span>
       ${numbered ? `<span class="cl-item-num">${ii+1}.</span>` : ''}
       <input type="checkbox" ${it.done?'checked':''} onchange="toggleCLItem('${ctx}',${li},'${pathJSON}',${ii})"
         style="width:16px;height:16px;cursor:pointer;accent-color:var(--mint);flex-shrink:0;" />
-      <span style="${it.done?'text-decoration:line-through;color:var(--ink-softer);':''}font-size:13px;flex:1;cursor:default;">${escapeHtml(it.text)}</span>
+      <span class="cl-item-text" style="${it.done?'text-decoration:line-through;color:var(--ink-softer);':''}font-size:13px;flex:1;min-width:0;overflow-wrap:anywhere;cursor:default;">${escapeHtml(it.text)}</span>
       <button onclick="editCLItemInline('${ctx}',${li},'${pathJSON}',${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);opacity:0.5;font-size:11px;padding:0 3px;" title="Modifier">✏️</button>
       <button onclick="deleteCLItem('${ctx}',${li},'${pathJSON}',${ii})" style="background:none;border:none;cursor:pointer;color:var(--ink-softer);opacity:0.5;font-size:12px;padding:0 3px;" title="Supprimer">✕</button>
     </div>`;
   const addRow = (li, pathJSON) => `
-    <div style="display:flex;gap:6px;margin-top:4px;">
+    <div class="cl-add-row" data-ctx="${ctx}" data-li="${li}" data-path="${pathJSON}" style="display:flex;gap:6px;margin-top:4px;">
       <input type="text" id="clInput_${ck}_${li}_${_clDomKey(pathJSON)}" placeholder="Ajouter…" maxlength="100"
         style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;background:white;"
         onkeydown="if(event.key==='Enter')addCLItem('${ctx}',${li},'${pathJSON}')" />
@@ -21230,12 +21244,12 @@ function editCLItemInline(ctx, li, pathJSON, ii) {
   const node = _clNode(ctx, li, JSON.parse(pathJSON));
   if (!node) return;
   const item = node.items[ii];
-  const span = row.querySelector('span');
+  const span = row.querySelector('.cl-item-text');
   if (!span) return;
   const inp = document.createElement('input');
   inp.type = 'text';
   inp.value = item.text;
-  inp.style.cssText = 'flex:1;padding:3px 8px;border:1px solid var(--lavender);border-radius:7px;font-family:inherit;font-size:14px;';
+  inp.style.cssText = 'flex:1;min-width:0;padding:3px 8px;border:1px solid var(--lavender);border-radius:7px;font-family:inherit;font-size:14px;';
   const save = () => {
     const val = inp.value.trim();
     if (val) { item.text = val; saveState(); }
@@ -21245,7 +21259,7 @@ function editCLItemInline(ctx, li, pathJSON, ii) {
   inp.onblur = save;
   span.replaceWith(inp);
   // Cacher les boutons pendant l'édition
-  row.querySelectorAll('button').forEach(b => b.style.display = 'none');
+  row.querySelectorAll('button, .cl-item-grip').forEach(b => b.style.display = 'none');
   inp.focus(); inp.select();
 }
 function toggleCLItem(ctx, li, pathJSON, ii) {
@@ -21349,6 +21363,100 @@ function moveCLSection(ctx, li, pathJSON, dir) {
   const [moved] = sections.splice(idx, 1);
   sections.splice(newIdx, 0, moved);
   saveState(); _clRerenderCtx(ctx);
+}
+/* Drag & drop des ÉLÉMENTS d'une liste — souris ET tactile (pointer events, poignée ⠿).
+   On peut déposer avant/après n'importe quel élément, y compris d'une autre liste ou sous-liste
+   du même contexte, ou sur la ligne « Ajouter… » pour mettre l'élément en fin de liste. */
+let _clItemDrag = null;
+function _clItemDragStart(e, ctx, li, pathJSON, ii) {
+  if (e.button !== undefined && e.button > 0) return;
+  e.preventDefault();
+  const grip = e.currentTarget, row = grip.closest('.cl-item-row');
+  const node = _clNode(ctx, li, JSON.parse(pathJSON));
+  if (!node || !row || !node.items[ii]) return;
+  try { grip.setPointerCapture(e.pointerId); } catch (_) {}
+  const ghost = document.createElement('div');
+  ghost.className = 'cl-drag-ghost';
+  ghost.textContent = node.items[ii].text;
+  document.body.appendChild(ghost);
+  row.classList.add('cl-dragging');
+  document.documentElement.classList.add('dnd-active');
+  _clItemDrag = { ctx, li, path: JSON.parse(pathJSON), ii, row, grip, ghost, target: null, x: e.clientX, y: e.clientY, timer: 0, pointerId: e.pointerId };
+  grip.addEventListener('pointermove', _clItemDragMove);
+  grip.addEventListener('pointerup', _clItemDragEnd);
+  grip.addEventListener('pointercancel', _clItemDragCancel);
+  document.addEventListener('keydown', _clItemDragKey);
+  _clItemDrag.timer = setInterval(_clItemDragTick, 30);
+  _clItemDragUpdate();
+}
+function _clItemDragMove(e) {
+  if (!_clItemDrag) return;
+  _clItemDrag.x = e.clientX; _clItemDrag.y = e.clientY;
+  _clItemDragUpdate();
+}
+// Recalcule la cible sous le doigt/curseur (appelé aussi pendant le défilement automatique)
+function _clItemDragUpdate() {
+  const d = _clItemDrag; if (!d) return;
+  d.ghost.style.left = Math.min(d.x + 14, innerWidth - 40) + 'px';
+  d.ghost.style.top = (d.y - 16) + 'px';
+  document.querySelectorAll('.cl-drop-before, .cl-drop-after, .cl-drop-end').forEach(el => el.classList.remove('cl-drop-before', 'cl-drop-after', 'cl-drop-end'));
+  d.target = null;
+  const el = document.elementFromPoint(d.x, d.y);
+  const r = el && el.closest && el.closest('.cl-item-row');
+  if (r && r.dataset.ctx === d.ctx) {
+    if (r === d.row) return;
+    const rect = r.getBoundingClientRect();
+    const after = d.y > rect.top + rect.height / 2;
+    r.classList.add(after ? 'cl-drop-after' : 'cl-drop-before');
+    d.target = { li: +r.dataset.li, path: JSON.parse(r.dataset.path), idx: +r.dataset.ii, after };
+    return;
+  }
+  const z = el && el.closest && el.closest('.cl-add-row');
+  if (z && z.dataset.ctx === d.ctx) {
+    z.classList.add('cl-drop-end');
+    d.target = { li: +z.dataset.li, path: JSON.parse(z.dataset.path), end: true };
+  }
+}
+// Défilement automatique de la page quand on approche du bord haut/bas de l'écran
+function _clItemDragTick() {
+  const d = _clItemDrag; if (!d) return;
+  const hdr = document.querySelector('.sticky-header-group');
+  const top = (hdr && getComputedStyle(hdr).position === 'sticky') ? hdr.getBoundingClientRect().bottom + 30 : 60;
+  const bottom = innerHeight - 60;
+  let dy = 0;
+  if (d.y < top) dy = -Math.min(18, (top - d.y) / 4 + 4);
+  else if (d.y > bottom) dy = Math.min(18, (d.y - bottom) / 4 + 4);
+  if (dy) { window.scrollBy(0, dy); _clItemDragUpdate(); }
+}
+function _clItemDragCleanup() {
+  const d = _clItemDrag; if (!d) return null;
+  clearInterval(d.timer);
+  d.grip.removeEventListener('pointermove', _clItemDragMove);
+  d.grip.removeEventListener('pointerup', _clItemDragEnd);
+  d.grip.removeEventListener('pointercancel', _clItemDragCancel);
+  document.removeEventListener('keydown', _clItemDragKey);
+  try { d.grip.releasePointerCapture(d.pointerId); } catch (_) {}
+  d.ghost.remove();
+  d.row.classList.remove('cl-dragging');
+  document.querySelectorAll('.cl-drop-before, .cl-drop-after, .cl-drop-end').forEach(el => el.classList.remove('cl-drop-before', 'cl-drop-after', 'cl-drop-end'));
+  document.documentElement.classList.remove('dnd-active');
+  _clItemDrag = null;
+  return d;
+}
+function _clItemDragCancel() { _clItemDragCleanup(); }
+function _clItemDragKey(e) { if (e.key === 'Escape') _clItemDragCleanup(); }
+function _clItemDragEnd() {
+  const d = _clItemDragCleanup();
+  if (!d || !d.target) return;
+  const t = d.target;
+  const src = _clNode(d.ctx, d.li, d.path), dst = _clNode(d.ctx, t.li, t.path);
+  if (!src || !dst || !src.items[d.ii]) return;
+  if (!dst.items) dst.items = [];
+  const [moved] = src.items.splice(d.ii, 1);
+  let at = t.end ? dst.items.length : t.idx + (t.after ? 1 : 0);
+  if (!t.end && src === dst && d.ii < at) at--;
+  dst.items.splice(at, 0, moved);
+  saveState(); _clRerenderCtx(d.ctx);
 }
 /* Drag & drop sections — réordonne uniquement entre sous-listes d'un même parent */
 let _clDragSrc = null;
