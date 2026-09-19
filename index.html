@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1275</title>
+<title>Mon Tableau de Vie 🌿 · v1276</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1968,8 +1968,20 @@
   @media (max-width: 640px) {
     .notes-layout { grid-template-columns: minmax(0, 1fr); }
     .notes-layout > *, #notesSidebar { min-width: 0; }
-    .modal { max-height: 95vh; max-height: 95dvh; }
-    .modal .actions { flex-wrap: wrap; }
+    .modal { max-height: 95vh; max-height: 95dvh; max-height: calc(var(--vv-h, 100dvh) - 16px); }
+    /* Clavier ouvert : l'overlay épouse la zone RÉELLEMENT visible (--vv-h / --vv-top, posées en JS
+       depuis visualViewport) → la fenêtre reste au-dessus du clavier, boutons atteignables (iPhone). */
+    .modal-bg, div[style*="backdrop-filter"] {
+      inset: auto !important; left: 0 !important; right: 0 !important;
+      top: var(--vv-top, 0px) !important; height: var(--vv-h, 100%) !important;
+    }
+    /* Annuler / Valider toujours visibles en bas de la fenêtre, même quand elle est très courte
+       (clavier ouvert) : la rangée de boutons reste collée en bas pendant qu'on fait défiler. */
+    .modal .actions {
+      flex-wrap: wrap; position: sticky; bottom: -20px; z-index: 3;
+      margin: 16px -16px -20px; padding: 12px 16px 20px;
+      background: var(--card); border-top: 1px solid var(--line);
+    }
     .modal .actions .spacer { display: none; }
     .modal .actions button { flex: 1 1 auto; }
     .modal [style*="display:grid"] > *, .modal [style*="display: grid"] > * { min-width: 0; }
@@ -5492,6 +5504,28 @@ document.addEventListener('mousedown', e => {
     clearTimeout(scrollTimer);
     scrollTimer = setTimeout(() => root.classList.remove('is-scrolling'), 150);
   }, { passive: true });
+})();
+/* Clavier mobile : expose la zone réellement visible (au-dessus du clavier) au CSS des fenêtres,
+   et permet de ranger le clavier en touchant une zone vide d'une fenêtre (un clavier numérique
+   d'iPhone n'a pas de touche « OK »). */
+(function() {
+  const root = document.documentElement, vv = window.visualViewport;
+  if (vv) {
+    const upd = () => {
+      root.style.setProperty('--vv-h', vv.height + 'px');
+      root.style.setProperty('--vv-top', vv.offsetTop + 'px');
+    };
+    vv.addEventListener('resize', upd);
+    vv.addEventListener('scroll', upd);
+    upd();
+  }
+  document.addEventListener('pointerdown', e => {
+    const a = document.activeElement;
+    if (!a || !/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || !a.closest('.modal')) return;
+    const t = e.target;
+    if (t.closest('input, textarea, select, button, label, a, [contenteditable], [role=button]') || !t.closest('.modal')) return;
+    a.blur();
+  }, true);
 })();
 /* ===== ANALYSE ÉMOTIONNELLE DU JOURNAL ===== */
 const JOURNAL_EMOTIONS = [
@@ -9272,12 +9306,23 @@ function openProjectModal(id) {
   document.getElementById("projectModal").classList.add("open");
 }
 function closeProjectModal() { document.getElementById("projectModal").classList.remove("open"); }
+// Refus de validation : message visible + focus + liseré rouge sur le champ manquant
+// (avant, ces fenêtres restaient ouvertes sans rien dire, comme si « Valider » ne marchait pas).
+function _needField(id, msg) {
+  showToast("✏️ " + msg);
+  const el = document.getElementById(id);
+  if (!el) return;
+  try { el.focus(); } catch (_) {}
+  const old = el.style.boxShadow;
+  el.style.boxShadow = "0 0 0 2px #e07a7a";
+  setTimeout(() => { el.style.boxShadow = old; }, 1600);
+}
 function saveProject() {
   const id = document.getElementById("projectModalId").value;
   const name = document.getElementById("projectModalName").value.trim();
   const notes = document.getElementById("projectModalNotes").value.trim();
   const emoji = document.getElementById("projectModalEmoji").value || "📁";
-  if (!name) return;
+  if (!name) { _needField("projectModalName", "Donne un nom au projet."); return; }
   if (id) {
     const p = state.work.postdocProjects.find(x => x.id === id);
     Object.assign(p, { name, notes, emoji });
@@ -10077,7 +10122,7 @@ function saveCand() {
   const institution = document.getElementById("candModalInstitution").value.trim();
   const deadline = document.getElementById("candModalDeadline").value;
   const notes = document.getElementById("candModalNotes").value.trim();
-  if (!institution) return;
+  if (!institution) { _needField("candModalInstitution", "Renseigne l'établissement."); return; }
   if (id) {
     const c = state.work.candidatures.find(x => x.id === id);
     Object.assign(c, { type, status, institution, deadline, notes });
@@ -10166,7 +10211,7 @@ function saveArticle() {
   const coauthors = document.getElementById("articleModalCoauthors").value.trim();
   const submittedDate = document.getElementById("articleModalDate").value;
   const notes = document.getElementById("articleModalNotes").value.trim();
-  if (!title) return;
+  if (!title) { _needField("articleModalTitleInput", "Le titre est obligatoire."); return; }
   if (id) {
     const a = state.work.articles.find(x => x.id === id);
     Object.assign(a, { title, journal, status, coauthors, submittedDate, notes });
@@ -10263,7 +10308,7 @@ function saveComm() {
   const status = document.getElementById("commModalStatus").value;
   const link = document.getElementById("commModalLink").value.trim();
   const notes = document.getElementById("commModalNotes").value.trim();
-  if (!event) return;
+  if (!event) { _needField("commModalEvent", "Renseigne l'événement."); return; }
   if (id) {
     const c = state.work.communications.find(x => x.id === id);
     Object.assign(c, { event, location, date, type, status, link, notes });
@@ -15258,7 +15303,7 @@ function savePartialReimb() {
   const tx = state.transactions.find(t => t.id === _reimbModalTxId);
   if (!tx) return;
   const amount = parseFloat(document.getElementById("partialReimbAmount").value);
-  if (!amount || amount <= 0) return;
+  if (!amount || amount <= 0) { _needField("partialReimbAmount", "Entre un montant supérieur à 0."); return; }
   const date = document.getElementById("partialReimbDate").value || new Date().toISOString().slice(0, 10);
   const account = document.getElementById("partialReimbAccount").value.trim();
   const note = document.getElementById("partialReimbNote").value.trim();
@@ -17968,7 +18013,8 @@ function saveSub() {
   const category = document.getElementById("subModalCategory").value;
   const nextRenewal = document.getElementById("subModalRenewal").value;
   const notes = document.getElementById("subModalNotes").value.trim();
-  if (!name || !amount || amount <= 0) return;
+  if (!name) { _needField("subModalName", "Donne un nom à l'abonnement."); return; }
+  if (!amount || amount <= 0) { _needField("subModalAmount", "Entre un montant supérieur à 0."); return; }
   if (id) {
     const s = state.subscriptions.find(x => x.id === id);
     Object.assign(s, { name, amount, frequency, category, nextRenewal, notes });
@@ -20539,7 +20585,7 @@ function closePersoProjectModal() { document.getElementById("persoProjectModal")
 function savePersoProject() {
   const id = document.getElementById("persoProjectModalId").value;
   const name = document.getElementById("persoProjectName").value.trim();
-  if (!name) return;
+  if (!name) { _needField("persoProjectName", "Donne un nom au projet."); return; }
   const emoji  = document.getElementById("persoProjectEmoji").value || "🎉";
   const date   = document.getElementById("persoProjectDate").value || "";
   const budget = parseFloat(document.getElementById("persoProjectBudget").value)||0;
@@ -21246,7 +21292,7 @@ function editChecklist(ctx, li) {
 function closeNewListModal() { document.getElementById('newListModal').classList.remove('open'); }
 function saveNewList() {
   const name = document.getElementById('newListName').value.trim();
-  if (!name) return;
+  if (!name) { _needField("newListName", "Donne un nom à la liste."); return; }
   const ctx = document.getElementById('newListCtx').value || 'cl';
   const emoji = document.getElementById('newListEmoji').value.trim() || '🗂️';
   const numbered = document.getElementById('newListNumbered').checked;
@@ -21349,7 +21395,7 @@ function editCLSection(ctx, li, pathJSON) {
 function closeNewSectionModal() { document.getElementById('newSectionModal').classList.remove('open'); }
 function saveNewSection() {
   const name = document.getElementById('newSectionName').value.trim();
-  if (!name) return;
+  if (!name) { _needField("newSectionName", "Donne un nom à la sous-liste."); return; }
   const ctx = document.getElementById('newSectionCtx').value || 'cl';
   const emoji = document.getElementById('newSectionEmoji').value || '📂';
   const numbered = document.getElementById('newSectionNumbered').checked;
