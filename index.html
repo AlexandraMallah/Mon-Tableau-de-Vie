@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1272</title>
+<title>Mon Tableau de Vie 🌿 · v1273</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -57,7 +57,7 @@
     --shadow: 0 6px 20px rgba(120, 100, 160, 0.08);
     --shadow-hover: 0 10px 28px rgba(120, 100, 160, 0.14);
 
-    --nav-bg: rgba(253, 246, 240, 0.93);
+    --nav-bg: rgb(253, 246, 240);
     --nav-ink: var(--ink);
     --radius-card: 16px;
     --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
@@ -93,7 +93,7 @@
     --green: #6a9e78;
     --shadow: 0 1px 5px rgba(20, 40, 70, 0.08);
     --shadow-hover: 0 4px 14px rgba(20, 40, 70, 0.14);
-    --nav-bg: rgba(27, 45, 62, 0.97);
+    --nav-bg: rgb(27, 45, 62);
     --nav-ink: #e8f0f8;
     --radius-card: 8px;
     --font-main: "IBM Plex Sans", "Segoe UI", sans-serif;
@@ -142,14 +142,12 @@
     margin-bottom: 14px;
     background: var(--nav-bg);
     color: var(--nav-ink);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     padding: 10px 14px;
     border-radius: 18px;
     box-shadow: 0 4px 20px rgba(120, 100, 160, 0.12), 0 0 0 1px rgba(180,160,220,0.15);
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    will-change: transform;
+    /* Pas de backdrop-filter / will-change / translateZ ici : le fond est déjà opaque, et ces
+       effets forçaient le navigateur à recalculer un flou à CHAQUE image pendant le défilement
+       (clignotement + sauts sur ordinateur). */
   }
   .header-actions {
     display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
@@ -257,12 +255,27 @@
     50% { transform: scale(1.25); opacity: 0.8; }
   }
 
+  /* ========= ANTI-CLIGNOTEMENT AU DÉFILEMENT =========
+     - scrollbar-gutter : la barre de défilement qui apparaît/disparaît ne décale plus la page.
+     - fenêtres modales écrites en style inline (avec flou / couche GPU) : mêmes corrections que .modal-bg.
+     - html.modal-lock : ajouté en JS tant qu'une fenêtre est ouverte → la page derrière ne défile plus.
+     - html.is-scrolling : ajouté en JS pendant le défilement → les survols (cartes qui se soulèvent
+       sous la souris) sont suspendus, sinon ils sautillent en continu pendant que le contenu défile. */
+  html { scrollbar-gutter: stable; }
+  div[style*="backdrop-filter"] {
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    will-change: auto !important; transform: none !important;
+    overscroll-behavior: contain;
+  }
+  html.modal-lock { overflow: hidden !important; }
+  html.is-scrolling .view { pointer-events: none; }
+
   /* ========= VIEW SWITCHING ========= */
   .view { display: none; }
   .view.active { display: block; animation: fadeIn 0.3s ease; }
   .sub-view { display: none; }
   .sub-view.active { display: block; animation: fadeIn 0.3s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
   /* ========= GENERIC CARD ========= */
   .card { background: var(--card); border-radius: var(--radius-card, 22px); padding: 24px; box-shadow: var(--shadow); }
@@ -1372,26 +1385,19 @@
     background: rgba(74, 68, 88, 0.4);
     display: none; align-items: center; justify-content: center;
     z-index: 100; padding: 20px;
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-    /* Isole le flou dans sa propre couche GPU (même fix que .sticky-header-group) : sans ça,
-       le backdrop-filter est recalculé à chaque frame de scroll DANS la modale, ce qui donne
-       cet effet de clignotement/saut au défilement. */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    will-change: transform;
+    /* Aucun flou (backdrop-filter) sur les fenêtres : il était recalculé à chaque image dès que
+       la page défilait derrière (molette sur le fond sombre) → clignotement et sauts. Le fond
+       sombre translucide suffit, et le défilement de la page est verrouillé tant qu'une fenêtre
+       est ouverte (voir html.modal-lock). */
+    overscroll-behavior: contain;
   }
   .modal-bg.open { display: flex; }
   .modal {
     background: var(--card); border-radius: 22px; padding: 28px;
-    width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; overflow-x: hidden;
+    width: 100%; max-width: 520px; max-height: 90vh; max-height: 90dvh; overflow-y: auto; overflow-x: hidden;
     box-sizing: border-box;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
     overscroll-behavior: contain;
-    /* Couche GPU dédiée pour que le scroll interne ne redéclenche pas le repaint du flou
-       du fond (.modal-bg) juste derrière — même logique que ci-dessus. */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
   }
   .modal h2 { margin: 0 0 18px; }
   /* ===== Sélecteur d'emoji unifié (listes, projets, activités, plantes, routines, suivi santé…) ===== */
@@ -4659,7 +4665,7 @@
     <label for="virNote">Note <span style="font-weight:400;color:var(--ink-softer);">(optionnel)</span></label>
     <input type="text" id="virNote" placeholder="ex : investissement PEA" maxlength="80" />
 
-    <p id="virHint" style="font-size:12px;color:var(--ink-soft);margin:12px 0 0;line-height:1.5;"></p>
+    <p id="virHint" style="font-size:12px;color:var(--ink-soft);margin:12px 0 0;line-height:1.5;min-height:3em;"></p>
 
     <div class="actions">
       <button class="secondary" onclick="closeVirementModal()">Annuler</button>
@@ -5416,6 +5422,27 @@ document.addEventListener('mousedown', e => {
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(update).observe(grp);
   window.addEventListener('resize', update);
   update();
+})();
+/* Verrouille le défilement de la page tant qu'une fenêtre modale est ouverte (sinon la molette sur
+   le fond sombre fait défiler la page DERRIÈRE la fenêtre), et suspend les survols pendant que la
+   page défile (sinon les cartes sous la souris sautillent en continu). */
+(function() {
+  const root = document.documentElement;
+  const modalOpen = () => !!document.querySelector('.modal-bg.open') ||
+    [...document.querySelectorAll('div[style*="backdrop-filter"]')].some(el => getComputedStyle(el).display !== 'none');
+  const sync = () => root.classList.toggle('modal-lock', modalOpen());
+  new MutationObserver(ms => {
+    for (const m of ms) {
+      const t = m.target;
+      if (t === document.body || (t.matches && t.matches('.modal-bg, div[style*="backdrop-filter"]'))) { sync(); break; }
+    }
+  }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class', 'style'], childList: true });
+  let scrollTimer = 0;
+  window.addEventListener('scroll', () => {
+    if (!root.classList.contains('is-scrolling')) root.classList.add('is-scrolling');
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => root.classList.remove('is-scrolling'), 150);
+  }, { passive: true });
 })();
 /* ===== ANALYSE ÉMOTIONNELLE DU JOURNAL ===== */
 const JOURNAL_EMOTIONS = [

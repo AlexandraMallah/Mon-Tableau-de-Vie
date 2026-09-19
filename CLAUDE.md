@@ -394,6 +394,7 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 | Notes perdues au rechargement SW | `_noteFlushToLocalStorage()` + `pagehide` listener |
 | SW bloqué en cache HTTP | `{ updateViaCache: 'none' }` + `reg.update()` |
 | SW sert une vieille version après mise à jour | `index.html` exclu du précache dans `sw.js` — il ne faut JAMAIS l'ajouter dans `ASSETS` |
+| Fenêtre/page qui clignote et saute au défilement (ordinateur) | Pas de `backdrop-filter`, `will-change` ni `translateZ` sur `.modal-bg`, `.modal` et `.sticky-header-group` (flou recalculé à chaque image). Défilement de la page verrouillé tant qu'une modale est ouverte (`html.modal-lock`, posé en JS), survols suspendus pendant le scroll (`html.is-scrolling`), animation `fadeIn` en opacité seule (pas de `transform`), `scrollbar-gutter: stable`. Ne pas réintroduire ces effets. |
 
 ---
 
