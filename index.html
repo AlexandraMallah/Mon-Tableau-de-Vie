@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1271</title>
+<title>Mon Tableau de Vie 🌿 · v1272</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3173,6 +3173,7 @@
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
         <button onclick="openSavingsAccountsManager()" class="help-btn" style="font-size:13px;padding:7px 16px;">💰 Gérer l'épargne</button>
         <button onclick="openSecondaryAccountsManager()" class="help-btn" style="font-size:13px;padding:7px 16px;">🧾 Gérer les comptes secondaires</button>
+        <button onclick="openVirementModal()" class="help-btn" style="font-size:13px;padding:7px 16px;">⇄ Faire un virement</button>
       </div>
       <p style="color:var(--ink-soft);font-size:12px;margin:10px 0 0;">💡 Quand tu ajoutes une transaction <strong>💰 Épargne</strong>, le montant est <strong>retiré du compte courant</strong> et <strong>ajouté au compte épargne</strong>. Pour ajuster les soldes de départ : utilise les liens <strong>Modifier départ</strong> sous chaque carte.</p>
 
@@ -3329,38 +3330,7 @@
       </div>
       <div id="savingsBreakdown" style="margin-bottom:14px;"></div>
       <p style="color:var(--ink-soft);font-size:13px;margin:0 0 8px;">Pour ajouter une mise de côté : formulaire « Nouvelle transaction » au-dessus → choisis <strong>💰 Épargne</strong>. Pour modéliser un retrait, mets un montant négatif.</p>
-      <button onclick="toggleVirementEpargne()" style="background:var(--lavender-soft);border:1px solid var(--lavender);color:#6b4d99;border-radius:10px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px;">⇄ Virement entre comptes épargne</button>
-      <div id="virementEpargnePanel" style="display:none;background:var(--lavender-soft);border:1px solid var(--lavender);border-radius:12px;padding:14px;margin-bottom:14px;">
-        <div style="font-weight:600;font-size:14px;color:#6b4d99;margin-bottom:10px;">⇄ Virement inter-épargne</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-          <div>
-            <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:3px;">De (compte source)</label>
-            <select id="virFrom" style="width:100%;padding:7px 9px;border-radius:8px;border:1px solid var(--lavender);background:white;font-size:13px;"></select>
-          </div>
-          <div>
-            <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:3px;">Vers (compte destination)</label>
-            <select id="virTo" style="width:100%;padding:7px 9px;border-radius:8px;border:1px solid var(--lavender);background:white;font-size:13px;"></select>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:8px;margin-bottom:10px;">
-          <div>
-            <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:3px;">Montant (€)</label>
-            <input type="number" id="virAmount" min="0.01" step="0.01" placeholder="0,00" style="width:100%;box-sizing:border-box;padding:7px 9px;border-radius:8px;border:1px solid var(--lavender);font-size:13px;" />
-          </div>
-          <div>
-            <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:3px;">Date</label>
-            <input type="date" id="virDate" style="width:100%;box-sizing:border-box;padding:7px 9px;border-radius:8px;border:1px solid var(--lavender);font-size:13px;" />
-          </div>
-          <div>
-            <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:3px;">Note (optionnel)</label>
-            <input type="text" id="virNote" placeholder="ex : investissement PEA" style="width:100%;box-sizing:border-box;padding:7px 9px;border-radius:8px;border:1px solid var(--lavender);font-size:13px;" />
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="submitVirementEpargne()" style="background:#6b4d99;color:white;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;">Valider</button>
-          <button onclick="toggleVirementEpargne()" style="background:white;border:1px solid var(--lavender);color:#6b4d99;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;">Annuler</button>
-        </div>
-      </div>
+      <button onclick="openVirementModal()" style="background:var(--lavender-soft);border:1px solid var(--lavender);color:#6b4d99;border-radius:10px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px;">⇄ Faire un virement entre comptes</button>
       <div class="chart-wrap" style="height:200px;"><canvas id="savingsChart"></canvas></div>
       <div id="savingsDetailPanel" style="display:none;margin-top:12px;border-top:1px solid var(--line);padding-top:12px;"></div>
     </div>
@@ -4655,6 +4625,46 @@
       <button class="secondary" onclick="_regenerateStepsToken()" title="Si ton lien a fuité, génère-en un nouveau (l'ancien arrêtera de fonctionner)">🔄 Régénérer le lien</button>
       <div class="spacer"></div>
       <button class="primary" onclick="closeStepsImportModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Virement entre comptes -->
+<div class="modal-bg" id="virementModal" onclick="event.target===this&&_modalMouseDownTarget===this&&closeVirementModal()">
+  <div class="modal" style="max-width:460px;" onclick="event.stopPropagation()">
+    <h2 style="margin:0 0 4px;">⇄ Virement entre comptes</h2>
+    <p class="modal-hint">Déplace de l'argent d'un compte à un autre : compte courant, comptes secondaires ou épargne.</p>
+
+    <label for="virFrom">De (compte source)</label>
+    <select id="virFrom" onchange="_virUpdateHint()"></select>
+
+    <div style="display:flex;justify-content:center;margin:10px 0 0;">
+      <button type="button" onclick="_virSwap()" title="Inverser source et destination" style="width:38px;height:38px;border-radius:50%;border:1px solid var(--lavender);background:var(--lavender-soft);color:#6b4d99;font-size:18px;cursor:pointer;font-family:inherit;line-height:1;">⇅</button>
+    </div>
+
+    <label for="virTo" style="margin-top:0;">Vers (compte destination)</label>
+    <select id="virTo" onchange="_virUpdateHint()"></select>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1 1 140px;min-width:0;">
+        <label for="virAmount">Montant (€)</label>
+        <input type="number" id="virAmount" min="0.01" step="0.01" placeholder="0,00" inputmode="decimal" />
+      </div>
+      <div style="flex:1 1 140px;min-width:0;">
+        <label for="virDate">Date</label>
+        <input type="date" id="virDate" />
+      </div>
+    </div>
+
+    <label for="virNote">Note <span style="font-weight:400;color:var(--ink-softer);">(optionnel)</span></label>
+    <input type="text" id="virNote" placeholder="ex : investissement PEA" maxlength="80" />
+
+    <p id="virHint" style="font-size:12px;color:var(--ink-soft);margin:12px 0 0;line-height:1.5;"></p>
+
+    <div class="actions">
+      <button class="secondary" onclick="closeVirementModal()">Annuler</button>
+      <div class="spacer"></div>
+      <button class="primary" onclick="submitVirement()">Valider</button>
     </div>
   </div>
 </div>
@@ -14729,7 +14739,7 @@ function _delAllAccDom(a, rowEl) {
       state.savingsCategories = (state.savingsCategories||[]).filter(c=>c!==a.name);
       if (state.accounts?.savingsBreakdown) delete state.accounts.savingsBreakdown[a.name];
       if (state.accounts?.savingsEmojis) delete state.accounts.savingsEmojis[a.name];
-      state.transactions = (state.transactions||[]).filter(t=>!(t.category===a.name&&(t.type==="savings"||t.type==="savings-out")));
+      state.transactions = (state.transactions||[]).filter(t=>!(t.category===a.name&&(t.type==="savings"||t.type==="savings-out")) && !_trTouchesSav(t, a.name));
     } else {
       const fallback = (state.externalAccounts.find(x=>x.id!==a.extId)||{}).id||"";
       state.transactions?.forEach(t=>{if(t.type==="external"&&t.externalAccountId===a.extId)t.externalAccountId=fallback;});
@@ -15254,6 +15264,7 @@ function balanceCourant() {
     else if (t.type === "savings" && !t.isAdjustment) savings   += t.amount;
     else if (t.type === "savings-out" && !t.isAdjustment && !t._linkedCashWithdrawal) savingsOut += t.amount;
     else if (t.type === "cash-withdrawal" && t.cashSrcAccount === "__checking__") expense += t.amount;
+    else if (t.type === "transfer") { const d = _trCourantDelta(t); if (d >= 0) income += d; else expense -= d; }
   }
   return start + income + savingsOut - expense - savings;
 }
@@ -15266,7 +15277,10 @@ function balanceEpargne() {
   const savings    = state.transactions.filter(t => t.type === "savings").reduce((s, t) => s + t.amount, 0);
   const savingsOut = state.transactions.filter(t => t.type === "savings-out").reduce((s, t) => s + t.amount, 0);
   const fromSavExp = state.transactions.filter(t => t.fromSavingsAccount && t.fromSavingsAccount !== "__cash__" && (t.type === "expense" || t.type === "external")).reduce((s, t) => s + t.amount, 0);
-  return startTotal + savings + directIncome - savingsOut - fromSavExp;
+  const trDelta = {};
+  state.transactions.forEach(t => _trApplyToSavingsDelta(t, trDelta));
+  const transfers = Object.values(trDelta).reduce((sum, v) => sum + v, 0);
+  return startTotal + savings + directIncome - savingsOut - fromSavExp + transfers;
 }
 function renderAccounts() {
   const c = balanceCourant();
@@ -15441,7 +15455,7 @@ function _saveAllAccounts() {
     if (type === "savings") {
       const oldName = origData?.type === "savings" ? origData.name : null;
       if (oldName && oldName !== name) {
-        state.transactions?.forEach(t => { if (t.category === oldName && (t.type === "savings" || t.type === "savings-out")) t.category = name; });
+        state.transactions?.forEach(t => { if (t.category === oldName && (t.type === "savings" || t.type === "savings-out")) t.category = name; }); _renameSavInTransfers(oldName, name);
         if (state.accounts.savingsBreakdown[oldName] !== undefined) { state.accounts.savingsBreakdown[name] = state.accounts.savingsBreakdown[oldName]; delete state.accounts.savingsBreakdown[oldName]; }
         if (state.accounts.savingsEmojis[oldName] !== undefined) delete state.accounts.savingsEmojis[oldName];
       }
@@ -15506,7 +15520,7 @@ function _saveSavingsAccounts() {
     const startVal = parseFloat(startInputs[i]?.value) || 0;
     const emojiVal = emojiInputs[i]?.value.trim().slice(0, 4) || "🏦";
     if (newName !== oldName) {
-      state.transactions?.forEach(t => { if (t.category === oldName && (t.type === "savings" || t.type === "savings-out")) t.category = newName; });
+      state.transactions?.forEach(t => { if (t.category === oldName && (t.type === "savings" || t.type === "savings-out")) t.category = newName; }); _renameSavInTransfers(oldName, newName);
       const idx = state.savingsCategories.indexOf(oldName);
       if (idx >= 0) state.savingsCategories[idx] = newName;
       if (state.accounts.savingsEmojis[oldName] !== undefined) { state.accounts.savingsEmojis[newName] = state.accounts.savingsEmojis[oldName]; delete state.accounts.savingsEmojis[oldName]; }
@@ -15562,7 +15576,7 @@ function _deleteSavAcc(name) {
     state.savingsCategories = (state.savingsCategories || []).filter(c => c !== name);
     if (state.accounts?.savingsBreakdown) delete state.accounts.savingsBreakdown[name];
     if (state.accounts?.savingsEmojis) delete state.accounts.savingsEmojis[name];
-    state.transactions = (state.transactions||[]).filter(t=>!(t.category===name&&(t.type==="savings"||t.type==="savings-out")));
+    state.transactions = (state.transactions||[]).filter(t=>!(t.category===name&&(t.type==="savings"||t.type==="savings-out")) && !_trTouchesSav(t, name));
     saveState();
     _refreshPreleveSur();
     renderSavings();
@@ -15623,7 +15637,7 @@ function saveAccountEdit() {
       const startVal = parseFloat(startInputs[i]?.value) || 0;
       const emojiVal = emojiInputs[i]?.value.trim().slice(0, 4) || "";
       if (newName !== oldName) {
-        state.transactions.forEach(t => { if (t.category === oldName && (t.type === "savings" || t.type === "savings-out")) t.category = newName; });
+        state.transactions.forEach(t => { if (t.category === oldName && (t.type === "savings" || t.type === "savings-out")) t.category = newName; }); _renameSavInTransfers(oldName, newName);
         const idx = state.savingsCategories.indexOf(oldName);
         if (idx >= 0) state.savingsCategories[idx] = newName;
         if (newEmojis[oldName] !== undefined) { newEmojis[newName] = newEmojis[oldName]; delete newEmojis[oldName]; }
@@ -16535,6 +16549,11 @@ function renderBalanceEvolutionChart() {
       if (t.type === "income" && t.directSavingsAccount !== "__cash__") bal += t.amount;
       else if (t.type === "expense" && t.fromSavingsAccount !== "__cash__") bal -= t.amount;
       else if (t.type === "cash-withdrawal") bal -= t.amount;
+      else if (t.type === "transfer") {
+        // suivi = courant principal + épargne ; un compte secondaire est hors patrimoine suivi
+        const tracked = k => k === "__courant__" || (k || "").startsWith("sav:");
+        bal += (tracked(t.virToKey) ? t.amount : 0) - (tracked(t.virFromKey) ? t.amount : 0);
+      }
       // savings / savings-out : transferts entre courant et épargne → patrimoine inchangé
     }
     return bal;
@@ -16624,6 +16643,7 @@ function renderSavings() {
     else if (t.type === "savings-out" && t.category) txDelta[t.category] = (txDelta[t.category] || 0) - t.amount;
     else if (t.type === "income" && t.directSavingsAccount) txDelta[t.directSavingsAccount] = (txDelta[t.directSavingsAccount] || 0) + t.amount;
     if (t.fromSavingsAccount && (t.type === "expense" || t.type === "external")) txDelta[t.fromSavingsAccount] = (txDelta[t.fromSavingsAccount] || 0) - t.amount;
+    _trApplyToSavingsDelta(t, txDelta);
   });
   const balByCat = {};
   cats.forEach(c => {
@@ -16690,6 +16710,7 @@ function openSavingsAccountModal(cat) {
     else if (t.type === "savings-out" && t.category) txDelta[t.category] = (txDelta[t.category] || 0) - t.amount;
     else if (t.type === "income" && t.directSavingsAccount) txDelta[t.directSavingsAccount] = (txDelta[t.directSavingsAccount] || 0) + t.amount;
     if (t.fromSavingsAccount && (t.type === "expense" || t.type === "external")) txDelta[t.fromSavingsAccount] = (txDelta[t.fromSavingsAccount] || 0) - t.amount;
+    _trApplyToSavingsDelta(t, txDelta);
   });
   const bal = (breakdown[cat] || 0) + (txDelta[cat] || 0);
 
@@ -16760,6 +16781,7 @@ function updateSavingsBalance(cat) {
     else if (t.type === "savings-out" && t.category) txDelta[t.category] = (txDelta[t.category] || 0) - t.amount;
     else if (t.type === "income" && t.directSavingsAccount) txDelta[t.directSavingsAccount] = (txDelta[t.directSavingsAccount] || 0) + t.amount;
     if (t.fromSavingsAccount && (t.type === "expense" || t.type === "external")) txDelta[t.fromSavingsAccount] = (txDelta[t.fromSavingsAccount] || 0) - t.amount;
+    _trApplyToSavingsDelta(t, txDelta);
   });
   _savingsUpdateCat = cat;
   _savingsUpdateCurrentBal = (breakdown[cat] || 0) + (txDelta[cat] || 0);
@@ -16923,25 +16945,60 @@ function renderSavingsChart() {
     },
   });
 }
-function toggleVirementEpargne() {
-  const panel = document.getElementById("virementEpargnePanel");
-  const isOpen = panel.style.display !== "none";
-  if (isOpen) { panel.style.display = "none"; return; }
-  // Populate selects
-  const cats = state.savingsCategories || [];
+/* ===== VIREMENTS ENTRE COMPTES =====
+   Clés de compte : "__courant__" (compte courant principal), "ext:<id>" (compte secondaire),
+   "sav:<nom>" (compte épargne).
+   - épargne ↔ épargne, courant ↔ épargne : mêmes transactions "savings" / "savings-out" qu'avant
+     (tous les calculs d'épargne et de budget existants continuent de s'appliquer tels quels).
+   - tout virement impliquant un compte secondaire : transaction "transfer" (voir _trCourantDelta /
+     _trSavingsDelta). Un compte secondaire n'a pas de solde suivi : seul l'autre compte bouge. */
+function _virKind(key) { return key === "__courant__" ? "c" : (key || "").startsWith("ext:") ? "e" : "s"; }
+function _virAccounts() {
   const locked = state.savingsLocked || {};
-  const unlocked = cats.filter(c => !locked[c]);
-  document.getElementById("virFrom").innerHTML = unlocked.map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
-  document.getElementById("virTo").innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
-  // Default: from first, to second
-  if (cats.length > 1) document.getElementById("virTo").value = cats[1];
-  document.getElementById("virDate").value = new Date().toISOString().slice(0, 10);
+  const cur = [{ key: "__courant__", name: _courantName(), label: (state.accounts?.courantEmoji || "💳") + " " + _courantName() }];
+  (state.externalAccounts || []).forEach(a => cur.push({ key: "ext:" + a.id, name: a.name, label: (a.emoji || "🧾") + " " + a.name }));
+  const sav = (state.savingsCategories || []).filter(Boolean).map(c => ({ key: "sav:" + c, name: c, label: _accountEmoji(c) + c, locked: !!locked[c] }));
+  return { cur, sav };
+}
+function _virOptionsHtml(isSource) {
+  const { cur, sav } = _virAccounts();
+  const opt = a => `<option value="${escapeHtml(a.key)}"${isSource && a.locked ? " disabled" : ""}>${escapeHtml(a.label)}${a.locked ? " 🔒" : ""}</option>`;
+  return `<optgroup label="💳 Comptes courants">${cur.map(opt).join("")}</optgroup>` +
+    (sav.length ? `<optgroup label="🏦 Épargne">${sav.map(opt).join("")}</optgroup>` : "");
+}
+function openVirementModal() {
+  const fromEl = document.getElementById("virFrom"), toEl = document.getElementById("virTo");
+  fromEl.innerHTML = _virOptionsHtml(true);
+  toEl.innerHTML = _virOptionsHtml(false);
+  const { cur, sav } = _virAccounts();
+  fromEl.value = "__courant__";
+  toEl.value = (sav[0] || cur[1] || cur[0]).key;
+  document.getElementById("virDate").value = todayKey();
   document.getElementById("virAmount").value = "";
   document.getElementById("virNote").value = "";
-  panel.style.display = "block";
+  _virUpdateHint();
+  document.getElementById("virementModal").classList.add("open");
 }
-
-function submitVirementEpargne() {
+function closeVirementModal() { document.getElementById("virementModal").classList.remove("open"); }
+function _virSwap() {
+  const fromEl = document.getElementById("virFrom"), toEl = document.getElementById("virTo");
+  const f = fromEl.value, t = toEl.value;
+  if (fromEl.querySelector(`option[value="${CSS.escape(t)}"]`)?.disabled) { showToast("🔒 Ce compte est verrouillé : il ne peut pas être la source d'un virement."); return; }
+  fromEl.value = t; toEl.value = f;
+  _virUpdateHint();
+}
+function _virUpdateHint() {
+  const f = document.getElementById("virFrom").value, t = document.getElementById("virTo").value;
+  const el = document.getElementById("virHint");
+  if (!el) return;
+  const kf = _virKind(f), kt = _virKind(t);
+  el.textContent = (f && t && f !== t && (kf === "e" || kt === "e"))
+    ? ((kf === "e" && kt === "e")
+        ? "ℹ️ Les comptes secondaires n'ont pas de solde suivi : ce virement sera seulement noté dans l'historique."
+        : "ℹ️ Un compte secondaire n'a pas de solde suivi : seul le solde de l'autre compte change.")
+    : "";
+}
+function submitVirement() {
   const from = document.getElementById("virFrom").value;
   const to   = document.getElementById("virTo").value;
   const amt  = parseFloat(document.getElementById("virAmount").value);
@@ -16949,21 +17006,51 @@ function submitVirementEpargne() {
   const note = document.getElementById("virNote").value.trim();
   if (!from || !to || !amt || amt <= 0 || !date) { showToast("⚠️ Remplis tous les champs obligatoires."); return; }
   if (from === to) { showToast("⚠️ Les comptes source et destination sont identiques."); return; }
+  const { cur, sav } = _virAccounts();
+  const all = [...cur, ...sav];
+  const fromName = all.find(a => a.key === from)?.name || from;
+  const toName   = all.find(a => a.key === to)?.name || to;
+  const kf = _virKind(from), kt = _virKind(to);
   const dateIso = new Date(date + "T12:00:00").toISOString();
-  const label = note || `Virement ${from} → ${to}`;
-  const mkId = () => "tx" + Date.now() + Math.random().toString(36).slice(2, 6);
+  const label = note || `Virement ${fromName} → ${toName}`;
   const virId = "vir" + Date.now();
-  state.transactions.unshift({
-    id: mkId(), date: dateIso, type: "savings-out",
-    amount: amt, category: from, note: label, virementId: virId, virFrom: from, virTo: to,
+  const mk = over => ({
+    id: "tx" + Date.now() + Math.random().toString(36).slice(2, 6), date: dateIso, amount: amt,
+    note: label, virementId: virId, virFrom: fromName, virTo: toName, ...over,
   });
-  state.transactions.unshift({
-    id: mkId(), date: dateIso, type: "savings",
-    amount: amt, category: to, note: label, virementId: virId, virFrom: from, virTo: to,
-  });
-  document.getElementById("virementEpargnePanel").style.display = "none";
+  if (kf === "s" && kt === "s") {
+    state.transactions.unshift(mk({ type: "savings-out", category: fromName }));
+    state.transactions.unshift(mk({ type: "savings", category: toName }));
+  } else if (kf === "c" && kt === "s") {
+    state.transactions.unshift(mk({ type: "savings", category: toName }));
+  } else if (kf === "s" && kt === "c") {
+    state.transactions.unshift(mk({ type: "savings-out", category: fromName }));
+  } else {
+    state.transactions.unshift(mk({ type: "transfer", category: "Virement", virFromKey: from, virToKey: to }));
+  }
+  closeVirementModal();
   saveState();
-  renderMoney(); renderSavings(); renderSavingsChart();
+  renderMoney();
+  showToast("✅ Virement enregistré");
+}
+// Effets d'un virement "transfer" sur les soldes suivis (courant principal + comptes épargne)
+function _trCourantDelta(t) {
+  return (t.virToKey === "__courant__" ? t.amount : 0) - (t.virFromKey === "__courant__" ? t.amount : 0);
+}
+function _trApplyToSavingsDelta(t, txDelta) {
+  if (t.type !== "transfer") return;
+  if ((t.virToKey || "").startsWith("sav:"))   { const n = t.virToKey.slice(4);   txDelta[n] = (txDelta[n] || 0) + t.amount; }
+  if ((t.virFromKey || "").startsWith("sav:")) { const n = t.virFromKey.slice(4); txDelta[n] = (txDelta[n] || 0) - t.amount; }
+}
+function _trTouchesSav(t, name) {
+  return t.type === "transfer" && (t.virFromKey === "sav:" + name || t.virToKey === "sav:" + name);
+}
+function _renameSavInTransfers(oldName, newName) {
+  (state.transactions || []).forEach(t => {
+    if (t.type !== "transfer") return;
+    if (t.virFromKey === "sav:" + oldName) { t.virFromKey = "sav:" + newName; t.virFrom = newName; }
+    if (t.virToKey === "sav:" + oldName)   { t.virToKey = "sav:" + newName;   t.virTo = newName; }
+  });
 }
 
 function _showSavingsDetail({ start, end, label }) {
@@ -23997,7 +24084,7 @@ function renameIncomeCategory(newName, oldName) {
 function renameSavingsCategory(newName, oldName) {
   const idx = state.savingsCategories.indexOf(oldName);
   if (idx >= 0) state.savingsCategories[idx] = newName;
-  state.transactions.forEach(t => { if (t.category === oldName && (t.type === "savings" || t.type === "savings-out")) t.category = newName; });
+  state.transactions.forEach(t => { if (t.category === oldName && (t.type === "savings" || t.type === "savings-out")) t.category = newName; }); _renameSavInTransfers(oldName, newName);
   saveState(); renderSettingsLists();
 }
 function removeCandType(c) { state.candidatureTypes = state.candidatureTypes.filter(x => x !== c); renderSettingsLists(); }
