@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1277</title>
+<title>Mon Tableau de Vie 🌿 · v1278</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3366,8 +3366,8 @@
     </div>
     <div class="card" id="externalCard" style="margin-bottom:18px;display:none;">
       <div style="display:flex;align-items:center;margin-bottom:8px;gap:10px;flex-wrap:wrap;">
-        <button id="externalEditAccountsBtn" onclick="openSecondaryAccountsManager()" class="help-btn" style="flex-shrink:0;">✦ Gérer</button>
-        <h2 style="margin:0;font-size:15px;min-width:0;overflow-wrap:anywhere;" id="externalCardTitle">🏦 Comptes tiers</h2>
+        <h2 style="margin:0;font-size:15px;min-width:0;flex:1;overflow-wrap:anywhere;" id="externalCardTitle">🏦 Comptes tiers</h2>
+        <button id="externalEditAccountsBtn" onclick="openSecondaryAccountsManager()" class="help-btn" style="flex-shrink:0;margin-left:auto;">✦ Gérer</button>
       </div>
       <div id="externalAccountTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
       <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;">
@@ -5523,6 +5523,31 @@ document.addEventListener('mousedown', e => {
     if (t.closest('input, textarea, select, button, label, a, [contenteditable], [role=button]') || !t.closest('.modal')) return;
     a.blur();
   }, true);
+})();
+/* Typographie : un « : » ne doit jamais rester seul au bout d'une ligne avec sa valeur à la ligne d'après
+   (« Cumulé épargné : » / « +29825,02 € »). On colle le « : » au mot précédent et au mot suivant avec des
+   espaces insécables. Traité au moment de l'AFFICHAGE, sur les nœuds de texte uniquement (jamais dans le
+   code, ni dans les champs de saisie / zones éditables), y compris pour tout ce qui est ajouté plus tard. */
+(function() {
+  const SKIP = /^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|OPTION|CODE|PRE|NOSCRIPT|TITLE)$/;
+  const fix = node => {
+    const t = node.nodeValue;
+    if (!t || t.indexOf(':') === -1) return;
+    const n = t.replace(/(\S) : (?=\S)/g, '$1\u00a0:\u00a0').replace(/(\S) :(?=\s|$)/g, '$1\u00a0:');
+    if (n !== t) node.nodeValue = n;
+  };
+  const ok = node => { for (let e = node.parentElement; e; e = e.parentElement) { if (SKIP.test(e.tagName) || e.isContentEditable) return false; } return true; };
+  const walk = root => {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let n; while ((n = w.nextNode())) if (ok(n)) fix(n);
+  };
+  new MutationObserver(ms => {
+    for (const m of ms) {
+      if (m.type === 'characterData') { if (ok(m.target)) fix(m.target); continue; }
+      m.addedNodes.forEach(n => { if (n.nodeType === 3) { if (ok(n)) fix(n); } else if (n.nodeType === 1 && !SKIP.test(n.tagName)) walk(n); });
+    }
+  }).observe(document.body, { childList: true, subtree: true, characterData: true });
+  walk(document.body);
 })();
 /* ===== ANALYSE ÉMOTIONNELLE DU JOURNAL ===== */
 const JOURNAL_EMOTIONS = [
