@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1283</title>
+<title>Mon Tableau de Vie 🌿 · v1284</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14828,7 +14828,7 @@ function renderExternalSummary() {
   const txs = state.transactions.filter(tx => {
     const d = new Date(tx.date);
     if (d < start || d >= end) return false;
-    if (tx.type === "external" && tx.category !== "↩ Retour hors compte") {
+    if (tx.type === "external" && tx.category !== REIMB_RETURN_CAT) {
       if (_externalAccountFilter) return (tx.externalAccountId || "ext-default") === _externalAccountFilter;
       return true;
     }
@@ -14844,7 +14844,7 @@ function renderExternalSummary() {
   state.transactions.forEach(tx => {
     const d = new Date(tx.date);
     if (d < start || d >= end) return;
-    if (tx.type === "external" && tx.category !== "↩ Retour hors compte") {
+    if (tx.type === "external" && tx.category !== REIMB_RETURN_CAT) {
       const id = tx.externalAccountId || "ext-default";
       spentThisMonthByAcc[id] = (spentThisMonthByAcc[id] || 0) + tx.amount;
     } else if (tx.type === "expense" && (tx.fromSavingsAccount||"").startsWith("ext:")) {
@@ -15174,6 +15174,10 @@ function _createReimbIncomeTx(dateIso, reimbAmount, note, category) {
 // Répartit un remboursement reçu : compte courant reçoit (reçu − hors compte),
 // le surplus (reçu − dépensé) part dans une catégorie de revenu dédiée,
 // et la part hors compte revient au hors compte.
+// Écriture (montant négatif) créée quand un frais pro payé « hors compte » (ex. compte de Papa) est remboursé :
+// elle ne fait que rendre l'argent au compte tiers. La dépense d'origine étant exclue des graphiques de dépenses
+// (remboursable), son retour doit l'être aussi — sinon il se retrouve compté comme une « catégorie » négative.
+const REIMB_RETURN_CAT = "↩ Retour hors compte";
 function _applyReimbursementSplit(txs, receivedTotal, dateIso, note) {
   const externalPortion = txs.filter(t => t.type === "external").reduce((s, t) => s + t.amount, 0);
   const totalSpent = txs.reduce((s, t) => s + t.amount, 0);
@@ -15195,7 +15199,7 @@ function _applyReimbursementSplit(txs, receivedTotal, dateIso, note) {
       date: dateIso,
       type: "external",
       amount: -externalPortion,
-      category: "↩ Retour hors compte",
+      category: REIMB_RETURN_CAT,
       note,
       reimbursable: false,
     };
@@ -17320,7 +17324,7 @@ function renderMoneyCatChart() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d < end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && tx.category !== "Retrait espèces") totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
+    if (d >= start && d < end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && tx.category !== "Retrait espèces" && tx.category !== REIMB_RETURN_CAT) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const depTotal = entries.reduce((s,[,v]) => s+v, 0);
@@ -17382,7 +17386,7 @@ function renderMoneyCatChartNoFixed() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d < end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && !tx.fixedCharge && !tx.exceptional && tx.category !== "Retrait espèces")
+    if (d >= start && d < end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && !tx.fixedCharge && !tx.exceptional && tx.category !== "Retrait espèces" && tx.category !== REIMB_RETURN_CAT)
       totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
@@ -17880,7 +17884,7 @@ function renderMoneyCatAllChart() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d <= end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && tx.category !== "Retrait espèces") totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
+    if (d >= start && d <= end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && tx.category !== "Retrait espèces" && tx.category !== REIMB_RETURN_CAT) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
@@ -17928,7 +17932,7 @@ function renderMoneyCatAllNoFixChart() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d <= end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && !tx.fixedCharge && !tx.exceptional && tx.category !== "Retrait espèces") totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
+    if (d >= start && d <= end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && !tx.fixedCharge && !tx.exceptional && tx.category !== "Retrait espèces" && tx.category !== REIMB_RETURN_CAT) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
@@ -18551,7 +18555,7 @@ function computeMetric(m, override) {
     let spent = 0, fixedTotal = 0;
     for (const tx of state.transactions) {
       const d = new Date(tx.date);
-      if (d >= start && d < pEnd && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable) {
+      if (d >= start && d < pEnd && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && tx.category !== REIMB_RETURN_CAT) {
         const net = txNetAmount(tx);
         spent += net;
         if (tx.fixedCharge) fixedTotal += net;
