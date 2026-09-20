@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1285</title>
+<title>Mon Tableau de Vie 🌿 · v1286</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15037,11 +15037,14 @@ function renderReimbursable() {
               style="width:100px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:12px;" />
             <span style="font-size:11px;color:var(--ink-soft);">€ (dépensé : ${tx.amount.toFixed(2)} €)</span>
           </div>
+          <div style="font-size:11px;color:var(--ink-soft);margin:-4px 0 10px;line-height:1.5;">💡 Déjà remboursé (par exemple suivi dans Admin &gt; Mission, ou trop-perçu d'une autre mission) ? Clique sur <strong>« Déjà remboursé »</strong> : la dépense est soldée et rien n'est ajouté à ton solde.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button onclick="markReimbClaimed('${tx.id}')"
               style="padding:5px 12px;border-radius:7px;border:1.5px solid #d97706;background:#fff7ed;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;">⏳ Lancé (pas encore reçu)</button>
             <button onclick="confirmReimbursed('${tx.id}')"
               style="padding:5px 12px;border-radius:7px;border:none;background:#10b981;color:white;font-size:12px;font-weight:600;cursor:pointer;">✅ Reçu sur le compte</button>
+            <button onclick="markReimbAlreadyReceived('${tx.id}')" title="Déjà remboursé ailleurs (ex. suivi Admin > Mission) : la dépense est soldée, rien n'est ajouté à ton solde"
+              style="padding:5px 12px;border-radius:7px;border:1.5px solid #10b981;background:white;color:#0f766e;font-size:12px;font-weight:600;cursor:pointer;">✔️ Déjà remboursé (rien à ajouter)</button>
           </div>
         </div>` : ''}
       </div>`;
@@ -15209,11 +15212,18 @@ function _applyReimbursementSplit(txs, receivedTotal, dateIso, note) {
   return { incomeId, surplusId, returnId };
 }
 
+function markReimbAlreadyReceived(id) {
+  const inp = document.getElementById("reimbAmt_" + id);
+  if (inp) inp.value = "0";
+  confirmReimbursed(id);
+}
+
 function confirmReimbursed(id) {
   const tx = state.transactions.find(t => t.id === id);
   if (!tx) return;
   const dateVal = document.getElementById("reimbDate_" + id)?.value || new Date().toISOString().slice(0, 10);
-  const reimbAmt = parseFloat(document.getElementById("reimbAmt_" + id)?.value) || tx.amount;
+  const _reimbInput = parseFloat(document.getElementById("reimbAmt_" + id)?.value);
+  const reimbAmt = Number.isFinite(_reimbInput) ? _reimbInput : tx.amount;   // 0 € autorisé : déjà remboursé d'avance
   const dateIso = new Date(dateVal).toISOString();
   tx.reimbursedAt = dateIso;
   tx.reimbursedAmount = reimbAmt;
