@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1281</title>
+<title>Mon Tableau de Vie 🌿 · v1282</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -8186,6 +8186,23 @@ var _congesYear = new Date().getFullYear();
 var _congesYearTo = new Date().getFullYear();
 var _congesMonthFrom = 1;
 var _congesMonthTo = 12;
+/* La plage de mois affichée (de / à) est enregistrée dans state.admin.congesRange : elle reste telle quelle
+   après un rechargement (et se synchronise avec le cloud) tant qu'on ne la change pas. */
+function _congesLoadRange() {
+  var r = state.admin && state.admin.congesRange;
+  if (!r) return;
+  if (r.yFrom) _congesYear = r.yFrom;
+  if (r.mFrom) _congesMonthFrom = r.mFrom;
+  if (r.yTo) _congesYearTo = r.yTo;
+  if (r.mTo) _congesMonthTo = r.mTo;
+}
+function _congesSetRange(varName, val) {
+  window[varName] = Number(val);
+  _getCongesConfig();
+  state.admin.congesRange = { yFrom: _congesYear, mFrom: _congesMonthFrom, yTo: _congesYearTo, mTo: _congesMonthTo };
+  saveState();
+  admRenderConges();
+}
 
 /* --- Config congés par défaut --- */
 function _defaultCongesConfig() {
@@ -8401,6 +8418,7 @@ function admDeleteMissionGroup(id) {
 }
 
 function admRenderConges() {
+  _congesLoadRange();
   var el = document.getElementById("admCongesContent");
   if (!el) return;
   var periodes = (state.admin && state.admin.congesPeriodes) || [];
@@ -8486,12 +8504,12 @@ function admRenderConges() {
   function _yearSel(varName, curVal) {
     var opts = "";
     for (var y = curY - 3; y <= curY + 6; y++) opts += '<option value="'+y+'"'+(y===curVal?' selected':'')+'>'+y+'</option>';
-    return '<select onchange="'+varName+'=Number(this.value);admRenderConges()" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;">'+opts+'</select>';
+    return '<select onchange="_congesSetRange(\''+varName+'\',this.value)" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;">'+opts+'</select>';
   }
   function _monthSel(varName, curVal) {
     var opts = "";
     for (var m = 1; m <= 12; m++) opts += '<option value="'+m+'"'+(m===curVal?' selected':'')+'>'+mNames2[m]+'</option>';
-    return '<select onchange="'+varName+'=Number(this.value);admRenderConges()" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;">'+opts+'</select>';
+    return '<select onchange="_congesSetRange(\''+varName+'\',this.value)" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;">'+opts+'</select>';
   }
   var controls = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;background:var(--bg-1);border-radius:10px;">'
     + '<span style="font-size:13px;font-weight:700;color:var(--ink);">📅 Calendrier</span>'
