@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1284</title>
+<title>Mon Tableau de Vie 🌿 · v1285</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17303,14 +17303,34 @@ function _emptyDonutPlaceholder(wrap, text) {
        <p style="color:var(--ink-softer);font-size:12px;margin:0;">${text}</p>
      </div>`);
 }
+/* Règle UNIQUE des graphiques de dépenses ET de leurs fenêtres de détail (au clic sur une part / la légende) :
+   - « Dépenses » = toutes les dépenses de tous les comptes (compte courant, comptes tiers « hors compte » comme
+     le compte de Papa, dépenses payées depuis l'épargne ou en espèces…), SAUF les frais pro (remboursables) et
+     le retour de leur remboursement ;
+   - « Dépenses courantes » (courantes = true) = pareil, SAUF charges fixes et dépenses exceptionnelles lissées. */
+function _isChartExpense(tx, courantes) {
+  if (tx.type !== "expense" && tx.type !== "external") return false;
+  if (tx.reimbursable || tx.category === "Retrait espèces" || tx.category === REIMB_RETURN_CAT) return false;
+  if (courantes && (tx.fixedCharge || tx.exceptional)) return false;
+  return true;
+}
+// Nom du compte tiers (ex. « Compte Papa ») pour une dépense saisie hors compte, sinon ""
+function _txExtAccountLabel(tx) {
+  let id = "";
+  if (tx.type === "external") id = tx.externalAccountId || "ext-default";
+  else if (String(tx.fromSavingsAccount || "").startsWith("ext:")) id = tx.fromSavingsAccount.slice(4);
+  if (!id) return "";
+  const a = (state.externalAccounts || []).find(x => x.id === id);
+  return a ? (a.emoji || "🧾") + " " + a.name : "🧾 hors compte";
+}
 // Légende HTML (sous le donut) — pastille + nom, cliquable vers le détail catégorie.
 // type : "expense" (défaut) ou "income" — le donut Revenus est un anneau de type "income",
 // sinon son détail cherchait des dépenses et affichait toujours 0€/"Aucune dépense".
 // allTime : true pour les 3 graphiques "depuis toujours" (sinon détail calé sur le mois affiché).
-function _catLegendHtml(entries, type = "expense", allTime = false) {
+function _catLegendHtml(entries, type = "expense", allTime = false, courantes = false) {
   const fn = allTime ? "openCatDetailAllTime" : "openCatDetail";
   return entries.map(([cat]) =>
-    `<span class="cat-legend-item" onclick="${fn}('${(cat||'').replace(/'/g,"\\'")}','${type}')"><span class="cat-legend-dot" style="background:${catColor(cat)};"></span>${escapeHtml(cat)}</span>`
+    `<span class="cat-legend-item" onclick="${fn}('${(cat||'').replace(/'/g,"\\'")}','${type}',${courantes})"><span class="cat-legend-dot" style="background:${catColor(cat)};"></span>${escapeHtml(cat)}</span>`
   ).join("");
 }
 function renderMoneyCatChart() {
@@ -17324,7 +17344,7 @@ function renderMoneyCatChart() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d < end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && tx.category !== "Retrait espèces" && tx.category !== REIMB_RETURN_CAT) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
+    if (d >= start && d < end && _isChartExpense(tx, false)) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const depTotal = entries.reduce((s,[,v]) => s+v, 0);
@@ -17386,7 +17406,7 @@ function renderMoneyCatChartNoFixed() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d < end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && !tx.fixedCharge && !tx.exceptional && tx.category !== "Retrait espèces" && tx.category !== REIMB_RETURN_CAT)
+    if (d >= start && d < end && _isChartExpense(tx, true))
       totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
@@ -17394,7 +17414,7 @@ function renderMoneyCatChartNoFixed() {
   const el = document.getElementById("catChartNoFixTotal");
   if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatNoFixLegend");
-  if (lg) lg.innerHTML = _catLegendHtml(entries);
+  if (lg) lg.innerHTML = _catLegendHtml(entries, "expense", false, true);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>courante"); return; }
 
   moneyCatChartNoFixed = new Chart(document.getElementById("moneyCatChartNoFixed"), {
@@ -17404,7 +17424,7 @@ function renderMoneyCatChartNoFixed() {
       responsive: true, maintainAspectRatio: false,
       cutout: "55%",
       interaction: { mode: "nearest", intersect: true },
-      onClick: (evt, elements) => { if (elements.length) openCatDetail(entries[elements[0].index][0]); },
+      onClick: (evt, elements) => { if (elements.length) openCatDetail(entries[elements[0].index][0], "expense", true); },
       onHover: (evt, elements) => { evt.native.target.style.cursor = elements.length ? "pointer" : "default"; },
       plugins: {
         ...baseChartOpts().plugins,
@@ -17429,54 +17449,42 @@ function renderMoneyCatChartNoFixed() {
   });
 }
 
-function openCatDetailAllTime(cat, type = "expense") {
-  const [start, end] = _allTimeRange();
-  const txs = state.transactions
-    .filter(tx => tx.type === type && tx.category === cat && new Date(tx.date) >= start && new Date(tx.date) <= end)
+// Fenêtre de détail d'une catégorie : mêmes transactions (et mêmes montants nets) que la part du graphique cliquée.
+function _catDetailInRange(cat, type, courantes, inRange) {
+  return state.transactions
+    .filter(tx => (type === "expense" ? _isChartExpense(tx, courantes) : tx.type === type) && tx.category === cat && inRange(new Date(tx.date)))
     .sort((a, b) => new Date(b.date) - new Date(a.date));
-  const total = txs.reduce((s, tx) => s + (type === "expense" ? txNetAmount(tx) : tx.amount), 0);
-  document.getElementById("catDetailTitle").textContent = cat + " · Depuis le " + APP_START_LABEL;
-  document.getElementById("catDetailTotal").textContent = total.toFixed(2) + " €";
-  document.getElementById("catDetailDot").style.background = catColor(cat);
-  document.getElementById("catDetailList").innerHTML = txs.length ? txs.map(tx => {
-    const d = new Date(tx.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
-    const amount = type === "expense" ? txNetAmount(tx) : tx.amount;
-    return `<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);">
-      <div style="flex:1;">
-        <div style="font-size:14px;color:var(--ink);">${escapeHtml(tx.note || "—")}</div>
-        <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${d}</div>
-      </div>
-      <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${amount.toFixed(2)} €</div>
-      <button onclick="openTxModal('${tx.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:11px;cursor:pointer;flex-shrink:0;">✎</button>
-    </div>`;
-  }).join("") : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px 0;">${type === "expense" ? "Aucune dépense" : "Aucun revenu"} dans cette catégorie.</p>`;
-  document.getElementById("catDetailModal").classList.add("open");
 }
-function openCatDetail(cat, type = "expense") {
-  const [start, end] = _moneyCatRange();
-  const txs = state.transactions
-    .filter(tx => tx.type === type && tx.category === cat && new Date(tx.date) >= start && new Date(tx.date) < end)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
-  const total = txs.reduce((s, tx) => s + tx.amount, 0);
-
-  document.getElementById("catDetailTitle").textContent = cat;
-  document.getElementById("catDetailTotal").textContent = total.toFixed(2) + " €";
+function _catDetailShow(cat, type, txs, titleSuffix) {
+  const amountOf = tx => (type === "expense" ? txNetAmount(tx) : tx.amount);
+  const total = txs.reduce((s, tx) => s + amountOf(tx), 0);
+  document.getElementById("catDetailTitle").textContent = cat + (titleSuffix || "");
+  document.getElementById("catDetailTotal").textContent = total.toFixed(2) + " €";
   document.getElementById("catDetailDot").style.background = catColor(cat);
-
   document.getElementById("catDetailList").innerHTML = txs.length ? txs.map(tx => {
     const d = new Date(tx.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+    const acc = _txExtAccountLabel(tx);
     return `
       <div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);">
         <div style="flex:1;">
           <div style="font-size:14px;color:var(--ink);">${escapeHtml(tx.note || "—")}</div>
-          <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${d}</div>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${d}${acc ? " · " + escapeHtml(acc) : ""}</div>
         </div>
-        <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${tx.amount.toFixed(2)} €</div>
+        <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${amountOf(tx).toFixed(2)}\u00a0€</div>
         <button onclick="openTxModal('${tx.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:11px;cursor:pointer;flex-shrink:0;">✎</button>
       </div>`;
   }).join("") : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px 0;">${type === "expense" ? "Aucune dépense" : "Aucun revenu"} dans cette catégorie.</p>`;
-
   document.getElementById("catDetailModal").classList.add("open");
+}
+function openCatDetailAllTime(cat, type = "expense", courantes = false) {
+  const [start, end] = _allTimeRange();
+  const txs = _catDetailInRange(cat, type, courantes, d => d >= start && d <= end);
+  _catDetailShow(cat, type, txs, " · Depuis le " + APP_START_LABEL);
+}
+function openCatDetail(cat, type = "expense", courantes = false) {
+  const [start, end] = _moneyCatRange();
+  const txs = _catDetailInRange(cat, type, courantes, d => d >= start && d < end);
+  _catDetailShow(cat, type, txs, "");
 }
 function renderBudgetGauge() {
   const el = document.getElementById("budgetGauge");
@@ -17884,7 +17892,7 @@ function renderMoneyCatAllChart() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d <= end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && tx.category !== "Retrait espèces" && tx.category !== REIMB_RETURN_CAT) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
+    if (d >= start && d <= end && _isChartExpense(tx, false)) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
@@ -17932,14 +17940,14 @@ function renderMoneyCatAllNoFixChart() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d <= end && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && !tx.fixedCharge && !tx.exceptional && tx.category !== "Retrait espèces" && tx.category !== REIMB_RETURN_CAT) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
+    if (d >= start && d <= end && _isChartExpense(tx, true)) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((s,[,v]) => s+v, 0);
   const el = document.getElementById("catAllChartNoFixTotal");
   if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
   const lg = document.getElementById("moneyCatAllNoFixLegend");
-  if (lg) lg.innerHTML = _catLegendHtml(entries, "expense", true);
+  if (lg) lg.innerHTML = _catLegendHtml(entries, "expense", true, true);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>courante"); return; }
   moneyCatAllNoFixChart = new Chart(document.getElementById("moneyCatAllNoFixChart"), {
     type: "doughnut",
@@ -17947,7 +17955,7 @@ function renderMoneyCatAllNoFixChart() {
     options: {
       responsive: true, maintainAspectRatio: false, cutout: "55%",
       interaction: { mode: "nearest", intersect: true },
-      onClick: (evt, elements) => { if (elements.length) openCatDetailAllTime(entries[elements[0].index][0]); },
+      onClick: (evt, elements) => { if (elements.length) openCatDetailAllTime(entries[elements[0].index][0], "expense", true); },
       onHover: (evt, elements) => { evt.native.target.style.cursor = elements.length ? "pointer" : "default"; },
       plugins: {
         ...baseChartOpts().plugins,
