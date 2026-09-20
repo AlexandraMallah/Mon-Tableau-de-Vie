@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1286</title>
+<title>Mon Tableau de Vie 🌿 · v1287</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15495,7 +15495,7 @@ function balanceEpargne() {
   const directIncome = state.transactions.filter(t => t.type === "income" && t.directSavingsAccount && t.directSavingsAccount !== "__cash__").reduce((s, t) => s + t.amount, 0);
   const savings    = state.transactions.filter(t => t.type === "savings").reduce((s, t) => s + t.amount, 0);
   const savingsOut = state.transactions.filter(t => t.type === "savings-out").reduce((s, t) => s + t.amount, 0);
-  const fromSavExp = state.transactions.filter(t => t.fromSavingsAccount && t.fromSavingsAccount !== "__cash__" && (t.type === "expense" || t.type === "external")).reduce((s, t) => s + t.amount, 0);
+  const fromSavExp = state.transactions.filter(t => t.fromSavingsAccount && t.fromSavingsAccount !== "__cash__" && !String(t.fromSavingsAccount).startsWith("ext:") && (t.type === "expense" || t.type === "external")).reduce((s, t) => s + t.amount, 0);
   const trDelta = {};
   state.transactions.forEach(t => _trApplyToSavingsDelta(t, trDelta));
   const transfers = Object.values(trDelta).reduce((sum, v) => sum + v, 0);
@@ -16766,13 +16766,17 @@ function renderBalanceEvolutionChart() {
       // un retrait d'espèces (quelle que soit la source) fait bien sortir de l'argent
       // du patrimoine suivi.
       if (t.type === "income" && t.directSavingsAccount !== "__cash__") bal += t.amount;
-      else if (t.type === "expense" && t.fromSavingsAccount !== "__cash__") bal -= t.amount;
+      else if (t.type === "expense" && t.fromSavingsAccount !== "__cash__" && !String(t.fromSavingsAccount || "").startsWith("ext:")) bal -= t.amount;
       else if (t.type === "cash-withdrawal") bal -= t.amount;
       else if (t.type === "transfer") {
         // suivi = courant principal + épargne ; un compte secondaire est hors patrimoine suivi
         const tracked = k => k === "__courant__" || (k || "").startsWith("sav:");
         bal += (tracked(t.virToKey) ? t.amount : 0) - (tracked(t.virFromKey) ? t.amount : 0);
       }
+      // ajustement de valeur d'un compte épargne (mise à jour du solde réel : plus-value, moins-value…) :
+      // c'est un vrai gain/perte de patrimoine, contrairement aux virements courant ↔ épargne
+      else if (t.type === "savings" && t.isAdjustment) bal += t.amount;
+      else if (t.type === "savings-out" && t.isAdjustment) bal -= t.amount;
       // savings / savings-out : transferts entre courant et épargne → patrimoine inchangé
     }
     return bal;
@@ -17324,6 +17328,13 @@ function _isChartExpense(tx, courantes) {
   if (courantes && (tx.fixedCharge || tx.exceptional)) return false;
   return true;
 }
+/* Dépense d'un compte tiers (ex. « Compte Papa » : ce que ton papa te paie). Elle n'est SUIVIE que dans les deux graphiques
+   de dépenses (« Dépenses » et « Dépenses courantes ») pour voir ce qu'elle pèse ; elle n'intervient ni dans la jauge
+   « budget de vie », ni dans les objectifs par catégorie, ni dans la prévision, ni dans le patrimoine ou l'épargne
+   (ce n'est pas de l'argent que tu as ou que tu perds). */
+function _isThirdPartyExpense(tx) {
+  return tx.type === "external" || String(tx.fromSavingsAccount || "").startsWith("ext:");
+}
 // Nom du compte tiers (ex. « Compte Papa ») pour une dépense saisie hors compte, sinon ""
 function _txExtAccountLabel(tx) {
   let id = "";
@@ -17614,7 +17625,7 @@ function renderBudgetFeedback() {
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d < end && tx.type === "expense" && !tx.reimbursable)
+    if (d >= start && d < end && _isChartExpense(tx, false) && !_isThirdPartyExpense(tx))
       totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
 
@@ -17709,7 +17720,7 @@ function renderForecast() {
 
   // Garder uniquement les mois ayant au moins une dépense
   const usedMonths = allMonths.filter(m =>
-    state.transactions.some(t => { const d = new Date(t.date); return d >= m.start && d < m.end && t.type === "expense"; })
+    state.transactions.some(t => { const d = new Date(t.date); return d >= m.start && d < m.end && _isChartExpense(t, false) && !_isThirdPartyExpense(t); })
   );
 
   if (!usedMonths.length) {
@@ -17731,8 +17742,8 @@ function renderForecast() {
   for (const m of usedMonths) {
     for (const tx of state.transactions) {
       const d = new Date(tx.date);
-      if (d >= m.start && d < m.end && tx.type === "expense")
-        catSums[tx.category] = (catSums[tx.category] || 0) + tx.amount;
+      if (d >= m.start && d < m.end && _isChartExpense(tx, false) && !_isThirdPartyExpense(tx))
+        catSums[tx.category] = (catSums[tx.category] || 0) + txNetAmount(tx);
     }
   }
   const catAvg = Object.fromEntries(Object.entries(catSums).map(([k, v]) => [k, v / n]));
@@ -17742,8 +17753,8 @@ function renderForecast() {
   const lastCat = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= lastM.start && d < lastM.end && tx.type === "expense")
-      lastCat[tx.category] = (lastCat[tx.category] || 0) + tx.amount;
+    if (d >= lastM.start && d < lastM.end && _isChartExpense(tx, false) && !_isThirdPartyExpense(tx))
+      lastCat[tx.category] = (lastCat[tx.category] || 0) + txNetAmount(tx);
   }
 
   const budgets = state.budgets || {};
@@ -18573,7 +18584,7 @@ function computeMetric(m, override) {
     let spent = 0, fixedTotal = 0;
     for (const tx of state.transactions) {
       const d = new Date(tx.date);
-      if (d >= start && d < pEnd && (tx.type === "expense" || tx.type === "external") && !tx.reimbursable && tx.category !== REIMB_RETURN_CAT) {
+      if (d >= start && d < pEnd && tx.type === "expense" && !tx.reimbursable && !_isThirdPartyExpense(tx) && tx.category !== "Retrait espèces") {
         const net = txNetAmount(tx);
         spent += net;
         if (tx.fixedCharge) fixedTotal += net;
@@ -26438,7 +26449,7 @@ function openBudgetDetail() {
   const txs = (state.transactions || [])
     .filter(tx => {
       const d = new Date(tx.date);
-      return d >= start && d < end && tx.type === "expense" && !tx.reimbursable;
+      return d >= start && d < end && tx.type === "expense" && !tx.reimbursable && !(tx.fromSavingsAccount || "").startsWith("ext:");
     })
     .sort((a, b) => new Date(a.date) - new Date(b.date));
   document.getElementById("budgetDetailTitle").textContent = `Dépenses — ${label}`;
