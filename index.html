@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1280</title>
+<title>Mon Tableau de Vie 🌿 · v1281</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -280,7 +280,6 @@
     overscroll-behavior: contain;
   }
   html.modal-lock { overflow: hidden !important; }
-  body.band-hidden .sticky-header-group { display: none !important; }
   html.is-scrolling .view { pointer-events: none; }
 
   /* ========= VIEW SWITCHING ========= */
@@ -2067,7 +2066,6 @@
       <button class="btn-icon" id="gestionBtn" onclick="openGestionModal()" style="display:none;background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
       <a href="#" onclick="event.preventDefault();openSupportContact()" title="Contacter le support" class="btn-icon" style="text-decoration:none;">📧 Support</a>
       <button class="btn-icon" onclick="openShortcutsEditor()" title="Gérer les raccourcis" style="background:var(--lavender-soft);">⚡</button>
-      <button class="btn-icon" onclick="hideHeaderBand()" title="Masquer cette bande pendant 2 minutes (elle revient toute seule)">🙈 Masquer 2 min</button>
       <!-- Thème visuel -->
       <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);">
         <button id="themeBtnSmooth"  onclick="applyTheme('smooth')"  title="Smooth"  style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">🌸</button>
@@ -4709,9 +4707,6 @@
   </div>
 </div>
 
-<!-- Pastille : bande du haut masquée temporairement -->
-<div id="bandRestorePill" onclick="showHeaderBand()" role="button" title="Remettre la bande maintenant" style="display:none;position:fixed;top:8px;right:8px;z-index:9998;background:var(--card);color:var(--ink);border:1.5px solid var(--lavender);border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.15);cursor:pointer;max-width:calc(100vw - 16px);box-sizing:border-box;">🙈 Bande masquée · <span id="bandCountdown">2:00</span> · <u>Remettre</u></div>
-
 <!-- Modal Virement entre comptes -->
 <div class="modal-bg" id="virementModal" onclick="event.target===this&&_modalMouseDownTarget===this&&closeVirementModal()">
   <div class="modal" style="max-width:460px;" onclick="event.stopPropagation()">
@@ -5585,30 +5580,6 @@ document.addEventListener('mousedown', e => {
   }).observe(document.body, { childList: true, subtree: true, characterData: true });
   walk(document.body);
 })();
-/* Masquer la bande du haut (boutons + onglets) pendant 2 minutes, puis elle revient toute seule.
-   Rien n'est enregistré : un rechargement de la page la remet aussi. */
-const BAND_HIDE_MS = 120000;
-let _bandTimer = null, _bandUntil = 0;
-function hideHeaderBand() {
-  _bandUntil = Date.now() + BAND_HIDE_MS;
-  document.body.classList.add('band-hidden');
-  document.getElementById('bandRestorePill').style.display = 'block';
-  window.scrollTo(0, 0);
-  clearInterval(_bandTimer);
-  _bandTimer = setInterval(_bandTick, 500);
-  _bandTick();
-}
-function _bandTick() {
-  const left = Math.max(0, _bandUntil - Date.now());
-  if (left <= 0) { showHeaderBand(); return; }
-  const sec = Math.ceil(left / 1000);
-  document.getElementById('bandCountdown').textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
-}
-function showHeaderBand() {
-  clearInterval(_bandTimer); _bandTimer = null;
-  document.body.classList.remove('band-hidden');
-  document.getElementById('bandRestorePill').style.display = 'none';
-}
 /* ===== ANALYSE ÉMOTIONNELLE DU JOURNAL ===== */
 const JOURNAL_EMOTIONS = [
   { id: "joie", label: "Joie", emoji: "😊", color: "#16a34a", bg: "#dcfce7", colorS: "#3d6b5c", bgS: "#dbe6e0",
