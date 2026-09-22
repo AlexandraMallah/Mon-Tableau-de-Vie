@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1290</title>
+<title>Mon Tableau de Vie 🌿 · v1291</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4795,7 +4795,10 @@
     <input type="hidden" id="candModalId" />
     <div class="grid-2">
       <div>
-        <label>Type</label>
+        <label style="display:flex;align-items:center;gap:6px;">Type
+          <button type="button" onclick="_addCandType()" title="Ajouter un type" style="background:var(--lavender-soft);border:1px solid var(--lavender);color:var(--lavender);border-radius:7px;padding:1px 7px;font-size:13px;cursor:pointer;font-weight:700;line-height:1.4;">＋</button>
+          <button type="button" onclick="_removeCandTypeCurrent()" title="Supprimer le type sélectionné" style="background:none;border:none;color:var(--ink-softer);cursor:pointer;font-size:13px;padding:0;">🗑️</button>
+        </label>
         <select id="candModalType"></select>
       </div>
       <div>
@@ -8055,8 +8058,12 @@ function _saveWorkProjTask() {
   const projectId = document.getElementById("workProjTaskProjectId").value;
   const name = document.getElementById("workProjTaskName").value.trim();
   if (!name) return;
-  state.work.postdocTasks.unshift({ id: "t" + Date.now(), name, projectId, priority: "medium", done: false, createdAt: new Date().toISOString() });
+  const id = "t" + Date.now();
+  state.work.postdocTasks.unshift({ id, name, projectId, priority: "medium", done: false, createdAt: new Date().toISOString() });
   saveState(); _closeWorkProjTaskModal(); renderTasks(); renderWorkProjectTabs();
+  // Ouvre directement la fenêtre complète (priorité, deadline, notes, jalons…) — mêmes possibilités
+  // que depuis l'onglet Tâches, plutôt qu'un 2e formulaire à maintenir en double.
+  openTaskEditModal(id);
 }
 
 function renderProjects() {
@@ -10192,18 +10199,44 @@ function renderCandCard(c) {
       <div class="deadline ${dlClass}">📅 ${dlText}${dlExtra}</div>
     </div>`;
 }
+// Remplit le <select> des types de candidature ; si selectVal est fourni (ex: type qu'on vient
+// de créer), le sélectionne — sinon garde la sélection en cours si elle existe toujours.
+function _fillCandTypeSelect(selectVal) {
+  const sType = document.getElementById("candModalType");
+  const prev = selectVal || sType.value;
+  sType.innerHTML = state.candidatureTypes.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+  if (prev && state.candidatureTypes.includes(prev)) sType.value = prev;
+}
+function _addCandType() {
+  _showPrompt("Nouveau type de candidature (ex : Chaire, ATER, Bourse…)", "", val => {
+    const name = (val || "").trim();
+    if (!name) return;
+    if (!state.candidatureTypes.includes(name)) state.candidatureTypes.push(name);
+    saveState();
+    _fillCandTypeSelect(name);
+  });
+}
+function _removeCandTypeCurrent() {
+  const sel = document.getElementById("candModalType");
+  const val = sel.value;
+  if (!val) return;
+  _showConfirm(`Supprimer le type « ${val} » ? Les candidatures qui l'utilisent déjà le garderont jusqu'à ce que tu les modifies.`, () => {
+    state.candidatureTypes = state.candidatureTypes.filter(x => x !== val);
+    saveState();
+    _fillCandTypeSelect();
+  });
+}
 function openCandModal(id) {
   const isEdit = !!id;
   document.getElementById("candModalTitle").textContent = isEdit ? "Modifier candidature" : "Nouvelle candidature";
   document.getElementById("candModalId").value = id || "";
   document.getElementById("candModalDelete").style.display = isEdit ? "" : "none";
-  const sType = document.getElementById("candModalType");
-  sType.innerHTML = state.candidatureTypes.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+  _fillCandTypeSelect();
   const sStatus = document.getElementById("candModalStatus");
   sStatus.innerHTML = CAND_STATUSES.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
   if (isEdit) {
     const c = state.work.candidatures.find(x => x.id === id);
-    sType.value = c.type; sStatus.value = c.status;
+    document.getElementById("candModalType").value = c.type; sStatus.value = c.status;
     document.getElementById("candModalInstitution").value = c.institution || "";
     document.getElementById("candModalDeadline").value = c.deadline || "";
     document.getElementById("candModalNotes").value = c.notes || "";
