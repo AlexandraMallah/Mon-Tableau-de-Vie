@@ -8,12 +8,24 @@
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 <script>
-  // Sur GitHub Pages uniquement : ajoute un timestamp dans l'URL pour court-circuiter le cache CDN
-  if (location.hostname.includes('github.io') && !location.search.includes('_cb=')) {
-    location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
+  // Sur GitHub Pages uniquement : ajoute un timestamp dans l'URL pour court-circuiter le cache CDN.
+  // Ne pas se contenter de vérifier "_cb= déjà présent" : un lien enregistré en favori GARDE son
+  // _cb figé pour toujours, donc on ne le rafraîchissait plus jamais une fois le favori créé —
+  // le favori resservait indéfiniment la version du jour où il a été enregistré (bug trouvé le
+  // 22/09, "avant j'avais juste à cliquer sur mon raccourci favori"). On rafraîchit maintenant
+  // dès que le _cb a plus de 5 min (ou est absent), sans boucle infinie puisque la redirection
+  // pose un _cb tout frais.
+  if (location.hostname.includes('github.io')) {
+    const params = new URLSearchParams(location.search);
+    const cb = Number(params.get('_cb'));
+    const isFresh = cb && (Date.now() - cb) < 5 * 60 * 1000;
+    if (!isFresh) {
+      params.set('_cb', Date.now());
+      location.replace(location.pathname + '?' + params.toString());
+    }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1308</title>
+<title>Mon Tableau de Vie 🌿 · v1309</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
