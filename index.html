@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1310</title>
+<title>Mon Tableau de Vie 🌿 · v1311</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24924,7 +24924,7 @@ function applyPatch(p) {
 function checkSeedBanner() { /* bannière supprimée */ }
 function dismissSeed() {}
 function confirmReseed() {}
-function showToast(message) {
+function showToast(message, duration = 2400) {
   let toast = document.getElementById("appToast");
   if (!toast) {
     toast = document.createElement("div");
@@ -24936,10 +24936,13 @@ function showToast(message) {
   toast.style.opacity = "1";
   toast.style.transform = "translateX(-50%) translateY(0)";
   clearTimeout(toast._timer);
+  // Certains appels passent une durée plus longue (ex. avertissement de synchro cloud) — sans ce
+  // 2e paramètre, il était silencieusement ignoré et tout toast disparaissait en 2,4s pile, trop
+  // vite pour être vu à coup sûr sur un message important.
   toast._timer = setTimeout(() => {
     toast.style.opacity = "0";
     toast.style.transform = "translateX(-50%) translateY(10px)";
-  }, 2400);
+  }, duration);
 }
 function loadInitialData() {
   // Nettoyage des anciens seeds éventuels (idempotent)
@@ -26594,12 +26597,30 @@ async function _fbSaveNow() {
     const toSave = _CLOUD_DOC_NAMES.filter(name => !oversized.includes(name));
     await Promise.all(toSave.map(name => _fbDocRef(name).set(payloadsByName[name])));
     _fbSetStatus(oversized.length ? "error" : "ok");
+    if (!oversized.length) _fbLastSyncOkAt = Date.now();
   } catch(e) {
     console.warn("[Firebase] save error", e);
     _fbSetStatus("error");
     showToast("❌ Échec de la synchronisation cloud — vérifie ta connexion", 5000);
   }
 }
+// Filet de secours contre une synchro cassée en silence (ex. session Google interrompue par un
+// accroc réseau) : le seul signal jusqu'ici était un petit point de couleur + un toast de 2,4s,
+// faciles à ne jamais voir sur toute une journée de travail (incident du 22/09 — des heures de
+// saisie sur l'ordi jamais montées au cloud, découvert seulement le soir sur le téléphone).
+// Ce contrôle répète un avertissement toutes les 3 minutes tant que des modifs locales plus
+// récentes que la dernière synchro réussie s'accumulent sans jamais y arriver.
+let _fbLastSyncOkAt = Date.now(); // optimiste au démarrage : laisse le temps à la 1ère synchro
+let _fbLastWarnAt = 0;
+setInterval(() => {
+  if (!_fbUser) return; // pas connecté·e : le statut "Non connecté" du point suffit, pas la peine d'en rajouter
+  const lastLocal = window._lastLocalSave || 0;
+  const stuck = lastLocal > _fbLastSyncOkAt && (Date.now() - _fbLastSyncOkAt) > 3 * 60 * 1000;
+  if (stuck && (Date.now() - _fbLastWarnAt) > 3 * 60 * 1000) {
+    _fbLastWarnAt = Date.now();
+    showToast("⚠️ Tes modifs ne montent plus vers le cloud depuis un moment — vérifie ta connexion", 6000);
+  }
+}, 30 * 1000);
 
 function _fbQueueSave() {
   if (!_fbUser || !_fbDb) return;
