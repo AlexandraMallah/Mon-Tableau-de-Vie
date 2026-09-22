@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1309</title>
+<title>Mon Tableau de Vie 🌿 · v1310</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4251,7 +4251,7 @@
 </div>
 
 <!-- Modal ajout/édition habitude -->
-<div class="modal-bg" id="habitModal">
+<div class="modal-bg" id="habitModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)_closeHabitModal()">
   <div class="modal" style="max-width:440px;padding:28px 24px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
       <h3 id="habitModalTitle" style="margin:0;font-size:18px;">✨ Nouvelle habitude</h3>
@@ -4754,7 +4754,7 @@
 </div>
 
 <!-- Project modal -->
-<div class="modal-bg" id="projectModal">
+<div class="modal-bg" id="projectModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeProjectModal()">
   <div class="modal">
     <h2 id="projectModalTitle" style="margin:0 0 6px;">Nouveau projet</h2>
     <p class="modal-hint">Crée un projet de travail : il apparaîtra comme sous-onglet dans Travail, comme section dans tes tâches, et comme catégorie dans le suivi du temps. Pour supprimer, ouvre-le et clique sur <strong>Supprimer</strong>.</p>
@@ -4784,7 +4784,7 @@
 </div>
 
 <!-- Candidature modal -->
-<div class="modal-bg" id="candModal">
+<div class="modal-bg" id="candModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeCandModal()">
   <div class="modal">
     <h2 id="candModalTitle" style="margin:0 0 6px;">Nouvelle candidature</h2>
     <p class="modal-hint">Suis tes candidatures (postes, bourses, appels à projets…). Indique le statut, la deadline et tes notes. Pour modifier ou supprimer, clique sur la candidature dans la liste.</p>
@@ -4821,7 +4821,7 @@
 </div>
 
 <!-- Article modal -->
-<div class="modal-bg" id="articleModal">
+<div class="modal-bg" id="articleModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeArticleModal()">
   <div class="modal">
     <h2 id="articleModalTitle" style="margin:0 0 6px;">Nouvel article</h2>
     <p class="modal-hint">Suit la rédaction et soumission de tes articles scientifiques. Renseigne le journal cible, les co-auteurs, la date de soumission et le statut (en cours, soumis, accepté…).</p>
@@ -4854,7 +4854,7 @@
 </div>
 
 <!-- Communication modal -->
-<div class="modal-bg" id="commModal">
+<div class="modal-bg" id="commModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeCommModal()">
   <div class="modal">
     <h2 id="commModalTitle" style="margin:0 0 6px;">Nouvelle communication</h2>
     <p class="modal-hint">Enregistre tes présentations, posters et interventions (congrès, séminaires, colloques). Indique le type, le statut et le lien de l'événement.</p>
@@ -5026,7 +5026,7 @@
 </div>
 
 <!-- Task edit modal -->
-<div class="modal-bg" id="taskEditModal">
+<div class="modal-bg" id="taskEditModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeTaskEditModal()">
   <div class="modal" style="max-width:480px;">
     <h2 style="margin:0 0 6px;">Modifier la tâche</h2>
     <p class="modal-hint">Modifie le nom, la priorité, la deadline et le projet associé. Ajoute des <strong>jalons</strong> pour découper la tâche en étapes — la progression sera calculée automatiquement. Pour supprimer, clique sur le bouton rouge en bas.</p>
@@ -5086,7 +5086,7 @@
 </div>
 
 <!-- Manual Event Modal -->
-<div class="modal-bg" id="manualEventModal">
+<div class="modal-bg" id="manualEventModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeManualEventModal()">
   <div class="modal" style="max-width:460px;">
     <h2 id="manualEventModalTitle" style="margin:0 0 6px;">✚ Nouvel événement</h2>
     <p class="modal-hint">Ajoute un événement manuellement au calendrier (rendez-vous, anniversaire, rappel…). Les événements créés ici sont modifiables et supprimables depuis le calendrier, contrairement aux événements importés depuis Google Calendar.</p>
@@ -5132,7 +5132,7 @@
 </div>
 
 <!-- Plants detection modal -->
-<div class="modal-bg" id="plantsDetectModal">
+<div class="modal-bg" id="plantsDetectModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closePlantsDetectModal()">
   <div class="modal" style="max-width:560px;">
     <h2>🌱 Plantes détectées</h2>
     <p style="font-size:13px;color:var(--ink-soft);margin:-8px 0 16px;">Voici les plantes trouvées dans ton Google Agenda. Coche celles que tu veux importer.</p>
@@ -5147,7 +5147,7 @@
 </div>
 
 <!-- Subscription modal -->
-<div class="modal-bg" id="subModal">
+<div class="modal-bg" id="subModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)closeSubModal()">
   <div class="modal">
     <h2 id="subModalTitle" style="margin:0 0 6px;">Nouvel abonnement</h2>
     <p class="modal-hint">Enregistre un abonnement récurrent (streaming, transport, assurance…). Son montant est automatiquement exclu de ton budget mensuel en tant que charge fixe. Pour modifier ou supprimer, clique sur l'abonnement dans la liste.</p>
@@ -5207,7 +5207,7 @@
 </div>
 
 <!-- Modal mission / abonnement -->
-<div class="modal-bg" id="admMissionModal">
+<div class="modal-bg" id="admMissionModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)admCloseMission()">
   <div class="modal" style="max-width:500px;">
     <h2 id="admMissionTitle" style="margin:0 0 6px;">+ Nouvelle mission</h2>
     <p class="modal-hint">Enregistre une mission professionnelle avec ses frais (transport, repas, hébergement, km). Les totaux sont calculés automatiquement. Pour modifier ou supprimer, clique sur la mission dans le tableau.</p>
@@ -5406,7 +5406,7 @@
   </div>
 </div>
 
-<div class="modal-bg" id="admCongeModal">
+<div class="modal-bg" id="admCongeModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)admCloseConge()">
   <div class="modal" style="max-width:400px;">
     <h2 id="admCongeTitle" style="margin:0 0 6px;">+ Nouvelle periode</h2>
     <p class="modal-hint">Saisis une période de congé avec sa date de début et de fin. Le type détermine sur quel compteur de jours la période est décomptée.</p>
