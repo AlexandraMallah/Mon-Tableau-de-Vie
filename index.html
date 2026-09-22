@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1287</title>
+<title>Mon Tableau de Vie 🌿 · v1288</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3670,7 +3670,7 @@
         <div>
           <div class="card" style="position:sticky;top:var(--sticky-stack-bottom, 74px);">
             <h2>🔁 Achats récurrents</h2>
-            <p style="color:var(--ink-soft);font-size:12px;margin:-8px 0 12px;">Détectés automatiquement (achetés ≥ 3 fois sur les dernières semaines). Clique pour les ajouter à ton dernier événement.</p>
+            <p style="color:var(--ink-soft);font-size:12px;margin:-8px 0 12px;">Détectés automatiquement (achetés au moins 3 semaines différentes sur les 10 dernières). Clique pour les ajouter à ton dernier événement.</p>
             <div id="recurringItemsList"></div>
           </div>
         </div>
@@ -23558,32 +23558,46 @@ function toggleGlobalGrocery(nameKey) {
   matches.forEach(g => { g.checked = !allChecked; });
   saveState(); renderGroceries();
 }
+// Numéro de semaine ISO-ish (juste besoin d'une clé stable "année-semaine", pas de la vraie norme ISO)
+function _weekKeyOf(dateStr) {
+  const d = dateStr ? new Date(dateStr + "T00:00:00") : new Date();
+  if (isNaN(d)) return null;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return todayKey(monday);
+}
+const RECURRING_WEEKS_WINDOW = 10; // fenêtre d'observation
+const RECURRING_MIN_WEEKS = 3;     // nb de semaines différentes mini pour être jugé "récurrent"
 function renderRecurringItems() {
   const target = document.getElementById("recurringItemsList");
   if (!target) return;
-  // Compte dans l'historique d'achats (persistant après suppression d'événements)
-  const counts = {};
   const history = state.domestique.purchaseHistory || [];
-  for (const h of history) {
-    const key = h.name.toLowerCase().trim();
-    if (!counts[key]) counts[key] = { name: h.name, count: 0 };
-    counts[key].count++;
-  }
-  // Ajoute aussi les articles cochés actuels non encore supprimés
+  // Fenêtre : les 10 dernières semaines seulement — un achat d'il y a 4 mois n'est plus "récurrent" aujourd'hui
+  const cutoff = _weekKeyOf(todayKey(new Date(Date.now() - RECURRING_WEEKS_WINDOW * 7 * 864e5)));
+  const weeksByItem = {}; // key -> { name, weeks:Set }
+  const addEntry = (name, dateStr) => {
+    const wk = _weekKeyOf(dateStr);
+    if (!wk || wk < cutoff) return;
+    const key = name.toLowerCase().trim();
+    if (!weeksByItem[key]) weeksByItem[key] = { name, weeks: new Set() };
+    weeksByItem[key].weeks.add(wk);
+  };
+  for (const h of history) addEntry(h.name, h.date);
+  // Les articles cochés du panier en cours (pas encore dans l'historique si l'événement n'a jamais été supprimé)
   for (const g of (state.domestique.groceries || [])) {
-    if (!g.checked) continue;
-    const key = g.name.toLowerCase().trim();
-    if (!counts[key]) counts[key] = { name: g.name, count: 0 };
-    counts[key].count++;
+    if (g.checked) addEntry(g.name, todayKey());
   }
-  const recurring = Object.values(counts).filter(c => c.count >= 2).sort((a, b) => b.count - a.count);
+  const recurring = Object.values(weeksByItem)
+    .map(v => ({ name: v.name, weeks: v.weeks.size }))
+    .filter(v => v.weeks >= RECURRING_MIN_WEEKS)
+    .sort((a, b) => b.weeks - a.weeks);
   if (!recurring.length) {
-    target.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;padding:10px 0;">Pas encore assez d'historique pour détecter des récurrences. Continue à utiliser tes événements de courses, je détecterai les habitudes au bout de 3 achats du même article.</p>`;
+    target.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;padding:10px 0;">Pas encore assez d'historique pour détecter des récurrences. Un article doit revenir sur ${RECURRING_MIN_WEEKS} semaines différentes (sur les ${RECURRING_WEEKS_WINDOW} dernières) pour apparaître ici.</p>`;
     return;
   }
   target.innerHTML = recurring.slice(0, 30).map(r => `
     <button class="recurring-chip" onclick="addRecurringToLatestEvent('${escapeHtml(r.name).replace(/'/g, "&#39;")}')">
-      ${escapeHtml(r.name)} <span class="rc-count">${r.count}</span>
+      ${escapeHtml(r.name)} <span class="rc-count">${r.weeks}/${RECURRING_WEEKS_WINDOW} sem.</span>
     </button>`).join("");
 }
 function addGroceryEvent() {
@@ -23617,10 +23631,10 @@ function deleteGroceryEvent(id) {
   if (!ev) return;
   const items = state.domestique.groceries.filter(g => g.eventId === id);
   _showConfirm(`Supprimer la liste « ${ev.name} » et ses ${items.length} article(s) ?`, () => {
+    // Les articles cochés ont déjà été enregistrés dans l'historique au moment où ils ont été
+    // cochés (toggleGrocery) — ne PAS les réenregistrer ici, sinon chaque achat compte double
+    // (bug corrigé v1288 : "Achats récurrents" gonflait le nombre d'achats réels).
     state.domestique.groceryEvents = state.domestique.groceryEvents.filter(e => e.id !== id);
-    if (!state.domestique.purchaseHistory) state.domestique.purchaseHistory = [];
-    state.domestique.groceries.filter(g => g.eventId === id && g.checked)
-      .forEach(g => state.domestique.purchaseHistory.push({ name: g.name, date: todayKey() }));
     state.domestique.groceries = state.domestique.groceries.filter(g => g.eventId !== id);
     saveState(); renderGroceries();
   });
@@ -23637,7 +23651,11 @@ function toggleGrocery(id) {
   g.checked = !g.checked;
   if (g.checked) {
     if (!state.domestique.purchaseHistory) state.domestique.purchaseHistory = [];
-    state.domestique.purchaseHistory.push({ name: g.name, date: todayKey() });
+    const key = g.name.toLowerCase().trim();
+    const dk = todayKey();
+    // Évite le doublon si on coche/décoche/recoche le même article le même jour.
+    const already = state.domestique.purchaseHistory.some(h => h.date === dk && h.name.toLowerCase().trim() === key);
+    if (!already) state.domestique.purchaseHistory.push({ name: g.name, date: dk });
   }
   saveState(); renderGroceries();
 }
