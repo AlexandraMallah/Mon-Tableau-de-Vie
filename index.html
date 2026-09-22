@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1295</title>
+<title>Mon Tableau de Vie 🌿 · v1296</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6079,6 +6079,28 @@ function migrate(s) {
         }
         delete t.category; // nettoyage de l'ancien champ
       });
+      // Migration v1296 : le lien auto tâche ↔ candidature (v1293) ne s'appliquait qu'aux
+      // NOUVELLES tâches créées après coup — toutes les tâches déjà taguées "Candidatures" avant
+      // ça (en cours ou terminées) n'avaient donc aucune carte dans le tableau de suivi. On crée
+      // ici, une fois, la carte manquante pour chacune (statut "À préparer" par défaut,
+      // modifiable ensuite comme n'importe quelle carte).
+      if (!Array.isArray(s.work.candidatures)) s.work.candidatures = [];
+      s.work.postdocTasks.forEach(t => {
+        if (t.projectId === candProj.id && !t.candId) {
+          const cand = {
+            id: "c" + Date.now() + Math.random().toString(36).slice(2, 6),
+            type: (s.candidatureTypes || [])[0] || "",
+            status: CAND_STATUSES[0],
+            institution: t.name || "",
+            deadline: t.deadline || "",
+            notes: "",
+            taskId: t.id,
+            createdAt: new Date().toISOString(),
+          };
+          s.work.candidatures.push(cand);
+          t.candId = cand.id;
+        }
+      });
     }
   }
   // Migration : ancien today.water → today.habits["h-eau"] (pour synchroniser)
@@ -7868,9 +7890,17 @@ function _renderProjFicheSuivi(projId) {
   else if (projId === "p-seed-enseignement") renderTeachingView();
 }
 
+// Onglet actif par défaut d'une fiche projet, la 1ère fois (avant tout clic manuel). Doit rester
+// identique entre renderProjectFiche (ce qui s'affiche) et renderWorkProjectTabs (ce qui se
+// remplit) — sinon le contenu de l'onglet marqué actif n'est jamais rendu (bug trouvé v1296 :
+// "Suivi candidatures" s'affichait vide au 1er accès, la fiche l'ouvrait par défaut sur "suivi"
+// mais le remplissage des données par défaut sur "tasks" ne l'appelait jamais).
+function _ficheDefaultTab(p) {
+  return _projFicheActiveTab[p.id] || (p.id === "p-seed-candidatures" ? "suivi" : "tasks");
+}
 function renderProjectFiche(p) {
   const col = p.color || "#b8a5e8";
-  const activeTab = _projFicheActiveTab[p.id] || (p.id === "p-seed-candidatures" ? "suivi" : "tasks");
+  const activeTab = _ficheDefaultTab(p);
   const hasSuivi = ["p-seed-candidatures","p-seed-valo","p-seed-enseignement"].includes(p.id);
   const suiviLabel = p.id === "p-seed-candidatures" ? "📊 Suivi" :
                      p.id === "p-seed-valo"         ? "📊 Publications" :
@@ -8004,7 +8034,7 @@ function renderWorkProjectTabs() {
 
   // Rendre les panels actifs initialement
   projects.forEach(p => {
-    const activeTab = _projFicheActiveTab[p.id] || "tasks";
+    const activeTab = _ficheDefaultTab(p);
     _renderProjFicheTasks(p.id);
     if (activeTab === "temps") _renderProjFicheTemps(p.id);
     if (activeTab === "checklist") _renderProjFicheChecklist(p.id);
