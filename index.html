@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1289</title>
+<title>Mon Tableau de Vie 🌿 · v1290</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -743,6 +743,11 @@
     background: white; color: var(--ink-soft);
     border: 1px solid var(--line);
   }
+  .task-notes-preview {
+    font-size: 11px; color: var(--ink-softer); margin-top: 3px; cursor: pointer;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+  }
+  .task-notes-preview:hover { color: var(--ink-soft); text-decoration: underline; }
   .task-deadline { font-size: 12px; color: var(--ink-soft); }
   .task-deadline.urgent { color: var(--red); font-weight: 600; }
   .task-deadline.soon { color: var(--orange); }
@@ -5051,6 +5056,8 @@
     </div>
     <label>Projet lié</label>
     <select id="taskEditProject"></select>
+    <label style="margin-top:12px;">Notes <span style="font-size:11px;color:var(--ink-softer);font-weight:400;">(infos libres — résumé de candidature, contacts, détails…)</span></label>
+    <textarea id="taskEditNotes" rows="4" placeholder="Écris ici ce que tu veux garder sur cette tâche…" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);resize:vertical;min-height:70px;"></textarea>
     <label style="margin-top:12px;">Avancement</label>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
       <input type="range" id="taskEditProgress" min="0" max="100" step="5" value="0" style="flex:1;" oninput="updateModalPreview(+this.value)" />
@@ -9528,6 +9535,8 @@ function renderTasks() {
       ? `<span class="task-kind-badge is-event" title="${t.calEventId ? "Lié à un événement du calendrier" : "Événement prévu"}">📅 ${t.calEventId ? "Lié au cal." : "Événement"}</span>`
       : "";
     const aiBadge = t.forAI ? `<span title="Tâche IA" style="font-size:12px;">🤖</span>` : "";
+    const notesBadge = t.notes ? `<span title="A une note" style="font-size:12px;">📝</span>` : "";
+    const notesPreview = t.notes ? `<div class="task-notes-preview" onclick="openTaskEditModal('${t.id}')" title="${escapeHtml(t.notes)}">📝 ${escapeHtml(t.notes)}</div>` : "";
     return `
       <div class="task-row prio-${t.priority} ${t.done ? "done" : ""} ${isEvent ? "is-event" : ""}">
         <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
@@ -9535,12 +9544,14 @@ function renderTasks() {
           <div class="task-meta">
             ${kindBadge}
             ${aiBadge}
+            ${notesBadge}
             <span class="task-name">${escapeHtml(t.name)}</span>
             ${pctBadge}
             ${tagHtml}
             ${dlText ? `<span class="task-deadline ${dlClass}">${dlText}</span>` : ""}
           </div>
           ${progressHtml}
+          ${notesPreview}
         </div>
         <button class="task-edit-btn" onclick="openTaskEditModal('${t.id}')" title="Modifier">✏️</button>
         <button class="task-del" onclick="deleteTask('${t.id}')">✕</button>
@@ -10064,6 +10075,7 @@ function openTaskEditModal(id) {
   }
   pSel.innerHTML = pHtml;
   pSel.value = t.projectId || "";
+  document.getElementById("taskEditNotes").value = t.notes || "";
   const pct = taskProgress(t);
   document.getElementById("taskEditProgress").value = pct;
   updateModalPreview(pct);
@@ -10084,6 +10096,7 @@ function saveTaskEdit() {
   t.priority  = document.getElementById("taskEditPriority").value;
   t.projectId = document.getElementById("taskEditProject").value;
   t.deadline  = document.getElementById("taskEditDeadline").value || "";
+  t.notes     = document.getElementById("taskEditNotes").value.trim();
   t.kind      = getModalKind();
   // Sauvegarde progression manuelle (si pas de jalons)
   if (!t.milestones || !t.milestones.length) {
@@ -23555,7 +23568,17 @@ function renderGlobalGroceries() {
 function toggleGlobalGrocery(nameKey) {
   const matches = state.domestique.groceries.filter(g => g.name.toLowerCase().trim() === nameKey);
   const allChecked = matches.every(g => g.checked);
-  matches.forEach(g => { g.checked = !allChecked; });
+  const newChecked = !allChecked;
+  matches.forEach(g => { g.checked = newChecked; });
+  // Cocher depuis la liste globale doit compter comme un achat, exactement comme depuis la liste
+  // par événement (toggleGrocery) — sinon rien n'atterrit jamais dans l'historique et "Achats
+  // récurrents" reste vide même après des semaines d'usage (bug trouvé v1290).
+  if (newChecked && matches.length) {
+    if (!state.domestique.purchaseHistory) state.domestique.purchaseHistory = [];
+    const dk = todayKey();
+    const already = state.domestique.purchaseHistory.some(h => h.date === dk && h.name.toLowerCase().trim() === nameKey);
+    if (!already) state.domestique.purchaseHistory.push({ name: matches[0].name, date: dk });
+  }
   saveState(); renderGroceries();
 }
 // Numéro de semaine ISO-ish (juste besoin d'une clé stable "année-semaine", pas de la vraie norme ISO)
