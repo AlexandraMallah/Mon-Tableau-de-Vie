@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1302</title>
+<title>Mon Tableau de Vie 🌿 · v1303</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5042,12 +5042,6 @@
     </div>
     <label>Projet lié</label>
     <select id="taskEditProject" onchange="_onTaskProjectChange()"></select>
-    <div id="taskCandLinkWrap" style="display:none;margin-top:12px;">
-      <label>🔗 Candidature <span style="font-size:11px;color:var(--ink-softer);font-weight:400;">(créée et nommée automatiquement d'après cette tâche)</span></label>
-      <div style="margin-top:4px;">
-        <button type="button" onclick="_goToLinkedCand()" style="background:var(--lavender-soft);border:1px solid var(--lavender);color:var(--ink);border-radius:10px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;">📋 Voir la candidature →</button>
-      </div>
-    </div>
     <label style="margin-top:12px;">Notes <span id="taskEditNotesHint" style="font-size:11px;color:var(--ink-softer);font-weight:400;">(infos libres — résumé de candidature, contacts, détails…)</span></label>
     <textarea id="taskEditNotes" rows="4" placeholder="Écris ici ce que tu veux garder sur cette tâche…" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);resize:vertical;min-height:70px;"></textarea>
     <label style="margin-top:12px;">Avancement</label>
@@ -9757,16 +9751,15 @@ function getModalKind() {
   const eBtn = document.getElementById("kindToggleEvent");
   return (eBtn && eBtn.classList.contains("active")) ? "event" : "task";
 }
-// Affiche/masque le bloc "🔗 Candidature" selon le projet choisi, et rafraîchit son statut pour
-// la candidature déjà liée à cette tâche (créée automatiquement, voir _autoLinkCandidatureForTask
-// — plus de sélecteur à gérer soi-même : 1 tâche du projet Candidatures = 1 carte de suivi).
+// Rafraîchit les infobulles Nom/Notes selon le projet choisi, et pré-remplit ces champs (+ la
+// deadline) depuis la candidature déjà liée à cette tâche s'il y en a une (créée automatiquement,
+// voir _autoLinkCandidatureForTask — aucune UI dédiée : 1 tâche du projet Candidatures = 1 carte
+// de suivi, gérée depuis le tableau de suivi lui-même).
 function _onTaskProjectChange() { _refreshTaskCandBlock(); }
 function _refreshTaskCandBlock() {
-  const wrap = document.getElementById("taskCandLinkWrap");
   const notesHint = document.getElementById("taskEditNotesHint");
   const nameHint = document.getElementById("taskEditNameHint");
   const isCand = document.getElementById("taskEditProject").value === "p-seed-candidatures";
-  wrap.style.display = isCand ? "" : "none";
   if (!isCand) {
     notesHint.textContent = "(infos libres — résumé de candidature, contacts, détails…)";
     nameHint.textContent = "";
@@ -9782,24 +9775,6 @@ function _refreshTaskCandBlock() {
     document.getElementById("taskEditDeadline").value = cand.deadline || (t && t.deadline) || "";
     document.getElementById("taskEditNotes").value = cand.notes || "";
   }
-}
-// Ouvre la candidature liée à la tâche en cours d'édition si elle existe déjà ; sinon (tâche pas
-// encore enregistrée) emmène directement sur le tableau de suivi Candidatures plutôt que de
-// bloquer avec un message — pratique pour vérifier si une carte existe déjà avant d'enregistrer.
-function _goToLinkedCand() {
-  const id = document.getElementById("taskEditId").value;
-  const t = state.work.postdocTasks.find(x => x.id === id);
-  closeTaskEditModal();
-  if (t && t.candId) { openCandModal(t.candId); return; }
-  _goToCandidaturesSuivi();
-}
-// Navigue jusqu'à l'onglet Suivi (kanban) du projet Candidatures, où qu'on soit dans l'appli.
-function _goToCandidaturesSuivi() {
-  document.querySelector('.tab[data-view="work"]')?.click();
-  setTimeout(() => {
-    document.querySelector('.sub-tab[data-sub="proj-p-seed-candidatures"]')?.click();
-    setTimeout(() => _switchProjFicheTab("p-seed-candidatures", "suivi"), 60);
-  }, 60);
 }
 // Détache une tâche de sa candidature (ex. projet changé hors Candidatures) — la carte n'est PAS
 // supprimée, elle redevient une candidature autonome, gérable depuis le tableau de suivi.
