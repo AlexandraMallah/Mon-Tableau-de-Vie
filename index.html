@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1307</title>
+<title>Mon Tableau de Vie 🌿 · v1308</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25968,6 +25968,19 @@ function renderAll() {
   _initWorkTabLabels();
 }
 
+// Déclarées ICI (avant le try/renderAll() ci-dessous) et non plus juste avant leur usage plus bas
+// dans le fichier : le bloc try qui suit appelle renderAll() de façon synchrone au chargement, et
+// certains chemins de rendu (ex. renderPill → _syncFeatureSections → renderSkincare →
+// setSkincareNb → saveState → _fbQueueSave) touchent _fbUser AVANT que le script n'atteigne sa
+// déclaration plus bas. Comme "let" ne s'initialise qu'à la ligne où il est écrit (temporal dead
+// zone), ça levait une ReferenceError "Cannot access '_fbUser' before initialization" qui
+// empêchait l'app entière de démarrer — intermittent, selon si ce chemin de rendu précis était
+// emprunté. Bug trouvé le 22/09 (Alexandra : "l'app n'a pas pu démarrer", 2 fois en 2 min).
+let _fbDb = null, _fbAuth = null, _fbUser = null;
+let _fbSaveTimer = null, _fbUnsub = null;
+let _fbListenTimer = null, _fbLoadTime = 0;
+let _snapCache = { state: null, work: null, transactions: null, domestique: null };
+
 try {
   setupTabs();
   setupWellbeing();
@@ -26021,11 +26034,8 @@ const FB_CONFIG = {
   appId: "1:263100412161:web:638ce5c3ef91b8ffa4ab00"
 };
 /* ↑↑↑ FIN CONFIG ↑↑↑ */
-
-let _fbDb = null, _fbAuth = null, _fbUser = null;
-let _fbSaveTimer = null, _fbUnsub = null;
-let _fbListenTimer = null, _fbLoadTime = 0;
-let _snapCache = { state: null, work: null, transactions: null, domestique: null };
+// (_fbDb, _fbAuth, _fbUser, _fbSaveTimer, _fbUnsub, _fbListenTimer, _fbLoadTime, _snapCache
+// déclarés plus haut, avant le try/renderAll() du démarrage — voir le commentaire là-bas)
 
 function _fbDocRef(name = "state") {
   return _fbDb.collection("users").doc(_fbUser.uid).collection("dashboard").doc(name);
