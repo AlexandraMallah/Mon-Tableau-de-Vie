@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1304</title>
+<title>Mon Tableau de Vie 🌿 · v1305</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -9950,13 +9950,21 @@ function renderBilanChart() {
     },
   });
 }
+// Supprime une tâche ET la candidature qui lui est liée (1 tâche = 1 candidature) — sinon la
+// carte, restée seule, réapparaîtrait au prochain rattrapage automatique (renderCandidatures).
+function _deleteTaskAndLinkedCand(id) {
+  const t = state.work.postdocTasks.find(x => x.id === id);
+  if (t && t.candId) state.work.candidatures = (state.work.candidatures || []).filter(c => c.id !== t.candId);
+  state.work.postdocTasks = state.work.postdocTasks.filter(x => x.id !== id);
+}
 function deleteTask(id) {
   _showConfirm("Supprimer cette tâche ?", () => {
-    state.work.postdocTasks = state.work.postdocTasks.filter(t => t.id !== id);
+    _deleteTaskAndLinkedCand(id);
     saveState();
     renderTasks();
     renderTaskBilan();
     renderProjects();
+    renderCandidatures();
     updateWorkTabBadges();
   });
 }
@@ -10226,7 +10234,7 @@ function deleteTaskFromModal() {
   const id = document.getElementById("taskEditId").value;
   if (!id) return;
   _showConfirm("Supprimer cette tâche ?", () => {
-    state.work.postdocTasks = state.work.postdocTasks.filter(t => t.id !== id);
+    _deleteTaskAndLinkedCand(id);
     saveState();
     closeTaskEditModal();
     renderTasks(); renderTaskBilan(); renderProjects(); renderCandidatures(); renderCalendar(); updateWorkTabBadges();
@@ -10408,9 +10416,18 @@ function saveCand() {
 function deleteCand() {
   const id = document.getElementById("candModalId").value;
   if (!id) return;
-  _showConfirm("Supprimer cette candidature ?", () => {
+  const c = state.work.candidatures.find(x => x.id === id);
+  const linkedTask = c && c.taskId ? (state.work.postdocTasks || []).find(t => t.id === c.taskId) : null;
+  // 1 tâche = 1 candidature : supprimer l'une supprime l'autre, sinon la tâche restée seule sous
+  // le projet Candidatures fait réapparaître une carte toute seule au prochain rattrapage
+  // automatique (voir renderCandidatures) — exactement le bug remonté par Alexandra.
+  const msg = linkedTask ? `Supprimer cette candidature et la tâche « ${escapeHtml(linkedTask.name)} » qui lui est liée ?` : "Supprimer cette candidature ?";
+  _showConfirm(msg, () => {
     state.work.candidatures = state.work.candidatures.filter(c => c.id !== id);
-    saveState(); closeCandModal(); renderCandidatures();
+    if (linkedTask) state.work.postdocTasks = state.work.postdocTasks.filter(t => t.id !== linkedTask.id);
+    saveState(); closeCandModal(); renderCandidatures(); renderTasks(); renderTaskBilan();
+    const proj = state.work.postdocProjects.find(p => p.id === "p-seed-candidatures");
+    if (proj) _renderProjFicheTasks(proj.id);
   });
 }
 
@@ -20540,18 +20557,24 @@ function renderTimeStatsMonth() {
   const t = document.getElementById("timeMonthStats");
   if (!t) return;
   const dates = _monthDatesFor(_timeMonthOffset);
-  // Moyenne hebdo prorata : jours écoulés (jusqu'à aujourd'hui ou fin de période) ÷ 7
+  // Moyenne hebdo prorata sur les jours écoulés (jusqu'à aujourd'hui ou fin de période)
   const today = new Date(); today.setHours(0,0,0,0);
-  const periodEnd = dates[dates.length - 1];
   const elapsed = dates.filter(d => d <= today);
-  const elapsedDays = elapsed.length;
   let totalHours = 0;
   for (const d of elapsed) {
     const dk = todayKey(d);
     const wt = getWorkTime(dk);
     for (const c of TIME_CATS) totalHours += Number(wt[c.key]) || 0;
   }
-  const nbWeeksExact = elapsedDays / 7;
+  // Dénominateur = jours OUVRÉS écoulés (lun-ven, hors fériés, hors congés) ÷ 5 — même logique
+  // que "cette semaine" et "depuis toujours" (_isDayConge), pour ne pas faire baisser la moyenne
+  // avec des jours chômés (week-ends, congés) comme si c'était du temps non travaillé.
+  const workDaysElapsed = elapsed.filter(d => {
+    const dow = d.getDay();
+    const dk = todayKey(d);
+    return dow >= 1 && dow <= 5 && !_isHoliday(dk) && !_isDayConge(dk);
+  }).length;
+  const nbWeeksExact = workDaysElapsed / 5;
   const note = nbWeeksExact > 0 ? `≈ ${(totalHours / nbWeeksExact).toFixed(1).replace(".", ",")} h/sem.` : "";
   _renderTimeStats(t, dates, _timeMonthOffset === 0 ? "ce mois" : "ce mois-là", note);
   // Titre + bouton suivant
