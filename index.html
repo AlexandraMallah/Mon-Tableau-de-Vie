@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1299</title>
+<title>Mon Tableau de Vie 🌿 · v1300</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5045,6 +5045,10 @@
     <div id="taskCandLinkWrap" style="display:none;margin-top:12px;">
       <label>🔗 Candidature liée</label>
       <select id="taskEditCandLink" onchange="_onTaskCandLinkChange()"></select>
+      <div id="taskCandStatusWrap" style="display:none;margin-top:8px;">
+        <label style="font-size:12px;">Statut de la candidature</label>
+        <select id="taskEditCandStatus"></select>
+      </div>
       <div id="taskGoToCandWrap" style="display:none;margin-top:8px;">
         <button type="button" onclick="_goToLinkedCand()" style="background:var(--lavender-soft);border:1px solid var(--lavender);color:var(--ink);border-radius:10px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;">📋 Voir la candidature →</button>
       </div>
@@ -9801,6 +9805,7 @@ function _onTaskCandLinkChange() {
 // Bascule l'affichage en conséquence et affiche/masque le raccourci "Voir la candidature →".
 function _applyLinkedCandFields(candLinkValue) {
   const goWrap = document.getElementById("taskGoToCandWrap");
+  const statusWrap = document.getElementById("taskCandStatusWrap");
   const notesHint = document.getElementById("taskEditNotesHint");
   const nameHint = document.getElementById("taskEditNameHint");
   const notesEl = document.getElementById("taskEditNotes");
@@ -9808,12 +9813,16 @@ function _applyLinkedCandFields(candLinkValue) {
   const deadlineEl = document.getElementById("taskEditDeadline");
   const isExisting = candLinkValue && candLinkValue !== "__new__";
   goWrap.style.display = isExisting ? "" : "none";
+  statusWrap.style.display = isExisting ? "" : "none";
   if (isExisting) {
     const cand = (state.work.candidatures || []).find(c => c.id === candLinkValue);
     if (cand) {
       notesEl.value = cand.notes || "";
       if (cand.institution) nameEl.value = cand.institution;
       if (cand.deadline) deadlineEl.value = cand.deadline;
+      const statusSel = document.getElementById("taskEditCandStatus");
+      statusSel.innerHTML = CAND_STATUSES.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+      statusSel.value = cand.status || CAND_STATUSES[0];
     }
     notesHint.textContent = "(partagées avec la candidature liée)";
     nameHint.textContent = "(= institution de la candidature liée)";
@@ -10298,8 +10307,11 @@ function saveTaskEdit() {
   // information, éditable des deux côtés) plutôt que dupliqués. Sans lien, ils restent propres à
   // la tâche.
   const linkedCand = t.candId ? (state.work.candidatures || []).find(c => c.id === t.candId) : null;
-  if (linkedCand) { linkedCand.notes = notesVal; linkedCand.deadline = t.deadline; linkedCand.institution = t.name; }
-  else { t.notes = notesVal; }
+  if (linkedCand) {
+    linkedCand.notes = notesVal; linkedCand.deadline = t.deadline; linkedCand.institution = t.name;
+    const statusSel = document.getElementById("taskEditCandStatus");
+    if (statusSel && statusSel.value) linkedCand.status = statusSel.value;
+  } else { t.notes = notesVal; }
   _pendingNewTaskId = null; // nommée et enregistrée → Annuler ne doit plus jamais la supprimer
   saveState();
   closeTaskEditModal();
