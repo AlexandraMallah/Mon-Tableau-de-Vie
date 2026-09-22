@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1298</title>
+<title>Mon Tableau de Vie 🌿 · v1299</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4773,6 +4773,9 @@
     <h2 id="candModalTitle" style="margin:0 0 6px;">Nouvelle candidature</h2>
     <p class="modal-hint">Suis tes candidatures (postes, bourses, appels à projets…). Indique le statut, la deadline et tes notes. Pour modifier ou supprimer, clique sur la candidature dans la liste.</p>
     <input type="hidden" id="candModalId" />
+    <div id="candModalTaskLinkWrap" style="display:none;margin:-6px 0 14px;">
+      <button type="button" onclick="_goToLinkedTask()" style="background:var(--lavender-soft);border:1px solid var(--lavender);color:var(--ink);border-radius:10px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;">✅ Voir la tâche liée →</button>
+    </div>
     <div class="grid-2">
       <div>
         <label style="display:flex;align-items:center;gap:6px;">Type
@@ -4788,9 +4791,9 @@
     </div>
     <label>Institution / programme</label>
     <input type="text" id="candModalInstitution" placeholder="Ex : Université Paris-Saclay" />
-    <label>Date limite</label>
+    <label>Date limite <span id="candModalDeadlineSyncHint" style="font-size:11px;color:var(--ink-softer);font-weight:400;display:none;">(partagée avec la tâche liée)</span></label>
     <input type="date" id="candModalDeadline" />
-    <label>Notes</label>
+    <label>Notes <span id="candModalNotesSyncHint" style="font-size:11px;color:var(--ink-softer);font-weight:400;display:none;">(partagées avec la tâche liée)</span></label>
     <textarea id="candModalNotes" placeholder="Lien dossier, contacts utiles, retours…"></textarea>
     <div class="actions">
       <button class="danger" id="candModalDelete" onclick="deleteCand()">Supprimer</button>
@@ -5016,7 +5019,7 @@
       <button type="button" id="kindToggleTask" class="kind-toggle active is-task" onclick="setModalKind('task')">📌 À faire</button>
       <button type="button" id="kindToggleEvent" class="kind-toggle" onclick="setModalKind('event')">📅 Événement prévu</button>
     </div>
-    <label>Nom</label>
+    <label>Nom <span id="taskEditNameHint" style="font-size:11px;color:var(--ink-softer);font-weight:400;"></span></label>
     <input type="text" id="taskEditName" placeholder="Nom de la tâche" />
     <label style="margin-top:2px;display:flex;align-items:center;gap:8px;cursor:pointer;">
       <input type="checkbox" id="taskEditForAI" style="width:16px;height:16px;cursor:pointer;margin:0;" />
@@ -5041,9 +5044,12 @@
     <select id="taskEditProject" onchange="_onTaskProjectChange()"></select>
     <div id="taskCandLinkWrap" style="display:none;margin-top:12px;">
       <label>🔗 Candidature liée</label>
-      <select id="taskEditCandLink"></select>
+      <select id="taskEditCandLink" onchange="_onTaskCandLinkChange()"></select>
+      <div id="taskGoToCandWrap" style="display:none;margin-top:8px;">
+        <button type="button" onclick="_goToLinkedCand()" style="background:var(--lavender-soft);border:1px solid var(--lavender);color:var(--ink);border-radius:10px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;">📋 Voir la candidature →</button>
+      </div>
     </div>
-    <label style="margin-top:12px;">Notes <span style="font-size:11px;color:var(--ink-softer);font-weight:400;">(infos libres — résumé de candidature, contacts, détails…)</span></label>
+    <label style="margin-top:12px;">Notes <span id="taskEditNotesHint" style="font-size:11px;color:var(--ink-softer);font-weight:400;">(infos libres — résumé de candidature, contacts, détails…)</span></label>
     <textarea id="taskEditNotes" rows="4" placeholder="Écris ici ce que tu veux garder sur cette tâche…" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);resize:vertical;min-height:70px;"></textarea>
     <label style="margin-top:12px;">Avancement</label>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
@@ -9771,7 +9777,7 @@ function _refreshTaskCandLinkUI(currentValue) {
   const wrap = document.getElementById("taskCandLinkWrap");
   const isCand = document.getElementById("taskEditProject").value === "p-seed-candidatures";
   wrap.style.display = isCand ? "" : "none";
-  if (!isCand) return;
+  if (!isCand) { _applyLinkedCandFields(""); return; }
   const sel = document.getElementById("taskEditCandLink");
   const cands = state.work.candidatures || [];
   sel.innerHTML =
@@ -9779,12 +9785,52 @@ function _refreshTaskCandLinkUI(currentValue) {
     `<option value="__new__">➕ Créer une nouvelle candidature</option>` +
     cands.map(c => `<option value="${c.id}">${escapeHtml(c.institution || "(sans nom)")}${c.status ? " · " + escapeHtml(c.status) : ""}</option>`).join("");
   sel.value = currentValue || "";
+  _applyLinkedCandFields(sel.value);
 }
 // Appelé quand on change le "Projet lié" dans la fenêtre : affiche/masque et rafraîchit le
 // sélecteur de candidature liée. Tente de garder la sélection en cours si elle est encore valide.
 function _onTaskProjectChange() {
   const sel = document.getElementById("taskEditCandLink");
   _refreshTaskCandLinkUI(sel ? sel.value : "");
+}
+function _onTaskCandLinkChange() {
+  _applyLinkedCandFields(document.getElementById("taskEditCandLink").value);
+}
+// Une tâche liée à une candidature partage avec elle son Nom (= Institution), sa Date limite et
+// ses Notes — une seule info éditable des deux côtés, plutôt que deux copies qui peuvent diverger.
+// Bascule l'affichage en conséquence et affiche/masque le raccourci "Voir la candidature →".
+function _applyLinkedCandFields(candLinkValue) {
+  const goWrap = document.getElementById("taskGoToCandWrap");
+  const notesHint = document.getElementById("taskEditNotesHint");
+  const nameHint = document.getElementById("taskEditNameHint");
+  const notesEl = document.getElementById("taskEditNotes");
+  const nameEl = document.getElementById("taskEditName");
+  const deadlineEl = document.getElementById("taskEditDeadline");
+  const isExisting = candLinkValue && candLinkValue !== "__new__";
+  goWrap.style.display = isExisting ? "" : "none";
+  if (isExisting) {
+    const cand = (state.work.candidatures || []).find(c => c.id === candLinkValue);
+    if (cand) {
+      notesEl.value = cand.notes || "";
+      if (cand.institution) nameEl.value = cand.institution;
+      if (cand.deadline) deadlineEl.value = cand.deadline;
+    }
+    notesHint.textContent = "(partagées avec la candidature liée)";
+    nameHint.textContent = "(= institution de la candidature liée)";
+  } else if (candLinkValue === "__new__") {
+    notesHint.textContent = "(seront enregistrées sur la nouvelle candidature)";
+    nameHint.textContent = "(deviendra l'institution de la nouvelle candidature)";
+  } else {
+    notesHint.textContent = "(infos libres — résumé de candidature, contacts, détails…)";
+    nameHint.textContent = "";
+  }
+}
+// Ouvre la candidature actuellement liée à la tâche en cours d'édition.
+function _goToLinkedCand() {
+  const val = document.getElementById("taskEditCandLink").value;
+  if (!val || val === "__new__") return;
+  closeTaskEditModal();
+  openCandModal(val);
 }
 // Applique le choix fait dans "🔗 Candidature liée" : "" (aucune / détache), "__new__" (crée une
 // nouvelle candidature liée), ou l'id d'une candidature existante à lier. Détache proprement
@@ -10234,7 +10280,7 @@ function saveTaskEdit() {
   t.priority  = document.getElementById("taskEditPriority").value;
   t.projectId = document.getElementById("taskEditProject").value;
   t.deadline  = document.getElementById("taskEditDeadline").value || "";
-  t.notes     = document.getElementById("taskEditNotes").value.trim();
+  const notesVal = document.getElementById("taskEditNotes").value.trim();
   t.kind      = getModalKind();
   // Sauvegarde progression manuelle (si pas de jalons)
   if (!t.milestones || !t.milestones.length) {
@@ -10248,6 +10294,12 @@ function saveTaskEdit() {
   } else if (t.candId) {
     _setTaskCandLink(t, "");
   }
+  // Nom/Institution, Notes et Date limite : partagés avec la candidature liée (une seule
+  // information, éditable des deux côtés) plutôt que dupliqués. Sans lien, ils restent propres à
+  // la tâche.
+  const linkedCand = t.candId ? (state.work.candidatures || []).find(c => c.id === t.candId) : null;
+  if (linkedCand) { linkedCand.notes = notesVal; linkedCand.deadline = t.deadline; linkedCand.institution = t.name; }
+  else { t.notes = notesVal; }
   _pendingNewTaskId = null; // nommée et enregistrée → Annuler ne doit plus jamais la supprimer
   saveState();
   closeTaskEditModal();
@@ -10374,6 +10426,10 @@ function openCandModal(id) {
   _fillCandTypeSelect();
   const sStatus = document.getElementById("candModalStatus");
   sStatus.innerHTML = CAND_STATUSES.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+  const linkedTask = isEdit ? (state.work.postdocTasks || []).find(t => t.id === state.work.candidatures.find(x => x.id === id)?.taskId) : null;
+  document.getElementById("candModalTaskLinkWrap").style.display = linkedTask ? "" : "none";
+  document.getElementById("candModalDeadlineSyncHint").style.display = linkedTask ? "" : "none";
+  document.getElementById("candModalNotesSyncHint").style.display = linkedTask ? "" : "none";
   if (isEdit) {
     const c = state.work.candidatures.find(x => x.id === id);
     document.getElementById("candModalType").value = c.type; sStatus.value = c.status;
@@ -10389,6 +10445,14 @@ function openCandModal(id) {
   document.getElementById("candModal").classList.add("open");
 }
 function closeCandModal() { document.getElementById("candModal").classList.remove("open"); }
+// Ouvre la tâche actuellement liée à la candidature en cours d'édition.
+function _goToLinkedTask() {
+  const id = document.getElementById("candModalId").value;
+  const c = state.work.candidatures.find(x => x.id === id);
+  if (!c || !c.taskId) return;
+  closeCandModal();
+  openTaskEditModal(c.taskId);
+}
 function saveCand() {
   const id = document.getElementById("candModalId").value;
   const type = document.getElementById("candModalType").value;
@@ -10400,12 +10464,22 @@ function saveCand() {
   if (id) {
     const c = state.work.candidatures.find(x => x.id === id);
     Object.assign(c, { type, status, institution, deadline, notes });
+    // Nom, date limite et notes sont partagés avec la tâche liée (voir saveTaskEdit) — on
+    // propage donc aussi dans l'autre sens ici.
+    if (c.taskId) {
+      const t = (state.work.postdocTasks || []).find(x => x.id === c.taskId);
+      if (t) { t.name = institution; t.deadline = deadline; }
+    }
   } else {
     state.work.candidatures.push({ id: "c" + Date.now(), type, status, institution, deadline, notes, createdAt: new Date().toISOString() });
   }
   saveState();
   closeCandModal();
   renderCandidatures();
+  renderTasks();
+  renderTaskBilan();
+  const proj = state.work.postdocProjects.find(p => p.id === "p-seed-candidatures");
+  if (proj) _renderProjFicheTasks(proj.id);
 }
 function deleteCand() {
   const id = document.getElementById("candModalId").value;
