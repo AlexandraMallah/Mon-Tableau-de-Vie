@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1293</title>
+<title>Mon Tableau de Vie 🌿 · v1294</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -743,11 +743,6 @@
     background: white; color: var(--ink-soft);
     border: 1px solid var(--line);
   }
-  .task-notes-preview {
-    font-size: 11px; color: var(--ink-softer); margin-top: 3px; cursor: pointer;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
-  }
-  .task-notes-preview:hover { color: var(--ink-soft); text-decoration: underline; }
   .task-deadline { font-size: 12px; color: var(--ink-soft); }
   .task-deadline.urgent { color: var(--red); font-weight: 600; }
   .task-deadline.soon { color: var(--orange); }
@@ -9560,8 +9555,8 @@ function renderTasks() {
       ? `<span class="task-kind-badge is-event" title="${t.calEventId ? "Lié à un événement du calendrier" : "Événement prévu"}">📅 ${t.calEventId ? "Lié au cal." : "Événement"}</span>`
       : "";
     const aiBadge = t.forAI ? `<span title="Tâche IA" style="font-size:12px;">🤖</span>` : "";
-    const notesBadge = t.notes ? `<span title="A une note" style="font-size:12px;">📝</span>` : "";
-    const notesPreview = t.notes ? `<div class="task-notes-preview" onclick="openTaskEditModal('${t.id}')" title="${escapeHtml(t.notes)}">📝 ${escapeHtml(t.notes)}</div>` : "";
+    // La note (t.notes) n'est plus affichée dans la liste — visible seulement en ouvrant la tâche
+    // (bouton ✏️), sur demande d'Alexandra qui trouvait le badge 📝 et l'aperçu trop visibles.
     return `
       <div class="task-row prio-${t.priority} ${t.done ? "done" : ""} ${isEvent ? "is-event" : ""}">
         <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
@@ -9569,14 +9564,12 @@ function renderTasks() {
           <div class="task-meta">
             ${kindBadge}
             ${aiBadge}
-            ${notesBadge}
             <span class="task-name">${escapeHtml(t.name)}</span>
             ${pctBadge}
             ${tagHtml}
             ${dlText ? `<span class="task-deadline ${dlClass}">${dlText}</span>` : ""}
           </div>
           ${progressHtml}
-          ${notesPreview}
         </div>
         <button class="task-edit-btn" onclick="openTaskEditModal('${t.id}')" title="Modifier">✏️</button>
         <button class="task-del" onclick="deleteTask('${t.id}')">✕</button>
