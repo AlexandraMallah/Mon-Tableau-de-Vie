@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1306</title>
+<title>Mon Tableau de Vie 🌿 · v1307</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5691,7 +5691,7 @@ function emotionBadgesHtml(emotions, small = false) {
 const STORE_KEY = "tableauDeVie_v3";
 const LEGACY_KEYS = ["tableauDeVie_v2", "tableauDeVie_v1"];
 
-const CAND_STATUSES = ["À préparer", "En rédaction", "Soumis", "En attente", "Audition / Entretien", "Résultat"];
+const CAND_STATUSES = ["À préparer", "En rédaction", "Soumis", "Audition / Entretien", "Résultat"];
 const ARTICLE_STATUSES = ["Idée", "Rédaction", "Soumis", "Révisions", "Accepté", "Publié", "Rejeté"];
 const COMM_STATUSES = ["Abstract en cours", "Abstract envoyé", "Accepté", "Préparation", "Présenté"];
 
@@ -6094,6 +6094,11 @@ function migrate(s) {
       (s.work.postdocTasks || []).forEach(t => { if (badIds.has(t.candId)) t.candId = null; });
     }
     s._undidCandAutoMigV1297 = true;
+  }
+  // Migration : colonne "En attente" supprimée du tableau de suivi (v1307) — reclasse en "Soumis"
+  // toute candidature qui y était encore, pour ne pas la faire disparaître du kanban.
+  if (Array.isArray(s.work?.candidatures)) {
+    s.work.candidatures.forEach(c => { if (c.status === "En attente") c.status = "Soumis"; });
   }
   // Migration : ancien today.water → today.habits["h-eau"] (pour synchroniser)
   if (s.history) {
