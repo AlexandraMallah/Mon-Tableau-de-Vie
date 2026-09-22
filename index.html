@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1296</title>
+<title>Mon Tableau de Vie 🌿 · v1297</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5038,7 +5038,11 @@
       </div>
     </div>
     <label>Projet lié</label>
-    <select id="taskEditProject"></select>
+    <select id="taskEditProject" onchange="_onTaskProjectChange()"></select>
+    <div id="taskCandLinkWrap" style="display:none;margin-top:12px;">
+      <label>🔗 Candidature liée</label>
+      <select id="taskEditCandLink"></select>
+    </div>
     <label style="margin-top:12px;">Notes <span style="font-size:11px;color:var(--ink-softer);font-weight:400;">(infos libres — résumé de candidature, contacts, détails…)</span></label>
     <textarea id="taskEditNotes" rows="4" placeholder="Écris ici ce que tu veux garder sur cette tâche…" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);resize:vertical;min-height:70px;"></textarea>
     <label style="margin-top:12px;">Avancement</label>
@@ -6079,29 +6083,27 @@ function migrate(s) {
         }
         delete t.category; // nettoyage de l'ancien champ
       });
-      // Migration v1296 : le lien auto tâche ↔ candidature (v1293) ne s'appliquait qu'aux
-      // NOUVELLES tâches créées après coup — toutes les tâches déjà taguées "Candidatures" avant
-      // ça (en cours ou terminées) n'avaient donc aucune carte dans le tableau de suivi. On crée
-      // ici, une fois, la carte manquante pour chacune (statut "À préparer" par défaut,
-      // modifiable ensuite comme n'importe quelle carte).
-      if (!Array.isArray(s.work.candidatures)) s.work.candidatures = [];
-      s.work.postdocTasks.forEach(t => {
-        if (t.projectId === candProj.id && !t.candId) {
-          const cand = {
-            id: "c" + Date.now() + Math.random().toString(36).slice(2, 6),
-            type: (s.candidatureTypes || [])[0] || "",
-            status: CAND_STATUSES[0],
-            institution: t.name || "",
-            deadline: t.deadline || "",
-            notes: "",
-            taskId: t.id,
-            createdAt: new Date().toISOString(),
-          };
-          s.work.candidatures.push(cand);
-          t.candId = cand.id;
-        }
-      });
     }
+  }
+  // Annulation de la migration v1296 (bug) : elle créait une carte de suivi pour CHAQUE tâche
+  // du projet Candidatures sans lien, y compris des tâches qui n'étaient que des étapes d'une
+  // candidature déjà suivie par une autre carte (ex. "Finaliser la candidature MCSA", "Envoyer V3
+  // à Frédéric" et la tâche seed MSCA pointaient en fait vers UNE seule vraie candidature MSCA ;
+  // "Candidature CNRS" doublait la carte CNRS existante) → doublons visibles dans le tableau.
+  // On supprime ici, une seule fois, toutes les cartes créées par cette migration (identifiables :
+  // elles ont un taskId ET ont été créées par le système, jamais éditées) et on délie les tâches
+  // correspondantes. Remplacé par un choix manuel dans la fenêtre de la tâche (lier / créer / rien).
+  if (!s._undidCandAutoMigV1297 && Array.isArray(s.work?.candidatures)) {
+    // Au moment où cette migration défectueuse a tourné (v1296), AUCUNE candidature légitime
+    // n'avait encore de taskId (le lien auto sur nouvelle tâche n'a été ajouté qu'en v1293 et
+    // personne n'avait encore créé de tâche Candidatures depuis) — donc "a un taskId" désigne ici
+    // sans ambiguïté une carte créée par le bug, jamais une carte volontaire.
+    const badIds = new Set(s.work.candidatures.filter(c => c.taskId).map(c => c.id));
+    if (badIds.size) {
+      s.work.candidatures = s.work.candidatures.filter(c => !badIds.has(c.id));
+      (s.work.postdocTasks || []).forEach(t => { if (badIds.has(t.candId)) t.candId = null; });
+    }
+    s._undidCandAutoMigV1297 = true;
   }
   // Migration : ancien today.water → today.habits["h-eau"] (pour synchroniser)
   if (s.history) {
@@ -9763,6 +9765,43 @@ function getModalKind() {
   const eBtn = document.getElementById("kindToggleEvent");
   return (eBtn && eBtn.classList.contains("active")) ? "event" : "task";
 }
+// Remplit/affiche le sélecteur "🔗 Candidature liée" dans la fenêtre de tâche — visible seulement
+// si le projet sélectionné est Candidatures. currentValue : "", "__new__" ou l'id d'une candidature.
+function _refreshTaskCandLinkUI(currentValue) {
+  const wrap = document.getElementById("taskCandLinkWrap");
+  const isCand = document.getElementById("taskEditProject").value === "p-seed-candidatures";
+  wrap.style.display = isCand ? "" : "none";
+  if (!isCand) return;
+  const sel = document.getElementById("taskEditCandLink");
+  const cands = state.work.candidatures || [];
+  sel.innerHTML =
+    `<option value="">— Aucune candidature liée —</option>` +
+    `<option value="__new__">➕ Créer une nouvelle candidature</option>` +
+    cands.map(c => `<option value="${c.id}">${escapeHtml(c.institution || "(sans nom)")}${c.status ? " · " + escapeHtml(c.status) : ""}</option>`).join("");
+  sel.value = currentValue || "";
+}
+// Appelé quand on change le "Projet lié" dans la fenêtre : affiche/masque et rafraîchit le
+// sélecteur de candidature liée. Tente de garder la sélection en cours si elle est encore valide.
+function _onTaskProjectChange() {
+  const sel = document.getElementById("taskEditCandLink");
+  _refreshTaskCandLinkUI(sel ? sel.value : "");
+}
+// Applique le choix fait dans "🔗 Candidature liée" : "" (aucune / détache), "__new__" (crée une
+// nouvelle candidature liée), ou l'id d'une candidature existante à lier. Détache proprement
+// l'ancien lien si la tâche en avait un autre avant.
+function _setTaskCandLink(t, value) {
+  if (t.candId && t.candId !== value) {
+    const old = (state.work.candidatures || []).find(c => c.id === t.candId);
+    if (old && old.taskId === t.id) old.taskId = null;
+    t.candId = null;
+  }
+  if (!value) return;
+  if (value === "__new__") { _autoLinkCandidatureForTask(t); return; }
+  const cand = (state.work.candidatures || []).find(c => c.id === value);
+  if (!cand) return;
+  cand.taskId = t.id;
+  t.candId = cand.id;
+}
 // Lie automatiquement une tâche du projet Candidatures à une nouvelle carte de suivi (kanban
 // "À préparer"), sans écraser un lien déjà existant. La carte reste ensuite éditable indépendamment
 // (renommer l'institution, le type, ajouter des notes…) — seul le statut se met à jour tout seul
@@ -10158,6 +10197,11 @@ function openTaskEditModal(id) {
   }
   pSel.innerHTML = pHtml;
   pSel.value = t.projectId || "";
+  // Pour une tâche toute neuve créée directement dans le projet Candidatures : présélectionne
+  // "créer une nouvelle candidature" (comportement pratique par défaut), sinon garde le lien
+  // existant de la tâche, ou "aucune" si elle n'en a pas.
+  const defaultCandLink = t.candId || (_pendingNewTaskId === id && t.projectId === "p-seed-candidatures" ? "__new__" : "");
+  _refreshTaskCandLinkUI(defaultCandLink);
   document.getElementById("taskEditNotes").value = t.notes || "";
   const pct = taskProgress(t);
   document.getElementById("taskEditProgress").value = pct;
@@ -10197,7 +10241,13 @@ function saveTaskEdit() {
     t.progress = Number(document.getElementById("taskEditProgress").value) || 0;
   }
   delete t.category;
-  _autoLinkCandidatureForTask(t); // au cas où le projet vient d'être changé vers Candidatures
+  // Applique le choix fait dans "🔗 Candidature liée" (visible seulement si projet = Candidatures) ;
+  // si le projet vient d'être changé hors Candidatures alors qu'un lien existait, on le détache.
+  if (t.projectId === "p-seed-candidatures") {
+    _setTaskCandLink(t, document.getElementById("taskEditCandLink").value);
+  } else if (t.candId) {
+    _setTaskCandLink(t, "");
+  }
   _pendingNewTaskId = null; // nommée et enregistrée → Annuler ne doit plus jamais la supprimer
   saveState();
   closeTaskEditModal();
