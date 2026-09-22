@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1294</title>
+<title>Mon Tableau de Vie 🌿 · v1295</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2519,21 +2519,6 @@
         <div class="spacer"></div>
         <button class="secondary" onclick="closeNewListModal()">Annuler</button>
         <button class="primary" id="newListSaveBtn" onclick="saveNewList()">Créer</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal : Ajout tâche projet Travail -->
-  <div class="modal-bg" id="workProjTaskModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)_closeWorkProjTaskModal()">
-    <div class="modal" style="max-width:400px;" onclick="event.stopPropagation()">
-      <h3 style="margin:0 0 16px;font-size:17px;">✅ Nouvelle tâche</h3>
-      <input type="hidden" id="workProjTaskProjectId" />
-      <input type="text" id="workProjTaskName" placeholder="Nom de la tâche…" maxlength="100"
-        style="width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;"
-        onkeydown="if(event.key==='Enter')_saveWorkProjTask()" />
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
-        <button onclick="_closeWorkProjTaskModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-        <button onclick="_saveWorkProjTask()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
       </div>
     </div>
   </div>
@@ -8058,24 +8043,14 @@ function _toggleTaskFromProjTab(taskId, done) {
     if (t.done && t.candId) _promptCandStatusAfterTaskDone(t.candId);
   }
 }
+// Crée une tâche vide pour ce projet et ouvre DIRECTEMENT la fenêtre complète (nom, priorité,
+// deadline, notes, jalons…) — plus d'étape intermédiaire avec un simple champ nom. Si la fenêtre
+// est fermée sans nom renseigné, la tâche vide est retirée automatiquement (closeTaskEditModal).
 function _addTaskFromProjTab(projectId) {
-  document.getElementById("workProjTaskProjectId").value = projectId;
-  document.getElementById("workProjTaskName").value = "";
-  document.getElementById("workProjTaskModal").classList.add("open");
-  setTimeout(() => document.getElementById("workProjTaskName").focus(), 80);
-}
-function _closeWorkProjTaskModal() { document.getElementById("workProjTaskModal").classList.remove("open"); }
-function _saveWorkProjTask() {
-  const projectId = document.getElementById("workProjTaskProjectId").value;
-  const name = document.getElementById("workProjTaskName").value.trim();
-  if (!name) return;
   const id = "t" + Date.now();
-  const newT = { id, name, projectId, priority: "medium", done: false, createdAt: new Date().toISOString() };
+  const newT = { id, name: "", projectId, priority: "medium", done: false, createdAt: new Date().toISOString() };
   state.work.postdocTasks.unshift(newT);
-  _autoLinkCandidatureForTask(newT);
-  saveState(); _closeWorkProjTaskModal(); renderTasks(); renderWorkProjectTabs(); renderCandidatures();
-  // Ouvre directement la fenêtre complète (priorité, deadline, notes, jalons…) — mêmes possibilités
-  // que depuis l'onglet Tâches, plutôt qu'un 2e formulaire à maintenir en double.
+  _pendingNewTaskId = id;
   openTaskEditModal(id);
 }
 
@@ -10130,6 +10105,9 @@ function updateMilestoneName(i, val) {
   saveState();
   // Pas de re-render pour garder le focus sur l'input
 }
+// Tâche créée pour remplir la fenêtre "Modifier la tâche" en mode création (voir
+// _addTaskFromProjTab) : si on ferme sans jamais lui donner de nom, elle est retirée en silence.
+let _pendingNewTaskId = null;
 function openTaskEditModal(id) {
   const t = state.work.postdocTasks.find(x => x.id === id);
   if (!t) return;
@@ -10161,12 +10139,23 @@ function openTaskEditModal(id) {
 }
 function closeTaskEditModal() {
   document.getElementById("taskEditModal").classList.remove("open");
+  if (_pendingNewTaskId) {
+    // Fenêtre de création fermée sans avoir jamais enregistré de nom → on retire la tâche vide
+    const t = state.work.postdocTasks.find(x => x.id === _pendingNewTaskId);
+    if (t && !t.name.trim()) {
+      state.work.postdocTasks = state.work.postdocTasks.filter(x => x.id !== _pendingNewTaskId);
+      saveState(); renderTasks(); renderWorkProjectTabs();
+    }
+    _pendingNewTaskId = null;
+  }
 }
 function saveTaskEdit() {
   const id = document.getElementById("taskEditId").value;
   const t = state.work.postdocTasks.find(x => x.id === id);
   if (!t) return;
-  t.name      = document.getElementById("taskEditName").value.trim() || t.name;
+  const name = document.getElementById("taskEditName").value.trim();
+  if (!name) { _needField("taskEditName", "Donne un nom à la tâche."); return; }
+  t.name      = name;
   t.forAI     = document.getElementById("taskEditForAI").checked;
   t.priority  = document.getElementById("taskEditPriority").value;
   t.projectId = document.getElementById("taskEditProject").value;
@@ -10179,6 +10168,7 @@ function saveTaskEdit() {
   }
   delete t.category;
   _autoLinkCandidatureForTask(t); // au cas où le projet vient d'être changé vers Candidatures
+  _pendingNewTaskId = null; // nommée et enregistrée → Annuler ne doit plus jamais la supprimer
   saveState();
   closeTaskEditModal();
   renderTasks();
@@ -10187,6 +10177,7 @@ function saveTaskEdit() {
   renderCandidatures();
   renderCalendar();
   updateWorkTabBadges();
+  if (t.projectId) _renderProjFicheTasks(t.projectId); // rafraîchit la fiche projet si affichée
 }
 function deleteTaskFromModal() {
   const id = document.getElementById("taskEditId").value;
