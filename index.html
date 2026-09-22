@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1300</title>
+<title>Mon Tableau de Vie 🌿 · v1301</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5043,13 +5043,12 @@
     <label>Projet lié</label>
     <select id="taskEditProject" onchange="_onTaskProjectChange()"></select>
     <div id="taskCandLinkWrap" style="display:none;margin-top:12px;">
-      <label>🔗 Candidature liée</label>
-      <select id="taskEditCandLink" onchange="_onTaskCandLinkChange()"></select>
-      <div id="taskCandStatusWrap" style="display:none;margin-top:8px;">
-        <label style="font-size:12px;">Statut de la candidature</label>
+      <label>🔗 Candidature <span style="font-size:11px;color:var(--ink-softer);font-weight:400;">(créée et nommée automatiquement d'après cette tâche)</span></label>
+      <div id="taskCandStatusWrap" style="margin-top:4px;">
+        <label style="font-size:12px;">Statut</label>
         <select id="taskEditCandStatus"></select>
       </div>
-      <div id="taskGoToCandWrap" style="display:none;margin-top:8px;">
+      <div style="margin-top:8px;">
         <button type="button" onclick="_goToLinkedCand()" style="background:var(--lavender-soft);border:1px solid var(--lavender);color:var(--ink);border-radius:10px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;">📋 Voir la candidature →</button>
       </div>
     </div>
@@ -9775,95 +9774,61 @@ function getModalKind() {
   const eBtn = document.getElementById("kindToggleEvent");
   return (eBtn && eBtn.classList.contains("active")) ? "event" : "task";
 }
-// Remplit/affiche le sélecteur "🔗 Candidature liée" dans la fenêtre de tâche — visible seulement
-// si le projet sélectionné est Candidatures. currentValue : "", "__new__" ou l'id d'une candidature.
-function _refreshTaskCandLinkUI(currentValue) {
+// Affiche/masque le bloc "🔗 Candidature" selon le projet choisi, et rafraîchit son statut pour
+// la candidature déjà liée à cette tâche (créée automatiquement, voir _autoLinkCandidatureForTask
+// — plus de sélecteur à gérer soi-même : 1 tâche du projet Candidatures = 1 carte de suivi).
+function _onTaskProjectChange() { _refreshTaskCandBlock(); }
+function _refreshTaskCandBlock() {
   const wrap = document.getElementById("taskCandLinkWrap");
-  const isCand = document.getElementById("taskEditProject").value === "p-seed-candidatures";
-  wrap.style.display = isCand ? "" : "none";
-  if (!isCand) { _applyLinkedCandFields(""); return; }
-  const sel = document.getElementById("taskEditCandLink");
-  const cands = state.work.candidatures || [];
-  sel.innerHTML =
-    `<option value="">— Aucune candidature liée —</option>` +
-    `<option value="__new__">➕ Créer une nouvelle candidature</option>` +
-    cands.map(c => `<option value="${c.id}">${escapeHtml(c.institution || "(sans nom)")}${c.status ? " · " + escapeHtml(c.status) : ""}</option>`).join("");
-  sel.value = currentValue || "";
-  _applyLinkedCandFields(sel.value);
-}
-// Appelé quand on change le "Projet lié" dans la fenêtre : affiche/masque et rafraîchit le
-// sélecteur de candidature liée. Tente de garder la sélection en cours si elle est encore valide.
-function _onTaskProjectChange() {
-  const sel = document.getElementById("taskEditCandLink");
-  _refreshTaskCandLinkUI(sel ? sel.value : "");
-}
-function _onTaskCandLinkChange() {
-  _applyLinkedCandFields(document.getElementById("taskEditCandLink").value);
-}
-// Une tâche liée à une candidature partage avec elle son Nom (= Institution), sa Date limite et
-// ses Notes — une seule info éditable des deux côtés, plutôt que deux copies qui peuvent diverger.
-// Bascule l'affichage en conséquence et affiche/masque le raccourci "Voir la candidature →".
-function _applyLinkedCandFields(candLinkValue) {
-  const goWrap = document.getElementById("taskGoToCandWrap");
-  const statusWrap = document.getElementById("taskCandStatusWrap");
   const notesHint = document.getElementById("taskEditNotesHint");
   const nameHint = document.getElementById("taskEditNameHint");
-  const notesEl = document.getElementById("taskEditNotes");
-  const nameEl = document.getElementById("taskEditName");
-  const deadlineEl = document.getElementById("taskEditDeadline");
-  const isExisting = candLinkValue && candLinkValue !== "__new__";
-  goWrap.style.display = isExisting ? "" : "none";
-  statusWrap.style.display = isExisting ? "" : "none";
-  if (isExisting) {
-    const cand = (state.work.candidatures || []).find(c => c.id === candLinkValue);
-    if (cand) {
-      notesEl.value = cand.notes || "";
-      if (cand.institution) nameEl.value = cand.institution;
-      if (cand.deadline) deadlineEl.value = cand.deadline;
-      const statusSel = document.getElementById("taskEditCandStatus");
-      statusSel.innerHTML = CAND_STATUSES.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
-      statusSel.value = cand.status || CAND_STATUSES[0];
-    }
-    notesHint.textContent = "(partagées avec la candidature liée)";
-    nameHint.textContent = "(= institution de la candidature liée)";
-  } else if (candLinkValue === "__new__") {
-    notesHint.textContent = "(seront enregistrées sur la nouvelle candidature)";
-    nameHint.textContent = "(deviendra l'institution de la nouvelle candidature)";
-  } else {
+  const isCand = document.getElementById("taskEditProject").value === "p-seed-candidatures";
+  wrap.style.display = isCand ? "" : "none";
+  if (!isCand) {
     notesHint.textContent = "(infos libres — résumé de candidature, contacts, détails…)";
     nameHint.textContent = "";
+    return;
+  }
+  notesHint.textContent = "(partagées avec la candidature liée)";
+  nameHint.textContent = "(= institution de la candidature liée)";
+  const id = document.getElementById("taskEditId").value;
+  const t = state.work.postdocTasks.find(x => x.id === id);
+  const cand = t && t.candId ? (state.work.candidatures || []).find(c => c.id === t.candId) : null;
+  const statusSel = document.getElementById("taskEditCandStatus");
+  if (cand) {
+    document.getElementById("taskEditName").value = cand.institution || (t && t.name) || "";
+    document.getElementById("taskEditDeadline").value = cand.deadline || (t && t.deadline) || "";
+    document.getElementById("taskEditNotes").value = cand.notes || "";
+    statusSel.innerHTML = CAND_STATUSES.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+    statusSel.value = cand.status || CAND_STATUSES[0];
+  } else {
+    statusSel.innerHTML = `<option value="">— sera créée à l'enregistrement —</option>`;
   }
 }
-// Ouvre la candidature actuellement liée à la tâche en cours d'édition.
+// Ouvre la candidature liée à la tâche en cours d'édition (elle existe déjà, sauf pour une tâche
+// jamais encore enregistrée).
 function _goToLinkedCand() {
-  const val = document.getElementById("taskEditCandLink").value;
-  if (!val || val === "__new__") return;
+  const id = document.getElementById("taskEditId").value;
+  const t = state.work.postdocTasks.find(x => x.id === id);
+  if (!t || !t.candId) { showToast("Enregistre d'abord la tâche pour créer sa candidature."); return; }
   closeTaskEditModal();
-  openCandModal(val);
+  openCandModal(t.candId);
 }
-// Applique le choix fait dans "🔗 Candidature liée" : "" (aucune / détache), "__new__" (crée une
-// nouvelle candidature liée), ou l'id d'une candidature existante à lier. Détache proprement
-// l'ancien lien si la tâche en avait un autre avant.
-function _setTaskCandLink(t, value) {
-  if (t.candId && t.candId !== value) {
-    const old = (state.work.candidatures || []).find(c => c.id === t.candId);
-    if (old && old.taskId === t.id) old.taskId = null;
-    t.candId = null;
-  }
-  if (!value) return;
-  if (value === "__new__") { _autoLinkCandidatureForTask(t); return; }
-  const cand = (state.work.candidatures || []).find(c => c.id === value);
-  if (!cand) return;
-  cand.taskId = t.id;
-  t.candId = cand.id;
+// Détache une tâche de sa candidature (ex. projet changé hors Candidatures) — la carte n'est PAS
+// supprimée, elle redevient une candidature autonome, gérable depuis le tableau de suivi.
+function _detachTaskCand(t) {
+  if (!t.candId) return;
+  const old = (state.work.candidatures || []).find(c => c.id === t.candId);
+  if (old && old.taskId === t.id) old.taskId = null;
+  t.candId = null;
 }
-// Lie automatiquement une tâche du projet Candidatures à une nouvelle carte de suivi (kanban
-// "À préparer"), sans écraser un lien déjà existant. La carte reste ensuite éditable indépendamment
-// (renommer l'institution, le type, ajouter des notes…) — seul le statut se met à jour tout seul
-// quand la tâche est cochée comme faite (voir _promptCandStatusAfterTaskDone).
+// Lie automatiquement une tâche du projet Candidatures à une carte de suivi (kanban
+// "À préparer"), nommée d'après la tâche. Ne fait rien si elle est déjà liée à une carte qui
+// existe encore ; en recrée une si l'ancienne a été supprimée entretemps (ex. depuis le kanban).
 function _autoLinkCandidatureForTask(task) {
-  if (!task || task.projectId !== "p-seed-candidatures" || task.candId) return;
+  if (!task || task.projectId !== "p-seed-candidatures") return;
   if (!state.work.candidatures) state.work.candidatures = [];
+  if (task.candId && state.work.candidatures.some(c => c.id === task.candId)) return;
   const cand = {
     id: "c" + Date.now() + Math.random().toString(36).slice(2, 6),
     type: (state.candidatureTypes || [])[0] || "",
@@ -10252,12 +10217,8 @@ function openTaskEditModal(id) {
   }
   pSel.innerHTML = pHtml;
   pSel.value = t.projectId || "";
-  // Pour une tâche toute neuve créée directement dans le projet Candidatures : présélectionne
-  // "créer une nouvelle candidature" (comportement pratique par défaut), sinon garde le lien
-  // existant de la tâche, ou "aucune" si elle n'en a pas.
-  const defaultCandLink = t.candId || (_pendingNewTaskId === id && t.projectId === "p-seed-candidatures" ? "__new__" : "");
-  _refreshTaskCandLinkUI(defaultCandLink);
   document.getElementById("taskEditNotes").value = t.notes || "";
+  _refreshTaskCandBlock(); // affiche/masque le bloc Candidature et pré-remplit si déjà liée
   const pct = taskProgress(t);
   document.getElementById("taskEditProgress").value = pct;
   updateModalPreview(pct);
@@ -10296,12 +10257,12 @@ function saveTaskEdit() {
     t.progress = Number(document.getElementById("taskEditProgress").value) || 0;
   }
   delete t.category;
-  // Applique le choix fait dans "🔗 Candidature liée" (visible seulement si projet = Candidatures) ;
-  // si le projet vient d'être changé hors Candidatures alors qu'un lien existait, on le détache.
+  // Une tâche du projet Candidatures a toujours sa carte de suivi (créée ici si besoin) ; si le
+  // projet vient d'être changé hors Candidatures alors qu'un lien existait, on le détache proprement.
   if (t.projectId === "p-seed-candidatures") {
-    _setTaskCandLink(t, document.getElementById("taskEditCandLink").value);
+    _autoLinkCandidatureForTask(t);
   } else if (t.candId) {
-    _setTaskCandLink(t, "");
+    _detachTaskCand(t);
   }
   // Nom/Institution, Notes et Date limite : partagés avec la candidature liée (une seule
   // information, éditable des deux côtés) plutôt que dupliqués. Sans lien, ils restent propres à
