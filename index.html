@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1303</title>
+<title>Mon Tableau de Vie 🌿 · v1304</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10235,6 +10235,19 @@ function deleteTaskFromModal() {
 
 /* ========= WORK :: CANDIDATURES (KANBAN) ========= */
 function renderCandidatures() {
+  // Rattrapage silencieux : toute tâche du projet Candidatures sans carte valide (jamais
+  // rouverte/enregistrée depuis sa création, ou carte supprimée entretemps) en reçoit une à
+  // chaque affichage de cet onglet — évite l'incompréhension "tâche codée Candidatures mais
+  // absente du tableau de suivi" tant qu'on n'a pas rouvert la tâche manuellement.
+  const _candProj = state.work.postdocProjects.find(p => p.id === "p-seed-candidatures" || p.name === "Candidatures");
+  if (_candProj) {
+    let _changed = false;
+    (state.work.postdocTasks || []).forEach(t => {
+      const hasValidCand = t.candId && (state.work.candidatures || []).some(c => c.id === t.candId);
+      if (t.projectId === _candProj.id && !hasValidCand) { _autoLinkCandidatureForTask(t); _changed = true; }
+    });
+    if (_changed) saveState();
+  }
   renderCandidaturesProjectCard();
   // --- Tâches liées aux candidatures ---
   const candTasksEl = document.getElementById("candTasksCard");
