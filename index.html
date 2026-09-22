@@ -13,7 +13,7 @@
     location.replace(location.href + (location.search ? '&' : '?') + '_cb=' + Date.now());
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1292</title>
+<title>Mon Tableau de Vie 🌿 · v1293</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5086,6 +5086,19 @@
   </div>
 </div>
 
+<!-- Modal : statut de la candidature après une tâche cochée -->
+<div class="modal-bg" id="candStatusPickModal" onclick="if(event.target===this&&_modalMouseDownTarget===this)_closeCandStatusPick()">
+  <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
+    <h3 style="margin:0 0 6px;font-size:17px;">📋 Où en est <span id="candStatusPickInstitution">cette candidature</span> ?</h3>
+    <p class="modal-hint">Tâche terminée — mets à jour le statut de la candidature liée, ou laisse tel quel.</p>
+    <div id="candStatusPickList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div class="actions" style="margin-top:14px;">
+      <div class="spacer"></div>
+      <button class="secondary" onclick="_closeCandStatusPick()">Laisser tel quel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Manual Event Modal -->
 <div class="modal-bg" id="manualEventModal">
   <div class="modal" style="max-width:460px;">
@@ -8045,7 +8058,10 @@ function _workProjTabClick(btn, sub) {
 
 function _toggleTaskFromProjTab(taskId, done) {
   const t = state.work.postdocTasks.find(x => x.id === taskId);
-  if (t) { t.done = done; saveState(); renderTasks(); renderWorkProjectTabs(); }
+  if (t) {
+    t.done = done; saveState(); renderTasks(); renderWorkProjectTabs();
+    if (t.done && t.candId) _promptCandStatusAfterTaskDone(t.candId);
+  }
 }
 function _addTaskFromProjTab(projectId) {
   document.getElementById("workProjTaskProjectId").value = projectId;
@@ -8059,8 +8075,10 @@ function _saveWorkProjTask() {
   const name = document.getElementById("workProjTaskName").value.trim();
   if (!name) return;
   const id = "t" + Date.now();
-  state.work.postdocTasks.unshift({ id, name, projectId, priority: "medium", done: false, createdAt: new Date().toISOString() });
-  saveState(); _closeWorkProjTaskModal(); renderTasks(); renderWorkProjectTabs();
+  const newT = { id, name, projectId, priority: "medium", done: false, createdAt: new Date().toISOString() };
+  state.work.postdocTasks.unshift(newT);
+  _autoLinkCandidatureForTask(newT);
+  saveState(); _closeWorkProjTaskModal(); renderTasks(); renderWorkProjectTabs(); renderCandidatures();
   // Ouvre directement la fenêtre complète (priorité, deadline, notes, jalons…) — mêmes possibilités
   // que depuis l'onglet Tâches, plutôt qu'un 2e formulaire à maintenir en double.
   openTaskEditModal(id);
@@ -9747,13 +9765,67 @@ function getModalKind() {
   const eBtn = document.getElementById("kindToggleEvent");
   return (eBtn && eBtn.classList.contains("active")) ? "event" : "task";
 }
+// Lie automatiquement une tâche du projet Candidatures à une nouvelle carte de suivi (kanban
+// "À préparer"), sans écraser un lien déjà existant. La carte reste ensuite éditable indépendamment
+// (renommer l'institution, le type, ajouter des notes…) — seul le statut se met à jour tout seul
+// quand la tâche est cochée comme faite (voir _promptCandStatusAfterTaskDone).
+function _autoLinkCandidatureForTask(task) {
+  if (!task || task.projectId !== "p-seed-candidatures" || task.candId) return;
+  if (!state.work.candidatures) state.work.candidatures = [];
+  const cand = {
+    id: "c" + Date.now() + Math.random().toString(36).slice(2, 6),
+    type: (state.candidatureTypes || [])[0] || "",
+    status: CAND_STATUSES[0],
+    institution: task.name || "",
+    deadline: task.deadline || "",
+    notes: "",
+    taskId: task.id,
+    createdAt: new Date().toISOString(),
+  };
+  state.work.candidatures.push(cand);
+  task.candId = cand.id;
+}
+// Après avoir coché une tâche liée à une candidature comme faite : demande où en est la
+// candidature (elle ne passe jamais de statut toute seule sans confirmation).
+let _candStatusPickId = null;
+function _promptCandStatusAfterTaskDone(candId) {
+  const cand = (state.work.candidatures || []).find(c => c.id === candId);
+  if (!cand) return;
+  _candStatusPickId = candId;
+  document.getElementById("candStatusPickInstitution").textContent = cand.institution || "cette candidature";
+  document.getElementById("candStatusPickList").innerHTML = CAND_STATUSES.map(s => `
+    <button onclick="_pickCandStatus('${escapeHtml(s).replace(/'/g, "&#39;")}')" style="
+      text-align:left;padding:10px 14px;border-radius:10px;
+      border:1.5px solid ${s === cand.status ? "var(--lavender)" : "var(--line)"};
+      background:${s === cand.status ? "var(--lavender-soft)" : "var(--card)"};
+      cursor:pointer;font-family:inherit;font-size:14px;color:var(--ink);font-weight:${s === cand.status ? "700" : "400"};width:100%;">
+      ${escapeHtml(s)}${s === cand.status ? " · statut actuel" : ""}
+    </button>`).join("");
+  document.getElementById("candStatusPickModal").classList.add("open");
+}
+function _pickCandStatus(status) {
+  const cand = (state.work.candidatures || []).find(c => c.id === _candStatusPickId);
+  if (cand) {
+    cand.status = status;
+    saveState();
+    renderCandidatures();
+    showToast(`📋 Candidature marquée « ${status} »`);
+  }
+  _closeCandStatusPick();
+}
+function _closeCandStatusPick() {
+  document.getElementById("candStatusPickModal").classList.remove("open");
+  _candStatusPickId = null;
+}
 function addTask() {
   const name = document.getElementById("newTaskName").value.trim();
   if (!name) return;
   const projectId = document.getElementById("newTaskProject").value;
   const priority = document.getElementById("newTaskPriority").value;
   const deadline = document.getElementById("newTaskDeadline").value;
-  state.work.postdocTasks.unshift({ id: "t" + Date.now(), name, projectId, priority, deadline, kind: _newTaskKind, done: false, createdAt: new Date().toISOString() });
+  const newT = { id: "t" + Date.now(), name, projectId, priority, deadline, kind: _newTaskKind, done: false, createdAt: new Date().toISOString() };
+  state.work.postdocTasks.unshift(newT);
+  _autoLinkCandidatureForTask(newT);
   document.getElementById("newTaskName").value = "";
   document.getElementById("newTaskDeadline").value = "";
   setNewTaskKind("task"); // reset à "tâche" après ajout
@@ -9761,6 +9833,7 @@ function addTask() {
   renderTasks();
   renderTaskBilan();
   renderProjects();
+  renderCandidatures();
 }
 function toggleTask(id) {
   const t = state.work.postdocTasks.find(x => x.id === id);
@@ -9773,6 +9846,7 @@ function toggleTask(id) {
     renderProjects();
     renderCandidatures(); // aussi pour les tâches candidatures
     updateWorkTabBadges();
+    if (t.done && t.candId) _promptCandStatusAfterTaskDone(t.candId);
   }
 }
 function toggleCandTask(id, checked) {
@@ -9783,6 +9857,7 @@ function toggleCandTask(id, checked) {
     saveState();
     renderCandidatures();
     renderTasks();
+    if (t.done && t.candId) _promptCandStatusAfterTaskDone(t.candId);
   }
 }
 
@@ -10110,6 +10185,7 @@ function saveTaskEdit() {
     t.progress = Number(document.getElementById("taskEditProgress").value) || 0;
   }
   delete t.category;
+  _autoLinkCandidatureForTask(t); // au cas où le projet vient d'être changé vers Candidatures
   saveState();
   closeTaskEditModal();
   renderTasks();
