@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1311</title>
+<title>Mon Tableau de Vie 🌿 · v1312</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13915,7 +13915,7 @@ function renderCustomSymptomsSante() {
   if (!_symptomNbRestored) {
     _symptomNbRestored = true;
     if (state.symptomNbPref !== undefined && state.symptomNbPref !== null && state.symptomNbPref !== _symptomNb) {
-      setSymptomNb(state.symptomNbPref);
+      setSymptomNb(state.symptomNbPref, true); // true = restauration d'affichage, pas une vraie modif (voir setSkincareNb)
       return;
     }
   }
@@ -13997,7 +13997,7 @@ function renderSkincare() {
   if (!_skincareNbRestored) {
     _skincareNbRestored = true;
     if (state.skincareNbPref !== undefined && state.skincareNbPref !== null && state.skincareNbPref !== _skincareNb) {
-      setSkincareNb(state.skincareNbPref);
+      setSkincareNb(state.skincareNbPref, true); // true = restauration d'affichage, pas une vraie modif
       return;
     }
   }
