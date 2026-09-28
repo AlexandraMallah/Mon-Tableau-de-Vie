@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1313</title>
+<title>Mon Tableau de Vie 🌿 · v1314</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5786,6 +5786,19 @@ function migrate(s) {
   if (s.mainSalaryCategory === undefined) {
     const hasPostdocSalary = (s.transactions || []).some(t => t.type === "income" && t.category === "Salaire (postdoc)");
     s.mainSalaryCategory = hasPostdocSalary ? "Salaire (postdoc)" : null;
+  }
+  // Migration corrective : loadState() fait `{...DEFAULT_STATE, ...JSON.parse(raw)}` AVANT
+  // migrate() — donc pour tout compte déjà existant avant l'ajout de mainSalaryCategory (absent
+  // de son JSON sauvegardé), le spread de DEFAULT_STATE lui donnait déjà la valeur null, jamais
+  // `undefined`. Le garde-fou ci-dessus (`=== undefined`) ne s'est donc JAMAIS déclenché pour ces
+  // comptes : ils sont restés en permanence sur le calcul calendaire au 26 (qui déborde avec le
+  // temps, ex. "Jour 34/31"), sans jamais utiliser la vraie date des salaires. Si "Salaire
+  // (postdoc)" est en fait utilisée comme revenu récurrent (2 occurrences ou plus), on la marque
+  // maintenant comme salaire principal.
+  if (!s._fixedMainSalaryCatV1314 && s.mainSalaryCategory === null) {
+    const postdocSalaryCount = (s.transactions || []).filter(t => t.type === "income" && t.category === "Salaire (postdoc)").length;
+    if (postdocSalaryCount >= 2) s.mainSalaryCategory = "Salaire (postdoc)";
+    s._fixedMainSalaryCatV1314 = true;
   }
   s.savingsCategories = s.savingsCategories || DEFAULT_STATE.savingsCategories;
   s.candidatureTypes = s.candidatureTypes || DEFAULT_STATE.candidatureTypes;
