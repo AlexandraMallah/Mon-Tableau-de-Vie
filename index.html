@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1314</title>
+<title>Mon Tableau de Vie 🌿 · v1315</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16287,7 +16287,10 @@ function _salaryPeriods() {
     .map(tx => new Date(tx.date))
     .sort((a, b) => a - b) : [];
   const periods = [];
-  // Périodes réelles basées sur les salaires — frontière = début du jour du salaire
+  // Périodes réelles basées sur les salaires — frontière = début du jour du salaire. Le champ
+  // "date" n'a que la granularité du jour (input type=date, sans heure) : une dépense saisie le
+  // même jour que le salaire (avant ou après) tombe donc toujours dans le NOUVEAU mois qui
+  // démarre ce jour-là, quelle que soit l'heure réelle de saisie de l'une ou l'autre.
   for (let i = 0; i < salaires.length; i++) {
     const start = new Date(salaires[i]); start.setHours(0, 0, 0, 0);
     const endRaw = i + 1 < salaires.length ? new Date(salaires[i + 1]) : now;
@@ -16295,9 +16298,18 @@ function _salaryPeriods() {
     const current = i === salaires.length - 1;
     periods.push({ start, end, label: start, current });
   }
-  // Compléter avec des périodes calendaires (au 26) pour avoir 12 mois au total
-  const firstSalary = salaires.length ? salaires[0] : now;
-  let refDate = new Date(firstSalary);
+  // Sans salaire connu (mainSalaryCategory non choisie) : période calendaire au 26. La période la
+  // plus récente doit démarrer au bon 26 — celui de CE mois si on l'a déjà dépassé, sinon celui du
+  // mois précédent — sinon elle reste bloquée sur le cycle d'avant une fois le 26 dépassé et
+  // déborde avec le temps (ex. "Jour 34/31 · 0 jours restants" en fin de cycle).
+  if (!salaires.length) {
+    const anchorMonth = now.getDate() >= 26 ? now.getMonth() : now.getMonth() - 1;
+    const anchorStart = new Date(now.getFullYear(), anchorMonth, 26);
+    anchorStart.setHours(0, 0, 0, 0);
+    periods.push({ start: anchorStart, end: now, label: anchorStart, current: true });
+  }
+  // Complète avec des périodes calendaires (au 26) pour avoir 12 mois au total (historique/nav).
+  let refDate = salaires.length ? new Date(salaires[0]) : periods[0].start;
   while (periods.length < 12) {
     // Recule d'une période calendaire (26 du mois précédent)
     const prevEnd = new Date(refDate);
