@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1315</title>
+<title>Mon Tableau de Vie 🌿 · v1316</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17335,11 +17335,20 @@ function renderSavingsChart() {
   const incomeData = periods.map(({ start, end }) =>
     state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "income"; }).reduce((s, t) => s + t.amount, 0)
   );
+  // Revenus réellement gagnés (salaire, Airbnb, primes, intérêts…) : hors remboursements, comme le
+  // reste de l'app (voir REIMB_CATS) — affichés en barres larges derrière celles de l'épargne.
+  const _EARN_EXCL = ["Remboursement", "Surplus remboursement mission"];
+  const earnedData = periods.map(({ start, end }) =>
+    state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "income" && !t.partialReimbIncome && !_EARN_EXCL.includes(t.category); }).reduce((s, t) => s + t.amount, 0)
+  );
   const _isSavS = document.body.classList.contains("t-serieux");
   const _isSavM = false;
   savingsChart = new Chart(document.getElementById("savingsChart"), {
     type: "bar",
-    data: { labels, datasets: [{ label: "Mis de côté", data, backgroundColor: _isSavS?"#8ab4d4":_isSavM?"#666":"#c9b6f0", borderRadius: 8 }] },
+    data: { labels, datasets: [
+      { label: "Mis de côté", data, backgroundColor: _isSavS?"#8ab4d4":_isSavM?"#666":"#c9b6f0", borderRadius: 8, order: 1, grouped: false, barPercentage: 0.8, categoryPercentage: 0.9 },
+      { label: "Revenus gagnés", data: earnedData, backgroundColor: _isSavS?"#e2e9f0":"#d3efe2", borderRadius: 8, order: 2, grouped: false, barPercentage: 1.0, categoryPercentage: 0.98 },
+    ] },
     options: {
       ...baseChartOpts(),
       onClick: (_, els) => {
@@ -17357,12 +17366,13 @@ function renderSavingsChart() {
       plugins: {
         ...baseChartOpts().plugins,
         legend: { display: false },
-        tooltip: { ...baseChartOpts().plugins.tooltip, callbacks: {
+        tooltip: { ...baseChartOpts().plugins.tooltip, filter: item => item.datasetIndex === 0, callbacks: {
           label: ctx => {
             const saved = ctx.parsed.y;
             const income = incomeData[ctx.dataIndex];
+            const earned = earnedData[ctx.dataIndex];
             const pct = income > 0 ? Math.round((saved / income) * 100) : 0;
-            return [`${saved.toFixed(0)} € mis de côté`, income > 0 ? `${pct}% des revenus (${income.toFixed(0)} €)` : "Revenus non enregistrés"];
+            return [`${saved.toFixed(0)} € mis de côté`, income > 0 ? `${pct}% des revenus (${income.toFixed(0)} €)` : "Revenus non enregistrés", `${earned.toFixed(0)} € gagnés (hors remboursements)`];
           },
           footer: () => "Cliquer pour le détail",
         }},
