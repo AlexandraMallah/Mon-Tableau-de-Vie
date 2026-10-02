@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1319</title>
+<title>Mon Tableau de Vie 🌿 · v1320</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17394,7 +17394,17 @@ function renderSavingsChart() {
         datalabels: false,
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#8a8499", autoSkip: true, maxTicksLimit: 6, maxRotation: 0 } },
+        x: { grid: { display: false }, ticks: { color: "#8a8499", autoSkip: false, maxRotation: 0,
+          font: c => ({ size: ((c.chart.width - 55) / periods.length) < 40 ? 9 : 11 }),
+          // Un nom de mois sous chaque paire de barres : en toutes lettres si la place le permet,
+          // sinon abrégé ; l'année s'ajoute sous le premier mois et sous chaque janvier.
+          callback: function(value, index) {
+            const d = new Date(periods[index].start.getFullYear(), periods[index].start.getMonth() + 1, 1);
+            const slot = (this.chart.width - 55) / periods.length; // 55 ≈ axe des € (chartArea pas encore connue ici)
+            let m = d.toLocaleDateString("fr-FR", { month: slot > 78 ? "long" : "short" });
+            if (slot < 40) m = d.getMonth() === 5 ? "jun" : d.getMonth() === 6 ? "jul" : m.replace(".", "").slice(0, 3); // téléphone : 3 lettres (juin/juillet distingués)
+            return (index === 0 || d.getMonth() === 0) ? [m, "'" + String(d.getFullYear()).slice(2)] : m;
+          } } },
         y: { grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", callback: v => v + " €" }, beginAtZero: true },
       },
       animation: { onComplete: function() {
