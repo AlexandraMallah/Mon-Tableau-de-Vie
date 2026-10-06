@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1328</title>
+<title>Mon Tableau de Vie 🌿 · v1329</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -899,11 +899,13 @@
   /* Légende HTML des anneaux "par catégorie" (sous chaque donut → tailles égales) */
   /* Barre d'outils des graphiques par catégorie : une seule ligne compacte, commandes groupées */
   .cat-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 0 2px; }
-  .cat-toolbar-right { margin-left: auto; }
+  @media (max-width: 640px) { .seg-lbl { display: none; } }
   .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; background: #fff; overflow: hidden; }
   .seg button { border: 0; background: transparent; font: inherit; font-size: 12px; line-height: 1.2; padding: 5px 12px; cursor: pointer; color: var(--ink-soft); white-space: nowrap; }
   .seg button + button { border-left: 1px solid var(--line); }
   .seg button.on { background: var(--lavender-soft); color: var(--ink); font-weight: 700; }
+  /* Une seule ligne fixe (texte complet au survol) : sinon sa présence/absence décale les graphiques d'un mois à l'autre. En classe, pas en style inline : la règle mobile anti-débordement force le retour à la ligne sur les style="text-overflow". */
+  .cat-note { font-size: 11px; color: var(--ink-softer); margin-top: 4px; height: 16px; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cat-chk { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-soft); cursor: pointer; white-space: nowrap; }
   .cat-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px 10px; margin-top: 8px; }
   .cat-legend-item { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-soft); cursor: pointer; }
@@ -3441,16 +3443,16 @@
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
         <button class="day-nav-btn" onclick="moneyCatMonthNav(-1)" title="Mois précédent">◀</button>
         <h2 id="moneyCatTitle" style="margin:0;flex:1;">Par catégorie · Ce mois</h2>
+        <div class="seg" role="group" aria-label="Affichage des graphiques">
+          <button id="catStyleBtnDonut" onclick="setCatChartStyle('donut')" title="Graphiques ronds">◔<span class="seg-lbl"> Ronds</span></button>
+          <button id="catStyleBtnBar" onclick="setCatChartStyle('bar')" title="Graphiques en barres">▮<span class="seg-lbl"> Barres</span></button>
+        </div>
         <button class="day-nav-btn" id="moneyCatNext" onclick="moneyCatMonthNav(1)" title="Mois suivant" disabled>▶</button>
       </div>
       <div class="cat-toolbar">
         <label class="cat-chk" title="Exclut les charges fixes 🏠 et les dépenses exceptionnelles lissées ✨"><input type="checkbox" id="catHorsFixes" onchange="setCatHorsFixes(this.checked)"> Hors charges fixes &amp; exceptionnelles</label>
-        <div class="seg cat-toolbar-right" role="group" aria-label="Affichage">
-          <button id="catStyleBtnDonut" onclick="setCatChartStyle('donut')">◔ Ronds</button>
-          <button id="catStyleBtnBar" onclick="setCatChartStyle('bar')">▮ Barres</button>
-        </div>
       </div>
-      <div id="catNatureNote" style="font-size:11px;color:var(--ink-softer);margin-top:4px;"></div>
+      <div id="catNatureNote" class="cat-note"></div>
       <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:8px;align-items:start;">
         <div>
           <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses · tout <span id="catChartDepTotal" style="color:#c75b4d;"></span></p>
@@ -17844,9 +17846,11 @@ function renderMoneyCatChart() {
     if (d >= start && d < end && _isChartExpense(tx, _catHorsFixes()) && !_catNatureOf(tx.category)) un[tx.category] = (un[tx.category] || 0) + txNetAmount(tx);
   }
   const parts = Object.entries(un).sort((a, b) => b[1] - a[1]).map(([c, x]) => `${c} (${x.toFixed(0)}\u00a0€)`);
-  noteEl.textContent = !Object.keys(state.categoryNature || {}).length
+  const noteTxt = !Object.keys(state.categoryNature || {}).length
     ? "⚪ Classe tes catégories en « essentiel » ou « plaisir » (✏️ Éditer → Gérer les catégories) pour remplir ces deux graphiques."
     : parts.length ? "⚪ Non classées, absentes d'Essentiel et de Plaisir : " + parts.join(", ") : "";
+  noteEl.textContent = noteTxt;
+  noteEl.title = noteTxt; // ligne fixe (une seule ligne, pour ne pas décaler les graphiques d'un mois à l'autre) : texte complet au survol
 }
 
 // Fenêtre de détail d'une catégorie : mêmes transactions (et mêmes montants nets) que la part du graphique cliquée.
