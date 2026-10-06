@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1323</title>
+<title>Mon Tableau de Vie 🌿 · v1324</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -897,6 +897,14 @@
   .chart-wrap.tall { height: 280px; }
 
   /* Légende HTML des anneaux "par catégorie" (sous chaque donut → tailles égales) */
+  /* Barre d'outils des graphiques par catégorie : une seule ligne compacte, commandes groupées */
+  .cat-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 0 2px; }
+  .cat-toolbar-right { margin-left: auto; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; background: #fff; overflow: hidden; }
+  .seg button { border: 0; background: transparent; font: inherit; font-size: 12px; line-height: 1.2; padding: 5px 12px; cursor: pointer; color: var(--ink-soft); white-space: nowrap; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button.on { background: var(--lavender-soft); color: var(--ink); font-weight: 700; }
+  .cat-chk { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-soft); cursor: pointer; white-space: nowrap; }
   .cat-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px 10px; margin-top: 8px; }
   .cat-legend-item { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-soft); cursor: pointer; }
   .cat-legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
@@ -3435,24 +3443,29 @@
         <h2 id="moneyCatTitle" style="margin:0;flex:1;">Par catégorie · Ce mois</h2>
         <button class="day-nav-btn" id="moneyCatNext" onclick="moneyCatMonthNav(1)" title="Mois suivant" disabled>▶</button>
       </div>
-      <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:6px;">
-        <span style="font-size:11px;color:var(--ink-softer);">Affichage :</span>
-        <button class="btn-soft" id="catStyleBtnDonut" onclick="setCatChartStyle('donut')" style="padding:4px 10px;font-size:12px;">◔ Ronds</button>
-        <button class="btn-soft" id="catStyleBtnBar" onclick="setCatChartStyle('bar')" style="padding:4px 10px;font-size:12px;">▮ Barres</button>
+      <div class="cat-toolbar">
+        <label class="cat-chk" title="Exclut les charges fixes 🏠 et les dépenses exceptionnelles lissées ✨"><input type="checkbox" id="catHorsFixes" onchange="setCatHorsFixes(this.checked)"> Hors charges fixes &amp; exceptionnelles</label>
+        <div class="seg cat-toolbar-right" role="group" aria-label="Affichage">
+          <button id="catStyleBtnDonut" onclick="setCatChartStyle('donut')">◔ Ronds</button>
+          <button id="catStyleBtnBar" onclick="setCatChartStyle('bar')">▮ Barres</button>
+        </div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px;margin-top:6px;">
-        <span style="font-size:11px;color:var(--ink-softer);">Dépenses :</span>
-        <button class="btn-soft" id="catNatBtn-all" onclick="setCatNature('all')" style="padding:4px 10px;font-size:12px;">Tout</button>
-        <button class="btn-soft" id="catNatBtn-essentiel" onclick="setCatNature('essentiel')" style="padding:4px 10px;font-size:12px;">✅ Essentiel</button>
-        <button class="btn-soft" id="catNatBtn-plaisir" onclick="setCatNature('plaisir')" style="padding:4px 10px;font-size:12px;">🎉 Plaisir</button>
-        <label style="font-size:12px;color:var(--ink-soft);display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Exclut les charges fixes 🏠 et les dépenses exceptionnelles lissées ✨"><input type="checkbox" id="catHorsFixes" onchange="setCatHorsFixes(this.checked)"> hors charges fixes &amp; exceptionnelles</label>
-      </div>
-      <div id="catNatureNote" style="font-size:11px;color:var(--ink-softer);text-align:right;margin-top:4px;"></div>
+      <div id="catNatureNote" style="font-size:11px;color:var(--ink-softer);margin-top:4px;"></div>
       <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:8px;align-items:start;">
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;"><span id="catChartDepLabel">− Dépenses</span> <span id="catChartDepTotal" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses · tout <span id="catChartDepTotal" style="color:#c75b4d;"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatChart"></canvas></div>
           <div id="moneyCatLegend" class="cat-legend"></div>
+        </div>
+        <div>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">✅ Essentielles <span id="catChartDepTotalEss" style="color:#c75b4d;"></span></p>
+          <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatChartEss"></canvas></div>
+          <div id="moneyCatLegendEss" class="cat-legend"></div>
+        </div>
+        <div>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🎉 Plaisir <span id="catChartDepTotalFun" style="color:#c75b4d;"></span></p>
+          <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatChartFun"></canvas></div>
+          <div id="moneyCatLegendFun" class="cat-legend"></div>
         </div>
         <div>
           <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">+ Revenus <span id="catChartIncTotal" style="color:#4d9c7e;"></span></p>
@@ -3465,9 +3478,19 @@
       <summary style="margin:0;font-size:16px;font-weight:600;cursor:pointer;color:var(--ink);" id="moneyCatAllTitle">Par catégorie · Depuis le 26 mai 2026</summary>
       <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:14px;align-items:start;">
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;"><span id="catAllChartDepLabel">− Dépenses</span> <span id="catAllChartDepTotal" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses · tout <span id="catAllChartDepTotal" style="color:#c75b4d;"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllChart"></canvas></div>
           <div id="moneyCatAllLegend" class="cat-legend"></div>
+        </div>
+        <div>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">✅ Essentielles <span id="catAllChartDepTotalEss" style="color:#c75b4d;"></span></p>
+          <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllChartEss"></canvas></div>
+          <div id="moneyCatAllLegendEss" class="cat-legend"></div>
+        </div>
+        <div>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🎉 Plaisir <span id="catAllChartDepTotalFun" style="color:#c75b4d;"></span></p>
+          <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllChartFun"></canvas></div>
+          <div id="moneyCatAllLegendFun" class="cat-legend"></div>
         </div>
         <div>
           <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">+ Revenus <span id="catAllChartIncTotal" style="color:#4d9c7e;"></span></p>
@@ -16754,8 +16777,8 @@ function renderTxList() {
       </div>`;
   }).join("");
 }
-let moneyFlowChart, moneyCatChart, moneyIncomeCatChart, savingsChart, dailyExpenseChart;
-let moneyCatAllChart, moneyIncomeAllChart;
+let moneyFlowChart, moneyIncomeCatChart, savingsChart, dailyExpenseChart;
+let moneyIncomeAllChart;
 function renderDailyExpenseChart() {
   const canvas = document.getElementById("dailyExpenseChart");
   if (!canvas) return;
@@ -17637,36 +17660,17 @@ function _catLegendHtml(entries, type = "expense", allTime = false, courantes = 
     `<span class="cat-legend-item" onclick="${fn}('${(cat||'').replace(/'/g,"\\'")}','${type}',${courantes})"><span class="cat-legend-dot" style="background:${catColor(cat)};"></span>${escapeHtml(cat)}</span>`
   ).join("");
 }
-// Filtre des graphiques de dépenses : nature (tout / essentiel / plaisir, posée PAR CATÉGORIE dans
-// « Gérer les catégories ») + case « hors charges fixes & exceptionnelles » (posées par dépense).
-// Deux axes indépendants ; préférence propre à l'appareil (localStorage).
-function _catNature() { try { const v = localStorage.getItem("catNature"); return v === "essentiel" || v === "plaisir" ? v : "all"; } catch (e) { return "all"; } }
+// Graphiques de dépenses : trois côte à côte — Tout / Essentiel / Plaisir. La nature est posée PAR
+// CATÉGORIE dans « Gérer les catégories » ; la case « hors charges fixes & exceptionnelles » (posées
+// par dépense) s'applique aux trois. Préférence de la case propre à l'appareil (localStorage).
 function _catHorsFixes() { try { return localStorage.getItem("catHorsFixes") === "1"; } catch (e) { return false; } }
 function _catNatureOf(cat) { return (state.categoryNature || {})[cat] || ""; }
-function _catExpenseIn(tx) {
-  if (!_isChartExpense(tx, _catHorsFixes())) return false;
-  const n = _catNature();
-  return n === "all" || _catNatureOf(tx.category) === n;
-}
-function _catDepLabel() {
-  const n = _catNature();
-  return "− Dépenses" + (n === "essentiel" ? " essentielles" : n === "plaisir" ? " plaisir" : "") + (_catHorsFixes() ? " · hors fixes" : "");
-}
-function _syncCatNatureControls() {
-  const cur = _catNature();
-  ["all", "essentiel", "plaisir"].forEach(k => {
-    const b = document.getElementById("catNatBtn-" + k); if (!b) return;
-    const on = k === cur;
-    b.style.fontWeight = on ? "700" : "400"; b.style.background = on ? "var(--lavender-soft)" : ""; b.style.borderColor = on ? "var(--lavender)" : "";
-  });
-  const cb = document.getElementById("catHorsFixes"); if (cb) cb.checked = _catHorsFixes();
-}
+function _syncCatHorsFixes() { const cb = document.getElementById("catHorsFixes"); if (cb) cb.checked = _catHorsFixes(); }
 function _refreshCatExpenseCharts() {
   renderMoneyCatChart();
   const d = document.getElementById("moneyCatAllCard");
   if (d && d.open) renderMoneyCatAllChart();
 }
-function setCatNature(n) { try { localStorage.setItem("catNature", n); } catch (e) {} _refreshCatExpenseCharts(); }
 function setCatHorsFixes(on) { try { localStorage.setItem("catHorsFixes", on ? "1" : "0"); } catch (e) {} _refreshCatExpenseCharts(); }
 // Pastille de « Gérer les catégories » : non classé → essentiel → plaisir → non classé
 function _cycleCatNature(c) {
@@ -17680,10 +17684,8 @@ function _cycleCatNature(c) {
 function _catStyleIsBar() { try { return localStorage.getItem("catChartStyle") === "bar"; } catch (e) { return false; } }
 function _syncCatStyleButtons() {
   const bar = _catStyleIsBar();
-  [["catStyleBtnDonut", !bar], ["catStyleBtnBar", bar]].forEach(([id, on]) => {
-    const b = document.getElementById(id);
-    if (b) { b.style.fontWeight = on ? "700" : "400"; b.style.background = on ? "var(--lavender-soft)" : ""; b.style.borderColor = on ? "var(--lavender)" : ""; }
-  });
+  document.getElementById("catStyleBtnDonut")?.classList.toggle("on", !bar);
+  document.getElementById("catStyleBtnBar")?.classList.toggle("on", bar);
 }
 function setCatChartStyle(style) {
   try { localStorage.setItem("catChartStyle", style); } catch (e) {}
@@ -17726,73 +17728,56 @@ function _catBarChart(wrap, canvasId, entries, onPick, legendId) {
     plugins: [ChartDataLabels],
   });
 }
-function renderMoneyCatChart() {
-  try { _updateMoneyCatTitle(); _syncCatStyleButtons(); _syncCatNatureControls(); } catch (e) {}
-  if (moneyCatChart) moneyCatChart.destroy();
-  const wrap = document.getElementById("moneyCatChart").parentElement;
-  wrap.innerHTML = '<canvas id="moneyCatChart"></canvas>';
+const _CAT_VARIANTS = [{ key: "", nature: "all" }, { key: "Ess", nature: "essentiel" }, { key: "Fun", nature: "plaisir" }];
+const _catExpenseCharts = {};
+// Un graphique de dépenses (rond ou barres) pour une variante (tout / essentiel / plaisir),
+// sur le mois affiché ou "depuis toujours".
+function _renderCatExpenseChart(v, allTime) {
+  const canvasId = (allTime ? "moneyCatAllChart" : "moneyCatChart") + v.key;
+  const legendId = (allTime ? "moneyCatAllLegend" : "moneyCatLegend") + v.key;
+  const totalId = (allTime ? "catAllChartDepTotal" : "catChartDepTotal") + v.key;
+  if (_catExpenseCharts[canvasId]) { _catExpenseCharts[canvasId].destroy(); delete _catExpenseCharts[canvasId]; }
+  const wrap = document.getElementById(canvasId)?.parentElement;
+  if (!wrap) return;
+  wrap.innerHTML = '<canvas id="' + canvasId + '"></canvas>';
   wrap.style.height = "160px";
-
-  const [start, end] = _moneyCatRange();
+  const [start, end] = allTime ? _allTimeRange() : _moneyCatRange();
+  const hf = _catHorsFixes();
   const totals = {};
   for (const tx of state.transactions) {
     const d = new Date(tx.date);
-    if (d >= start && d < end && _catExpenseIn(tx)) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
+    if (d >= start && (allTime ? d <= end : d < end) && _isChartExpense(tx, hf) && (v.nature === "all" || _catNatureOf(tx.category) === v.nature))
+      totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
   }
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-  const depTotal = entries.reduce((s,[,v]) => s+v, 0);
-  const depEl = document.getElementById("catChartDepTotal");
-  if (depEl) depEl.textContent = depTotal > 0 ? ": " +depTotal.toFixed(0) + " €" : "";
-  const lg = document.getElementById("moneyCatLegend");
-  if (lg) lg.innerHTML = _catLegendHtml(entries, "expense", false, _catHorsFixes());
-  const labEl = document.getElementById("catChartDepLabel"); if (labEl) labEl.textContent = _catDepLabel();
-  // Catégories non classées : absentes des filtres Essentiel / Plaisir — on le dit plutôt que de les perdre.
-  const noteEl = document.getElementById("catNatureNote");
-  if (noteEl) {
-    let note = "";
-    if (_catNature() !== "all") {
-      const un = {};
-      for (const tx of state.transactions) {
-        const d = new Date(tx.date);
-        if (d >= start && d < end && _isChartExpense(tx, _catHorsFixes()) && !_catNatureOf(tx.category)) un[tx.category] = (un[tx.category] || 0) + txNetAmount(tx);
-      }
-      const parts = Object.entries(un).sort((a, b) => b[1] - a[1]).map(([c, v]) => `${c} (${v.toFixed(0)}\u00a0€)`);
-      if (parts.length) note = "⚪ Non classées, absentes de ce filtre : " + parts.join(", ");
-    }
-    noteEl.textContent = note;
-  }
-  if (!entries.length) { _emptyDonutPlaceholder(wrap, _catNature() === "all" ? "Aucune dépense<br>ce mois" : "Aucune dépense<br>dans ce filtre"); return; }
-
-  if (_catStyleIsBar()) { moneyCatChart = _catBarChart(wrap, "moneyCatChart", entries, c => openCatDetail(c, "expense", _catHorsFixes()), "moneyCatLegend"); return; }
-  moneyCatChart = new Chart(document.getElementById("moneyCatChart"), {
+  const total = entries.reduce((s, [, x]) => s + x, 0);
+  const totEl = document.getElementById(totalId);
+  if (totEl) totEl.textContent = total > 0 ? ": " + total.toFixed(0) + " €" : "";
+  const lg = document.getElementById(legendId);
+  if (lg) lg.innerHTML = _catLegendHtml(entries, "expense", allTime, hf);
+  if (!entries.length) { _emptyDonutPlaceholder(wrap, v.nature === "all" ? (allTime ? "Aucune dépense" : "Aucune dépense<br>ce mois") : "Aucune dépense<br>classée ici"); return; }
+  const open = c => (allTime ? openCatDetailAllTime : openCatDetail)(c, "expense", hf);
+  if (_catStyleIsBar()) { _catExpenseCharts[canvasId] = _catBarChart(wrap, canvasId, entries, open, legendId); return; }
+  _catExpenseCharts[canvasId] = new Chart(document.getElementById(canvasId), {
     type: "doughnut",
     data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
     options: {
-      responsive: true, maintainAspectRatio: false,
-      cutout: "55%",
+      responsive: true, maintainAspectRatio: false, cutout: "55%",
       interaction: { mode: "nearest", intersect: true },
-      onClick: (evt, elements) => {
-        if (!elements.length) return;
-        const idx = elements[0].index;
-        openCatDetail(entries[idx][0], "expense", _catHorsFixes());
-      },
-      onHover: (evt, elements) => {
-        evt.native.target.style.cursor = elements.length ? "pointer" : "default";
-      },
+      onClick: (evt, elements) => { if (elements.length) open(entries[elements[0].index][0]); },
+      onHover: (evt, elements) => { evt.native.target.style.cursor = elements.length ? "pointer" : "default"; },
       plugins: {
         ...baseChartOpts().plugins,
         legend: { display: false },
         tooltip: { callbacks: { label: ctx => {
-          const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
-          const pct = total > 0 ? Math.round((ctx.raw / total) * 100) : 0;
-          return ` ${ctx.raw.toFixed(2)} € (${pct}%)`;
+          const t = ctx.dataset.data.reduce((s, x) => s + x, 0);
+          return ` ${ctx.raw.toFixed(2)} € (${t > 0 ? Math.round(ctx.raw / t * 100) : 0}%)`;
         }}},
         datalabels: {
-          color: '#fff',
-          font: { size: 11, weight: '700' },
+          color: '#fff', font: { size: 11, weight: '700' },
           formatter: (value, ctx) => {
-            const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
-            const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+            const t = ctx.dataset.data.reduce((s, x) => s + x, 0);
+            const pct = t > 0 ? Math.round(value / t * 100) : 0;
             return pct >= 5 ? pct + '%' : '';
           },
         },
@@ -17801,7 +17786,23 @@ function renderMoneyCatChart() {
     plugins: [ChartDataLabels],
   });
 }
-
+function renderMoneyCatChart() {
+  try { _updateMoneyCatTitle(); _syncCatStyleButtons(); _syncCatHorsFixes(); } catch (e) {}
+  _CAT_VARIANTS.forEach(v => _renderCatExpenseChart(v, false));
+  // Catégories non classées : absentes des graphiques Essentiel et Plaisir — on le dit plutôt que de les perdre.
+  const noteEl = document.getElementById("catNatureNote");
+  if (!noteEl) return;
+  const [start, end] = _moneyCatRange();
+  const un = {};
+  for (const tx of state.transactions) {
+    const d = new Date(tx.date);
+    if (d >= start && d < end && _isChartExpense(tx, _catHorsFixes()) && !_catNatureOf(tx.category)) un[tx.category] = (un[tx.category] || 0) + txNetAmount(tx);
+  }
+  const parts = Object.entries(un).sort((a, b) => b[1] - a[1]).map(([c, x]) => `${c} (${x.toFixed(0)}\u00a0€)`);
+  noteEl.textContent = !Object.keys(state.categoryNature || {}).length
+    ? "⚪ Classe tes catégories en « essentiel » ou « plaisir » (✏️ Éditer → Gérer les catégories) pour remplir ces deux graphiques."
+    : parts.length ? "⚪ Non classées, absentes d'Essentiel et de Plaisir : " + parts.join(", ") : "";
+}
 
 // Fenêtre de détail d'une catégorie : mêmes transactions (et mêmes montants nets) que la part du graphique cliquée.
 function _catDetailInRange(cat, type, courantes, inRange) {
@@ -18234,58 +18235,11 @@ function _renderMoneyAllCharts() {
 function renderMoneyCatAllChart() {
   const titleEl = document.getElementById("moneyCatAllTitle");
   if (titleEl) titleEl.textContent = "Par catégorie · Depuis le " + APP_START_LABEL;
-  // Repliée par défaut (voir #moneyCatAllCard) : pas la peine de calculer/dessiner ces 3
-  // graphiques tant que la section n'est pas ouverte — _renderMoneyAllCharts() s'en charge à
-  // l'ouverture (ontoggle).
+  // Repliée par défaut (voir #moneyCatAllCard) : pas la peine de dessiner ces graphiques tant que la
+  // section n'est pas ouverte — _renderMoneyAllCharts() s'en charge à l'ouverture (ontoggle).
   const detailsEl = document.getElementById("moneyCatAllCard");
   if (detailsEl && !detailsEl.open) return;
-  if (moneyCatAllChart) moneyCatAllChart.destroy();
-  const wrap = document.getElementById("moneyCatAllChart")?.parentElement;
-  if (!wrap) return;
-  wrap.innerHTML = '<canvas id="moneyCatAllChart"></canvas>';
-  wrap.style.height = "160px";
-  const [start, end] = _allTimeRange();
-  const totals = {};
-  for (const tx of state.transactions) {
-    const d = new Date(tx.date);
-    if (d >= start && d <= end && _catExpenseIn(tx)) totals[tx.category] = (totals[tx.category] || 0) + txNetAmount(tx);
-  }
-  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-  const total = entries.reduce((s,[,v]) => s+v, 0);
-  const el = document.getElementById("catAllChartDepTotal");
-  if (el) el.textContent = total > 0 ? ": " +total.toFixed(0) + " €" : "";
-  const lg = document.getElementById("moneyCatAllLegend");
-  if (lg) lg.innerHTML = _catLegendHtml(entries, "expense", true, _catHorsFixes());
-  const labAllEl = document.getElementById("catAllChartDepLabel"); if (labAllEl) labAllEl.textContent = _catDepLabel();
-  if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense"); return; }
-  if (_catStyleIsBar()) { moneyCatAllChart = _catBarChart(wrap, "moneyCatAllChart", entries, c => openCatDetailAllTime(c, "expense", _catHorsFixes()), "moneyCatAllLegend"); return; }
-  moneyCatAllChart = new Chart(document.getElementById("moneyCatAllChart"), {
-    type: "doughnut",
-    data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: "55%",
-      interaction: { mode: "nearest", intersect: true },
-      onClick: (evt, elements) => { if (elements.length) openCatDetailAllTime(entries[elements[0].index][0], "expense", _catHorsFixes()); },
-      onHover: (evt, elements) => { evt.native.target.style.cursor = elements.length ? "pointer" : "default"; },
-      plugins: {
-        ...baseChartOpts().plugins,
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => {
-          const t = ctx.dataset.data.reduce((s, v) => s + v, 0);
-          return ` ${ctx.raw.toFixed(2)} € (${t > 0 ? Math.round(ctx.raw/t*100) : 0}%)`;
-        }}},
-        datalabels: {
-          color: '#fff', font: { size: 11, weight: '700' },
-          formatter: (value, ctx) => {
-            const t = ctx.dataset.data.reduce((s, v) => s + v, 0);
-            const pct = t > 0 ? Math.round(value/t*100) : 0;
-            return pct >= 5 ? pct + '%' : '';
-          },
-        },
-      },
-    },
-    plugins: [ChartDataLabels],
-  });
+  _CAT_VARIANTS.forEach(v => _renderCatExpenseChart(v, true));
 }
 function renderMoneyIncomeAllChart() {
   const detailsEl = document.getElementById("moneyCatAllCard");
