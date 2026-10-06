@@ -17651,38 +17651,34 @@ function setCatChartStyle(style) {
   const d = document.getElementById("moneyCatAllCard");
   if (d && d.open) _renderMoneyAllCharts();
 }
-// Même données que les ronds, en barres verticales : catégories en bas, montants en hauteur. Au-delà de
-// 6 catégories, les noms et les montants sont inclinés/couchés pour tenir dans une colonne étroite.
+// Même données que les ronds, en barres horizontales : nom de la catégorie à gauche, montant et part à droite.
 function _catBarChart(wrap, canvasId, entries, onPick, legendId) {
   const lg = legendId && document.getElementById(legendId);
   if (lg) lg.innerHTML = ""; // les noms sont déjà sur l'axe
-  const many = entries.length > 6;
-  wrap.style.height = (many ? 270 : 220) + "px";
+  wrap.style.height = Math.max(110, entries.length * 28 + 14) + "px";
   const total = entries.reduce((s, [, v]) => s + v, 0);
   const pctOf = v => total > 0 ? Math.round(v / total * 100) : 0;
   return new Chart(document.getElementById(canvasId), {
     type: "bar",
-    data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderRadius: 6, maxBarThickness: 34 }] },
+    data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderRadius: 6, barThickness: 16 }] },
     options: {
-      indexAxis: "x", responsive: true, maintainAspectRatio: false,
-      layout: { padding: { top: many ? 46 : 22 } },
-      interaction: { mode: "nearest", axis: "x", intersect: false },
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      layout: { padding: { right: 84 } },
+      interaction: { mode: "nearest", axis: "y", intersect: false },
       onClick: (evt, els) => { if (els.length && onPick) onPick(entries[els[0].index][0]); },
       onHover: (evt, els) => { evt.native.target.style.cursor = els.length ? "pointer" : "default"; },
       plugins: {
         legend: { display: false },
         tooltip: { ...baseChartOpts().plugins.tooltip, callbacks: { label: ctx => ` ${ctx.raw.toFixed(2)}\u00a0€ (${pctOf(ctx.raw)}%)` } },
-        datalabels: { anchor: "end", align: "end", offset: 2, clip: false, color: "#6b6580", font: { size: many ? 10 : 11, weight: "600" },
-          rotation: many ? -90 : 0,
-          formatter: v => many ? `${Math.round(v)}\u00a0€` : `${Math.round(v)}\u00a0€ · ${pctOf(v)}%` },
+        datalabels: { anchor: "end", align: "right", clip: false, color: "#6b6580", font: { size: 11, weight: "600" },
+          formatter: v => `${Math.round(v)}\u00a0€ · ${pctOf(v)}%` },
       },
       scales: {
-        y: { display: false, beginAtZero: true },
-        x: { grid: { display: false }, border: { display: false }, ticks: { color: "#4a4458", font: { size: 11 }, autoSkip: false,
-          maxRotation: many ? 65 : 0, minRotation: many ? 65 : 0,
+        x: { display: false, beginAtZero: true },
+        y: { grid: { display: false }, border: { display: false }, ticks: { color: "#4a4458", font: { size: 11 }, autoSkip: false,
           callback: function(v) {
             const l = this.getLabelForValue(v);
-            const max = many ? 16 : Math.max(8, Math.floor((this.chart.width / entries.length) / 6.5));
+            const max = Math.max(8, Math.floor(this.chart.width * 0.28 / 6)); // ≈ 28 % de la largeur pour les noms
             return l.length > max ? l.slice(0, max - 1) + "…" : l;
           } } },
       },
