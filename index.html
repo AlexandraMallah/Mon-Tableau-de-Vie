@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1331</title>
+<title>Mon Tableau de Vie 🌿 · v1332</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18071,18 +18071,23 @@ function renderBudgetGauge() {
   // Dépenses PRÉVUES (carte « Paiements prévus », non comptées tant que non validées) qui tomberaient
   // dans le mois en cours : prolongement clair de la jauge, dans la couleur qu'elle prendrait si on
   // les payait toutes maintenant. Les revenus prévus n'entrent pas dans ce calcul.
-  const plannedOut = isCurrent
-    ? (state.plannedPayments || []).filter(p => p.type !== "income" && new Date(p.date + "T00:00:00") < estimatedEnd).reduce((s, p) => s + p.amount, 0)
-    : 0;
+  const plannedList = isCurrent
+    ? (state.plannedPayments || []).filter(p => p.type !== "income" && new Date(p.date + "T00:00:00") < estimatedEnd)
+    : [];
+  const plannedOut = plannedList.reduce((s, p) => s + p.amount, 0);
+  // Le rythme se juge à la date du DERNIER paiement prévu (ex. le 16 oct. : jour 19), pas à aujourd'hui :
+  // 250 € étalés sur 19 jours ne pèsent pas pareil que 250 € dépensés d'un coup au jour 9.
+  const lastPlanned = plannedList.reduce((m, p) => { const d = new Date(p.date + "T00:00:00"); return d > m ? d : m; }, new Date(0));
+  const daysRef = Math.max(daysElapsed, Math.floor((lastPlanned - start) / 86400000) + 1);
   let ghostHtml = "", plannedLine = "";
   if (plannedOut > 0 && budget > 0) {
     const spent2 = spent + plannedOut, remaining2 = remaining - plannedOut;
-    const ratio2 = dailyIdeal > 0 ? (spent2 / daysElapsed) / dailyIdeal : 1;
+    const ratio2 = dailyIdeal > 0 ? (spent2 / daysRef) / dailyIdeal : 1;
     const color2 = remaining2 < 0 || ratio2 >= 1.5 ? "#dc2626" : ratio2 >= 1.1 ? "#f59e0b" : "#10b981";
     const pale = { "#dc2626": "rgba(220,38,38,0.28)", "#f59e0b": "rgba(245,158,11,0.32)", "#10b981": "rgba(16,185,129,0.30)" }[color2];
     const ghostPct = Math.min(100, Math.round((spent2 / budget) * 100));
     ghostHtml = `<div style="position:absolute;left:0;top:0;height:100%;width:${ghostPct}%;background:${pale};border-radius:999px;transition:width 0.4s;"></div>`;
-    plannedLine = `<div style="font-size:12px;color:var(--ink-soft);margin:6px 0 2px;">📅 Avec tes dépenses prévues (−${plannedOut.toFixed(0)}\u00a0€, partie claire de la jauge) : <strong style="color:${color2};">${spent2.toFixed(0)}\u00a0€ dépensés · ${remaining2 >= 0 ? "il resterait " + remaining2.toFixed(0) : "dépassement de " + Math.abs(remaining2).toFixed(0)}\u00a0€</strong></div>`;
+    plannedLine = `<div style="font-size:12px;color:var(--ink-soft);margin:6px 0 2px;">📅 Avec tes dépenses prévues${lastPlanned > now ? " jusqu'au " + lastPlanned.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : ""} (−${plannedOut.toFixed(0)}\u00a0€, partie claire de la jauge) : <strong style="color:${color2};">${spent2.toFixed(0)}\u00a0€ dépensés · ${remaining2 >= 0 ? "il resterait " + remaining2.toFixed(0) : "dépassement de " + Math.abs(remaining2).toFixed(0)}\u00a0€</strong></div>`;
   }
 
   let alertHtml = "";

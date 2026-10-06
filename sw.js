@@ -1,5 +1,5 @@
 // Service Worker — Mon Tableau de Vie
-const CACHE = "mon-tableau-v1791290500";
+const CACHE = "mon-tableau-v1791290647";
 // index.html exclu du précache — toujours servi network-first avec no-cache
 const ASSETS = [
   "/Mon-Tableau-de-Vie/manifest.json",
