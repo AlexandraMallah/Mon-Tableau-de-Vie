@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1329</title>
+<title>Mon Tableau de Vie 🌿 · v1330</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -906,6 +906,17 @@
   .seg button.on { background: var(--lavender-soft); color: var(--ink); font-weight: 700; }
   /* Une seule ligne fixe (texte complet au survol) : sinon sa présence/absence décale les graphiques d'un mois à l'autre. En classe, pas en style inline : la règle mobile anti-débordement force le retour à la ligne sur les style="text-overflow". */
   .cat-note { font-size: 11px; color: var(--ink-softer); margin-top: 4px; height: 16px; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Paiements prévus */
+  .planned-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 12px; }
+  .planned-in { width: 100%; min-width: 0; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font-family: inherit; font-size: 13px; color: var(--ink); background: #fff; }
+  .planned-row { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .planned-date { min-width: 78px; font-size: 12px; color: var(--ink-soft); }
+  .planned-late { display: inline-block; margin-left: 4px; font-size: 10px; font-weight: 700; color: #b5675d; background: #fbe4e0; border-radius: 6px; padding: 1px 6px; }
+  .planned-txt { flex: 1; min-width: 120px; font-size: 13px; color: var(--ink); overflow-wrap: anywhere; }
+  .planned-txt small { display: block; color: var(--ink-softer); font-size: 11px; }
+  .planned-amt { font-size: 14px; font-weight: 700; white-space: nowrap; }
+  .planned-btn { border: 1px solid var(--line); background: #fff; border-radius: 999px; font: inherit; font-size: 12px; padding: 4px 11px; cursor: pointer; color: var(--ink-soft); }
+  .planned-btn.ok { border-color: var(--mint); color: #2f7a5a; font-weight: 600; }
   .cat-chk { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-soft); cursor: pointer; white-space: nowrap; }
   .cat-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px 10px; margin-top: 8px; }
   .cat-legend-item { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-soft); cursor: pointer; }
@@ -3392,6 +3403,20 @@
       </div>
       <div id="budgetGauge"></div>
     </div>
+    <div class="card" id="plannedCard" style="margin-bottom:18px;">
+      <h2 style="margin:0 0 4px;">📅 Paiements prévus</h2>
+      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">Note à l'avance ce que tu sais que tu vas payer ou recevoir, avec sa date. <strong>Rien n'est compté</strong> (jauge, graphiques, épargne) tant que tu ne l'as pas validé.</p>
+      <div id="plannedSummary"></div>
+      <div id="plannedList"></div>
+      <div class="planned-form">
+        <select id="plannedType" class="planned-in" onchange="_plannedFillCats()"><option value="expense">− Dépense</option><option value="income">+ Revenu</option></select>
+        <input type="date" id="plannedDate" class="planned-in" />
+        <input type="number" id="plannedAmount" class="planned-in" placeholder="Montant (€)" step="0.01" min="0" inputmode="decimal" />
+        <select id="plannedCat" class="planned-in"></select>
+        <input type="text" id="plannedNote" class="planned-in" placeholder="Note (optionnel)" maxlength="80" onkeydown="if(event.key==='Enter')addPlanned()" />
+        <button class="planned-btn ok" onclick="addPlanned()" style="padding:8px 14px;">+ Prévoir</button>
+      </div>
+    </div>
     <div class="card" id="externalCard" style="margin-bottom:18px;display:none;">
       <div style="display:flex;align-items:center;margin-bottom:8px;gap:10px;flex-wrap:wrap;">
         <h2 style="margin:0;font-size:15px;min-width:0;flex:1;overflow-wrap:anywhere;" id="externalCardTitle">🏦 Comptes tiers</h2>
@@ -5767,6 +5792,7 @@ const DEFAULT_STATE = {
   categories: ["Alimentation", "Logement", "Transport", "Loisirs", "Santé", "Autre"],
   incomeCategories: ["Salaire", "Prime", "Remboursement", "Autre revenu"],
   mainSalaryCategory: null,
+  plannedPayments: [], // [{id, type:"expense"|"income", date:"YYYY-MM-DD", amount, category, note}] — prévus, non comptés tant que non validés
   categoryNature: {}, // { "Sorties": "plaisir", "Santé": "essentiel" } — filtre des graphiques de dépenses
   gender: null, // "f" (elle), "m" (il), "x" (iel) — null = pas encore choisi
   savingsCategories: [],
@@ -5831,6 +5857,7 @@ function migrate(s) {
     s._fixedMainSalaryCatV1314 = true;
   }
   s.categoryNature = s.categoryNature || {};
+  s.plannedPayments = Array.isArray(s.plannedPayments) ? s.plannedPayments : [];
   s.savingsCategories = s.savingsCategories || DEFAULT_STATE.savingsCategories;
   s.candidatureTypes = s.candidatureTypes || DEFAULT_STATE.candidatureTypes;
   s.contactRoles = s.contactRoles || DEFAULT_STATE.contactRoles;
@@ -6607,7 +6634,7 @@ function onViewChange(view) {
   if (view === "work") updateWorkTabBadges();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
   if (view === "health") { _healthMonthOffset = 0; _stepsMonthOffset = 0; _renderHealthMonthLabel(); _renderStepsMonthLabel(); _refreshHealthCharts(); }
-  if (view === "money") { initTxDate(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
+  if (view === "money") { initTxDate(); renderPlanned(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
 }
@@ -15032,7 +15059,7 @@ function saveMoneyNote() {
 function renderMoney() {
   const noteEl = document.getElementById("moneyNote");
   if (noteEl && noteEl.value !== (state.moneyNote || "")) noteEl.value = state.moneyNote || "";
-  populateTxCategories(); populateMissionList(); renderBudgetGauge(); renderExternalSummary(); renderTxList(); renderReimbursable(); renderSavings(); renderAccounts(); renderForecast(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback();
+  populateTxCategories(); populateMissionList(); renderBudgetGauge(); renderExternalSummary(); renderTxList(); renderReimbursable(); renderSavings(); renderAccounts(); renderForecast(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderPlanned();
 }
 let _externalMonthOffset = 0;
 let _externalAccountFilter = null; // null = "Tous"
@@ -16366,6 +16393,85 @@ function currentMonthLabel() {
 function initTxDate() {
   const el = document.getElementById("txDate");
   if (el && !el.value) el.value = new Date().toISOString().slice(0, 10);
+}
+/* ===== PAIEMENTS PRÉVUS =====
+   state.plannedPayments : dépenses / revenus que l'on sait à l'avance. Volontairement SANS effet sur la
+   jauge, les graphiques, l'épargne et les soldes tant qu'ils ne sont pas validés ; « Valider » en fait
+   une vraie transaction (date prévue si elle est passée ou aujourd'hui, sinon aujourd'hui). */
+function _plannedFillCats() {
+  const sel = document.getElementById("plannedCat");
+  if (!sel) return;
+  const income = document.getElementById("plannedType")?.value === "income";
+  const list = (income ? state.incomeCategories : state.categories) || [];
+  const cur = sel.value;
+  sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  if (list.includes(cur)) sel.value = cur;
+}
+function _plannedToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+function renderPlanned() {
+  const listEl = document.getElementById("plannedList");
+  if (!listEl) return;
+  _plannedFillCats();
+  const dateEl = document.getElementById("plannedDate");
+  if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0, 10);
+  const items = [...(state.plannedPayments || [])].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  const today = _plannedToday();
+  const fmt = d => new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+  const eur = v => v.toFixed(2).replace(/\.00$/, "") + "\u00a0€";
+  listEl.innerHTML = items.length ? items.map(p => {
+    const late = new Date(p.date + "T00:00:00") < today;
+    const inc = p.type === "income";
+    return `<div class="planned-row">
+      <div class="planned-date">${fmt(p.date)}${late ? '<span class="planned-late">en retard</span>' : ""}</div>
+      <div class="planned-txt">${escapeHtml(p.category || "")}${p.note ? `<small>${escapeHtml(p.note)}</small>` : ""}</div>
+      <div class="planned-amt" style="color:${inc ? "#4d9c7e" : "#c75b4d"};">${inc ? "+" : "−"}${eur(p.amount)}</div>
+      <button class="planned-btn ok" onclick="validatePlanned('${p.id}')" title="Enregistrer comme vraie transaction">✓ Valider</button>
+      <button class="planned-btn" onclick="deletePlanned('${p.id}')" title="Supprimer ce paiement prévu">✕</button>
+    </div>`;
+  }).join("") : `<p style="font-size:12px;color:var(--ink-softer);margin:4px 0 0;">Aucun paiement prévu pour le moment.</p>`;
+  const sumEl = document.getElementById("plannedSummary");
+  if (sumEl) {
+    if (!items.length) { sumEl.innerHTML = ""; return; }
+    const out = items.filter(p => p.type !== "income").reduce((s, p) => s + p.amount, 0);
+    const inc = items.filter(p => p.type === "income").reduce((s, p) => s + p.amount, 0);
+    const now = balanceCourant() + (state.accounts?.cashBalance || 0); // même base que la jauge Budget de vie
+    const after = now + inc - out;
+    sumEl.innerHTML = `<div style="background:var(--bg-2,#f6f2fb);border-radius:12px;padding:10px 12px;margin-bottom:6px;font-size:13px;line-height:1.7;color:var(--ink-soft);">
+      Prévu : <strong style="color:#c75b4d;">−${eur(out)}</strong> · <strong style="color:#4d9c7e;">+${eur(inc)}</strong><br>
+      Disponible (compte courant + espèces) : <strong style="color:var(--ink);">${eur(now)}</strong> → <strong style="color:${after < 0 ? "#dc2626" : "var(--ink)"};">${after < 0 ? "−" : ""}${eur(Math.abs(after))}</strong> si tout se passe comme prévu
+    </div>`;
+  }
+}
+function addPlanned() {
+  const type = document.getElementById("plannedType").value === "income" ? "income" : "expense";
+  const date = document.getElementById("plannedDate").value;
+  const amount = Number(document.getElementById("plannedAmount").value);
+  const category = document.getElementById("plannedCat").value;
+  const note = document.getElementById("plannedNote").value.trim();
+  if (!date) return _needField("plannedDate", "Choisis la date prévue.");
+  if (!amount || amount <= 0) return _needField("plannedAmount", "Entre un montant.");
+  if (!category) return _needField("plannedCat", "Choisis une catégorie.");
+  if (!Array.isArray(state.plannedPayments)) state.plannedPayments = [];
+  state.plannedPayments.push({ id: "pl" + Date.now(), type, date, amount, category, note });
+  document.getElementById("plannedAmount").value = "";
+  document.getElementById("plannedNote").value = "";
+  saveState(); renderPlanned();
+  showToast("📅 Paiement prévu ajouté");
+}
+function deletePlanned(id) {
+  state.plannedPayments = (state.plannedPayments || []).filter(p => p.id !== id);
+  saveState(); renderPlanned();
+}
+function validatePlanned(id) {
+  const p = (state.plannedPayments || []).find(x => x.id === id);
+  if (!p) return;
+  const planned = new Date(p.date + "T00:00:00");
+  const when = planned <= _plannedToday() ? p.date : new Date().toISOString().slice(0, 10);
+  state.transactions.unshift({ id: "tx" + Date.now(), date: new Date(when).toISOString(), type: p.type, amount: p.amount, category: p.category, note: p.note || "", reimbursable: false, mission: "", fixedCharge: false, exceptional: false, postdocMission: false, directSavingsAccount: "", fromSavingsAccount: "", cashSrcAccount: "", externalAccountId: "" });
+  if (p.type === "income" && state.mainSalaryCategory && p.category === state.mainSalaryCategory) _resetMoneyNav();
+  state.plannedPayments = state.plannedPayments.filter(x => x.id !== id);
+  saveState(); renderMoney();
+  showToast("✅ Enregistré le " + new Date(when + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long" }));
 }
 function addTransaction() {
   const amount = Number(document.getElementById("txAmount").value);
