@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1326</title>
+<title>Mon Tableau de Vie 🌿 · v1327</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17477,20 +17477,31 @@ function renderSavingsChart() {
           ctx.fillStyle = "#ffffff";
           ctx.fillText(text, centerX, centerY);
         });
-        // Part des revenus gagnés dépensée, juste AU-DESSUS de la barre de dépenses (milieu) : toujours
-        // lisible, même quand la barre d'épargne, devant, monte presque aussi haut. Dans la barre (en
-        // blanc) seulement si elle touche le haut du graphique.
+        // Part des revenus gagnés dépensée : écrite à la verticale (quart de tour vers la gauche) dans la
+        // bande de gauche de la barre de dépenses, toujours libre (la barre d'épargne ne recouvre que la
+        // droite). Masquée si la barre est trop basse ou trop fine (mobile) pour la contenir.
         chart.data.datasets[1].data.forEach((val, i) => {
           const earned = earnedData[i];
           if (!earned || earned <= 0 || val <= 0) return;
           const bar = chart.getDatasetMeta(1).data[i];
           if (!bar) return;
+          const barH = Math.abs((bar.base || 0) - bar.y);
+          const stripW = (bar.width || 0) * 0.45; // bande libre à gauche
+          if (stripW < 12) return;
           const text = Math.round((val / earned) * 100) + "%";
           ctx.font = "bold 10px system-ui, sans-serif";
-          if (ctx.measureText(text).width + 2 > Math.max(bar.width || 0, 26)) return;
-          const inside = bar.y < chart.chartArea.top + 14;
-          ctx.fillStyle = inside ? "#ffffff" : "#b5675d";
-          ctx.fillText(text, bar.x, inside ? bar.y + 11 : bar.y - 8);
+          const textW = ctx.measureText(text).width;
+          if (textW + 6 > barH) return;
+          ctx.save();
+          ctx.translate(bar.x - (bar.width || 0) * 0.275, bar.y + barH / 2);
+          ctx.rotate(-Math.PI / 2);
+          ctx.fillStyle = "rgba(255,255,255,0.22)";
+          ctx.beginPath();
+          ctx.roundRect(-textW / 2 - 4, -8, textW + 8, 16, 4);
+          ctx.fill();
+          ctx.fillStyle = "#ffffff";
+          ctx.fillText(text, 0, 0);
+          ctx.restore();
         });
         ctx.restore();
       }},
