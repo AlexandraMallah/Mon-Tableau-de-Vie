@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1320</title>
+<title>Mon Tableau de Vie 🌿 · v1321</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3433,6 +3433,11 @@
         <button class="day-nav-btn" onclick="moneyCatMonthNav(-1)" title="Mois précédent">◀</button>
         <h2 id="moneyCatTitle" style="margin:0;flex:1;">Par catégorie · Ce mois</h2>
         <button class="day-nav-btn" id="moneyCatNext" onclick="moneyCatMonthNav(1)" title="Mois suivant" disabled>▶</button>
+      </div>
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:6px;">
+        <span style="font-size:11px;color:var(--ink-softer);">Affichage :</span>
+        <button class="btn-soft" id="catStyleBtnDonut" onclick="setCatChartStyle('donut')" style="padding:4px 10px;font-size:12px;">◔ Ronds</button>
+        <button class="btn-soft" id="catStyleBtnBar" onclick="setCatChartStyle('bar')" style="padding:4px 10px;font-size:12px;">▮ Barres</button>
       </div>
       <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:8px;align-items:start;">
         <div>
@@ -17630,12 +17635,64 @@ function _catLegendHtml(entries, type = "expense", allTime = false, courantes = 
     `<span class="cat-legend-item" onclick="${fn}('${(cat||'').replace(/'/g,"\\'")}','${type}',${courantes})"><span class="cat-legend-dot" style="background:${catColor(cat)};"></span>${escapeHtml(cat)}</span>`
   ).join("");
 }
+// Affichage des graphiques par catégorie : ronds (défaut) ou barres horizontales — préférence propre
+// à l'appareil (localStorage), appliquée aux 6 graphiques (mois affiché + "depuis toujours").
+function _catStyleIsBar() { try { return localStorage.getItem("catChartStyle") === "bar"; } catch (e) { return false; } }
+function _syncCatStyleButtons() {
+  const bar = _catStyleIsBar();
+  [["catStyleBtnDonut", !bar], ["catStyleBtnBar", bar]].forEach(([id, on]) => {
+    const b = document.getElementById(id);
+    if (b) { b.style.fontWeight = on ? "700" : "400"; b.style.background = on ? "var(--lavender-soft)" : ""; b.style.borderColor = on ? "var(--lavender)" : ""; }
+  });
+}
+function setCatChartStyle(style) {
+  try { localStorage.setItem("catChartStyle", style); } catch (e) {}
+  renderMoneyCatChart(); renderMoneyIncomeCatChart();
+  const d = document.getElementById("moneyCatAllCard");
+  if (d && d.open) _renderMoneyAllCharts();
+}
+// Même données que les ronds, en barres horizontales : nom de la catégorie à gauche, montant et part à droite.
+function _catBarChart(wrap, canvasId, entries, onPick, legendId) {
+  const lg = legendId && document.getElementById(legendId);
+  if (lg) lg.innerHTML = ""; // les noms sont déjà sur l'axe
+  wrap.style.height = Math.max(110, entries.length * 28 + 14) + "px";
+  const total = entries.reduce((s, [, v]) => s + v, 0);
+  const pctOf = v => total > 0 ? Math.round(v / total * 100) : 0;
+  return new Chart(document.getElementById(canvasId), {
+    type: "bar",
+    data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderRadius: 6, barThickness: 16 }] },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      layout: { padding: { right: 84 } },
+      interaction: { mode: "nearest", axis: "y", intersect: false },
+      onClick: (evt, els) => { if (els.length && onPick) onPick(entries[els[0].index][0]); },
+      onHover: (evt, els) => { evt.native.target.style.cursor = els.length ? "pointer" : "default"; },
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...baseChartOpts().plugins.tooltip, callbacks: { label: ctx => ` ${ctx.raw.toFixed(2)}\u00a0€ (${pctOf(ctx.raw)}%)` } },
+        datalabels: { anchor: "end", align: "right", clip: false, color: "#6b6580", font: { size: 11, weight: "600" },
+          formatter: v => `${Math.round(v)}\u00a0€ · ${pctOf(v)}%` },
+      },
+      scales: {
+        x: { display: false, beginAtZero: true },
+        y: { grid: { display: false }, border: { display: false }, ticks: { color: "#4a4458", font: { size: 11 }, autoSkip: false,
+          callback: function(v) {
+            const l = this.getLabelForValue(v);
+            const max = Math.max(8, Math.floor(this.chart.width * 0.28 / 6)); // ≈ 28 % de la largeur pour les noms
+            return l.length > max ? l.slice(0, max - 1) + "…" : l;
+          } } },
+      },
+    },
+    plugins: [ChartDataLabels],
+  });
+}
 function renderMoneyCatChart() {
   try { renderMoneyCatChartNoFixed(); } catch (e) {} // anneau "hors charges fixes" (toujours rafraîchi)
-  try { _updateMoneyCatTitle(); } catch (e) {}
+  try { _updateMoneyCatTitle(); _syncCatStyleButtons(); } catch (e) {}
   if (moneyCatChart) moneyCatChart.destroy();
   const wrap = document.getElementById("moneyCatChart").parentElement;
   wrap.innerHTML = '<canvas id="moneyCatChart"></canvas>';
+  wrap.style.height = "160px";
 
   const [start, end] = _moneyCatRange();
   const totals = {};
@@ -17651,6 +17708,7 @@ function renderMoneyCatChart() {
   if (lg) lg.innerHTML = _catLegendHtml(entries);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>ce mois"); return; }
 
+  if (_catStyleIsBar()) { moneyCatChart = _catBarChart(wrap, "moneyCatChart", entries, c => openCatDetail(c), "moneyCatLegend"); return; }
   moneyCatChart = new Chart(document.getElementById("moneyCatChart"), {
     type: "doughnut",
     data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
@@ -17698,6 +17756,7 @@ function renderMoneyCatChartNoFixed() {
   if (moneyCatChartNoFixed) moneyCatChartNoFixed.destroy();
   const wrap = canvas.parentElement;
   wrap.innerHTML = '<canvas id="moneyCatChartNoFixed"></canvas>';
+  wrap.style.height = "160px";
 
   const [start, end] = _moneyCatRange();
   const totals = {};
@@ -17714,6 +17773,7 @@ function renderMoneyCatChartNoFixed() {
   if (lg) lg.innerHTML = _catLegendHtml(entries, "expense", false, true);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>courante"); return; }
 
+  if (_catStyleIsBar()) { moneyCatChartNoFixed = _catBarChart(wrap, "moneyCatChartNoFixed", entries, c => openCatDetail(c, "expense", true), "moneyCatNoFixLegend"); return; }
   moneyCatChartNoFixed = new Chart(document.getElementById("moneyCatChartNoFixed"), {
     type: "doughnut",
     data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
@@ -18125,6 +18185,7 @@ function renderMoneyIncomeCatChart() {
   if (moneyIncomeCatChart) moneyIncomeCatChart.destroy();
   const wrap = document.getElementById("moneyIncomeCatChart").parentElement;
   wrap.innerHTML = '<canvas id="moneyIncomeCatChart"></canvas>';
+  wrap.style.height = "160px";
 
   const [start, end] = _moneyCatRange();
   const totals = {};
@@ -18141,6 +18202,7 @@ function renderMoneyIncomeCatChart() {
   if (lg) lg.innerHTML = _catLegendHtml(entries, "income");
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucun revenu<br>ce mois"); return; }
 
+  if (_catStyleIsBar()) { moneyIncomeCatChart = _catBarChart(wrap, "moneyIncomeCatChart", entries, c => openCatDetail(c, "income"), "moneyIncomeLegend"); return; }
   moneyIncomeCatChart = new Chart(document.getElementById("moneyIncomeCatChart"), {
     type: "doughnut",
     data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
@@ -18185,6 +18247,7 @@ function renderMoneyCatAllChart() {
   const wrap = document.getElementById("moneyCatAllChart")?.parentElement;
   if (!wrap) return;
   wrap.innerHTML = '<canvas id="moneyCatAllChart"></canvas>';
+  wrap.style.height = "160px";
   const [start, end] = _allTimeRange();
   const totals = {};
   for (const tx of state.transactions) {
@@ -18198,6 +18261,7 @@ function renderMoneyCatAllChart() {
   const lg = document.getElementById("moneyCatAllLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries, "expense", true);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense"); return; }
+  if (_catStyleIsBar()) { moneyCatAllChart = _catBarChart(wrap, "moneyCatAllChart", entries, c => openCatDetailAllTime(c), "moneyCatAllLegend"); return; }
   moneyCatAllChart = new Chart(document.getElementById("moneyCatAllChart"), {
     type: "doughnut",
     data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
@@ -18233,6 +18297,7 @@ function renderMoneyCatAllNoFixChart() {
   const wrap = document.getElementById("moneyCatAllNoFixChart")?.parentElement;
   if (!wrap) return;
   wrap.innerHTML = '<canvas id="moneyCatAllNoFixChart"></canvas>';
+  wrap.style.height = "160px";
   const [start, end] = _allTimeRange();
   const totals = {};
   for (const tx of state.transactions) {
@@ -18246,6 +18311,7 @@ function renderMoneyCatAllNoFixChart() {
   const lg = document.getElementById("moneyCatAllNoFixLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries, "expense", true, true);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucune dépense<br>courante"); return; }
+  if (_catStyleIsBar()) { moneyCatAllNoFixChart = _catBarChart(wrap, "moneyCatAllNoFixChart", entries, c => openCatDetailAllTime(c, "expense", true), "moneyCatAllNoFixLegend"); return; }
   moneyCatAllNoFixChart = new Chart(document.getElementById("moneyCatAllNoFixChart"), {
     type: "doughnut",
     data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
@@ -18281,6 +18347,7 @@ function renderMoneyIncomeAllChart() {
   const wrap = document.getElementById("moneyIncomeAllChart")?.parentElement;
   if (!wrap) return;
   wrap.innerHTML = '<canvas id="moneyIncomeAllChart"></canvas>';
+  wrap.style.height = "160px";
   const [start, end] = _allTimeRange();
   const totals = {};
   const REIMB_CATS = ["Remboursement", "Surplus remboursement mission"];
@@ -18295,6 +18362,7 @@ function renderMoneyIncomeAllChart() {
   const lg = document.getElementById("moneyIncomeAllLegend");
   if (lg) lg.innerHTML = _catLegendHtml(entries, "income", true);
   if (!entries.length) { _emptyDonutPlaceholder(wrap, "Aucun revenu"); return; }
+  if (_catStyleIsBar()) { moneyIncomeAllChart = _catBarChart(wrap, "moneyIncomeAllChart", entries, c => openCatDetailAllTime(c, "income"), "moneyIncomeAllLegend"); return; }
   moneyIncomeAllChart = new Chart(document.getElementById("moneyIncomeAllChart"), {
     type: "doughnut",
     data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => catColor(e[0])), borderWidth: 0, hoverOffset: 6 }] },
