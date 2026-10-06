@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1325</title>
+<title>Mon Tableau de Vie 🌿 · v1326</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17355,7 +17355,7 @@ function editSavingsStart(cat) {
 function renderSavingsChart() {
   if (savingsChart) savingsChart.destroy();
   const allPeriods = _salaryPeriods();
-  const periods = allPeriods.slice(-12);
+  const periods = allPeriods.slice(-9); // 9 mois : trois barres par mois, 12 serait trop serré
   const labels = periods.map(p => _periodLabel(p).replace(/\s\d{4}$/, v => " '" + v.trim().slice(2)));
   const data = periods.map(({ start, end }) => {
     const inAmt  = state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "savings"; }).reduce((s, t) => s + t.amount, 0);
@@ -17366,10 +17366,14 @@ function renderSavingsChart() {
     state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "income"; }).reduce((s, t) => s + t.amount, 0)
   );
   // Revenus réellement gagnés (salaire, Airbnb, primes, intérêts…) : hors remboursements, comme le
-  // reste de l'app (voir REIMB_CATS) — affichés en barres larges derrière celles de l'épargne.
+  // reste de l'app (voir REIMB_CATS) — barre claire tout derrière.
   const _EARN_EXCL = ["Remboursement", "Surplus remboursement mission"];
   const earnedData = periods.map(({ start, end }) =>
     state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "income" && !t.partialReimbIncome && !_EARN_EXCL.includes(t.category); }).reduce((s, t) => s + t.amount, 0)
+  );
+  // Toutes les dépenses du mois (hors frais pro) : même règle que le rond « Dépenses · tout ».
+  const spentData = periods.map(({ start, end }) =>
+    state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && _isChartExpense(t, false); }).reduce((s, t) => s + txNetAmount(t), 0)
   );
   const _isSavS = document.body.classList.contains("t-serieux");
   const _isSavM = false;
@@ -17377,7 +17381,8 @@ function renderSavingsChart() {
     type: "bar",
     data: { labels, datasets: [
       { label: "Mis de côté", data, backgroundColor: _isSavS?"#8ab4d4":_isSavM?"#666":"#c9b6f0", borderRadius: 8, order: 1, grouped: false, barPercentage: 0.5, categoryPercentage: 0.9 },
-      { label: "Revenus gagnés", data: earnedData, backgroundColor: _isSavS?"#c3d0dd":"#aee0c8", borderRadius: 8, order: 2, grouped: false, barPercentage: 0.5, categoryPercentage: 0.9 },
+      { label: "Dépenses", data: spentData, backgroundColor: _isSavS?"#d49a94":"#f4b0a8", borderRadius: 8, order: 2, grouped: false, barPercentage: 0.5, categoryPercentage: 0.9 },
+      { label: "Revenus gagnés", data: earnedData, backgroundColor: _isSavS?"#c3d0dd":"#aee0c8", borderRadius: 8, order: 3, grouped: false, barPercentage: 0.5, categoryPercentage: 0.9 },
     ] },
     // Deux barres de même largeur qui se chevauchent : revenus derrière (décalée à gauche),
     // épargne devant (décalée à droite). Chart.js ne gère pas ce décalage nativement.
@@ -17386,8 +17391,8 @@ function renderSavingsChart() {
       // Décalage appliqué au DESSIN seulement (puis annulé) : modifier bar.x dans afterUpdate se
       // faisait écraser par l'animation d'ouverture du graphique.
       beforeDatasetDraw(chart, args) {
-        const dir = args.index === 0 ? 1 : args.index === 1 ? -1 : 0;
-        args.meta.data.forEach(bar => { bar._sx = dir * (bar.width || 0) * 0.35; bar.x += bar._sx; });
+        const dir = [1, 0, -1][args.index] || 0; // épargne à droite, dépenses au centre, revenus à gauche
+        args.meta.data.forEach(bar => { bar._sx = dir * (bar.width || 0) * 0.45; bar.x += bar._sx; });
       },
       afterDatasetDraw(chart, args) {
         args.meta.data.forEach(bar => { bar.x -= bar._sx || 0; bar._sx = 0; });
@@ -17415,8 +17420,10 @@ function renderSavingsChart() {
             const saved = ctx.parsed.y;
             const income = incomeData[ctx.dataIndex];
             const earned = earnedData[ctx.dataIndex];
+            const spent = spentData[ctx.dataIndex];
             const pct = income > 0 ? Math.round((saved / income) * 100) : 0;
-            return [`${saved.toFixed(0)} € mis de côté`, income > 0 ? `${pct}% des revenus (${income.toFixed(0)} €)` : "Revenus non enregistrés", `${earned.toFixed(0)} € gagnés (hors remboursements)`];
+            const spentPct = earned > 0 ? Math.round((spent / earned) * 100) : 0;
+            return [`${saved.toFixed(0)} € mis de côté`, income > 0 ? `${pct}% des revenus (${income.toFixed(0)} €)` : "Revenus non enregistrés", `${earned.toFixed(0)} € gagnés (hors remboursements)`, `${spent.toFixed(0)} € dépensés${earned > 0 ? ` (${spentPct}% des revenus gagnés)` : ""}`];
           },
           footer: () => "Cliquer pour le détail",
         }},
@@ -17454,7 +17461,7 @@ function renderSavingsChart() {
           const barH = Math.abs((bar.base || 0) - bar.y);
           if (barH < 22) return; // barre trop petite pour afficher le texte
           const centerY = bar.y + barH / 2;
-          const centerX = bar.x + (bar.width || 0) * 0.35; // même décalage que savOverlapShift
+          const centerX = bar.x + (bar.width || 0) * 0.45; // même décalage que savOverlapShift
           // Fond semi-transparent pour lisibilité
           ctx.font = "bold 10px system-ui, sans-serif";
           // « 48% rev. » si la barre est assez large, sinon « 48% » seul (les barres sont plus fines
@@ -17469,6 +17476,21 @@ function renderSavingsChart() {
           ctx.fill();
           ctx.fillStyle = "#ffffff";
           ctx.fillText(text, centerX, centerY);
+        });
+        // Part des revenus gagnés dépensée, juste AU-DESSUS de la barre de dépenses (milieu) : toujours
+        // lisible, même quand la barre d'épargne, devant, monte presque aussi haut. Dans la barre (en
+        // blanc) seulement si elle touche le haut du graphique.
+        chart.data.datasets[1].data.forEach((val, i) => {
+          const earned = earnedData[i];
+          if (!earned || earned <= 0 || val <= 0) return;
+          const bar = chart.getDatasetMeta(1).data[i];
+          if (!bar) return;
+          const text = Math.round((val / earned) * 100) + "%";
+          ctx.font = "bold 10px system-ui, sans-serif";
+          if (ctx.measureText(text).width + 2 > Math.max(bar.width || 0, 26)) return;
+          const inside = bar.y < chart.chartArea.top + 14;
+          ctx.fillStyle = inside ? "#ffffff" : "#b5675d";
+          ctx.fillText(text, bar.x, inside ? bar.y + 11 : bar.y - 8);
         });
         ctx.restore();
       }},
