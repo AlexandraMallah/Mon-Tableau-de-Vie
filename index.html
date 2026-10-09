@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1336</title>
+<title>Mon Tableau de Vie 🌿 · v1337</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3414,7 +3414,8 @@
         <input type="number" id="plannedAmount" class="planned-in" placeholder="Montant (€)" step="0.01" min="0" inputmode="decimal" />
         <select id="plannedCat" class="planned-in"></select>
         <input type="text" id="plannedNote" class="planned-in" placeholder="Note (optionnel)" maxlength="80" onkeydown="if(event.key==='Enter')addPlanned()" />
-        <button class="planned-btn ok" onclick="addPlanned()" style="padding:8px 14px;">+ Prévoir</button>
+        <button class="planned-btn ok" id="plannedAddBtn" onclick="addPlanned()" style="padding:8px 14px;">+ Prévoir</button>
+        <button class="planned-btn" id="plannedCancelBtn" onclick="cancelPlannedEdit()" style="padding:8px 14px;display:none;">Annuler</button>
       </div>
     </div>
     <div class="card" id="externalCard" style="margin-bottom:18px;display:none;">
@@ -16425,6 +16426,7 @@ function renderPlanned() {
       <div class="planned-txt">${escapeHtml(p.category || "")}${p.note ? `<small>${escapeHtml(p.note)}</small>` : ""}</div>
       <div class="planned-amt" style="color:${inc ? "#4d9c7e" : "#c75b4d"};">${inc ? "+" : "−"}${eur(p.amount)}</div>
       <button class="planned-btn ok" onclick="validatePlanned('${p.id}')" title="Enregistrer comme vraie transaction">✓ Valider</button>
+      <button class="planned-btn" onclick="editPlanned('${p.id}')" title="Modifier ce paiement prévu">✎</button>
       <button class="planned-btn" onclick="deletePlanned('${p.id}')" title="Supprimer ce paiement prévu">✕</button>
     </div>`;
   }).join("") : `<p style="font-size:12px;color:var(--ink-softer);margin:4px 0 0;">Aucun paiement prévu pour le moment.</p>`;
@@ -16441,6 +16443,35 @@ function renderPlanned() {
     </div>`;
   }
 }
+let _plannedEditId = null;
+function _plannedFormMode(editing) {
+  const add = document.getElementById("plannedAddBtn"), cancel = document.getElementById("plannedCancelBtn");
+  if (add) add.textContent = editing ? "✓ Enregistrer" : "+ Prévoir";
+  if (cancel) cancel.style.display = editing ? "" : "none";
+  document.querySelector("#plannedCard .planned-form")?.style.setProperty("outline", editing ? "2px solid var(--lavender)" : "", "");
+}
+function editPlanned(id) {
+  const p = (state.plannedPayments || []).find(x => x.id === id);
+  if (!p) return;
+  _plannedEditId = id;
+  document.getElementById("plannedType").value = p.type === "income" ? "income" : "expense";
+  _plannedFillCats();
+  const sel = document.getElementById("plannedCat");
+  if (![...sel.options].some(o => o.value === p.category)) sel.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(p.category)}">${escapeHtml(p.category)}</option>`);
+  sel.value = p.category;
+  document.getElementById("plannedDate").value = p.date;
+  document.getElementById("plannedAmount").value = p.amount;
+  document.getElementById("plannedNote").value = p.note || "";
+  _plannedFormMode(true);
+  document.getElementById("plannedAmount").focus();
+  document.getElementById("plannedAmount").scrollIntoView({ block: "center", behavior: "smooth" });
+}
+function cancelPlannedEdit() {
+  _plannedEditId = null;
+  document.getElementById("plannedAmount").value = "";
+  document.getElementById("plannedNote").value = "";
+  _plannedFormMode(false);
+}
 function addPlanned() {
   const type = document.getElementById("plannedType").value === "income" ? "income" : "expense";
   const date = document.getElementById("plannedDate").value;
@@ -16451,14 +16482,18 @@ function addPlanned() {
   if (!amount || amount <= 0) return _needField("plannedAmount", "Entre un montant.");
   if (!category) return _needField("plannedCat", "Choisis une catégorie.");
   if (!Array.isArray(state.plannedPayments)) state.plannedPayments = [];
-  state.plannedPayments.push({ id: "pl" + Date.now(), type, date, amount, category, note });
+  const editing = _plannedEditId && state.plannedPayments.find(x => x.id === _plannedEditId);
+  if (editing) Object.assign(editing, { type, date, amount, category, note });
+  else state.plannedPayments.push({ id: "pl" + Date.now(), type, date, amount, category, note });
+  _plannedEditId = null; _plannedFormMode(false);
   document.getElementById("plannedAmount").value = "";
   document.getElementById("plannedNote").value = "";
   saveState(); renderPlanned(); renderBudgetGauge();
-  showToast("📅 Paiement prévu ajouté");
+  showToast(editing ? "✏️ Paiement prévu modifié" : "📅 Paiement prévu ajouté");
 }
 function deletePlanned(id) {
   state.plannedPayments = (state.plannedPayments || []).filter(p => p.id !== id);
+  if (_plannedEditId === id) cancelPlannedEdit();
   saveState(); renderPlanned(); renderBudgetGauge();
 }
 function validatePlanned(id) {
@@ -16469,6 +16504,7 @@ function validatePlanned(id) {
   state.transactions.unshift({ id: "tx" + Date.now(), date: new Date(when).toISOString(), type: p.type, amount: p.amount, category: p.category, note: p.note || "", reimbursable: false, mission: "", fixedCharge: false, exceptional: false, postdocMission: false, directSavingsAccount: "", fromSavingsAccount: "", cashSrcAccount: "", externalAccountId: "" });
   if (p.type === "income" && state.mainSalaryCategory && p.category === state.mainSalaryCategory) _resetMoneyNav();
   state.plannedPayments = state.plannedPayments.filter(x => x.id !== id);
+  if (_plannedEditId === id) cancelPlannedEdit();
   saveState(); renderMoney();
   showToast("✅ Enregistré le " + new Date(when + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long" }));
 }
