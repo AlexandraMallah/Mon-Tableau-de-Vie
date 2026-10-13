@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1337</title>
+<title>Mon Tableau de Vie 🌿 · v1338</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3291,7 +3291,7 @@
           <div>
             <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;">💸 Dépenses</div>
             <div id="financeCatList" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;"></div>
-            <p style="font-size:11px;color:var(--ink-soft);margin:0 0 6px;">⚪ non classé → ✅ essentiel → 🎉 plaisir : clique sur la pastille pour changer. Sert au filtre « Dépenses » des graphiques par catégorie.</p>
+            <p style="font-size:11px;color:var(--ink-soft);margin:0 0 6px;">⚪ non classé → ✅ essentiel → 🎉 plaisir → 🧰 pratique : clique sur la pastille pour changer. Sert au filtre « Dépenses » des graphiques par catégorie.</p>
             <div style="display:flex;gap:6px;">
               <input type="text" id="newFinanceCatInput" placeholder="Nouvelle catégorie…" maxlength="40"
                 style="flex:1;min-width:0;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);"
@@ -3478,7 +3478,7 @@
         <label class="cat-chk" title="Exclut les charges fixes 🏠 et les dépenses exceptionnelles lissées ✨"><input type="checkbox" id="catHorsFixes" onchange="setCatHorsFixes(this.checked)"> Hors charges fixes &amp; exceptionnelles</label>
       </div>
       <div id="catNatureNote" class="cat-note"></div>
-      <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:8px;align-items:start;">
+      <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:8px;align-items:start;">
         <div>
           <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses · tout <span id="catChartDepTotal" style="color:#c75b4d;"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatChart"></canvas></div>
@@ -3495,6 +3495,11 @@
           <div id="moneyCatLegendFun" class="cat-legend"></div>
         </div>
         <div>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🧰 Pratique <span id="catChartDepTotalPra" style="color:#c75b4d;"></span></p>
+          <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatChartPra"></canvas></div>
+          <div id="moneyCatLegendPra" class="cat-legend"></div>
+        </div>
+        <div>
           <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">+ Revenus <span id="catChartIncTotal" style="color:#4d9c7e;"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyIncomeCatChart"></canvas></div>
           <div id="moneyIncomeLegend" class="cat-legend"></div>
@@ -3503,7 +3508,7 @@
     </div>
     <details class="card" id="moneyCatAllCard" style="margin-top:18px;" ontoggle="if(this.open)_renderMoneyAllCharts()">
       <summary style="margin:0;font-size:16px;font-weight:600;cursor:pointer;color:var(--ink);" id="moneyCatAllTitle">Par catégorie · Depuis le 26 mai 2026</summary>
-      <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:14px;align-items:start;">
+      <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:14px;align-items:start;">
         <div>
           <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses · tout <span id="catAllChartDepTotal" style="color:#c75b4d;"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllChart"></canvas></div>
@@ -3518,6 +3523,11 @@
           <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🎉 Plaisir <span id="catAllChartDepTotalFun" style="color:#c75b4d;"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllChartFun"></canvas></div>
           <div id="moneyCatAllLegendFun" class="cat-legend"></div>
+        </div>
+        <div>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🧰 Pratique <span id="catAllChartDepTotalPra" style="color:#c75b4d;"></span></p>
+          <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllChartPra"></canvas></div>
+          <div id="moneyCatAllLegendPra" class="cat-legend"></div>
         </div>
         <div>
           <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">+ Revenus <span id="catAllChartIncTotal" style="color:#4d9c7e;"></span></p>
@@ -5857,6 +5867,19 @@ function migrate(s) {
     s._fixedMainSalaryCatV1314 = true;
   }
   s.categoryNature = s.categoryNature || {};
+  // Migration ponctuelle : introduction de la 3e famille « pratique » et du poste « Vêtements », avec le classement
+  // validé par Alexandra. Réservée à son compte (reconnu à ses catégories propres) pour ne pas écraser le
+  // classement d'autres personnes ; ne tourne qu'une fois (drapeau _natureV2).
+  if (!s._natureV2 && ["Investissement AirBnB", "Logistique", "Entretien vêtements"].every(c => (s.categories || []).includes(c))) {
+    if (!s.categories.includes("Vêtements")) s.categories.push("Vêtements");
+    const fam = {
+      essentiel: ["Logement", "Alimentation", "Santé", "Transport"],
+      plaisir: ["Sorties", "Cadeau", "Danse", "Culture", "Voyages", "Abonnements audiovisuels", "Bijoux", "Esthétique", "Salle de sport", "Vêtements"],
+      pratique: ["Entretien logement (et déco)", "Entretien vêtements", "Logistique", "Frais bancaires", "Autre", "Abonnement IA", "Investissement AirBnB"],
+    };
+    for (const [nature, cats] of Object.entries(fam)) cats.forEach(c => { if (s.categories.includes(c)) s.categoryNature[c] = nature; });
+    s._natureV2 = true;
+  }
   s.plannedPayments = Array.isArray(s.plannedPayments) ? s.plannedPayments : [];
   s.savingsCategories = s.savingsCategories || DEFAULT_STATE.savingsCategories;
   s.candidatureTypes = s.candidatureTypes || DEFAULT_STATE.candidatureTypes;
@@ -17876,10 +17899,10 @@ function _refreshCatExpenseCharts() {
   if (d && d.open) renderMoneyCatAllChart();
 }
 function setCatHorsFixes(on) { try { localStorage.setItem("catHorsFixes", on ? "1" : "0"); } catch (e) {} _refreshCatExpenseCharts(); }
-// Pastille de « Gérer les catégories » : non classé → essentiel → plaisir → non classé
+// Pastille de « Gérer les catégories » : non classé → essentiel → plaisir → pratique → non classé
 function _cycleCatNature(c) {
   if (!state.categoryNature) state.categoryNature = {};
-  const next = { "": "essentiel", essentiel: "plaisir", plaisir: "" }[state.categoryNature[c] || ""];
+  const next = { "": "essentiel", essentiel: "plaisir", plaisir: "pratique", pratique: "" }[state.categoryNature[c] || ""];
   if (next) state.categoryNature[c] = next; else delete state.categoryNature[c];
   saveState(); _renderFinanceCatLists(); _refreshCatExpenseCharts();
 }
@@ -17932,9 +17955,9 @@ function _catBarChart(wrap, canvasId, entries, onPick, legendId) {
     plugins: [ChartDataLabels],
   });
 }
-const _CAT_VARIANTS = [{ key: "", nature: "all" }, { key: "Ess", nature: "essentiel" }, { key: "Fun", nature: "plaisir" }];
+const _CAT_VARIANTS = [{ key: "", nature: "all" }, { key: "Ess", nature: "essentiel" }, { key: "Fun", nature: "plaisir" }, { key: "Pra", nature: "pratique" }];
 const _catExpenseCharts = {};
-// Un graphique de dépenses (rond ou barres) pour une variante (tout / essentiel / plaisir),
+// Un graphique de dépenses (rond ou barres) pour une variante (tout / essentiel / plaisir / pratique),
 // sur le mois affiché ou "depuis toujours".
 function _renderCatExpenseChart(v, allTime) {
   const canvasId = (allTime ? "moneyCatAllChart" : "moneyCatChart") + v.key;
@@ -17993,7 +18016,7 @@ function _renderCatExpenseChart(v, allTime) {
 function renderMoneyCatChart() {
   try { _updateMoneyCatTitle(); _syncCatStyleButtons(); _syncCatHorsFixes(); } catch (e) {}
   _CAT_VARIANTS.forEach(v => _renderCatExpenseChart(v, false));
-  // Catégories non classées : absentes des graphiques Essentiel et Plaisir — on le dit plutôt que de les perdre.
+  // Catégories non classées : absentes des graphiques Essentiel, Plaisir et Pratique — on le dit plutôt que de les perdre.
   const noteEl = document.getElementById("catNatureNote");
   if (!noteEl) return;
   const [start, end] = _moneyCatRange();
@@ -18004,8 +18027,8 @@ function renderMoneyCatChart() {
   }
   const parts = Object.entries(un).sort((a, b) => b[1] - a[1]).map(([c, x]) => `${c} (${x.toFixed(0)}\u00a0€)`);
   const noteTxt = !Object.keys(state.categoryNature || {}).length
-    ? "⚪ Classe tes catégories en « essentiel » ou « plaisir » (✏️ Éditer → Gérer les catégories) pour remplir ces deux graphiques."
-    : parts.length ? "⚪ Non classées, absentes d'Essentiel et de Plaisir : " + parts.join(", ") : "";
+    ? "⚪ Classe tes catégories en « essentiel », « plaisir » ou « pratique » (✏️ Éditer → Gérer les catégories) pour remplir ces graphiques."
+    : parts.length ? "⚪ Non classées, absentes d'Essentiel, Plaisir et Pratique : " + parts.join(", ") : "";
   noteEl.textContent = noteTxt;
   noteEl.title = noteTxt; // ligne fixe (une seule ligne, pour ne pas décaler les graphiques d'un mois à l'autre) : texte complet au survol
 }
@@ -25685,7 +25708,7 @@ function _renderFinanceCatLists() {
   if (el) el.innerHTML = (state.categories || []).map(c => {
     const ce = escapeHtml(c).replace(/'/g,"&#39;");
     return `<span title="Double-clic pour renommer" ondblclick="_renameCatDirect(state.categories,'${ce}')" style="display:inline-flex;align-items:center;gap:4px;background:var(--rose-soft);border-radius:20px;padding:3px 10px;font-size:12px;cursor:default;">
-      <span onclick="_cycleCatNature('${ce}')" title="${{essentiel:"Essentiel (clique : → plaisir)",plaisir:"Plaisir (clique : → non classé)"}[(state.categoryNature||{})[c]] || "Non classé (clique : → essentiel)"}" style="cursor:pointer;font-size:12px;">${{essentiel:"✅",plaisir:"🎉"}[(state.categoryNature||{})[c]] || "⚪"}</span>
+      <span onclick="_cycleCatNature('${ce}')" title="${{essentiel:"Essentiel (clique : → plaisir)",plaisir:"Plaisir (clique : → pratique)",pratique:"Pratique (clique : → non classé)"}[(state.categoryNature||{})[c]] || "Non classé (clique : → essentiel)"}" style="cursor:pointer;font-size:12px;">${{essentiel:"✅",plaisir:"🎉",pratique:"🧰"}[(state.categoryNature||{})[c]] || "⚪"}</span>
       ${escapeHtml(c)}
       <span onclick="_removeFinanceCat('${ce}')" style="cursor:pointer;color:var(--ink-softer);font-size:10px;">✕</span>
     </span>`;
