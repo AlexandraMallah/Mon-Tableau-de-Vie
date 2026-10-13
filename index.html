@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1339</title>
+<title>Mon Tableau de Vie 🌿 · v1340</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17835,23 +17835,46 @@ function _showBarDetail({ start, end }, kind, color) {
   txs.sort((a, b) => new Date(b.date) - new Date(a.date));
   const total = txs.reduce((s, t) => s + signedAmount(t), 0);
   const fmt = v => (v < 0 ? "−" : (kind === "spent" ? "" : "+")) + Math.abs(v).toFixed(2) + "\u00a0€";
-  document.getElementById("catDetailTitle").textContent = label + " · " + _periodLabel({ start });
-  document.getElementById("catDetailTotal").textContent = fmt(kind === "spent" ? -total : total);
+  _showTxListPopup(label + " · " + _periodLabel({ start }), color, fmt(kind === "spent" ? -total : total),
+    txs.map(t => ({ id: t.id, main: t.note || t.category || "—", sub: sub(t), amount: fmt(kind === "spent" ? -signedAmount(t) : signedAmount(t)), tx: t })),
+    "Rien ce mois-là.");
+}
+// Fenêtre « liste de transactions » (réutilise #catDetailModal) : titre, pastille, total, une ligne par opération
+// avec bouton d'édition. rows = [{ id, main, sub, amount, tx }].
+function _showTxListPopup(title, color, totalText, rows, emptyText) {
+  document.getElementById("catDetailTitle").textContent = title;
+  document.getElementById("catDetailTotal").textContent = totalText;
   document.getElementById("catDetailDot").style.background = color;
-  document.getElementById("catDetailList").innerHTML = txs.length ? txs.map(t => {
-    const d = new Date(t.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
-    const acc = _txExtAccountLabel(t);
+  document.getElementById("catDetailList").innerHTML = rows.length ? rows.map(r => {
+    const d = new Date(r.tx.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+    const acc = _txExtAccountLabel(r.tx);
     return `
       <div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);">
         <div style="flex:1;min-width:0;overflow-wrap:anywhere;">
-          <div style="font-size:14px;color:var(--ink);">${escapeHtml(t.note || t.category || "—")}</div>
-          <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${d} · ${escapeHtml(sub(t))}${acc ? " · " + escapeHtml(acc) : ""}</div>
+          <div style="font-size:14px;color:var(--ink);">${escapeHtml(r.main)}</div>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${d} · ${escapeHtml(r.sub)}${acc ? " · " + escapeHtml(acc) : ""}</div>
         </div>
-        <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${fmt(kind === "spent" ? -signedAmount(t) : signedAmount(t))}</div>
-        <button onclick="openTxModal('${t.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:11px;cursor:pointer;flex-shrink:0;">✎</button>
+        <div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;">${r.amount}</div>
+        <button onclick="openTxModal('${r.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:white;color:var(--ink-soft);font-size:11px;cursor:pointer;flex-shrink:0;">✎</button>
       </div>`;
-  }).join("") : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px 0;">Rien ce mois-là.</p>`;
+  }).join("") : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px 0;">${emptyText}</p>`;
   document.getElementById("catDetailModal").classList.add("open");
+}
+// Clic sur une tranche (ou la légende) du graphique « Répartition » : toutes les dépenses de cette famille.
+function _showFamilyDetail(nature, allTime) {
+  const fam = _CAT_FAMILIES.find(f => f.nature === nature);
+  const [start, end] = allTime ? _allTimeRange() : _moneyCatRange();
+  const hf = _catHorsFixes();
+  const txs = state.transactions.filter(t => {
+    const d = new Date(t.date);
+    return d >= start && (allTime ? d <= end : d < end) && _isChartExpense(t, hf) && _catNatureOf(t.category) === nature;
+  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+  const fmt = v => v.toFixed(2) + "\u00a0€";
+  const total = txs.reduce((s, t) => s + txNetAmount(t), 0);
+  const period = allTime ? "depuis le " + APP_START_LABEL : _periodLabel({ start });
+  _showTxListPopup(fam.label + " · " + period, _catFamilyColor(fam), fmt(total),
+    txs.map(t => ({ id: t.id, main: t.note || t.category || "—", sub: t.category || "", amount: fmt(txNetAmount(t)), tx: t })),
+    "Aucune dépense dans cette famille.");
 }
 function _emptyDonutPlaceholder(wrap, text) {
   wrap.insertAdjacentHTML("beforeend",
@@ -18029,12 +18052,15 @@ function _catDonut(canvasId, entries, colorOf, onPick) {
 }
 // 6e graphique : part de chaque grande famille (essentiel / plaisir / pratique / non classé) dans les dépenses
 // de la période (mêmes dépenses que « Dépenses · tout », case « hors charges fixes » comprise).
+// Couleurs de la charte du thème actif : pastels en Smooth, bleus / bruns / vert sauge en Sérieux
+// (mêmes teintes que _CAT_PAL_SERIEUX).
 const _CAT_FAMILIES = [
-  { nature: "essentiel", label: "✅ Essentiel", color: "#8fc9b0" },
-  { nature: "plaisir", label: "🎉 Plaisir", color: "#f4b8a6" },
-  { nature: "pratique", label: "🧰 Pratique", color: "#b5a4e0" },
-  { nature: "", label: "⚪ Non classé", color: "#d5d0dc" },
+  { nature: "essentiel", label: "✅ Essentiel", color: "#8fc9b0", colorSerieux: "#8ab4d4" },
+  { nature: "plaisir", label: "🎉 Plaisir", color: "#f4b8a6", colorSerieux: "#d0ac84" },
+  { nature: "pratique", label: "🧰 Pratique", color: "#b5a4e0", colorSerieux: "#a0c0a8" },
+  { nature: "", label: "⚪ Non classé", color: "#d5d0dc", colorSerieux: "#d8c8b0" },
 ];
+function _catFamilyColor(f) { return document.body.classList.contains("t-serieux") ? f.colorSerieux : f.color; }
 function _renderCatShareChart(allTime) {
   const canvasId = allTime ? "moneyCatAllShare" : "moneyCatShare";
   const wrap = document.getElementById(canvasId)?.parentElement;
@@ -18053,15 +18079,16 @@ function _renderCatShareChart(allTime) {
     }
   }
   const entries = _CAT_FAMILIES.filter(f => sums[f.nature] > 0).map(f => [f.label, sums[f.nature]]);
-  const colorOf = label => _CAT_FAMILIES.find(f => f.label === label)?.color || "#ccc";
+  const colorOf = label => { const f = _CAT_FAMILIES.find(f => f.label === label); return f ? _catFamilyColor(f) : "#ccc"; };
+  const pick = label => { const f = _CAT_FAMILIES.find(f => f.label === label); if (f) _showFamilyDetail(f.nature, allTime); };
   const total = entries.reduce((s, [, x]) => s + x, 0);
   const totEl = document.getElementById(allTime ? "catAllShareTotal" : "catShareTotal");
   if (totEl) totEl.textContent = total > 0 ? ": " + total.toFixed(0) + " €" : "";
   const lg = document.getElementById(allTime ? "moneyCatAllShareLegend" : "moneyCatShareLegend");
-  if (lg) lg.innerHTML = entries.map(([l]) => `<span class="cat-legend-item" style="cursor:default;"><span class="cat-legend-dot" style="background:${colorOf(l)};"></span>${l}</span>`).join("");
+  if (lg) lg.innerHTML = entries.map(([l]) => { const f = _CAT_FAMILIES.find(f => f.label === l); return `<span class="cat-legend-item" onclick="_showFamilyDetail('${f.nature}',${allTime})"><span class="cat-legend-dot" style="background:${colorOf(l)};"></span>${l}</span>`; }).join("");
   if (!entries.length) { _emptyDonutPlaceholder(wrap, allTime ? "Aucune dépense" : "Aucune dépense<br>ce mois"); return; }
-  if (_catStyleIsBar()) { _catExpenseCharts[canvasId] = _catBarChart(wrap, canvasId, entries, null, canvasId === "moneyCatShare" ? "moneyCatShareLegend" : "moneyCatAllShareLegend", colorOf); return; }
-  _catExpenseCharts[canvasId] = _catDonut(canvasId, entries, colorOf, null);
+  if (_catStyleIsBar()) { _catExpenseCharts[canvasId] = _catBarChart(wrap, canvasId, entries, pick, canvasId === "moneyCatShare" ? "moneyCatShareLegend" : "moneyCatAllShareLegend", colorOf); return; }
+  _catExpenseCharts[canvasId] = _catDonut(canvasId, entries, colorOf, pick);
 }
 function renderMoneyCatChart() {
   try { _updateMoneyCatTitle(); _syncCatStyleButtons(); _syncCatHorsFixes(); } catch (e) {}
