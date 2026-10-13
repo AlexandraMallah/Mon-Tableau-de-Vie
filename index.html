@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1341</title>
+<title>Mon Tableau de Vie 🌿 · v1342</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14875,6 +14875,9 @@ function toggleMissionField(wrapId, show) {
   if (wrapId === "txMissionWrap") _refreshTxCategories(show);
   if (wrapId === "txModalMissionWrap") _refreshModalCategories(show);
 }
+// Catégories de dépenses / revenus affichées par ordre alphabétique dans les listes déroulantes et la gestion des
+// catégories. Tri à l'affichage SEULEMENT : l'ordre stocké sert à attribuer les couleurs (catColor) et ne doit pas bouger.
+function _alpha(list) { return [...(list || [])].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" })); }
 // Liste de catégories modifiable selon le type de transaction (null si frais pro = liste figée)
 function _activeTxCatList() {
   const isPro = document.getElementById("txReimbursable")?.checked && txType === "expense";
@@ -14893,7 +14896,7 @@ function _txCatExtraOptions() {
 function _refreshTxCategories(isPro) {
   const sel = document.getElementById("txCategory");
   if (!sel) return;
-  const list = isPro ? PRO_CATEGORIES : state.categories;
+  const list = isPro ? PRO_CATEGORIES : _alpha(state.categories);
   const prev = sel.value;
   sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("") + _txCatExtraOptions();
   if (list.includes(prev)) sel.value = prev;
@@ -14933,10 +14936,10 @@ function _refreshModalCategories(isPro) {
   if (!sel) return;
   const isExpense = (txModalType === "expense" || txModalType === "external");
   const list = (isPro && isExpense) ? PRO_CATEGORIES
-             : txModalType === "income" ? state.incomeCategories
+             : txModalType === "income" ? _alpha(state.incomeCategories)
              : txModalType === "savings" ? state.savingsCategories
              : txModalType === "savings-out" ? (state.savingsCategories || []).filter(c => !(state.savingsLocked || {})[c])
-             : state.categories;
+             : _alpha(state.categories);
   const prev = sel.value;
   sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
   if (list.includes(prev)) sel.value = prev;
@@ -16312,11 +16315,11 @@ function populateTxCategories() {
   const sel = document.getElementById("txCategory");
   const isPro = document.getElementById("txReimbursable")?.checked && txType === "expense";
   const list = isPro                          ? PRO_CATEGORIES
-             : txType === "income"            ? state.incomeCategories
+             : txType === "income"            ? _alpha(state.incomeCategories)
              : txType === "savings"           ? state.savingsCategories
              : txType === "savings-out"       ? state.savingsCategories
              : txType === "cash-withdrawal"   ? []
-             : state.categories;
+             : _alpha(state.categories);
   if (txType === "cash-withdrawal") { sel.innerHTML = ""; sel.style.display = "none"; return; }
   sel.style.display = "";
   sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("") + _txCatExtraOptions();
@@ -16435,7 +16438,7 @@ function _plannedFillCats() {
   const sel = document.getElementById("plannedCat");
   if (!sel) return;
   const income = document.getElementById("plannedType")?.value === "income";
-  const list = (income ? state.incomeCategories : state.categories) || [];
+  const list = _alpha(income ? state.incomeCategories : state.categories);
   const cur = sel.value;
   sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
   if (list.includes(cur)) sel.value = cur;
@@ -16688,10 +16691,10 @@ function closeTxModal() { document.getElementById("txModal").classList.remove("o
 function setTxModalType(t, presetCategory) {
   txModalType = t;
   const cfg = {
-    expense:      { btn: "txModalTypeExpense",    bg: "var(--rose-soft)",    border: "var(--rose)",    list: state.categories },
-    income:       { btn: "txModalTypeIncome",     bg: "var(--mint-soft)",    border: "var(--mint)",    list: state.incomeCategories },
+    expense:      { btn: "txModalTypeExpense",    bg: "var(--rose-soft)",    border: "var(--rose)",    list: _alpha(state.categories) },
+    income:       { btn: "txModalTypeIncome",     bg: "var(--mint-soft)",    border: "var(--mint)",    list: _alpha(state.incomeCategories) },
     savings:      { btn: "txModalTypeSavings",    bg: "var(--lavender-soft)",border: "var(--lavender)",list: state.savingsCategories },
-    external:     { btn: "txModalTypeExternal",   bg: "var(--butter-soft)",  border: "var(--butter)",  list: state.categories },
+    external:     { btn: "txModalTypeExternal",   bg: "var(--butter-soft)",  border: "var(--butter)",  list: _alpha(state.categories) },
     "savings-out":{ btn: "txModalTypeSavingsOut", bg: "#e0f4f4",             border: "#5bbcb8",        list: state.savingsCategories },
   };
   for (const [type, c] of Object.entries(cfg)) {
@@ -18301,7 +18304,7 @@ function renderBudgetFeedback() {
   allCats.sort((a, b) => (totals[b] || 0) - (totals[a] || 0));
 
   // Formulaire d'ajout
-  const allExpCats = state.categories || [];
+  const allExpCats = _alpha(state.categories);
   // Catégories disponibles pour ajout (pas encore dans budgets ou sans dépenses ce mois)
   const addOptions = allExpCats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
   const addForm = `
@@ -18679,7 +18682,7 @@ function openSubModal(id) {
   document.getElementById("subModalId").value = id || "";
   document.getElementById("subModalDelete").style.display = isEdit ? "" : "none";
   const sCat = document.getElementById("subModalCategory");
-  sCat.innerHTML = state.categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  sCat.innerHTML = _alpha(state.categories).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
   if (isEdit) {
     const s = state.subscriptions.find(x => x.id === id);
     document.getElementById("subModalName").value = s.name || "";
@@ -25784,7 +25787,7 @@ function _renameCatDirect(list, catName) {
 function _renderFinanceCatLists() {
   const el = document.getElementById("financeCatList");
   const el2 = document.getElementById("financeIncomeCatList");
-  if (el) el.innerHTML = (state.categories || []).map(c => {
+  if (el) el.innerHTML = _alpha(state.categories).map(c => {
     const ce = escapeHtml(c).replace(/'/g,"&#39;");
     return `<span title="Double-clic pour renommer" ondblclick="_renameCatDirect(state.categories,'${ce}')" style="display:inline-flex;align-items:center;gap:4px;background:var(--rose-soft);border-radius:20px;padding:3px 10px;font-size:12px;cursor:default;">
       <span onclick="_cycleCatNature('${ce}')" title="${{essentiel:"Essentiel (clique : → plaisir)",plaisir:"Plaisir (clique : → pratique)",pratique:"Pratique (clique : → non classé)"}[(state.categoryNature||{})[c]] || "Non classé (clique : → essentiel)"}" style="cursor:pointer;font-size:12px;">${{essentiel:"✅",plaisir:"🎉",pratique:"🧰"}[(state.categoryNature||{})[c]] || "⚪"}</span>
@@ -25792,7 +25795,7 @@ function _renderFinanceCatLists() {
       <span onclick="_removeFinanceCat('${ce}')" style="cursor:pointer;color:var(--ink-softer);font-size:10px;">✕</span>
     </span>`;
   }).join("");
-  if (el2) el2.innerHTML = (state.incomeCategories || []).map(c => {
+  if (el2) el2.innerHTML = _alpha(state.incomeCategories).map(c => {
     const ce = escapeHtml(c).replace(/'/g,"&#39;");
     const isMain = state.mainSalaryCategory === c;
     return `<span title="Double-clic pour renommer" ondblclick="_renameCatDirect(state.incomeCategories,'${ce}')" style="display:inline-flex;align-items:center;gap:4px;background:${isMain ? "var(--lavender-soft)" : "var(--mint-soft)"};border-radius:20px;padding:3px 10px;font-size:12px;cursor:default;">
