@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1340</title>
+<title>Mon Tableau de Vie 🌿 · v1341</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5017,7 +5017,7 @@
 </div>
 
 <!-- Transaction edit modal -->
-<div class="modal-bg" id="txModal" onmousedown="_txBdDown=event.target===this" onclick="if(event.target===this&&_txBdDown)closeTxModal()">
+<div class="modal-bg" id="txModal" style="z-index:300;" onmousedown="_txBdDown=event.target===this" onclick="if(event.target===this&&_txBdDown)closeTxModal()">
   <div class="modal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
     <h2 style="margin:0 0 6px;">Modifier la transaction</h2>
     <p class="modal-hint">Corrige le montant, la date, la catégorie ou les options d'une transaction existante. Coche <strong>Charge fixe</strong> pour les loyers/abonnements (exclus du budget), <strong>Frais pro</strong> pour les remboursements professionnels.</p>
