@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1342</title>
+<title>Mon Tableau de Vie 🌿 · v1343</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2370,7 +2370,7 @@
             <label>Nom du plat / repas</label>
             <input type="text" id="foodEntryName" placeholder="ex : Latte maison, salade, poulet…" autocomplete="off"
               oninput="_foodNameSearch(this.value)" onblur="setTimeout(()=>_foodNameHide(),200)" />
-            <div id="foodNameDropdown" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:999;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.1);max-height:200px;overflow-y:auto;"></div>
+            <div id="foodNameDropdown" data-keep-keyboard onmousedown="event.preventDefault()" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:999;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.1);max-height:200px;overflow-y:auto;"></div>
           </div>
           <div>
             <label>Heure</label>
@@ -5622,7 +5622,9 @@ document.addEventListener('mousedown', e => {
     const a = document.activeElement;
     if (!a || !/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || !a.closest('.modal')) return;
     const t = e.target;
-    if (t.closest('input, textarea, select, button, label, a, [contenteditable], [role=button]') || !t.closest('.modal')) return;
+    // [data-keep-keyboard] : listes de suggestions sous un champ — y toucher ne doit PAS ranger le clavier, sinon la
+    // fenêtre se redimensionne sous le doigt et la suggestion n'est jamais sélectionnée (bug « cordon bleu » sur mobile).
+    if (t.closest('input, textarea, select, button, label, a, [contenteditable], [role=button], [data-keep-keyboard]') || !t.closest('.modal')) return;
     a.blur();
   }, true);
 })();
@@ -12946,7 +12948,10 @@ function selectFoodReason(r) {
 }
 
 function saveFoodEntry() {
-  const name = document.getElementById("foodEntryName").value.trim();
+  let name = document.getElementById("foodEntryName").value.trim();
+  // Choisir un aliment dans la liste de suggestions l'ajoute comme ingrédient et vide le champ nom : sans nom saisi,
+  // on le déduit des ingrédients (ex. « Cordon bleu » ou « Riz + Poulet ») plutôt que de bloquer l'enregistrement.
+  if (!name) name = (_foodIngredients || []).map(i => (i.name || "").trim()).filter(Boolean).slice(0, 3).join(" + ");
   if (!name) { showToast("🍽️ Indique ce que tu as mangé."); return; }
   const d = getToday();
   if (!d.foodLog) d.foodLog = [];
