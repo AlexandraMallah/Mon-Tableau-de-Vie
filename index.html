@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1344</title>
+<title>Mon Tableau de Vie 🌿 · v1345</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16767,9 +16767,12 @@ function setTxModalType(t, presetCategory) {
   const isExp = (t === "expense" || t === "external");
   if (fromWrap) fromWrap.style.display = isExp ? "flex" : "none";
   if (fromSel && isExp) {
+    // Comptes secondaires (ex. « Compte Papa ») inclus, comme dans le formulaire de création (voir _refreshPreleveSur)
+    const _extOpts = (state.externalAccounts || []).map(a => `<option value="ext:${escapeHtml(a.id)}">${a.emoji} ${escapeHtml(a.name)}</option>`).join("");
     fromSel.innerHTML = `<option value="">💳 Compte courant (défaut)</option>` +
       `<option value="__cash__">💵 Espèces en poche</option>` +
-      (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("");
+      (state.savingsCategories || []).map(c => `<option value="${escapeHtml(c)}">${_accountEmoji(c)}${escapeHtml(c)}</option>`).join("") +
+      _extOpts;
   }
   // Sélecteur de compte Hors compte dans la modale d'édition
   let modalExtWrap = document.getElementById("txModalExternalAccountWrap");
