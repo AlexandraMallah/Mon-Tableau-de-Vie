@@ -1,5 +1,5 @@
 // Service Worker — Mon Tableau de Vie
-const CACHE = "mon-tableau-v1792340223";
+const CACHE = "mon-tableau-v1792340927";
 // index.html exclu du précache — toujours servi network-first avec no-cache
 const ASSETS = [
   "/Mon-Tableau-de-Vie/manifest.json",
@@ -32,7 +32,7 @@ self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
   // L'appli + ses bibliothèques (graphiques, Firebase) : gardées aussi pour pouvoir s'ouvrir hors connexion
-  const LIBS = ["cdn.jsdelivr.net", "www.gstatic.com"];
+  const LIBS = ["cdn.jsdelivr.net", "www.gstatic.com", "fonts.googleapis.com", "fonts.gstatic.com"];
   if (!url.origin.includes("github.io") && !url.origin.includes("localhost") && !LIBS.includes(url.hostname)) return;
 
   const isHtml = url.pathname.endsWith(".html") || url.pathname.endsWith("/");

@@ -383,6 +383,17 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 - **Fix emoji modal émotion** : `_pickEmSuggest(i)` met à jour emoji ET label (plus d'apostrophe qui casse l'`onclick`)
 - **Thème Minimal supprimé** : variables `_hbM` et `_isM` entièrement retirées, 2 thèmes restants : 🌸 Smooth et 💼 Sérieux
 
+## iPhone / Safari iOS (audit v1353)
+- `viewport-fit=cover` : toute la page va jusqu'aux bords → marges avec `env(safe-area-inset-*)` (body gauche/droite, `.container` et `.modal-bg` en bas, bandeau mode édition, `#bandRestorePill`, toast). Tout nouvel élément `position:fixed` en bas : `bottom: calc(env(safe-area-inset-bottom, 0px) + Xpx)`.
+- Zoom automatique d'iOS au toucher d'un champ < 16 px : règle 16 px pour `input, select, textarea, [contenteditable]` sur `(max-width:700px), (hover:none) and (pointer:coarse)` (téléphone couché, iPad compris). Ne pas la restreindre à la largeur.
+- Élément fixe qui doit rester visible clavier ouvert : se caler sur `var(--vv-top)` (zone visible), pas sur le haut de la page.
+- Effets `:hover` (soulèvement, ✕ pâles) neutralisés en `(hover:none)` ; `user-select:none` toujours doublé de `-webkit-user-select:none`.
+- Téléphone couché (`max-height:500px` paysage) : bandeau du haut non collant.
+- Pas de notifications dans Safari iPhone (seulement l'appli de l'écran d'accueil, iOS 16.4+, et appli ouverte) → `savePillConfig` le dit au lieu d'activer un rappel muet.
+- Export : feuille de partage (`navigator.share({files})`) sur iOS.
+- Icône d'écran d'accueil : `apple-touch-icon-v4.png` (180×180, opaque — iOS noircit la transparence).
+- iOS ≥ 16 requis en pratique (`structuredClone`, `AbortSignal.timeout`, `overflow:clip`).
+
 ## Fonctionnalités en attente / à faire
 
 - **Bodytrax importer** : importer les métriques corporelles depuis export Samsung Health ou Bodytrax CSV

@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
 <meta name="color-scheme" content="light" />
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1352</title>
+<title>Mon Tableau de Vie 🌿 · v1353</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -120,7 +120,7 @@
     --accent-ink: #2c5a80;
     --surface-soft: #f4f7fb;
     --surface-weekend: #e9eff6;
-    --font-main: "IBM Plex Sans", "Segoe UI", sans-serif;
+    --font-main: "IBM Plex Sans", -apple-system, system-ui, "Segoe UI", sans-serif; /* iPhone hors ligne : police système */
   }
 
   * { box-sizing: border-box; }
@@ -448,7 +448,7 @@
     width: 30px; min-height: 40px; border-radius: 8px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 3px; cursor: pointer; border: 1.5px solid var(--line);
-    background:var(--surface-soft); transition: all 0.15s; user-select: none; flex-shrink: 0;
+    background:var(--surface-soft); transition: all 0.15s; -webkit-user-select:none;user-select: none; flex-shrink: 0;
   }
   .activity-day-dot .dot-day-label { font-size: 9px; font-weight: 700; color: var(--ink-softer); text-transform: uppercase; line-height: 1; }
   .activity-day-dot .dot-day-mark { width: 11px; height: 11px; border-radius: 50%; background: var(--line); transition: background 0.15s; flex-shrink: 0; }
@@ -609,9 +609,12 @@
   /* iOS zoome automatiquement toute la page quand on touche un champ dont le texte fait
      moins de 16px — c'est ce "zoom chelou" qui n'existe pas sur Android (Chrome n'a pas ce
      comportement). Le !important est nécessaire : beaucoup de champs ont leur taille en style
-     inline, plus prioritaire qu'une règle de classe normale. */
-  @media (max-width: 700px) {
-    input, select, textarea { font-size: 16px !important; }
+     inline, plus prioritaire qu'une règle de classe normale.
+     Aussi sur tout écran TACTILE (téléphone couché, iPad) : au-delà de 700 px de large la règle ne
+     s'appliquait plus, et depuis que le zoom à deux doigts est autorisé (v1350), iOS zoomait au
+     toucher de 625 champs en paysage. */
+  @media (max-width: 700px), (hover: none) and (pointer: coarse) {
+    input, select, textarea, [contenteditable]:not([contenteditable="false"]) { font-size: 16px !important; }
   }
   @media (max-width: 700px) {
     .sub-row { grid-template-columns: 1fr auto; gap: 8px; }
@@ -794,7 +797,7 @@
   .milestone-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background:var(--surface-soft); border: 1px solid var(--line); transition: opacity 0.15s; }
   .milestone-row.done-m { background: var(--mint-soft); border-color: #6dc0a0; }
   .milestone-row.drag-over { outline: 2px dashed var(--lavender); background: var(--lavender-soft) !important; }
-  .milestone-drag-handle { cursor: grab; color: var(--ink-softer); font-size: 15px; flex-shrink: 0; user-select: none; line-height: 1; padding: 0 1px; letter-spacing: -1px; }
+  .milestone-drag-handle { cursor: grab; color: var(--ink-softer); font-size: 15px; flex-shrink: 0; -webkit-user-select:none;user-select: none; line-height: 1; padding: 0 1px; letter-spacing: -1px; }
   .milestone-drag-handle:hover { color: var(--ink-soft); }
   .milestone-cb { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ink-soft); cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
   .milestone-row.done-m .milestone-cb { background: var(--mint); border-color: var(--mint); }
@@ -1012,7 +1015,7 @@
   .future-day .grid-two {
     opacity: 0.25;
     pointer-events: none;
-    user-select: none;
+    -webkit-user-select:none;user-select: none;
     transition: opacity 0.2s;
   }
 
@@ -1273,7 +1276,7 @@
   .meal-dish-block { border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:6px; }
   .meal-dish-hd {
     display:flex; align-items:center; gap:8px; padding:9px 12px;
-    cursor:pointer; background:var(--bg-1); transition:background .15s; user-select:none;
+    cursor:pointer; background:var(--bg-1); transition:background .15s; -webkit-user-select:none;user-select:none;
   }
   .meal-dish-hd:hover { background:var(--bg-2); }
   .meal-dish-arrow { font-size:9px; color:var(--ink-softer); flex-shrink:0; width:10px; }
@@ -1504,7 +1507,7 @@
   .cl-item-num { color: var(--ink-softer); font-size: 12px; font-variant-numeric: tabular-nums; min-width: 16px; text-align: right; flex-shrink: 0; }
   /* Listes Domestique + listes de projets perso — design unifié, compact */
   .cl-item-row { border-radius: 8px; transition: background .1s; }
-  .cl-item-grip { flex-shrink: 0; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+  .cl-item-grip { flex-shrink: 0; cursor: grab; touch-action: none; -webkit-user-select:none;user-select: none; -webkit-user-select: none;
     color: var(--ink-softer); opacity: .55; font-size: 14px; line-height: 1; padding: 6px 4px; margin: -6px -2px -6px -4px; }
   .cl-item-grip:hover { opacity: 1; }
   @media (pointer: coarse), (max-width: 640px) { .cl-item-grip { font-size: 18px; padding: 10px 9px; margin: -10px -3px -10px -7px; opacity: .7; } }
@@ -1515,7 +1518,7 @@
   .cl-drag-ghost { position: fixed; z-index: 9999; pointer-events: none; background: var(--card); border: 1.5px solid var(--lavender);
     border-radius: 8px; padding: 5px 10px; font-size: 13px; color: var(--ink); box-shadow: var(--shadow-hover);
     max-width: 70vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  html.dnd-active, html.dnd-active * { cursor: grabbing !important; -webkit-user-select: none; user-select: none; }
+  html.dnd-active, html.dnd-active * { cursor: grabbing !important; -webkit-user-select: none; -webkit-user-select:none;user-select: none; }
   html.dnd-active .view { pointer-events: auto !important; }
   .cl-item-row:hover { background: var(--bg-2); }
   .cl-item-row.done { background: var(--bg-1); }
@@ -1596,7 +1599,7 @@
     box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 9999; pointer-events: none;
     white-space: normal; width: max-content; max-width: calc(100vw - 24px); box-sizing: border-box; text-align: center;
   }
-  @media (max-width: 640px) { body.edit-mode::after { font-size: 11px; padding: 7px 12px; bottom: 8px; } }
+  @media (max-width: 640px) { body.edit-mode::after { font-size: 11px; padding: 7px 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); } }
   body.edit-mode:has(.modal-bg.open)::after { display: none; }
 
   /* ========= RESPONSIVE ========= */
@@ -1941,7 +1944,7 @@
   .note-group-item.active { border-color: var(--lilac); }
   .note-group-header {
     display: flex; align-items: center; gap: 6px; padding: 8px 10px;
-    cursor: pointer; user-select: none; background: var(--lavender-soft);
+    cursor: pointer; -webkit-user-select:none;user-select: none; background: var(--lavender-soft);
     min-width: 0;
   }
   .note-group-name {
@@ -2053,6 +2056,29 @@
   }
 
   /* ===== AUDIT DESIGN (v1350) ===== */
+  /* iPhone (v1353) — viewport-fit=cover : la page occupe tout l'écran, on garde donc nous-mêmes les marges
+     de l'encoche (paysage) et de la barre d'accueil (en bas, appli installée). env() vaut 0 ailleurs. */
+  body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+  .container { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  @media (max-width: 640px) {
+    .modal-bg { padding-bottom: env(safe-area-inset-bottom, 0px); } /* fenêtre au-dessus de la barre d'accueil */
+  }
+  /* iPhone : un toucher « colle » l'effet de survol (carte soulevée) ; et les ✕ pâles jusqu'au survol
+     resteraient pâles en permanence. */
+  @media (hover: none) {
+    .btn-icon:hover, .tab:hover, .ring-card:hover, .project-card:hover, .btn-primary:hover, .help-btn:hover { transform: none; }
+    .tx-del, .tx-edit, .task-del, .task-edit-btn { opacity: 0.85; }
+  }
+  /* Safari : triangle natif des <summary> en plus du nôtre */
+  summary::-webkit-details-marker { display: none; }
+  /* Champs heure / date natifs d'iPhone : même hauteur que les autres même vides, valeur alignée à gauche */
+  input[type="time"], input[type="date"], input[type="datetime-local"] { min-height: 40px; }
+  input::-webkit-date-and-time-value { text-align: left; }
+  /* Téléphone couché (écran bas) : le bandeau du haut ne reste plus collé — il occupait 31 % de
+     l'écran pendant tout le défilement (122 px sur 390). */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .sticky-header-group { position: relative; top: auto; }
+  }
   /* Haut de page compact sur téléphone (v1351) : titre + bouton « ☰ Menu » sur une ligne, les outils
      s'ouvrent dans un panneau ; les 9 onglets restent visibles en grille 3×3 plus serrée.
      Avant : le contenu commençait à 420 px sur un écran de 812 px. */
@@ -2101,7 +2127,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="Mon Tableau" />
-<link rel="apple-touch-icon" href="icon-192-v3.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-v4.png" />
 </head>
 <body>
 <script>
@@ -4840,7 +4866,7 @@
 </div>
 
 <!-- Pastille : bande du haut masquée temporairement -->
-<button id="bandRestorePill" onclick="showHeaderBand()" title="Remettre la bande du haut" style="display:none;position:fixed;top:8px;right:8px;z-index:9998;background:var(--card);color:var(--ink);border:1.5px solid var(--lavender);border-radius:999px;padding:8px 16px;font-family:inherit;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.15);cursor:pointer;max-width:calc(100vw - 16px);box-sizing:border-box;">🙈 Remettre la bande</button>
+<button id="bandRestorePill" onclick="showHeaderBand()" title="Remettre la bande du haut" style="display:none;position:fixed;top:calc(var(--vv-top, 0px) + env(safe-area-inset-top, 0px) + 8px);right:calc(env(safe-area-inset-right, 0px) + 8px);z-index:9998;background:var(--card);color:var(--ink);border:1.5px solid var(--lavender);border-radius:999px;padding:8px 16px;font-family:inherit;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.15);cursor:pointer;max-width:calc(100vw - 16px);box-sizing:border-box;">🙈 Remettre la bande</button>
 
 <!-- Modal Virement entre comptes -->
 <div class="modal-bg" id="virementModal" onclick="event.target===this&&_modalMouseDownTarget===this&&closeVirementModal()">
@@ -11622,7 +11648,7 @@ function renderHormones() {
     const lx = (CX + LR * Math.cos(DIRS[i])).toFixed(1);
     const ly = (CY + LR * Math.sin(DIRS[i])).toFixed(1);
     return `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle"
-      font-size="20" style="cursor:pointer;user-select:none;"
+      font-size="20" style="cursor:pointer;-webkit-user-select:none;user-select:none;"
       onclick="showHormoneDetail('${h.id}')">${h.emoji}</text>`;
   }).join("");
 
@@ -12634,13 +12660,22 @@ async function savePillConfig() {
     } catch (_) { reminderOn = false; }
   }
   if (reminderOn && typeof Notification !== "undefined" && Notification.permission !== "granted") reminderOn = false;
+  // Safari sur iPhone n'a pas de notifications (seulement l'appli ajoutée à l'écran d'accueil, iOS 16.4+) :
+  // avant, le rappel était enregistré comme actif sans jamais rien faire.
+  const noNotifApi = typeof Notification === "undefined";
+  if (noNotifApi) reminderOn = false;
   state.health.pillReminderEnabled = reminderOn;
   if (onInp) onInp.checked = reminderOn;
   saveState();
   closePillConfigModal();
   renderPill();
   renderPillSante();
-  if (wantedReminder && !reminderOn) showToast("🔕 Notifications refusées par le navigateur — le rappel visuel reste actif dans l'app.");
+  if (wantedReminder && !reminderOn) {
+    const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    showToast(noNotifApi && iOS
+      ? "📱 Sur iPhone, les notifications ne marchent que dans l'appli ajoutée à l'écran d'accueil (Partager → Sur l'écran d'accueil), et seulement quand elle est ouverte. Le rappel visuel reste actif."
+      : "🔕 Notifications refusées par le navigateur — le rappel visuel reste actif dans l'app.", 7000);
+  }
 }
 
 /* ========= AUTOCOMPLÉTION NOM DU PLAT ========= */
@@ -13891,8 +13926,21 @@ function _hoverTipEl() {
   }
   return t;
 }
-function showHoverTip(e, text) { const t = _hoverTipEl(); t.textContent = text; t.style.display = "block"; moveHoverTip(e); }
-function moveHoverTip(e) { const t = _hoverTipEl(); t.style.left = (e.clientX + 12) + "px"; t.style.top = (e.clientY - 32) + "px"; }
+// Sur écran tactile (iPhone), un toucher déclenche « survol » : l'infobulle reste affichée → elle se
+// referme seule après 2,5 s ou au défilement, et reste dans l'écran (elle était coupée au bord droit).
+function showHoverTip(e, text) {
+  const t = _hoverTipEl(); t.textContent = text; t.style.display = "block"; moveHoverTip(e);
+  clearTimeout(t._auto);
+  if (matchMedia("(hover: none)").matches) t._auto = setTimeout(hideHoverTip, 2500);
+}
+function moveHoverTip(e) {
+  const t = _hoverTipEl();
+  t.style.maxWidth = (innerWidth - 16) + "px";
+  const w = t.offsetWidth || 0;
+  t.style.left = Math.max(8, Math.min(e.clientX + 12, innerWidth - w - 8)) + "px";
+  t.style.top = Math.max(8, e.clientY - 32) + "px";
+}
+window.addEventListener("scroll", () => { const t = document.getElementById("hoverTip"); if (t && t.style.display !== "none") t.style.display = "none"; }, { passive: true });
 function hideHoverTip() { const t = document.getElementById("hoverTip"); if (t) t.style.display = "none"; }
 
 let _pillNb = 90;
@@ -15413,7 +15461,7 @@ function renderExternalSummary() {
   }).join("");
   listEl.innerHTML = balanceRows + `
     <details style="margin-top:10px;">
-      <summary style="font-size:12px;color:var(--ink-soft);cursor:pointer;user-select:none;">Dépenses ce mois (${txs.length})</summary>
+      <summary style="font-size:12px;color:var(--ink-soft);cursor:pointer;-webkit-user-select:none;user-select:none;">Dépenses ce mois (${txs.length})</summary>
       <div style="margin-top:8px;">${txRows}</div>
     </details>`;
 }
@@ -15663,7 +15711,7 @@ function renderReimbursable() {
   }
   const doneRows = done.length ? `
     <details style="margin-top:14px;">
-      <summary style="font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer;user-select:none;list-style:none;display:flex;align-items:center;gap:6px;">
+      <summary style="font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer;-webkit-user-select:none;user-select:none;list-style:none;display:flex;align-items:center;gap:6px;">
         <span>▸</span> Remboursés (${done.length}) · ${done.reduce((s,tx) => s + tx.amount, 0).toFixed(2)} €
       </summary>
       <div style="margin-top:8px;">
@@ -22135,7 +22183,7 @@ function _clRenderAllLists(ctx) {
         const borderColor = _CL_DEPTH_BORDER[depth % _CL_DEPTH_BORDER.length];
         return `<div class="_cl-sec" style="margin:8px 0;padding-left:10px;border-left:3px solid ${borderColor};">
           <div class="cl-sec-header" style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-            <span draggable="true" ondragstart="_clDragStart(event,'${ctx}',${li},'${childPathJSON}')" ondragend="_clDragEnd(event)" style="font-size:13px;color:var(--ink-softer);cursor:grab;user-select:none;opacity:.55;" title="Glisser pour déplacer">⠿</span>
+            <span draggable="true" ondragstart="_clDragStart(event,'${ctx}',${li},'${childPathJSON}')" ondragend="_clDragEnd(event)" style="font-size:13px;color:var(--ink-softer);cursor:grab;-webkit-user-select:none;user-select:none;opacity:.55;" title="Glisser pour déplacer">⠿</span>
             <span style="font-size:13px;">${sec.emoji||'📂'}</span>
             <span class="cl-sec-name" style="font-weight:700;font-size:13px;color:var(--ink-soft);flex:1;">${escapeHtml(sec.name)}</span>
             <span style="font-size:11px;color:var(--ink-softer);">${allSecItems.filter(i=>i.done).length}/${allSecItems.length}</span>
@@ -25021,6 +25069,10 @@ function switchSettingsTab(tab) {
 function applyTheme(id, persist = true) {
   document.body.classList.remove("t-serieux");
   if (id === "serieux") document.body.classList.add("t-serieux");
+  // Barre de Safari / barre d'état de l'iPhone et fond visible au rebond du défilement : suivent le thème
+  const tc = document.querySelector('meta[name="theme-color"]');
+  if (tc) tc.setAttribute("content", id === "serieux" ? "#1b2d3e" : "#b3a3dc");
+  document.documentElement.style.background = id === "serieux" ? "#eef1f6" : "#fdf6f0";
   state.uiTheme = id;
   if (persist) saveState();
   // Mettre à jour les boutons header
@@ -25143,15 +25195,28 @@ function _confirmGenderPrompt(skip) {
 function exportData() {
   try {
     const stamp = todayKey();
+    const name = `tableau-de-vie-${stamp}.json`;
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    // iPhone / iPad : le téléchargement direct s'ouvre souvent en simple aperçu (surtout dans l'appli de
+    // l'écran d'accueil). La feuille de partage propose « Enregistrer dans Fichiers ».
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if (isIOS && navigator.canShare && typeof File === "function") {
+      const file = new File([blob], name, { type: "application/json" });
+      if (navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: "Sauvegarde Mon Tableau de Vie" })
+          .then(() => showToast("📥 Sauvegarde prête — choisis « Enregistrer dans Fichiers »"))
+          .catch(err => { if (err && err.name !== "AbortError") _showAlert("Export impossible : " + err.message); });
+        return;
+      }
+    }
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `tableau-de-vie-${stamp}.json`;
+    a.download = name;
     document.body.appendChild(a);
     a.click();
     a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setTimeout(() => URL.revokeObjectURL(url), 60000); // laisse le temps de confirmer « Télécharger ? » (Safari)
     showToast("📥 Sauvegarde téléchargée");
   } catch (e) {
     _showAlert("Erreur lors de l'export : " + e.message);
@@ -25555,7 +25620,8 @@ function showToast(message, duration = 2400) {
   // « mode édition » en bas : le message s'affiche en HAUT pour ne rien masquer.
   const modalOpen = !!document.querySelector(".modal-bg.open") || document.documentElement.classList.contains("modal-lock");
   const top = modalOpen || document.body.classList.contains("edit-mode");
-  toast.style.top = top ? "calc(env(safe-area-inset-top, 0px) + 16px)" : "auto";
+  // --vv-top : décalage de la zone visible quand le clavier iPhone est ouvert (sinon le message tombait hors de l'écran)
+  toast.style.top = top ? "calc(var(--vv-top, 0px) + env(safe-area-inset-top, 0px) + 16px)" : "auto";
   toast.style.bottom = top ? "auto" : "calc(env(safe-area-inset-bottom, 0px) + 24px)";
   toast.textContent = message;
   toast.style.visibility = "visible";
@@ -27766,6 +27832,12 @@ function _saveNoteSelection() {
   const sel = window.getSelection();
   if (sel && sel.rangeCount > 0) _noteSelRange = sel.getRangeAt(0).cloneRange();
 }
+// iPhone : sélectionner avec les poignées ne déclenche ni mouseup ni keyup → on suit aussi
+// « selectionchange » (sinon Gras / Titre s'appliquait à l'ancienne position).
+document.addEventListener("selectionchange", () => {
+  const ed = document.getElementById("noteContentInput"), sel = window.getSelection();
+  if (ed && sel && sel.rangeCount > 0 && ed.contains(sel.anchorNode)) _saveNoteSelection();
+});
 function _restoreNoteSelection() {
   const ed = document.getElementById("noteContentInput");
   if (!ed) return;
@@ -28105,6 +28177,12 @@ function _startJournalMic() {
   _micRecognition.onerror = (e) => {
     if (e.error === 'no-speech') return; // silence normal, on redémarre dans onend
     if (e.error !== 'aborted') console.warn('Mic error:', e.error);
+    // Micro refusé (fréquent sur iPhone, surtout dans l'appli de l'écran d'accueil) : on arrête au lieu de
+    // relancer en boucle toutes les 150 ms (avant : relances et redemandes de permission sans fin).
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') {
+      _micActive = false;
+      showToast("🎙️ Dictée indisponible ici (micro refusé) — tu peux utiliser la dictée du clavier 🎤", 6000);
+    }
   };
 
   _micRecognition.onend = () => {
