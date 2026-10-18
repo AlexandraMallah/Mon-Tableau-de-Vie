@@ -392,6 +392,8 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 | Cache GitHub Pages | Script timestamp `?_cb=` en head |
 | Couché/Réveil ordre | Couché (bedtimeInput) GAUCHE, Réveil (wakeTimeInput) DROITE |
 | Bouton "Recharger" dangereux | Supprimé du header (existait dans une version précédente) |
+| Bouton qui ne répond pas avec un nom contenant une apostrophe (« Tir à l'arc », catégories, comptes…) | Texte passé en argument d'un handler inline : `onclick="f(${_jsq(nom)})"` (SANS guillemets autour). Jamais `'${escapeHtml(x)}'` ni `.replace(/'/g,"&#39;")` : le navigateur redécode avant d'exécuter. Texte affiché dans `_showConfirm` / `innerHTML` : `escapeHtml()`. |
+| Message « champ obligatoire » invisible derrière une fenêtre / toast invisible qui bloque les taps | `showToast` : z-index 100000 + `pointer-events:none` + `visibility:hidden` une fois disparu ; affiché en haut quand une fenêtre est ouverte ou en mode édition. |
 | Apostrophe dans `onclick` inline | Utiliser `_pickEmSuggest(i)` avec index plutôt qu'interpolation de string (ex: "Mal à l'aise") |
 | `ReferenceError: _hbM is not defined` | Après suppression du thème Minimal, vérifier TOUTES les occurrences de `_hbM` et `_isM` (barColor, couleurs projet, pill calendar) |
 | Poids composition corporelle disparu | `fillBodyCompForm` appelé à chaque `renderHealth()` pas seulement au premier bind |

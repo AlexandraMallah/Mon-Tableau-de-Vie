@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1348</title>
+<title>Mon Tableau de Vie 🌿 · v1349</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1171,6 +1171,8 @@
   }
   .grocery-item:hover .gi-del { opacity: 1; }
   .gi-del:hover { color: var(--red); background: var(--rose-soft); }
+  /* Écran tactile : pas de survol → le ✕ resterait invisible (mais actif). Toujours visible. */
+  @media (hover: none) { .gi-del { opacity: 1; } }
   .recurring-chip {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 7px 12px; border-radius: 999px;
@@ -6456,6 +6458,10 @@ function getGreeting() {
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
+// Texte passé en ARGUMENT d'un onclick="f(…)" : à utiliser SANS guillemets autour → onclick="f(${_jsq(nom)})".
+// escapeHtml seul ne suffit pas : le navigateur retransforme &#39; en ' AVANT d'exécuter le code, donc
+// f('Tir à l'arc') plantait et le bouton ne faisait rien (catégories, comptes, courses, sports…).
+function _jsq(s) { return escapeHtml(JSON.stringify(String(s ?? ""))); }
 function lastDates(n) {
   const arr = []; const d = new Date();
   for (let i = n - 1; i >= 0; i--) { const dd = new Date(d); dd.setDate(d.getDate() - i); arr.push(dd); }
@@ -6890,7 +6896,7 @@ function _deleteEmotion(id) {
   if (!state.emotions) state.emotions = [...EMOTIONS_DEFAULT];
   const e = state.emotions.find(x => x.id === id);
   if (!e) return;
-  _showConfirm(`Supprimer l'émotion « ${e.label} » ?`, () => {
+  _showConfirm(`Supprimer l'émotion « ${escapeHtml(e.label)} » ?`, () => {
     state.emotions = state.emotions.filter(x => x.id !== id);
     saveState(); renderEmotionGrid();
   });
@@ -7350,7 +7356,7 @@ function _editHabit(id) { _openHabitModal(id); }
 function _deleteHabit(id) {
   const h = state.habits.find(x => x.id === id);
   if (!h) return;
-  _showConfirm(`Supprimer l'habitude « ${h.name} » ?`, () => {
+  _showConfirm(`Supprimer l'habitude « ${escapeHtml(h.name)} » ?`, () => {
     state.habits = state.habits.filter(x => x.id !== id);
     saveState(); renderHabits();
     if (document.querySelector('.view[data-view="health"]')?.classList.contains('active')) renderHabitsTracking();
@@ -9659,7 +9665,7 @@ function deleteCustomSection(id) {
   if (!id) return;
   const p = state.work.postdocProjects.find(x => x.id === id);
   if (!p) return;
-  _showConfirm(`Supprimer la section « ${p.name} » ?<br><small style='opacity:0.7'>Les tâches liées resteront mais sans section.</small>`, () => {
+  _showConfirm(`Supprimer la section « ${escapeHtml(p.name)} » ?<br><small style='opacity:0.7'>Les tâches liées resteront mais sans section.</small>`, () => {
     _recordDeletedSeed(id);
     state.work.postdocProjects = state.work.postdocProjects.filter(x => x.id !== id);
     state.work.postdocTasks.forEach(t => { if (t.projectId === id) t.projectId = ""; });
@@ -10546,7 +10552,7 @@ function _removeCandTypeCurrent() {
   const sel = document.getElementById("candModalType");
   const val = sel.value;
   if (!val) return;
-  _showConfirm(`Supprimer le type « ${val} » ? Les candidatures qui l'utilisent déjà le garderont jusqu'à ce que tu les modifies.`, () => {
+  _showConfirm(`Supprimer le type « ${escapeHtml(val)} » ? Les candidatures qui l'utilisent déjà le garderont jusqu'à ce que tu les modifies.`, () => {
     state.candidatureTypes = state.candidatureTypes.filter(x => x !== val);
     saveState();
     _fillCandTypeSelect();
@@ -11117,7 +11123,7 @@ function _renderSportGrid(selectedKey) {
   grid.innerHTML = list.map(s => {
     const key = `${s.met}|${s.emoji}|${s.name}`;
     const sel = key === selectedKey;
-    return `<button onclick="_selectSport('${s.met}','${s.emoji}','${s.name.replace(/'/g,"&#39;")}')"
+    return `<button onclick="_selectSport('${s.met}','${s.emoji}',${_jsq(s.name)})"
       style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:10px;border:2px solid ${sel?'var(--mint)':'var(--line)'};background:${sel?'var(--mint-soft)':'white'};cursor:pointer;font-family:inherit;min-width:54px;max-width:88px;transition:all .12s;">
       <span style="font-size:20px;line-height:1;">${s.emoji}</span>
       <span style="font-size:9.5px;color:${sel?'var(--ink)':'var(--ink-soft)'};font-weight:${sel?700:500};text-align:center;line-height:1.25;word-break:break-word;max-width:80px;">${s.name}</span>
@@ -11250,7 +11256,7 @@ function activityMonthTotal(id) {
 function _deleteActivity(id) {
   const a = state.activities.find(x => x.id === id);
   if (!a) return;
-  _showConfirm(`Supprimer l'activité « ${a.name} » ?<br><small style="opacity:0.7">Ton historique de séances sera conservé.</small>`, () => {
+  _showConfirm(`Supprimer l'activité « ${escapeHtml(a.name)} » ?<br><small style="opacity:0.7">Ton historique de séances sera conservé.</small>`, () => {
     state.activities = state.activities.filter(x => x.id !== id);
     saveState(); renderActivities();
   });
@@ -12360,7 +12366,7 @@ function _openRoutineItemModal(key, editId) {
   // Preset chips
   const chips = (_ROUTINE_PRESETS[key] || []);
   document.getElementById("routineItemPresetChips").innerHTML = chips.map(p =>
-    `<button type="button" class="habit-suggest-chip" onclick="_applyRoutinePreset('${p.emoji}','${p.label.replace(/'/g,"\\'")}')"> ${p.emoji} ${p.label}</button>`
+    `<button type="button" class="habit-suggest-chip" onclick="_applyRoutinePreset('${p.emoji}',${_jsq(p.label)})"> ${p.emoji} ${p.label}</button>`
   ).join("");
   document.getElementById("routineItemModal").classList.add("open");
   setTimeout(() => document.getElementById("routineItemName").focus(), 100);
@@ -12389,7 +12395,7 @@ function _saveRoutineItemModal() {
 function _deleteRoutineItem(key, id) {
   const item = (getRoutines()[key] || []).find(s => s.id === id);
   if (!item) return;
-  _showConfirm(`Supprimer « ${item.label} » de la routine ?`, () => {
+  _showConfirm(`Supprimer « ${escapeHtml(item.label)} » de la routine ?`, () => {
     state.routines[key] = state.routines[key].filter(s => s.id !== id);
     state.habits = state.habits.filter(h => h.id !== id);
     saveState(); renderSkincare(); renderHabits();
@@ -13011,7 +13017,7 @@ async function searchFoodCalories(query) {
           ? `<span style="color:var(--green);font-weight:700;">${kcalPortion} kcal</span><span style="color:var(--ink-softer);font-size:11px;"> pour ${grams}g</span>`
           : `<span style="color:var(--orange);">${kcal100} kcal/100g</span>`;
         const calToApply = kcalPortion || kcal100;
-        return `<div onclick="applyCal('${escapeHtml(name.slice(0,50))}', ${calToApply})"
+        return `<div onclick="applyCal(${_jsq(name.slice(0,50))}, ${calToApply})"
           style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--line);"
           onmouseover="this.style.background='var(--lavender-soft)'"
           onmouseout="this.style.background='white'">
@@ -13547,7 +13553,7 @@ function _deleteCustomSymptom(id) {
   const syms = _getCustomSymptoms();
   const s = syms.find(x => x.id === id);
   if (!s) return;
-  _showConfirm(`Supprimer le suivi « ${s.name} » ?`, () => {
+  _showConfirm(`Supprimer le suivi « ${escapeHtml(s.name)} » ?`, () => {
     if (!state.customSymptoms || !state.customSymptoms.length) state.customSymptoms = [...CUSTOM_SYMPTOMS_DEFAULT];
     state.customSymptoms = state.customSymptoms.filter(x => x.id !== id);
     saveState(); renderCustomSymptoms(); renderCustomSymptomsSante();
@@ -15025,7 +15031,7 @@ function onTxCategoryChange() {
     const cur = sel.dataset.curval || list[0];
     const idx = list.indexOf(cur);
     if (idx >= 0) {
-      _showConfirm(`Supprimer la catégorie « ${cur} » ?<br><small style='opacity:0.7'>Les transactions existantes ne changent pas.</small>`, () => {
+      _showConfirm(`Supprimer la catégorie « ${escapeHtml(cur)} » ?<br><small style='opacity:0.7'>Les transactions existantes ne changent pas.</small>`, () => {
         list.splice(idx, 1); saveState(); populateTxCategories(); sel.value = list[0] || "";
       });
     }
@@ -16130,7 +16136,7 @@ function openSavingsAccountsManager() {
       <input type="hidden" id="savEmoji_${escapeHtml(c)}" data-saving-emoji="${escapeHtml(c)}" class="acc-saving-emoji" value="${escapeHtml(curEmoji)}" />
       <input data-saving-name="${escapeHtml(c)}" class="acc-saving-name" value="${escapeHtml(c)}" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
       <input data-saving-start="${escapeHtml(c)}" class="acc-saving-start" type="number" value="${(breakdown[c] || 0).toFixed(2)}" step="0.01" placeholder="Solde départ" style="width:80px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
-      ${cats.length > 1 ? `<button onclick="_deleteSavAcc('${escapeHtml(c)}')" title="Supprimer" style="flex-shrink:0;width:30px;height:30px;border:none;background:none;color:#d44;font-size:16px;cursor:pointer;border-radius:6px;">🗑</button>` : ""}
+      ${cats.length > 1 ? `<button onclick="_deleteSavAcc(${_jsq(c)})" title="Supprimer" style="flex-shrink:0;width:30px;height:30px;border:none;background:none;color:#d44;font-size:16px;cursor:pointer;border-radius:6px;">🗑</button>` : ""}
     </div>`;
   }).join("");
   document.getElementById("helpIcon").textContent = "🏦";
@@ -16198,7 +16204,7 @@ function _addSavAccFromEdit() {
     <input type="hidden" id="savEmoji_${uid}" data-saving-emoji="${escapeHtml(name)}" class="acc-saving-emoji" value="${escapeHtml(emoji)}" />
     <input data-saving-name="${escapeHtml(name)}" class="acc-saving-name" value="${escapeHtml(name)}" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
     <input data-saving-start="${escapeHtml(name)}" class="acc-saving-start" type="number" value="0.00" step="0.01" placeholder="Solde départ" style="width:80px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);" />
-    <button onclick="_deleteSavAcc('${escapeHtml(name)}')" title="Supprimer" style="flex-shrink:0;width:30px;height:30px;border:none;background:none;color:#d44;font-size:16px;cursor:pointer;border-radius:6px;">🗑</button>
+    <button onclick="_deleteSavAcc(${_jsq(name)})" title="Supprimer" style="flex-shrink:0;width:30px;height:30px;border:none;background:none;color:#d44;font-size:16px;cursor:pointer;border-radius:6px;">🗑</button>
   </div>`;
   listEl.insertAdjacentHTML("beforeend", rowHtml);
   // Ajouter immédiatement à state pour que la liste déroulante se mette à jour
@@ -17490,14 +17496,14 @@ function renderSavings() {
       const locked = !!lockedMap[cat];
       const startVal = (breakdown[cat] !== undefined) ? breakdown[cat] : (cat === defaultCat ? (state.accounts.epargneStart || 0) : 0);
       return `<div class="sav-row">
-        <span class="sav-name" onclick="openSavingsAccountModal('${escapeHtml(cat)}')" style="font-size:12.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" title="Voir les mouvements">${escapeHtml(cat)}</span>
-        <div onclick="openSavingsAccountModal('${escapeHtml(cat)}')" style="height:6px;background:var(--line);border-radius:3px;overflow:hidden;cursor:pointer;">
+        <span class="sav-name" onclick="openSavingsAccountModal(${_jsq(cat)})" style="font-size:12.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" title="Voir les mouvements">${escapeHtml(cat)}</span>
+        <div onclick="openSavingsAccountModal(${_jsq(cat)})" style="height:6px;background:var(--line);border-radius:3px;overflow:hidden;cursor:pointer;">
           <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;transition:width .4s;"></div>
         </div>
-        <span onclick="openSavingsAccountModal('${escapeHtml(cat)}')" style="font-size:13px;font-weight:700;color:${color};text-align:right;font-variant-numeric:tabular-nums;cursor:pointer;">${bal.toFixed(2)} €</span>
+        <span onclick="openSavingsAccountModal(${_jsq(cat)})" style="font-size:13px;font-weight:700;color:${color};text-align:right;font-variant-numeric:tabular-nums;cursor:pointer;">${bal.toFixed(2)} €</span>
         <div style="display:flex;gap:2px;">
-          <button onclick="updateSavingsBalance('${escapeHtml(cat)}')" title="Mettre à jour le solde réel" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.55;padding:0;line-height:1;">📊</button>
-          <button onclick="toggleSavingsLock('${escapeHtml(cat)}')" title="${locked ? 'Déverrouiller ce compte' : 'Verrouiller ce compte (aucun retrait possible)'}" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;line-height:1;opacity:${locked ? '1' : '0.3'};">${locked ? '🔒' : '🔓'}</button>
+          <button onclick="updateSavingsBalance(${_jsq(cat)})" title="Mettre à jour le solde réel" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.55;padding:0;line-height:1;">📊</button>
+          <button onclick="toggleSavingsLock(${_jsq(cat)})" title="${locked ? 'Déverrouiller ce compte' : 'Verrouiller ce compte (aucun retrait possible)'}" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;line-height:1;opacity:${locked ? '1' : '0.3'};">${locked ? '🔒' : '🔓'}</button>
         </div>
       </div>`;
     }).join("") + `</div>`;
@@ -17570,7 +17576,7 @@ function openSavingsAccountModal(cat) {
       const mainLabel = label && label !== cat ? label : typeLabel;
       const subLabel = (label && label !== cat) ? (typeLabel + (dateStr ? ' · ' + dateStr : '')) : dateStr;
       const isAdj = !!t.isAdjustment;
-      const clickAttr = !isAdj ? `onclick="editSavingsTxDesc('${t.id}','${escapeHtml(cat)}')"` : '';
+      const clickAttr = !isAdj ? `onclick="editSavingsTxDesc('${t.id}',${_jsq(cat)})"` : '';
       const borderStyle = isAdj ? 'border-left:3px solid #9b72d4;' : '';
       const cursorStyle = !isAdj ? 'cursor:pointer;' : '';
       const sub = subLabel ? `<span style="font-size:11px;color:var(--ink-soft);">${escapeHtml(subLabel)}${!isAdj ? ' · ✏️' : ''}</span>` : '';
@@ -18067,7 +18073,7 @@ function _txExtAccountLabel(tx) {
 function _catLegendHtml(entries, type = "expense", allTime = false, courantes = false) {
   const fn = allTime ? "openCatDetailAllTime" : "openCatDetail";
   return entries.map(([cat]) =>
-    `<span class="cat-legend-item" onclick="${fn}('${(cat||'').replace(/'/g,"\\'")}','${type}',${courantes})"><span class="cat-legend-dot" style="background:${catColor(cat)};"></span>${escapeHtml(cat)}</span>`
+    `<span class="cat-legend-item" onclick="${fn}(${_jsq(cat||'')},'${type}',${courantes})"><span class="cat-legend-dot" style="background:${catColor(cat)};"></span>${escapeHtml(cat)}</span>`
   ).join("");
 }
 // Graphiques de dépenses : trois côte à côte — Tout / Essentiel / Plaisir. La nature est posée PAR
@@ -18499,9 +18505,9 @@ function renderBudgetFeedback() {
             <input type="number" min="0" step="10" placeholder="€"
               value="${target || ""}"
               title="Objectif mensuel pour ${escapeHtml(cat)}"
-              onchange="setBudget('${escapeHtml(cat)}', this.value)"
+              onchange="setBudget(${_jsq(cat)}, this.value)"
               class="budget-input" />
-            <button onclick="setBudget('${escapeHtml(cat)}','0')"
+            <button onclick="setBudget(${_jsq(cat)},'0')"
               title="Supprimer cet objectif"
               class="budget-del">✕</button>
           </span>
@@ -19685,7 +19691,7 @@ function openPillarConfig(pillarId) {
       <div style="margin-bottom:10px;">
         <div style="font-size:11px;color:var(--ink-softer);margin-bottom:5px;">${grp}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          ${items.map(m => `<button onclick="_addExtraMetric('${escapeHtml(m._catId)}')" style="font-size:12px;padding:4px 10px;border-radius:999px;border:1.5px solid var(--line);background:white;color:var(--ink);cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='var(--lavender-soft)'" onmouseout="this.style.background='white'">${escapeHtml(m.label)}</button>`).join("")}
+          ${items.map(m => `<button onclick="_addExtraMetric(${_jsq(m._catId)})" style="font-size:12px;padding:4px 10px;border-radius:999px;border:1.5px solid var(--line);background:white;color:var(--ink);cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='var(--lavender-soft)'" onmouseout="this.style.background='white'">${escapeHtml(m.label)}</button>`).join("")}
         </div>
       </div>`).join("")}
   </div>` : `<div style="margin-top:14px;font-size:12px;color:var(--ink-softer);font-style:italic;text-align:center;">Tous les indicateurs disponibles sont déjà présents dans ce pilier.</div>`;
@@ -20138,7 +20144,7 @@ function deleteCalSource(id) {
   const src = state.calSources.find(s => s.id === id);
   if (!src) return;
   const count = state.calEvents.filter(e => e.sourceId === id).length;
-  _showConfirm(`Supprimer « ${src.name} » et ses ${count} événement(s) ?`, () => {
+  _showConfirm(`Supprimer « ${escapeHtml(src.name)} » et ses ${count} événement(s) ?`, () => {
     state.calEvents = state.calEvents.filter(e => e.sourceId !== id);
     state.calSources = state.calSources.filter(s => s.id !== id);
     saveState(); renderCalendar();
@@ -20836,7 +20842,7 @@ function _editTimeCat(key) {
 function _deleteTimeCat(key) {
   const cat = getTimeCats().find(c => c.key === key);
   if (!cat) return;
-  _showConfirm(`Supprimer la catégorie « ${cat.label} » ?`, () => {
+  _showConfirm(`Supprimer la catégorie « ${escapeHtml(cat.label)} » ?`, () => {
     if (!state.work.timeCats) state.work.timeCats = [];
     state.work.timeCats = state.work.timeCats.filter(c => c.key !== key);
     saveState(); renderTimeView();
@@ -21927,14 +21933,14 @@ function _deleteFreeNoteFromModal() {
   const id = document.getElementById("freeNoteEditId").value;
   if (!id) return;
   const n = (state.domestique?.freeNotes||[]).find(x=>x.id===id);
-  _showConfirm(`Supprimer la note « ${n?.title||"Sans titre"} » ?`, () => {
+  _showConfirm(`Supprimer la note « ${escapeHtml(n?.title||"Sans titre")} » ?`, () => {
     state.domestique.freeNotes = state.domestique.freeNotes.filter(x=>x.id!==id);
     saveState(); _closeFreeNoteModal(); renderFreeNotes();
   });
 }
 function _deleteFreeNote(id) {
   const n = (state.domestique?.freeNotes||[]).find(x=>x.id===id);
-  _showConfirm(`Supprimer la note « ${n?.title||"Sans titre"} » ?`, () => {
+  _showConfirm(`Supprimer la note « ${escapeHtml(n?.title||"Sans titre")} » ?`, () => {
     state.domestique.freeNotes = state.domestique.freeNotes.filter(x=>x.id!==id);
     saveState(); renderFreeNotes();
   });
@@ -22286,7 +22292,7 @@ function deleteCLSection(ctx, li, pathJSON) {
   const parent = _clNode(ctx, li, path.slice(0,-1));
   if (!parent || !parent.sections || !parent.sections[idx]) return;
   const sec = parent.sections[idx];
-  _showConfirm(`Supprimer la sous-liste « ${sec.name} » ?`, () => {
+  _showConfirm(`Supprimer la sous-liste « ${escapeHtml(sec.name)} » ?`, () => {
     parent.sections.splice(idx, 1);
     saveState(); _clRerenderCtx(ctx);
   });
@@ -22295,7 +22301,7 @@ function deleteChecklist(ctx, li) {
   const arr = _clArray(ctx);
   const lst = arr[li];
   if (!lst) return;
-  _showConfirm(`Supprimer la liste « ${lst.name} » ?`, () => {
+  _showConfirm(`Supprimer la liste « ${escapeHtml(lst.name)} » ?`, () => {
     arr.splice(li, 1);
     saveState(); _clRerenderCtx(ctx);
   });
@@ -22508,12 +22514,12 @@ function renderRecipeCategoryTabs() {
     <div onclick="${onclick}" style="position:relative;background:${bg};border:2px solid ${active?'rgba(74,68,88,.55)':'transparent'};border-radius:16px;padding:14px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:74px;box-shadow:var(--shadow);text-align:center;">
       <div style="font-weight:700;font-size:13px;color:var(--ink);line-height:1.2;">${label}</div>
       <div style="font-size:11px;color:var(--ink-soft);">${count} recette${count>1?'s':''}</div>
-      ${delCat!=null?`<button onclick="event.stopPropagation();deleteRecipeCategory('${delCat}')" title="Supprimer cette catégorie" style="position:absolute;top:3px;right:5px;background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:.55;padding:0 2px;">✕</button>`:''}
+      ${delCat!=null?`<button onclick="event.stopPropagation();deleteRecipeCategory(${_jsq(delCat)})" title="Supprimer cette catégorie" style="position:absolute;top:3px;right:5px;background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-softer);opacity:.55;padding:0 2px;">✕</button>`:''}
     </div>`;
   let cards = card("Toutes", recipes.length, allActive, "filterRecipeCategory('')", _isSerieux ? "#d8d4cc" : "#efeaf8", null);
   cats.forEach((cat, i) => {
     const n = recipes.filter(r => r.category === cat).length;
-    cards += card(escapeHtml(cat), n, _recipeCategoryFilter === cat, `filterRecipeCategory('${escapeHtml(cat)}')`, PASTELS[i % PASTELS.length], escapeHtml(cat));
+    cards += card(escapeHtml(cat), n, _recipeCategoryFilter === cat, `filterRecipeCategory(${_jsq(cat)})`, PASTELS[i % PASTELS.length], cat); // nom brut : _jsq() s'occupe de l'échappement
   });
   cards += `<div onclick="manageRecipeCategories()" style="border:2px dashed var(--line);border-radius:16px;padding:14px 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:74px;color:var(--ink-soft);font-size:13px;font-weight:600;">+ Catégorie</div>`;
   el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px;width:100%;">${cards}</div>`;
@@ -23511,7 +23517,7 @@ function renderMealRecipeFilters() {
   if (catEl) {
     const chip = (label, val) => {
       const active = _mealCatFilter === val;
-      return `<button onclick="_mealCatFilter='${val.replace(/'/g,"\\'")}';renderMealRecipeFilters();renderMealRecipeList()" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid ${active?'var(--lavender)':'var(--line)'};background:${active?'var(--lavender-soft)':'white'};color:var(--ink);cursor:pointer;font-family:inherit;font-weight:${active?'700':'500'};">${label}</button>`;
+      return `<button onclick="_mealCatFilter=${_jsq(val)};renderMealRecipeFilters();renderMealRecipeList()" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid ${active?'var(--lavender)':'var(--line)'};background:${active?'var(--lavender-soft)':'white'};color:var(--ink);cursor:pointer;font-family:inherit;font-weight:${active?'700':'500'};">${label}</button>`;
     };
     catEl.innerHTML = chip(`Toutes (${recipes.length})`, "") + cats.map(c => chip(`${escapeHtml(c)} (${recipes.filter(r=>r.category===c).length})`, escapeHtml(c))).join("");
   }
@@ -24166,7 +24172,7 @@ function _addRecipeDishTo(ev, rec) {
 function deleteMealEvent(id) {
   const ev = (state.domestique.mealEvents || []).find(e => e.id === id);
   if (!ev) return;
-  _showConfirm(`Supprimer « ${ev.name} » ?`, () => {
+  _showConfirm(`Supprimer « ${escapeHtml(ev.name)} » ?`, () => {
     _removeMealEventFromPlan(ev);
     state.domestique.mealEvents = state.domestique.mealEvents.filter(e => e.id !== id);
     saveState(); renderMealEvents(); try { renderMealWeekGrid(); } catch (e) {}
@@ -24291,7 +24297,7 @@ function renderGlobalGroceries() {
   }
   target.innerHTML = items.map(it => `
     <div class="grocery-item ${it.allChecked ? "checked" : ""}">
-      <div class="gi-check" onclick="toggleGlobalGrocery('${it.key.replace(/'/g,"&#39;")}')"></div>
+      <div class="gi-check" onclick="toggleGlobalGrocery(${_jsq(it.key)})"></div>
       <div class="gi-name">
         ${escapeHtml(it.name)}${it.total > 1 ? ` <span class="gi-count-badge">×${it.total}</span>` : ""}
       </div>
@@ -24354,7 +24360,7 @@ function renderRecurringItems() {
     return;
   }
   target.innerHTML = recurring.slice(0, 30).map(r => `
-    <button class="recurring-chip" onclick="addRecurringToLatestEvent('${escapeHtml(r.name).replace(/'/g, "&#39;")}')">
+    <button class="recurring-chip" onclick="addRecurringToLatestEvent(${_jsq(r.name)})">
       ${escapeHtml(r.name)} <span class="rc-count">${r.weeks}/${RECURRING_WEEKS_WINDOW} sem.</span>
     </button>`).join("");
 }
@@ -24388,7 +24394,7 @@ function deleteGroceryEvent(id) {
   const ev = state.domestique.groceryEvents.find(e => e.id === id);
   if (!ev) return;
   const items = state.domestique.groceries.filter(g => g.eventId === id);
-  _showConfirm(`Supprimer la liste « ${ev.name} » et ses ${items.length} article(s) ?`, () => {
+  _showConfirm(`Supprimer la liste « ${escapeHtml(ev.name)} » et ses ${items.length} article(s) ?`, () => {
     // Les articles cochés ont déjà été enregistrés dans l'historique au moment où ils ont été
     // cochés (toggleGrocery) — ne PAS les réenregistrer ici, sinon chaque achat compte double
     // (bug corrigé v1288 : "Achats récurrents" gonflait le nombre d'achats réels).
@@ -25433,23 +25439,33 @@ function showToast(message, duration = 2400) {
   if (!toast) {
     toast = document.createElement("div");
     toast.id = "appToast";
-    // z-index sous TOUTES les fenêtres modales (la plus basse est à 100) : un toast qui apparaît
-    // pendant qu'une fenêtre est ouverte (ex. alerte synchro) ne doit jamais passer devant un
-    // bouton de cette fenêtre et absorber le tap à sa place (bug "Valider ne répond pas" sur
-    // mobile quand la fenêtre est ancrée en bas d'écran, juste où s'affiche aussi le toast).
-    toast.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center;background:var(--card);color:var(--ink);padding:14px 22px;border-radius:14px;box-shadow:0 10px 30px rgba(120,100,160,0.25);z-index:60;font-size:14px;font-weight:500;border:1px solid var(--mint);opacity:0;transition:opacity 0.3s, transform 0.3s;";
+    // Au-dessus de TOUT (fenêtres comprises) mais "transparent" aux touchers (pointer-events:none) :
+    // avant, il était placé SOUS les fenêtres pour ne pas voler le tap d'un bouton — résultat, les
+    // messages affichés pendant qu'une fenêtre est ouverte (« Donne un nom… ») étaient invisibles,
+    // et une fois disparu (opacité 0) il bloquait quand même les touchers en bas de l'écran.
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    toast.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center;background:var(--card);color:var(--ink);padding:14px 22px;border-radius:14px;box-shadow:0 10px 30px rgba(120,100,160,0.25);z-index:100000;pointer-events:none;font-size:14px;font-weight:500;border:1px solid var(--mint);opacity:0;visibility:hidden;transition:opacity 0.3s, transform 0.3s;";
     document.body.appendChild(toast);
   }
+  // Fenêtre ouverte (sur téléphone elle occupe le bas de l'écran, avec ses boutons) ou bandeau
+  // « mode édition » en bas : le message s'affiche en HAUT pour ne rien masquer.
+  const modalOpen = !!document.querySelector(".modal-bg.open") || document.documentElement.classList.contains("modal-lock");
+  const top = modalOpen || document.body.classList.contains("edit-mode");
+  toast.style.top = top ? "calc(env(safe-area-inset-top, 0px) + 16px)" : "auto";
+  toast.style.bottom = top ? "auto" : "calc(env(safe-area-inset-bottom, 0px) + 24px)";
   toast.textContent = message;
+  toast.style.visibility = "visible";
   toast.style.opacity = "1";
   toast.style.transform = "translateX(-50%) translateY(0)";
-  clearTimeout(toast._timer);
+  clearTimeout(toast._timer); clearTimeout(toast._hideTimer);
   // Certains appels passent une durée plus longue (ex. avertissement de synchro cloud) — sans ce
   // 2e paramètre, il était silencieusement ignoré et tout toast disparaissait en 2,4s pile, trop
   // vite pour être vu à coup sûr sur un message important.
   toast._timer = setTimeout(() => {
     toast.style.opacity = "0";
-    toast.style.transform = "translateX(-50%) translateY(10px)";
+    toast.style.transform = `translateX(-50%) translateY(${top ? -10 : 10}px)`;
+    toast._hideTimer = setTimeout(() => { toast.style.visibility = "hidden"; }, 320); // après le fondu
   }, duration);
 }
 function loadInitialData() {
@@ -25934,19 +25950,19 @@ function _renderFinanceCatLists() {
   const el2 = document.getElementById("financeIncomeCatList");
   if (el) el.innerHTML = _alpha(state.categories).map(c => {
     const ce = escapeHtml(c).replace(/'/g,"&#39;");
-    return `<span title="Double-clic pour renommer" ondblclick="_renameCatDirect(state.categories,'${ce}')" style="display:inline-flex;align-items:center;gap:4px;background:var(--rose-soft);border-radius:20px;padding:3px 10px;font-size:12px;cursor:default;">
-      <span onclick="_cycleCatNature('${ce}')" title="${{essentiel:"Essentiel (clique : → plaisir)",plaisir:"Plaisir (clique : → pratique)",pratique:"Pratique (clique : → non classé)"}[(state.categoryNature||{})[c]] || "Non classé (clique : → essentiel)"}" style="cursor:pointer;font-size:12px;">${{essentiel:"✅",plaisir:"🎉",pratique:"🧰"}[(state.categoryNature||{})[c]] || "⚪"}</span>
+    return `<span title="Double-clic pour renommer" ondblclick="_renameCatDirect(state.categories,${_jsq(c)})" style="display:inline-flex;align-items:center;gap:4px;background:var(--rose-soft);border-radius:20px;padding:3px 10px;font-size:12px;cursor:default;">
+      <span onclick="_cycleCatNature(${_jsq(c)})" title="${{essentiel:"Essentiel (clique : → plaisir)",plaisir:"Plaisir (clique : → pratique)",pratique:"Pratique (clique : → non classé)"}[(state.categoryNature||{})[c]] || "Non classé (clique : → essentiel)"}" style="cursor:pointer;font-size:12px;">${{essentiel:"✅",plaisir:"🎉",pratique:"🧰"}[(state.categoryNature||{})[c]] || "⚪"}</span>
       ${escapeHtml(c)}
-      <span onclick="_removeFinanceCat('${ce}')" style="cursor:pointer;color:var(--ink-softer);font-size:10px;">✕</span>
+      <span onclick="_removeFinanceCat(${_jsq(c)})" style="cursor:pointer;color:var(--ink-softer);font-size:10px;">✕</span>
     </span>`;
   }).join("");
   if (el2) el2.innerHTML = _alpha(state.incomeCategories).map(c => {
     const ce = escapeHtml(c).replace(/'/g,"&#39;");
     const isMain = state.mainSalaryCategory === c;
-    return `<span title="Double-clic pour renommer" ondblclick="_renameCatDirect(state.incomeCategories,'${ce}')" style="display:inline-flex;align-items:center;gap:4px;background:${isMain ? "var(--lavender-soft)" : "var(--mint-soft)"};border-radius:20px;padding:3px 10px;font-size:12px;cursor:default;">
-      <span onclick="_toggleMainSalaryCategory('${ce}')" title="${isMain ? "Salaire principal — clique pour retirer" : "Marquer comme salaire principal (remet le mois à zéro)"}" style="cursor:pointer;font-size:12px;">${isMain ? "⭐" : "☆"}</span>
+    return `<span title="Double-clic pour renommer" ondblclick="_renameCatDirect(state.incomeCategories,${_jsq(c)})" style="display:inline-flex;align-items:center;gap:4px;background:${isMain ? "var(--lavender-soft)" : "var(--mint-soft)"};border-radius:20px;padding:3px 10px;font-size:12px;cursor:default;">
+      <span onclick="_toggleMainSalaryCategory(${_jsq(c)})" title="${isMain ? "Salaire principal — clique pour retirer" : "Marquer comme salaire principal (remet le mois à zéro)"}" style="cursor:pointer;font-size:12px;">${isMain ? "⭐" : "☆"}</span>
       ${escapeHtml(c)}
-      <span onclick="_removeFinanceIncomeCat('${ce}')" style="cursor:pointer;color:var(--ink-softer);font-size:10px;">✕</span>
+      <span onclick="_removeFinanceIncomeCat(${_jsq(c)})" style="cursor:pointer;color:var(--ink-softer);font-size:10px;">✕</span>
     </span>`;
   }).join("");
 }
@@ -26681,7 +26697,7 @@ function _fbUpdateUI(user) {
     } else if (!state.name && firstName) {
       state.name = firstName; saveState(); if (typeof renderAll === "function") { document.getElementById("greeting").textContent = getGreeting(); }
     }
-    av.innerHTML = imgHtml + `<span style="font-size:13px;color:var(--ink);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${firstName}</span>` +
+    av.innerHTML = imgHtml + `<span style="font-size:13px;color:var(--ink);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(firstName)}</span>` +
       `<span id="syncStatusDot" style="width:7px;height:7px;border-radius:50%;background:var(--ink-softer);flex-shrink:0;"></span>`;
     // Pas ici : à ce stade les données du cloud ne sont pas encore chargées (_fbLoad tourne en
     // parallèle), donc state.gender peut sembler vide alors qu'il est déjà renseigné côté cloud
