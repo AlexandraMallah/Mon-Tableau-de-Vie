@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1353</title>
+<title>Mon Tableau de Vie 🌿 · v1354</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26746,6 +26746,18 @@ const FB_CONFIG = {
   appId: "1:263100412161:web:638ce5c3ef91b8ffa4ab00"
 };
 /* ↑↑↑ FIN CONFIG ↑↑↑ */
+// Appli ajoutée à l'écran d'accueil d'un iPhone / iPad : la connexion Google y échoue avec la config
+// normale (la fenêtre Google ne partage pas sa mémoire avec l'appli, et Safari bloque la page de
+// connexion hébergée sur un autre site, firebaseapp.com). Pour elle SEULE, les pages de connexion sont
+// servies depuis alexandramallah.github.io/__/auth/ (même site que l'appli — copie dans le dépôt du site
+// perso, voir son README) et la connexion se fait par redirection. Ailleurs : rien ne change.
+const _IOS_STANDALONE = (() => {
+  try {
+    const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    return iOS && (navigator.standalone === true || matchMedia("(display-mode: standalone)").matches);
+  } catch (e) { return false; }
+})();
+const _FB_INIT = _IOS_STANDALONE ? { ...FB_CONFIG, authDomain: "alexandramallah.github.io" } : FB_CONFIG;
 // (_fbDb, _fbAuth, _fbUser, _fbSaveTimer, _fbUnsub, _fbListenTimer, _fbLoadTime, _snapCache
 // déclarés plus haut, avant le try/renderAll() du démarrage — voir le commentaire là-bas)
 
@@ -27589,6 +27601,8 @@ function signInWithGoogle() {
   // automatiquement au dernier compte utilisé sur cet appareil sans rien demander (gênant sur
   // un ordi/tél partagé entre plusieurs personnes).
   provider.setCustomParameters({ prompt: "select_account" });
+  // Appli de l'écran d'accueil iPhone : redirection directement (la fenêtre surgissante n'y revient jamais)
+  if (_IOS_STANDALONE) { _fbAuth.signInWithRedirect(provider); return; }
   // Connexion par pop-up (fiable malgré le blocage des cookies tiers de Chrome),
   // avec repli sur la redirection si le pop-up est bloqué.
   _fbAuth.signInWithPopup(provider)
@@ -27749,14 +27763,20 @@ function cloudSignOut() {
     return;
   }
   try {
-    if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    if (!firebase.apps.length) firebase.initializeApp(_FB_INIT);
     _fbDb   = firebase.firestore();
     _fbAuth = firebase.auth();
 
     // Récupérer la session après une redirection Google
     _fbAuth.getRedirectResult().then(result => {
       if (result && result.user) showToast("✅ Connecté·e !");
-    }).catch(e => { if (e.code && e.code !== "auth/no-current-user") console.warn("[auth redirect]", e.code, e.message); });
+    }).catch(e => {
+      if (e.code && e.code !== "auth/no-current-user") {
+        console.warn("[auth redirect]", e.code, e.message);
+        // Sur l'appli iPhone, dire ce qui s'est passé (sinon : retour à l'écran de connexion sans explication)
+        if (_IOS_STANDALONE) _showAlert("La connexion Google n'a pas abouti (" + e.code + "). Réessaie dans quelques minutes ; si ça persiste, envoie cette phrase au support.");
+      }
+    });
 
     _fbAuth.onAuthStateChanged(user => {
       _fbUser = user;
