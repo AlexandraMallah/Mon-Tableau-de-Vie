@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1354</title>
+<title>Mon Tableau de Vie 🌿 · v1355</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26757,7 +26757,10 @@ const _IOS_STANDALONE = (() => {
     return iOS && (navigator.standalone === true || matchMedia("(display-mode: standalone)").matches);
   } catch (e) { return false; }
 })();
-const _FB_INIT = _IOS_STANDALONE ? { ...FB_CONFIG, authDomain: "alexandramallah.github.io" } : FB_CONFIG;
+// ⏸ Désactivé (18/10/2026) : demande l'URI https://alexandramallah.github.io/__/auth/handler dans le client
+// OAuth Web de Google Cloud, pas encore ajouté. Pour réactiver : ajouter l'URI, puis _IOS_SAME_SITE_AUTH = true.
+const _IOS_SAME_SITE_AUTH = false;
+const _FB_INIT = (_IOS_STANDALONE && _IOS_SAME_SITE_AUTH) ? { ...FB_CONFIG, authDomain: "alexandramallah.github.io" } : FB_CONFIG;
 // (_fbDb, _fbAuth, _fbUser, _fbSaveTimer, _fbUnsub, _fbListenTimer, _fbLoadTime, _snapCache
 // déclarés plus haut, avant le try/renderAll() du démarrage — voir le commentaire là-bas)
 
@@ -27602,7 +27605,7 @@ function signInWithGoogle() {
   // un ordi/tél partagé entre plusieurs personnes).
   provider.setCustomParameters({ prompt: "select_account" });
   // Appli de l'écran d'accueil iPhone : redirection directement (la fenêtre surgissante n'y revient jamais)
-  if (_IOS_STANDALONE) { _fbAuth.signInWithRedirect(provider); return; }
+  if (_IOS_STANDALONE && _IOS_SAME_SITE_AUTH) { _fbAuth.signInWithRedirect(provider); return; }
   // Connexion par pop-up (fiable malgré le blocage des cookies tiers de Chrome),
   // avec repli sur la redirection si le pop-up est bloqué.
   _fbAuth.signInWithPopup(provider)

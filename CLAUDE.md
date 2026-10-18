@@ -392,7 +392,7 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 - Pas de notifications dans Safari iPhone (seulement l'appli de l'écran d'accueil, iOS 16.4+, et appli ouverte) → `savePillConfig` le dit au lieu d'activer un rappel muet.
 - Export : feuille de partage (`navigator.share({files})`) sur iOS.
 - Icône d'écran d'accueil : `apple-touch-icon-v4.png` (180×180, opaque — iOS noircit la transparence).
-- Connexion Google dans l'appli de l'écran d'accueil iPhone (`_IOS_STANDALONE`) : `authDomain` = `alexandramallah.github.io` (pages de connexion Firebase copiées dans le dépôt du site perso, dossier `__/auth/` + `.nojekyll`, voir son README) et `signInWithRedirect`. Ailleurs : config normale + fenêtre surgissante. Prérequis côté Google Cloud : URI de redirection `https://alexandramallah.github.io/__/auth/handler` sur le client OAuth Web.
+- Connexion Google dans l'appli de l'écran d'accueil iPhone (`_IOS_STANDALONE`) : `authDomain` = `alexandramallah.github.io` (pages de connexion Firebase copiées dans le dépôt du site perso, dossier `__/auth/` + `.nojekyll`, voir son README) et `signInWithRedirect`. Ailleurs : config normale + fenêtre surgissante. Prérequis côté Google Cloud : URI de redirection `https://alexandramallah.github.io/__/auth/handler` sur le client OAuth Web. **⏸ Désactivé** (`_IOS_SAME_SITE_AUTH = false`) tant que l'URI n'est pas ajouté ; les fichiers restent en place sur le site perso.
 - iOS ≥ 16 requis en pratique (`structuredClone`, `AbortSignal.timeout`, `overflow:clip`).
 
 ## Fonctionnalités en attente / à faire
