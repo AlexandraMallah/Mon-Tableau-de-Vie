@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1350</title>
+<title>Mon Tableau de Vie 🌿 · v1351</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2049,6 +2049,28 @@
   }
 
   /* ===== AUDIT DESIGN (v1350) ===== */
+  /* Haut de page compact sur téléphone (v1351) : titre + bouton « ☰ Menu » sur une ligne, les outils
+     s'ouvrent dans un panneau ; les 9 onglets restent visibles en grille 3×3 plus serrée.
+     Avant : le contenu commençait à 420 px sur un écran de 812 px. */
+  #hdrMenuBtn, .hdr-mobile-only { display: none; }
+  #hdrMenuDot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 6px; vertical-align: middle; background: transparent; }
+  @media (max-width: 640px) {
+    header.top { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
+    header.top > div { min-width: 0; }
+    header.top h1 { font-size: 21px; line-height: 1.2; }
+    header.top .date { font-size: 12.5px; margin-top: 1px; }
+    #hdrMenuBtn { display: inline-flex; align-items: center; flex-shrink: 0; border-radius: 999px; padding: 9px 14px; font-size: 13px; font-weight: 600; }
+    body.hdr-menu-open #hdrMenuBtn { background: var(--lavender-soft); }
+    .header-actions { display: none; }
+    body.hdr-menu-open .header-actions {
+      display: flex; margin: 10px 0 8px; padding: 10px; gap: 6px;
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow);
+    }
+    body.hdr-menu-open .hdr-mobile-only { display: inline-flex; }
+    #mobileHelpBtn { display: none !important; } /* Aide / Assistant IA : dans le menu */
+    nav.tabs { gap: 5px; margin-top: 8px; margin-bottom: 8px; }
+    .tab { padding: 7px 4px; font-size: 12.5px; line-height: 1.25; }
+  }
   /* Fenêtres "maison" (note libre, note projet perso, hormones, raccourcis) : la boîte défile quand
      elle dépasse l'écran (clavier ouvert) au lieu de cacher son haut ou « Enregistrer » ; arrondis du thème. */
   div[style*="backdrop-filter"] > div {
@@ -2116,13 +2138,16 @@
       <h1 id="greeting">Bonjour ✨</h1>
       <p class="date" id="todayDate"></p>
     </div>
+    <!-- Téléphone uniquement : les outils (Éditer, Personnaliser, thème, langue, connexion, Aide…)
+         sont rangés derrière ce bouton pour que le contenu commence plus haut. -->
+    <button type="button" id="hdrMenuBtn" class="btn-icon" onclick="toggleHeaderMenu()" aria-expanded="false" aria-controls="headerActions" title="Menu">☰ Menu<span id="hdrMenuDot"></span></button>
   </header>
 
   <!-- Sortie du <header> + regroupées sous un seul sticky (voir .sticky-header-group) :
        nécessaire pour que le sticky ait assez de place pour "coller" et pour éviter
        tout décalage entre plusieurs éléments sticky indépendants au scroll -->
   <div class="sticky-header-group">
-    <div class="header-actions">
+    <div class="header-actions" id="headerActions">
       <button class="btn-icon" id="editModeBtn" onclick="toggleEditMode()" title="Activer le mode édition pour modifier l'application">✏️ Éditer</button>
       <button class="btn-icon" id="settingsBtn" onclick="openSettings()">⚙ Personnaliser</button>
       <button class="btn-icon" id="gestionBtn" onclick="openGestionModal()" style="display:none;background:linear-gradient(135deg,var(--butter-soft),var(--peach-soft));">🛠 Gestion</button>
@@ -2141,6 +2166,8 @@
         <button id="langESBar" onclick="_setLang('es')" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">ES</button>
       </div>
       <div id="google_translate_element" style="display:none;"></div>
+      <button class="btn-icon hdr-mobile-only" onclick="openHelpForCurrentView()">✦ Aide</button>
+      <button class="btn-icon hdr-mobile-only" onclick="openAiRecipeModal()">✨ Assistant IA</button>
       <button class="btn-icon" id="syncSignInBtn" onclick="signInWithGoogle()" style="background:linear-gradient(135deg,#e8f0fe,#d2e3fc);color:#1a73e8;font-weight:600;">☁️ Connexion</button>
       <div class="sync-row">
         <div id="syncUserAvatar" style="display:none;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:9px 13px;white-space:nowrap;flex-shrink:0;cursor:pointer;box-shadow:var(--shadow);font-size:13px;" onclick="showSyncMenu()" title="Synchronisation cloud"></div>
@@ -5694,6 +5721,21 @@ document.addEventListener('mousedown', e => {
   }).observe(document.body, { childList: true, subtree: true, characterData: true });
   walk(document.body);
 })();
+/* Menu du haut sur téléphone : s'ouvre / se ferme avec « ☰ Menu », se referme après un choix ou un
+   toucher ailleurs. */
+function toggleHeaderMenu(force) {
+  const open = typeof force === "boolean" ? force : !document.body.classList.contains("hdr-menu-open");
+  document.body.classList.toggle("hdr-menu-open", open);
+  document.getElementById("hdrMenuBtn")?.setAttribute("aria-expanded", String(open));
+}
+document.addEventListener("click", e => {
+  if (!document.body.classList.contains("hdr-menu-open")) return;
+  if (e.target.closest("#hdrMenuBtn")) return;
+  const inPanel = e.target.closest("#headerActions");
+  // un choix dans le panneau (sauf les sélecteurs thème / langue, qu'on peut essayer) referme le menu
+  if (inPanel && (!e.target.closest("button, a, [onclick]") || e.target.closest("[id^=themeBtn], [id^=lang]"))) return;
+  toggleHeaderMenu(false);
+});
 /* Masquer / remettre la bande du haut (boutons + onglets). Rien n'est enregistré : un rechargement de la page
    remet la bande, pour ne jamais rester sans navigation. */
 function hideHeaderBand() {
@@ -26698,6 +26740,8 @@ function _fbSetStatus(s) {
     error:    { label: "Erreur de synchro", color: "var(--red)" },
   }[s] || { label: s, color: "var(--ink-softer)" };
   dot.style.background = cfg.color;
+  const md = document.getElementById("hdrMenuDot");
+  if (md) md.style.background = s === "off" ? "transparent" : cfg.color;
   if (av) av.title = (_fbUser?.email ? _fbUser.email + " — " : "") + cfg.label;
 }
 

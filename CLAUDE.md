@@ -206,6 +206,7 @@ function renderTodayView() {
 - Arrondis : `var(--radius-card)` (cartes) / `var(--radius-card-lg)` (anneaux, fenêtres) — Sérieux = 8px
 - Ne pas remettre `maximum-scale` / `user-scalable=no` dans le viewport (zoom à deux doigts)
 - Un bouton qui a juste le style `.sub-tab` sans `data-sub` est ignoré par `setupTabs`
+- Haut de page téléphone (≤ 640 px, v1351) : titre + bouton `#hdrMenuBtn` « ☰ Menu » ; `.header-actions` (`#headerActions`) n'apparaît que si `body.hdr-menu-open` (`toggleHeaderMenu()`), Aide / Assistant IA y sont (`.hdr-mobile-only`), `#mobileHelpBtn` masqué. Le point `#hdrMenuDot` reflète l'état de synchro. Tout nouveau bouton d'outil va dans `.header-actions`.
 
 ### Design system
 Style pastel féminin, doux. Arrondis généreux (12-16px). Pas de couleurs criardes. Palette : lavande, mint, peach, rose, sky, butter.
