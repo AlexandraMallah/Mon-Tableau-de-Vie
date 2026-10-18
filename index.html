@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1346</title>
+<title>Mon Tableau de Vie 🌿 · v1347</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5946,19 +5946,27 @@ function migrate(s) {
     if (!s.habits.find(h => h.id === "h-skincare-soir"))
       s.habits.push({ id: "h-skincare-soir", name: "Skincare soir 🌙", type: "boolean" });
   }
-  // Garantit que les 3 habitudes essentielles restent toujours numériques (résiste aux Recharger avec ancien cache)
+  // Garantit que les 3 habitudes essentielles restent toujours numériques (résiste aux Recharger avec ancien cache).
+  // Uniquement par identifiant : avant, un simple mot du nom suffisait (« Ne PAS fumer », « Soin de la pEAU »,
+  // « RELIRE »…) et l'habitude devenait un compteur impossible à cocher.
   if (Array.isArray(s.habits)) {
+    const FORCED = { "h-pas": ["pas", 9000], "h-eau": ["verres", 4], "h-lecture": ["min", 30] };
     s.habits.forEach(h => {
-      if (!h) return;
-      const n = (h.name || "").toLowerCase();
-      if (h.id === "h-pas" || /\bpas\b/.test(n)) {
-        h.type = "numeric"; h.target = h.target || 9000; h.unit = "pas";
-      } else if (h.id === "h-eau" || /eau/.test(n)) {
-        h.type = "numeric"; h.target = h.target || 4; h.unit = "verres";
-      } else if (h.id === "h-lecture" || /lire|lect/.test(n)) {
-        h.type = "numeric"; h.target = h.target || 30; h.unit = "min";
-      }
+      if (!h || !FORCED[h.id]) return;
+      h.type = "numeric"; h.target = h.target || FORCED[h.id][1]; h.unit = FORCED[h.id][0];
     });
+    // Réparation unique des habitudes transformées à tort par l'ancienne règle : on les remet en
+    // case à cocher si leur nom ne parle pas vraiment de pas / d'eau / de lecture et qu'aucun
+    // nombre n'a jamais été saisi pour elles.
+    if (!s._habitTypeFix1) {
+      const real = { pas: /\d\s*pas\b|^\s*pas\s*$/i, verres: /\beau\b|\bboire\b|\bverres?\b/i, min: /\b(lire|lecture)\b/i };
+      s.habits.forEach(h => {
+        if (!h || FORCED[h.id] || h.type !== "numeric" || !real[h.unit] || real[h.unit].test(h.name || "")) return;
+        const everNumber = Object.values(s.history || {}).some(d => Number(d?.habits?.[h.id]) >= 2);
+        if (!everNumber) { h.type = "boolean"; delete h.target; delete h.unit; }
+      });
+      s._habitTypeFix1 = true;
+    }
   }
   s.domestique = s.domestique || { groceries: [], groceryEvents: [], chores: [], plants: [] };
   s.domestique.groceries = s.domestique.groceries || [];
@@ -6155,7 +6163,8 @@ function migrate(s) {
     s.work.postdocProjects.forEach(p => {
       const meta = seedMeta[p.id];
       if (meta) {
-        p.name = meta.name;
+        // Nom réaligné une seule fois : avant, renommer « Postdoc » était annulé à chaque ouverture.
+        if (!p._nameMigrated) { p.name = meta.name; p._nameMigrated = true; }
         p.color = meta.color;
         p.bg    = meta.bg;
         if (!p.emoji) p.emoji = meta.emoji;
@@ -6327,13 +6336,16 @@ function migrate(s) {
       });
     });
   }
-  // Migration : auto-activer pilule si l'utilisateur a déjà des données pillTaken
-  if (!s.features.pill && s.history) {
+  // Migrations : auto-activer pilule / cycle s'il y a déjà des données — UNE SEULE FOIS. Avant, elles
+  // tournaient à chaque ouverture : désactiver la pilule ou le cycle dans les réglages était annulé.
+  const _autoFeat = !s.features._autoEnabledOnce;
+  s.features._autoEnabledOnce = true;
+  if (_autoFeat && !s.features.pill && s.history) {
     const hasPillData = Object.values(s.history).some(d => d && d.pillTaken);
     if (hasPillData) s.features.pill = true;
   }
   // Migration : auto-activer cycle si l'utilisateur a des données cycle
-  if (!s.features.cycle && s.history) {
+  if (_autoFeat && !s.features.cycle && s.history) {
     const hasCycleData = Object.values(s.history).some(d => d && d.cycleFlow != null && d.cycleFlow > 0);
     if (hasCycleData) s.features.cycle = true;
   }
@@ -6406,8 +6418,10 @@ function todayKey(d = new Date()) {
 }
 let _selectedDayKey = null; // null = aujourd'hui
 function getSelectedDayKey() { return _selectedDayKey || todayKey(); }
-function getToday() {
-  const k = getSelectedDayKey();
+// Jour affiché dans « Aujourd'hui » (peut être un jour passé si on a navigué avec ◀ ▶).
+function getToday() { return getDay(getSelectedDayKey()); }
+// Un jour précis, quel que soit le jour affiché dans « Aujourd'hui ».
+function getDay(k) {
   if (!state.history[k]) state.history[k] = { habits: {}, activities: {}, mood: null, sleep: null, sleepQuality: null, energy: null, weight: null, water: 0, journal: "", bedtime: null, wakeTime: null, todo: [], accomplishment: "", gratitude: "", highlight: "" };
   else {
     const d = state.history[k];
@@ -6676,14 +6690,33 @@ function _refreshHealthCharts() {
   renderHabitsTracking(); renderHealthCycle();
 }
 function onViewChange(view) {
-  if (view === "today") maybeLoadWeather();
-  if (view === "work") updateWorkTabBadges();
+  // Chaque onglet est redessiné quand on l'ouvre : ce qui a été modifié dans un autre onglet
+  // (tâche cochée → balance hormonale, repas ajouté depuis une recette, to-do…) y apparaît tout de
+  // suite, sans recharger la page. (Avant, Aujourd'hui / Travail / Domestique / Journal restaient figés.)
+  if (view === "today") { renderTodayView(); renderHormones(); maybeLoadWeather(); }
+  if (view === "work") { renderProjects(); renderWorkProjectTabs(); renderTasks(); renderTaskBilan(); renderTimeView(); renderCandidatures(); renderArticles(); renderCommunications(); updateWorkTabBadges(); }
+  if (view === "domestic") renderDomestique();
+  if (view === "journal") renderJournal();
   if (view === "activities") { renderActivityChart(); renderSportPlanning(); }
   if (view === "health") { _healthMonthOffset = 0; _stepsMonthOffset = 0; _renderHealthMonthLabel(); _renderStepsMonthLabel(); _refreshHealthCharts(); }
   if (view === "money") { initTxDate(); renderPlanned(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
   if (view === "pillars") renderPillars();
 }
+
+// Passage à un nouveau jour pendant que l'appli est ouverte (ou rouverte le matin depuis l'écran
+// d'accueil, sans rechargement) : tout est redessiné sur le nouveau jour. Avant, les anneaux,
+// habitudes et repas de la veille restaient affichés alors que les saisies allaient dans le nouveau jour.
+let _lastRenderedDayKey = todayKey();
+function _checkDayChange() {
+  const k = todayKey();
+  if (k === _lastRenderedDayKey) return;
+  _lastRenderedDayKey = k;
+  if (_selectedDayKey === k) _selectedDayKey = null;
+  renderAll();
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") _checkDayChange(); });
+setInterval(_checkDayChange, 60 * 1000);
 
 /* ========= RINGS ========= */
 const RING_COLORS = [
@@ -6715,8 +6748,9 @@ function ringSvg(pct, idx) {
 }
 function renderRings() {
   const today = getToday();
-  const habitsDone = state.habits.filter(h => isHabitDone(h, today.habits[h.id])).length;
-  const habitsPct = state.habits.length ? habitsDone / state.habits.length : 0;
+  const _hab = _activeHabits();
+  const habitsDone = _hab.filter(h => isHabitDone(h, today.habits[h.id])).length;
+  const habitsPct = _hab.length ? habitsDone / _hab.length : 0;
   const moodPct = today.mood ? today.mood / 5 : 0;
   const sleepPct = today.sleep != null
     ? (today.sleep < 7 ? today.sleep / 7 * 0.85 : today.sleep <= 9 ? 1 : 0.9)
@@ -6741,7 +6775,7 @@ function renderRings() {
     energyPct = 0; energySub = "à saisir"; energyVal = "—";
   }
   const cards = [
-    { label: "Habitudes", val: `${habitsDone}/${state.habits.length}`, sub: `${Math.round(habitsPct * 100)}%`, pct: habitsPct },
+    { label: "Habitudes", val: `${habitsDone}/${_hab.length}`, sub: `${Math.round(habitsPct * 100)}%`, pct: habitsPct },
     { label: "Humeur", val: today.mood ? `${today.mood}/5` : "—", sub: today.mood ? labelFor("mood", today.mood) : "à saisir", pct: moodPct },
     { label: "Sommeil", val: today.sleep != null ? `${today.sleep} h` : "—", sub: today.sleep != null ? sleepLabel(today.sleep) : "à saisir", pct: sleepPct },
     { label: "Énergie", val: energyVal, sub: energySub, pct: energyPct },
@@ -7139,20 +7173,28 @@ function computeStreak(habitId) {
   }
   return streak;
 }
-function renderHabits() {
-  const today = getToday();
-  // Les habitudes de routine ont leur propre section — on les exclut ici
-  const allRoutineIds = [...(getRoutines().matin || []), ...(getRoutines().soir || [])].map(s => s.id);
-  const ROUTINE_IDS = new Set(allRoutineIds);
-  const f = state.features || {};
-  // Les habitudes système pas/calories sont toujours affichées (grisées si désactivées)
+// Habitudes affichées dans « Mes habitudes » (sans les routines, qui ont leur section, ni l'ancienne
+// h-calories) et, parmi elles, celles qui comptent (pas / kcal désactivés = grisées, non comptées).
+// Partagé avec l'anneau « Habitudes » : avant, l'anneau comptait TOUT (3/9 contre 3/4 dans la carte).
+function _visibleHabits() {
+  const ROUTINE_IDS = new Set([...(getRoutines().matin || []), ...(getRoutines().soir || [])].map(s => s.id));
   const _fullyHidden = new Set(["h-calories"]); // h-calories est l'ancienne, h-cal-dep la nouvelle
-  const visibleHabits = state.habits.filter(h => !ROUTINE_IDS.has(h.id) && !_fullyHidden.has(h.id));
-  const activeHabits = visibleHabits.filter(h => {
+  return state.habits.filter(h => !ROUTINE_IDS.has(h.id) && !_fullyHidden.has(h.id));
+}
+function _activeHabits() {
+  const f = state.features || {};
+  return _visibleHabits().filter(h => {
     if (h.id === 'h-pas' && f.pas === false) return false;
     if (h.id === 'h-cal-dep' && f.calories === false) return false;
     return true;
   });
+}
+function renderHabits() {
+  const today = getToday();
+  const f = state.features || {};
+  // Les habitudes système pas/calories sont toujours affichées (grisées si désactivées)
+  const visibleHabits = _visibleHabits();
+  const activeHabits = _activeHabits();
   const done = activeHabits.filter(h => isHabitDone(h, today.habits[h.id])).length;
   document.getElementById("habitCount").textContent = `${done}/${activeHabits.length}`;
   document.getElementById("habitList").innerHTML = visibleHabits.map(h => {
@@ -7378,12 +7420,15 @@ function _getKcalBreakdown(steps) {
   }
   return { bmr, stepKcal, sportKcal: Math.round(sportKcal) };
 }
-function _autoCalcKcal(steps, forceOverwrite) {
+// Kcal dépensées du jour = repos + pas + sport, RECALCULÉES à chaque changement (pas, séance cochée
+// ou décochée) tant que la valeur n'a pas été saisie à la main (day.calDepManual). Avant, le premier
+// calcul figeait la valeur (500 pas le matin → plus jamais mis à jour), et le sport était ajouté par
+// incrément : cocher / décocher / recocher une séance la comptait deux fois.
+function _autoCalcKcal(steps, forceOverwrite, dk = getSelectedDayKey()) {
   const heightCm = state.health?.heightCm || 0;
   const age      = state.health?.ageyears  || 0;
   const sex      = state.health?.sex       || "";
   // Chercher le poids le plus récent dans l'historique
-  const dk = getSelectedDayKey();
   let weightKg = Number(state.history[dk]?.weight) || 0;
   if (!weightKg) {
     const dks = Object.keys(state.history).sort().reverse();
@@ -7422,15 +7467,20 @@ function _autoCalcKcal(steps, forceOverwrite) {
     }
   }
   const total = Math.round(bmr + stepKcal + sportKcalToday);
-  const t = getToday();
-  const existing = Number(t.habits?.['h-cal-dep']) || 0;
-  if (!existing || forceOverwrite) {
+  const t = getDay(dk);
+  if (forceOverwrite || !t.calDepManual) {
+    const changed = Number(t.habits['h-cal-dep']) !== total || t.calDepManual;
     t.habits['h-cal-dep'] = total;
-    saveState();
-    renderTodayView();
+    t.calDepManual = false;
+    if (changed) { saveState(); if (dk === getSelectedDayKey()) renderTodayView(); }
     return total;
   }
   return null;
+}
+// Recalcul des kcal d'un jour donné (après une séance cochée / décochée).
+function _recalcKcalForDay(dk) {
+  const steps = Number(state.history[dk]?.habits?.['h-pas']) || 0;
+  _autoCalcKcal(steps, false, dk);
 }
 
 function setHabitValue(id, val) {
@@ -7438,12 +7488,15 @@ function setHabitValue(id, val) {
   const v = Number(val) || 0;
   t.habits[id] = v; // stocker 0 explicitement pour que le cloud puisse écraser l'ancienne valeur
   // Si c'est l'eau, synchronise aussi today.water pour rétrocompat
-  if (id === "h-eau" || /eau/i.test(state.habits.find(h => h.id === id)?.name || "")) {
+  if (id === "h-eau" || /\beau\b/i.test(state.habits.find(h => h.id === id)?.name || "")) {
     t.water = v;
   }
-  // Si c'est les pas → calculer les kcal automatiquement (sans écraser une saisie manuelle)
+  // Kcal saisies à la main : le calcul automatique ne les écrase plus (0 / vide = retour au calcul auto)
+  if (id === "h-cal-dep") t.calDepManual = v > 0;
+  // Si c'est les pas → recalculer les kcal automatiquement (sans écraser une saisie manuelle)
   if (id === "h-pas" && v > 0) {
-    setTimeout(() => _autoCalcKcal(v, false), 0);
+    const dk = getSelectedDayKey();
+    setTimeout(() => _autoCalcKcal(v, false, dk), 0);
   }
   saveState();
   renderTodayView();
@@ -7645,9 +7698,10 @@ function renderTodayView() { renderTodayNav(); renderRings(); renderHabits(); re
 
 /* ========= WORK :: POSTDOC PROJECTS ========= */
 // Filtres pour identifier les projets "majeurs" qui ont leur propre sous-onglet
-function isPostdocProject(p) { return /^postdoc/i.test(p.name) || /\bélites mobiles\b/i.test(p.name); }
-function isValoProject(p) { return /valorisation/i.test(p.name); }
-function isTeachingProject(p) { return /enseignement/i.test(p.name); }
+// Les projets de départ sont reconnus par leur identifiant (et plus seulement par leur nom) : on peut les renommer.
+function isPostdocProject(p) { return p.id === "p-seed-postdoc" || /^postdoc/i.test(p.name) || /\bélites mobiles\b/i.test(p.name); }
+function isValoProject(p) { return p.id === "p-seed-valo" || /valorisation/i.test(p.name); }
+function isTeachingProject(p) { return p.id === "p-seed-enseignement" || /enseignement/i.test(p.name); }
 function isAutreProject(p) { return p.id === "p-seed-autre" || /^autre$/i.test(p.name); }
 function isPrixTheseProject(p) { return p.id === "p-seed-prixthese" || /^prix\s*de\s*th[eè]se$/i.test(p.name); }
 function isMajorProject(p) { return isPostdocProject(p) || isValoProject(p) || isTeachingProject(p) || isAutreProject(p) || isPrixTheseProject(p); }
@@ -8195,7 +8249,9 @@ function _workProjTabClick(btn, sub) {
 function _toggleTaskFromProjTab(taskId, done) {
   const t = state.work.postdocTasks.find(x => x.id === taskId);
   if (t) {
-    t.done = done; saveState(); renderTasks(); renderWorkProjectTabs();
+    // completedAt : sans lui, la tâche n'était comptée ni dans le bilan, ni dans les piliers, ni en dopamine
+    t.done = done; t.completedAt = done ? todayKey() : null;
+    saveState(); renderTasks(); renderTaskBilan(); renderProjects(); renderWorkProjectTabs(); updateWorkTabBadges();
     if (t.done && t.candId) _markCandSubmittedOnTaskDone(t.candId);
   }
 }
@@ -9742,8 +9798,9 @@ function completeClaudeTask(taskId) {
   const t = (state.work && state.work.postdocTasks || []).find(x => x.id === taskId);
   if (!t) return;
   t.done = true;
+  t.completedAt = todayKey();
   saveState();
-  renderTasks();
+  renderTasks(); renderTaskBilan(); renderProjects(); updateWorkTabBadges();
 }
 function unflagClaudeTask(taskId) {
   const t = (state.work && state.work.postdocTasks || []).find(x => x.id === taskId);
@@ -10325,6 +10382,9 @@ function closeTaskEditModal() {
     }
     _pendingNewTaskId = null;
   }
+  // Jalons cochés / supprimés dans la fenêtre puis fermée sans « Enregistrer » : ils sont déjà
+  // sauvegardés, il faut juste que les barres d'avancement le montrent.
+  renderTasks(); renderTaskBilan(); renderProjects(); renderWorkProjectTabs();
 }
 function saveTaskEdit() {
   const id = document.getElementById("taskEditId").value;
@@ -10390,7 +10450,11 @@ function renderCandidatures() {
     let _changed = false;
     (state.work.postdocTasks || []).forEach(t => {
       const hasValidCand = t.candId && (state.work.candidatures || []).some(c => c.id === t.candId);
-      if (t.projectId === _candProj.id && !hasValidCand) { _autoLinkCandidatureForTask(t); _changed = true; }
+      if (t.projectId === _candProj.id && !hasValidCand) {
+        const before = t.candId;
+        _autoLinkCandidatureForTask(t);
+        if (t.candId !== before) _changed = true; // sauvegarder seulement si une carte a vraiment été créée (pas à chaque affichage)
+      }
     });
     if (_changed) saveState();
   }
@@ -10791,7 +10855,9 @@ function toggleActivityDay(actId, dateKey) {
   if (day.activities[actId]) {
     // Décoche directement
     delete day.activities[actId];
+    _recalcKcalForDay(dateKey); // retire les kcal de la séance
     saveState(); renderActivities(); renderPillars();
+    if (dateKey === getSelectedDayKey()) renderTodayView();
     if (document.querySelector('.view[data-view="activities"]')?.classList.contains("active")) renderActivityChart();
   } else {
     // Ouvre le popup heure
@@ -10835,15 +10901,8 @@ function _actTimeConfirm() {
   if (time) entry.time = time;
   if (duration) entry.duration = duration;
   day.activities[actId] = (time || duration) ? entry : 1;
-  // Ajouter kcal sport au kcal du jour (en plus du BMR/pas)
-  if (act?.sport && act?.met && duration > 0) {
-    const sportKcal = _calcSportKcal(act.met, duration);
-    if (sportKcal > 0) {
-      const existing = Number(day.habits?.['h-cal-dep']) || 0;
-      if (!day.habits) day.habits = {};
-      day.habits['h-cal-dep'] = existing + sportKcal;
-    }
-  }
+  // Kcal du jour recalculées (repos + pas + toutes les séances avec durée)
+  if (act?.sport && act?.met && duration > 0) _recalcKcalForDay(dateKey);
   _actTimePending = null;
   document.getElementById('actTimePendingActId').value = '';
   document.getElementById('actTimePendingDateKey').value = '';
@@ -10863,6 +10922,7 @@ function _actTimeCancel() {
   document.getElementById('actTimePendingDateKey').value = '';
   document.getElementById('actTimeModal').classList.remove('open');
   saveState(); renderActivities(); renderPillars();
+  if (dateKey === getSelectedDayKey()) renderTodayView();
   if (document.querySelector('.view[data-view="activities"]')?.classList.contains("active")) renderActivityChart();
 }
 function renderActivities() {
@@ -11320,7 +11380,7 @@ function _hormoneSourceReasons(key, entry, dk, socialRe, wellnessRe) {
     case "sleep": { const dur = calcSleepDuration(entry.bedtime, entry.wakeTime); return (dur != null && dur >= 7) ? [`sommeil ${dur}h`] : []; }
     case "calendarSocial": return state.calEvents.filter(e => _hormoneEvOnDay(e, dk) && socialRe.test(e.title || "")).map(e => e.title || "événement social");
     case "calendarWellness": return state.calEvents.filter(e => _hormoneEvOnDay(e, dk) && wellnessRe.test(e.title || "")).map(e => e.title || "soin");
-    case "tasksDone": return (state.work?.postdocTasks || []).filter(t => t.done && t.completedAt === dk).map(t => `✓ ${(t.title||"tâche").slice(0,22)}`);
+    case "tasksDone": return (state.work?.postdocTasks || []).filter(t => t.done && t.completedAt === dk).map(t => `✓ ${(t.name||t.title||"tâche").slice(0,22)}`);
     case "milestones": return (state.work?.postdocTasks || []).flatMap(t => (t.milestones||[]).filter(m => m.done && m.doneAt === dk).map(m => `◆ jalon : ${String(m.name||"jalon").slice(0,20)}`));
     default: return [];
   }
@@ -12009,7 +12069,7 @@ function saveBodyComp() {
   // Si le poids est pour aujourd'hui et qu'on a des pas → recalculer les kcal
   if (w > 0 && dateKey === todayKey()) {
     const steps = Number(state.history[dateKey]?.habits?.['h-pas']) || 0;
-    _autoCalcKcal(steps, false);
+    _autoCalcKcal(steps, false, dateKey);
   }
 }
 // Dernier poids connu (n'importe quel jour passé, pas forcément aujourd'hui) — c'est ce que le
@@ -14197,7 +14257,7 @@ function renderSkincare() {
     const steps = getRoutines()[key] || [];
     const done = steps.map(s => !!habits[s.id]);
     const nb   = done.filter(Boolean).length;
-    const full = nb === steps.length;
+    const full = steps.length > 0 && nb === steps.length; // routine vide ≠ « Complète »
 
     const checkRow = (s, isDone) => `
       <div style="display:flex;align-items:center;gap:4px;">
@@ -16603,10 +16663,11 @@ function addTransaction() {
   // Rattachement aux missions postdoc (si frais pro + case cochée)
   const postdocEl = document.getElementById("txPostdocMission");
   let postdocMission = false;
+  let _newTxMission = null; // mission postdoc alimentée par ce frais pro (pour la corriger si on modifie / supprime)
   if (reimbursable && postdocEl?.checked) {
     const lieu = (document.getElementById("txMissionLieu")?.value.trim()) || mission || "";
     const type = document.getElementById("txMissionType")?.value || "train";
-    if (lieu) { addExpenseToPostdocMission(date, lieu, type, amount); postdocMission = true; }
+    if (lieu) { _newTxMission = { id: addExpenseToPostdocMission(date, lieu, type, amount).id, field: type }; postdocMission = true; }
   }
   const directSavEl = document.getElementById("txDirectSavings");
   const directSavingsAccount = (txType === "income" && directSavEl?.value) ? directSavEl.value : "";
@@ -16618,6 +16679,8 @@ function addTransaction() {
   const extAccEl = document.getElementById("txExternalAccount");
   const externalAccountId = txType === "external" ? (extAccEl?.value || "ext-default") : "";
   state.transactions.unshift({ id: "tx" + Date.now(), date, type: txType, amount, category: txType === "cash-withdrawal" ? (cashSrcAccount === "__checking__" ? "Compte courant" : cashSrcAccount) : category, note, reimbursable, mission, fixedCharge, exceptional, postdocMission, directSavingsAccount, fromSavingsAccount, cashSrcAccount, externalAccountId });
+  const _newTx = state.transactions[0];
+  if (_newTxMission) { _newTx.postdocMissionId = _newTxMission.id; _newTx.postdocMissionField = _newTxMission.field; }
   if (txType === "income" && state.mainSalaryCategory && category === state.mainSalaryCategory) _resetMoneyNav();
   // Si prélevé sur les espèces (dépense), déduire du cashBalance
   if (fromSavingsAccount === "__cash__" && (txType === "expense" || txType === "external")) {
@@ -16638,7 +16701,7 @@ function addTransaction() {
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) + amount;
     // Si depuis un compte épargne, créer aussi l'écriture savings-out correspondante
     if (cashSrcAccount !== "__checking__") {
-      state.transactions.unshift({ id: "tx" + Date.now() + "a", date, type: "savings-out", amount, category: cashSrcAccount, note: `Retrait espèces${note ? " — " + note : ""}`, reimbursable: false, mission: "", fixedCharge: false, exceptional: false, postdocMission: false, directSavingsAccount: "", fromSavingsAccount: "", cashSrcAccount: "", _linkedCashWithdrawal: true });
+      state.transactions.unshift({ id: "tx" + Date.now() + "a", date, type: "savings-out", amount, category: cashSrcAccount, note: `Retrait espèces${note ? " — " + note : ""}`, reimbursable: false, mission: "", fixedCharge: false, exceptional: false, postdocMission: false, directSavingsAccount: "", fromSavingsAccount: "", cashSrcAccount: "", _linkedCashWithdrawal: true, _cashParentId: _newTx.id });
     }
   }
   document.getElementById("txAmount").value = "";
@@ -16663,8 +16726,38 @@ function addTransaction() {
 function _resetMoneyNav() {
   _budgetMonthOffset = 0; _moneyCatMonthOffset = 0; _externalMonthOffset = 0; _patrimoineOffset = 0;
 }
+// Supprimer une transaction doit aussi défaire ce qu'elle avait modifié ailleurs (comme le fait
+// déjà la modification) : solde espèces, écriture d'épargne liée à un retrait, mission postdoc.
+// Avant, supprimer une dépense de 20 € payée en espèces laissait les espèces à −20 €.
+function _undoTxSideEffects(tx) {
+  if (!tx) return;
+  const acc = state.accounts || (state.accounts = {});
+  if (!acc.cashLog) acc.cashLog = [];
+  const log = (amount, dir) => acc.cashLog.push({ date: todayKey(), amount, dir, note: "Suppression — " + (tx.note || tx.category || "") });
+  if (tx.fromSavingsAccount === "__cash__" && (tx.type === "expense" || tx.type === "external")) { acc.cashBalance = (acc.cashBalance || 0) + tx.amount; log(tx.amount, "in"); }
+  if (tx.directSavingsAccount === "__cash__" && tx.type === "income") { acc.cashBalance = (acc.cashBalance || 0) - tx.amount; log(tx.amount, "out"); }
+  if (tx.type === "cash-withdrawal") {
+    acc.cashBalance = (acc.cashBalance || 0) - tx.amount; log(tx.amount, "out");
+    // écriture "sortie d'épargne" créée avec le retrait (anciennes : même date, montant et compte)
+    const linked = state.transactions.find(t => t._linkedCashWithdrawal && (t._cashParentId === tx.id ||
+      (!t._cashParentId && t.date === tx.date && t.amount === tx.amount && t.category === tx.cashSrcAccount)));
+    if (linked) state.transactions = state.transactions.filter(t => t !== linked);
+  }
+  _adjustTxMission(tx, -tx.amount);
+}
+// Ajoute delta (négatif = retrait) au poste de la mission postdoc alimentée par ce frais pro.
+function _adjustTxMission(tx, delta) {
+  if (!tx?.postdocMissionId || !delta) return;
+  const m = (state.admin?.missions || []).find(x => x.id === tx.postdocMissionId);
+  const f = tx.postdocMissionField;
+  if (!m || !f) return;
+  const v = Math.round(((Number(m[f]) || 0) + delta) * 100) / 100;
+  m[f] = v > 0 ? v : null;
+  try { admRender(); } catch (e) {}
+}
 function _deleteTxNow(id) {
   const removed = state.transactions.find(t => t.id === id);
+  _undoTxSideEffects(removed);
   state.transactions = state.transactions.filter(t => t.id !== id);
   if (removed && removed.type === "income" && state.mainSalaryCategory && removed.category === state.mainSalaryCategory) _resetMoneyNav();
   saveState(); renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
@@ -16818,9 +16911,10 @@ function saveTxFromModal() {
   // Reconstruct ISO date (keep original time if possible)
   const orig = new Date(tx.date);
   const [y, m, d] = dateStr.split("-").map(Number);
-  orig.setFullYear(y); orig.setMonth(m - 1); orig.setDate(d);
+  orig.setFullYear(y, m - 1, d); // en une fois : setMonth seul débordait (31/10 → 15/11 donnait le 15/12)
   const wasSalaryPostdoc = tx.type === "income" && state.mainSalaryCategory && tx.category === state.mainSalaryCategory;
   const oldAmount = tx.amount; // capturé AVANT d'écraser tx.amount — sinon impossible de calculer la différence plus bas
+  _adjustTxMission(tx, amount - oldAmount); // la mission postdoc suit le nouveau montant
   tx.type = txModalType;
   tx.amount = amount;
   tx.category = category;
@@ -16883,6 +16977,7 @@ function deleteTxFromModal() {
   const id = document.getElementById("txModalId").value;
   if (!id) return;
   _showConfirm("Supprimer cette transaction ?", () => {
+    _undoTxSideEffects(state.transactions.find(t => t.id === id));
     state.transactions = state.transactions.filter(t => t.id !== id);
     saveState(); closeTxModal();
     renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
@@ -18856,7 +18951,7 @@ function renderJournal() {
 
   // Entrées passées : on affiche journal libre + prompts s'ils existent
   const past = Object.entries(state.history)
-    .filter(([k, v]) => k !== todayKey() && (
+    .filter(([k, v]) => k !== getSelectedDayKey() && k <= todayKey() && ( // ni le jour en cours d'écriture, ni le futur
       (v.journal && v.journal.trim()) ||
       (v.accomplishment && v.accomplishment.trim()) ||
       (v.gratitude && v.gratitude.trim()) ||
@@ -18907,13 +19002,19 @@ function renderDreamHistory() {
   }).join("");
 }
 
+let _journalPending = null; // dernière frappe du journal pas encore enregistrée (envoyée si la page se ferme)
+window.addEventListener("pagehide", () => { if (_journalPending) _journalPending(); });
 function setupJournal() {
   const ta = document.getElementById("journalToday");
   let timeout;
   ta.addEventListener("input", () => {
     renderJournalMoodTags(ta.value);
     clearTimeout(timeout);
-    timeout = setTimeout(() => { getToday().journal = ta.value; saveState(); }, 800);
+    // Jour et texte capturés AU MOMENT de la frappe : si on change de jour (◀ ▶) pendant le délai,
+    // le texte va bien dans le jour où il a été écrit (avant : dans le nouveau jour affiché).
+    const dk = getSelectedDayKey(), v = ta.value;
+    _journalPending = () => { getDay(dk).journal = v; saveState(); _journalPending = null; };
+    timeout = setTimeout(() => _journalPending && _journalPending(), 800);
   });
   // Prompts dev perso
   const autoSave = (fieldId, key) => {
@@ -18922,7 +19023,8 @@ function setupJournal() {
     let t;
     el.addEventListener("input", () => {
       clearTimeout(t);
-      t = setTimeout(() => { getToday()[key] = el.value; saveState(); }, 800);
+      const dk = getSelectedDayKey(), v = el.value;
+      t = setTimeout(() => { getDay(dk)[key] = v; saveState(); }, 800);
     });
     el.addEventListener("focus", () => el.style.borderColor = "var(--lavender)");
     el.addEventListener("blur",  () => el.style.borderColor = "var(--line)");
@@ -19418,7 +19520,7 @@ function computeMetricDetails(m) {
   } else if (m.type === "journal-pct") {
     for (const d of days) { if ((state.history[todayKey(d)]?.journal || "").trim()) lines.push(`${_fmtDayFr(d)} — ✍️ journal écrit`); }
   } else if (m.type === "tasks-done") {
-    state.work.postdocTasks.filter(t => t.done && t.completedAt && t.completedAt >= k7).forEach(t => lines.push(`✓ ${t.title || "tâche"} (${t.completedAt})`));
+    state.work.postdocTasks.filter(t => t.done && t.completedAt && t.completedAt >= k7).forEach(t => lines.push(`✓ ${t.name || t.title || "tâche"} (${t.completedAt})`));
   } else if (m.type === "worktime-sum") {
     for (const d of days) { const wt = state.history[todayKey(d)]?.workTime || {}; const tot = Object.values(wt).reduce((s, v) => s + (Number(v) || 0), 0); if (tot) lines.push(`${_fmtDayFr(d)} — ${tot.toFixed(1)} h`); }
   } else if (m.type === "tx-tracked") {
@@ -21246,8 +21348,13 @@ function renderTimeDonutAllChart() {
 
 /* ========= DOMESTIQUE ========= */
 /* ========= TO-DO DU JOUR (partagé Aujourd'hui ↔ Domestique) ========= */
+// Domestique travaille toujours sur le VRAI jour ; Aujourd'hui sur le jour affiché (◀ ▶). Avant, les
+// deux suivaient le jour affiché : en consultant hier dans Aujourd'hui, la to-do de Domestique
+// affichait aujourd'hui mais ajoutait / cochait dans hier.
+function _todoDay(dom) { return dom ? getDay(todayKey()) : getToday(); }
 function _renderTodoWidget(listId, countId, doneLabelId) {
-  const today = getToday();
+  const dom = listId === "todoList";
+  const today = _todoDay(dom);
   const items = today.todo || [];
   const done  = items.filter(t => t.done).length;
   const total = items.length;
@@ -21260,9 +21367,9 @@ function _renderTodoWidget(listId, countId, doneLabelId) {
   listEl.innerHTML = total
     ? items.map(t => `
         <div class="todo-item${t.done ? " done-item" : ""}">
-          <div class="todo-cb" onclick="toggleTodoItem('${t.id}')"></div>
-          <span class="todo-text" onclick="toggleTodoItem('${t.id}')">${escapeHtml(t.text)}</span>
-          <button class="todo-del" onclick="deleteTodoItem('${t.id}')" title="Supprimer">✕</button>
+          <div class="todo-cb" onclick="toggleTodoItem('${t.id}', ${dom})"></div>
+          <span class="todo-text" onclick="toggleTodoItem('${t.id}', ${dom})">${escapeHtml(t.text)}</span>
+          <button class="todo-del" onclick="deleteTodoItem('${t.id}', ${dom})" title="Supprimer">✕</button>
         </div>`).join("")
     : `<div class="todo-empty">Rien pour l'instant — ajoute ta première tâche ✨</div>`;
 }
@@ -21274,17 +21381,17 @@ function addTodoItem(inputId) {
   const input = document.getElementById(inputId || "newTodoInput");
   const text = (input?.value || "").trim();
   if (!text) return;
-  getToday().todo.push({ id: "td" + Date.now(), text, done: false });
+  _todoDay(inputId === "newTodoInput").todo.push({ id: "td" + Date.now(), text, done: false });
   if (input) { input.value = ""; input.focus(); }
   saveState();
   _renderAllTodo();
 }
-function toggleTodoItem(id) {
-  const item = getToday().todo.find(t => t.id === id);
+function toggleTodoItem(id, dom = false) {
+  const item = _todoDay(dom).todo.find(t => t.id === id);
   if (item) { item.done = !item.done; saveState(); _renderAllTodo(); }
 }
-function deleteTodoItem(id) {
-  const today = getToday();
+function deleteTodoItem(id, dom = false) {
+  const today = _todoDay(dom);
   today.todo = today.todo.filter(t => t.id !== id);
   saveState();
   _renderAllTodo();
@@ -26510,8 +26617,10 @@ async function _checkStepsImport() {
     const updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt);
     if (todayKey(updatedAt) !== todayKey()) return; // import d'un autre jour, on ignore
     const steps = Number(data.steps) || 0;
-    if (steps > 0 && getToday().habits["h-pas"] !== steps) {
-      getToday().habits["h-pas"] = steps;
+    const day = getDay(todayKey()); // le vrai jour, même si on consulte un autre jour dans Aujourd'hui
+    if (steps > 0 && day.habits["h-pas"] !== steps) {
+      day.habits["h-pas"] = steps;
+      _autoCalcKcal(steps, false, todayKey());
       saveState(); renderAll();
       showToast("🚶 " + steps.toLocaleString("fr-FR") + " pas importés automatiquement");
     }
