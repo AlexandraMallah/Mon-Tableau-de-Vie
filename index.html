@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1351</title>
+<title>Mon Tableau de Vie 🌿 · v1352</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -77,6 +77,8 @@
     --on-accent: var(--ink);
     /* Encre d'accent (montants d'épargne, liens « Modifier »…) — suit le thème au lieu d'un violet fixe */
     --accent-ink: #6b4d99;
+    --surface-soft: #faf8fd;    /* fond doux des lignes (habitudes, tâches, formulaires…) */
+    --surface-weekend: #f4f0fb; /* week-end du calendrier */
     --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
   }
 
@@ -116,6 +118,8 @@
     --radius-card-lg: 8px;
     --on-accent: #10202e;
     --accent-ink: #2c5a80;
+    --surface-soft: #f4f7fb;
+    --surface-weekend: #e9eff6;
     --font-main: "IBM Plex Sans", "Segoe UI", sans-serif;
   }
 
@@ -342,7 +346,7 @@
   .habit {
     display: flex; align-items: center; gap: 14px;
     padding: 12px 14px; border-radius: 14px;
-    background: #faf8fd; border: 1px solid transparent;
+    background:var(--surface-soft); border: 1px solid transparent;
     cursor: pointer; transition: all 0.2s;
   }
   .habit:hover { background: var(--lavender-soft); }
@@ -377,7 +381,7 @@
   .wb-block label { font-size: 13px; color: var(--ink-soft); margin-bottom: 8px; display: block; }
   .scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
   .scale button {
-    background: #faf8fd; border: 1px solid var(--line); border-radius: 12px;
+    background:var(--surface-soft); border: 1px solid var(--line); border-radius: 12px;
     padding: 12px 0; font-size: 22px; cursor: pointer; transition: all 0.2s;
   }
   /* (hover: hover) exclut les écrans tactiles : sur iPhone/Android, un tap déclenche le :hover
@@ -427,7 +431,7 @@
   .activity-list { display: flex; flex-direction: column; gap: 12px; }
   .activity-row {
     display: flex; align-items: center; gap: 12px;
-    padding: 14px; border-radius: 16px; background: #faf8fd;
+    padding: 14px; border-radius: 16px; background:var(--surface-soft);
     border: 1px solid transparent; transition: all 0.2s;
   }
   .activity-row:hover { background: var(--mint-soft); }
@@ -444,7 +448,7 @@
     width: 30px; min-height: 40px; border-radius: 8px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 3px; cursor: pointer; border: 1.5px solid var(--line);
-    background: #faf8fd; transition: all 0.15s; user-select: none; flex-shrink: 0;
+    background:var(--surface-soft); transition: all 0.15s; user-select: none; flex-shrink: 0;
   }
   .activity-day-dot .dot-day-label { font-size: 9px; font-weight: 700; color: var(--ink-softer); text-transform: uppercase; line-height: 1; }
   .activity-day-dot .dot-day-mark { width: 11px; height: 11px; border-radius: 50%; background: var(--line); transition: background 0.15s; flex-shrink: 0; }
@@ -452,11 +456,11 @@
   .activity-day-dot.done .dot-day-label { color: #2f7a5a; }
   .activity-day-dot.done .dot-day-mark { background: #4d9c7e; }
   .activity-day-dot.today:not(.done) { border-color: var(--lavender); }
-  .activity-day-dot.today:not(.done) .dot-day-label { color: #7c5cbf; }
+  .activity-day-dot.today:not(.done) .dot-day-label { color: var(--accent-ink); }
   .activity-day-dot:hover { opacity: 0.8; }
 
   /* ========= HEALTH ========= */
-  .weight-add { display: flex; gap: 10px; margin-bottom: 14px; background: #faf8fd; padding: 12px; border-radius: 14px; }
+  .weight-add { display: flex; gap: 10px; margin-bottom: 14px; background:var(--surface-soft); padding: 12px; border-radius: 14px; }
   .weight-add input {
     flex: 1; padding: 10px 14px;
     border: 1px solid var(--line); border-radius: 10px;
@@ -464,13 +468,13 @@
   }
   .weight-add input:focus { outline: 2px solid var(--sky); }
   .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
-  .stat { background: #faf8fd; padding: 5px 8px; border-radius: 10px; text-align: center; align-self: start; }
+  .stat { background:var(--surface-soft); padding: 5px 8px; border-radius: 10px; text-align: center; align-self: start; }
   .stat-label { font-size: 10px; color: var(--ink-soft); margin-bottom: 1px; }
   .stat-val { font-size: 15px; font-weight: 600; }
   .stat-unit { font-size: 12px; color: var(--ink-soft); margin-left: 2px; }
   .water-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
   .water-glass {
-    width: 32px; height: 40px; background: #faf8fd;
+    width: 32px; height: 40px; background:var(--surface-soft);
     border: 2px solid var(--line); border-radius: 6px 6px 14px 14px;
     cursor: pointer; transition: all 0.2s;
   }
@@ -482,7 +486,7 @@
   .money-stat { padding: 18px; border-radius: max(var(--radius-card), min(18px, var(--radius-card-lg))); background: var(--card); box-shadow: var(--shadow); }
   .money-stat .label { color: var(--ink-soft); font-size: 13px; margin-bottom: 6px; }
   .money-stat .value { font-size: 26px; font-weight: 600; }
-  .tx-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; background: #faf8fd; padding: 12px; border-radius: 14px; }
+  .tx-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; background:var(--surface-soft); padding: 12px; border-radius: 14px; }
   .tx-form-inputs { display: grid; grid-template-columns: 1fr 1fr 2fr auto auto; gap: 8px; align-items: center; }
   .tx-form .type-toggle {
     display: flex; gap: 5px; flex-wrap: wrap;
@@ -514,7 +518,7 @@
   }
   .tx-list { max-height: 380px; overflow-y: auto; }
   .tx-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; transition: background 0.15s; }
-  .tx-row:hover { background: #faf8fd; }
+  .tx-row:hover { background:var(--surface-soft); }
   .tx-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .tx-info { flex: 1; min-width: 0; }
   .tx-cat { font-size: 13px; font-weight: 500; }
@@ -534,7 +538,7 @@
     grid-template-columns: 1fr auto auto auto auto;
     align-items: center; gap: 12px;
     padding: 12px 14px; border-radius: 12px;
-    background: #faf8fd; margin-bottom: 8px;
+    background:var(--surface-soft); margin-bottom: 8px;
     transition: background 0.2s;
   }
   .sub-row:hover { background: var(--butter-soft); }
@@ -567,7 +571,7 @@
   /* ===== Budget mensuel ===== */
   .budget-add-form {
     display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-    padding: 10px 12px; background: #faf8fd; border-radius: 12px;
+    padding: 10px 12px; background:var(--surface-soft); border-radius: 12px;
     border: 1px solid var(--line); margin-bottom: 12px;
   }
   .budget-row {
@@ -616,7 +620,7 @@
 
   /* ========= GOALS ========= */
   .goal-list { display: flex; flex-direction: column; gap: 14px; }
-  .goal { padding: 16px; border-radius: 16px; background: #faf8fd; transition: all 0.2s; }
+  .goal { padding: 16px; border-radius: 16px; background:var(--surface-soft); transition: all 0.2s; }
   .goal:hover { background: var(--peach-soft); }
   .goal-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
   .goal-name { font-weight: 600; font-size: 15px; }
@@ -637,7 +641,7 @@
   .goal-controls .del:hover { background: var(--rose-soft); color: var(--red); }
   .add-goal-form {
     display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 8px; margin-top: 14px;
-    background: #faf8fd; padding: 12px; border-radius: 14px;
+    background:var(--surface-soft); padding: 12px; border-radius: 14px;
   }
   .add-goal-form input {
     padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px;
@@ -655,11 +659,11 @@
     width: 100%; min-height: 140px; padding: 14px;
     border: 1px solid var(--line); border-radius: 14px;
     font-family: inherit; font-size: 14px; color: var(--ink);
-    resize: vertical; background: #faf8fd;
+    resize: vertical; background:var(--surface-soft);
   }
   .journal-input:focus { outline: 2px solid var(--pink); background: white; }
   .journal-past { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
-  .journal-entry { padding: 12px 14px; border-radius: 14px; background: #faf8fd; border-left: 3px solid var(--pink); }
+  .journal-entry { padding: 12px 14px; border-radius: 14px; background:var(--surface-soft); border-left: 3px solid var(--pink); }
   .journal-date { font-size: 12px; color: var(--ink-soft); margin-bottom: 4px; text-transform: capitalize; }
   .journal-text { font-size: 14px; white-space: pre-wrap; }
 
@@ -706,7 +710,7 @@
     font-size: 13px; font-family: inherit; transition: all 0.2s;
     min-height: 40px; touch-action: manipulation;
   }
-  .btn-soft:hover { background: #faf8fd; }
+  .btn-soft:hover { background:var(--surface-soft); }
 
   /* Postdoc */
   .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-bottom: 18px; }
@@ -727,14 +731,14 @@
   .task-row {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 14px; border-radius: 12px;
-    background: #faf8fd; transition: all 0.2s;
+    background:var(--surface-soft); transition: all 0.2s;
     border-left: 4px solid transparent;
   }
   .task-row:hover { background: var(--lilac-soft); }
   .task-row.prio-urgent {
     border-left-color: var(--red);
     border-left-width: 6px;
-    background: linear-gradient(90deg, rgba(199, 91, 77, 0.12) 0%, #faf8fd 60%);
+    background: linear-gradient(90deg, rgba(199, 91, 77, 0.12) 0%, var(--surface-soft) 60%);
   }
   .task-row.prio-urgent .task-name { font-weight: 700; }
   .task-row.prio-urgent::before { content: "🚨"; margin-right: 4px; font-size: 14px; }
@@ -787,7 +791,7 @@
   .task-pct-badge { font-size: 11px; font-weight: 600; color: var(--lavender); background: var(--lavender-soft); padding: 1px 6px; border-radius: 6px; }
   /* Modal jalons */
   .milestone-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
-  .milestone-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: #faf8fd; border: 1px solid var(--line); transition: opacity 0.15s; }
+  .milestone-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background:var(--surface-soft); border: 1px solid var(--line); transition: opacity 0.15s; }
   .milestone-row.done-m { background: var(--mint-soft); border-color: #6dc0a0; }
   .milestone-row.drag-over { outline: 2px dashed var(--lavender); background: var(--lavender-soft) !important; }
   .milestone-drag-handle { cursor: grab; color: var(--ink-softer); font-size: 15px; flex-shrink: 0; user-select: none; line-height: 1; padding: 0 1px; letter-spacing: -1px; }
@@ -799,7 +803,7 @@
   .milestone-row.done-m .milestone-label { text-decoration: line-through; color: var(--ink-soft); }
   .milestone-name-input { flex: 1; min-width: 0; width: auto !important; font-size: 13px; font-family: inherit; color: var(--ink); background: transparent; border: none; border-bottom: 1.5px solid transparent; padding: 1px 2px; outline: none; transition: border-color 0.15s; cursor: text; }
   .milestone-name-input:hover { border-bottom-color: var(--line); }
-  .milestone-name-input:focus { border-bottom-color: var(--lavender); background: #faf8fd; border-radius: 4px 4px 0 0; }
+  .milestone-name-input:focus { border-bottom-color: var(--lavender); background:var(--surface-soft); border-radius: 4px 4px 0 0; }
   .milestone-row.done-m .milestone-name-input { text-decoration: line-through; color: var(--ink-soft); }
   .milestone-del { background: none; border: none; color: var(--ink-softer); cursor: pointer; font-size: 14px; padding: 2px 5px; border-radius: 5px; }
   .milestone-del:hover { color: var(--red); background: var(--rose-soft); }
@@ -813,7 +817,7 @@
 
   .add-task-form {
     display: flex; flex-wrap: wrap; gap: 6px;
-    background: #faf8fd; padding: 12px; border-radius: 14px; margin-top: 14px;
+    background:var(--surface-soft); padding: 12px; border-radius: 14px; margin-top: 14px;
     align-items: center;
   }
   .add-task-form input, .add-task-form select {
@@ -841,7 +845,7 @@
   }
   .kanban-col {
     min-width: 240px; width: 240px; flex-shrink: 0;
-    background: #faf8fd; border-radius: 16px; padding: 12px;
+    background:var(--surface-soft); border-radius: 16px; padding: 12px;
     scroll-snap-align: start;
   }
   .kanban-col-head {
@@ -890,7 +894,7 @@
     vertical-align: middle;
   }
   .data-table tbody tr { cursor: pointer; transition: background 0.15s; }
-  .data-table tbody tr:hover { background: #faf8fd; }
+  .data-table tbody tr:hover { background:var(--surface-soft); }
   .status-badge {
     font-size: 11px; padding: 3px 9px; border-radius: 999px;
     font-weight: 600; white-space: nowrap; display: inline-block;
@@ -965,7 +969,7 @@
   }
   .pillar-metric {
     padding: 3px 9px; border-radius: 999px;
-    background: #faf8fd; border: 1px solid var(--line);
+    background:var(--surface-soft); border: 1px solid var(--line);
   }
   .pillar-metric.good { background: var(--mint-soft); border-color: var(--mint); color: var(--ink); }
   .pillar-metric.warn { background: var(--peach-soft); border-color: var(--peach); color: var(--ink); }
@@ -976,7 +980,7 @@
   }
   .pillar-rank-row {
     display: flex; align-items: center; gap: 10px;
-    padding: 8px 10px; border-radius: 10px; background: #faf8fd;
+    padding: 8px 10px; border-radius: 10px; background:var(--surface-soft);
   }
   .pillar-rank-emoji { font-size: 20px; }
   .pillar-rank-name { flex: 1; font-size: 13.5px; font-weight: 500; }
@@ -1014,7 +1018,7 @@
 
   /* ========= CAL SOURCES (multi-couleurs Google) ========= */
   .cal-sources-grid {
-    background: #faf8fd; border-radius: 12px; padding: 10px 12px;
+    background:var(--surface-soft); border-radius: 12px; padding: 10px 12px;
     display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
   }
   .cal-sources-grid-title {
@@ -1037,7 +1041,7 @@
     font-size: 13px; font-weight: 500; color: var(--ink);
     cursor: text; outline: none; padding: 2px 4px; border-radius: 4px;
   }
-  .cal-source-chip .cs-name:hover { background: #faf8fd; }
+  .cal-source-chip .cs-name:hover { background:var(--surface-soft); }
   .cal-source-chip .cs-count {
     font-size: 10px; padding: 2px 7px; border-radius: 999px;
     background: var(--line); color: var(--ink-soft); font-weight: 600;
@@ -1059,13 +1063,13 @@
     font-weight: 600; padding: 8px 0; text-transform: uppercase;
   }
   .cal-day {
-    min-height: 90px; background: #faf8fd; border-radius: 10px;
+    min-height: 90px; background:var(--surface-soft); border-radius: 10px;
     padding: 8px; position: relative;
     border: 1px solid transparent;
   }
   .cal-day.other-month { opacity: 0.4; }
   .cal-day.today { border-color: var(--lavender); background: var(--lavender-soft); }
-  .cal-day.weekend { background: #f4f0fb; }
+  .cal-day.weekend { background: var(--surface-weekend); }
   .cal-day-num { font-size: 13px; font-weight: 600; color: var(--ink); }
   .cal-day.today .cal-day-num { color:var(--accent-ink); }
   .cal-event {
@@ -1086,7 +1090,7 @@
   .cal-event.more { background: white; border-left-color: var(--ink-softer); font-style: italic; color: var(--ink-soft); }
   .cal-day-event-row {
     display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: 12px; background: #faf8fd;
+    padding: 10px 12px; border-radius: 12px; background:var(--surface-soft);
     margin-bottom: 8px; border-left: 4px solid;
   }
   .cal-day-event-row.task { border-left-color: var(--red); }
@@ -1108,7 +1112,7 @@
   /* ========= GROCERY EVENTS ========= */
   .grocery-layout { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; width: 100%; box-sizing: border-box; }
   .grocery-event {
-    background: #faf8fd; border-radius: 14px; padding: 14px;
+    background:var(--surface-soft); border-radius: 14px; padding: 14px;
     margin-bottom: 10px; border-left: 4px solid var(--lavender);
   }
   /* Liste d'articles scrollante par événement */
@@ -1289,7 +1293,7 @@
   .dom-row {
     display: flex; align-items: center; gap: 12px;
     padding: 12px 14px; border-radius: 12px;
-    background: #faf8fd; margin-bottom: 8px;
+    background:var(--surface-soft); margin-bottom: 8px;
     transition: background 0.2s;
   }
   /* Structure interne des cartes plantes */
@@ -1317,7 +1321,7 @@
   .dom-meta { font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
   .plant-notes-input { display:block; width:100%; font-size:12px; color:var(--ink-soft); font-style:italic; font-family:inherit; background:transparent; border:none; border-bottom:1px solid transparent; outline:none; resize:none; padding:2px 0; margin-top:3px; cursor:text; min-height:16px; overflow:hidden; transition:border-color 0.15s; line-height:1.4; }
   .plant-notes-input:hover { border-bottom-color:var(--line); }
-  .plant-notes-input:focus { border-bottom-color:var(--lavender); background:#faf8fd; border-radius:4px 4px 0 0; padding:2px 4px; cursor:auto; }
+  .plant-notes-input:focus { border-bottom-color:var(--lavender); background:var(--surface-soft); border-radius:4px 4px 0 0; padding:2px 4px; cursor:auto; }
   .plant-notes-input::placeholder { color:var(--ink-softer); }
   .dom-status-badge {
     font-size: 11px; padding: 3px 9px; border-radius: 6px;
@@ -1411,7 +1415,7 @@
   .todo-item {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 14px; border-radius: 12px;
-    background: #faf8fd; transition: background 0.2s;
+    background:var(--surface-soft); transition: background 0.2s;
   }
   .todo-item:hover { background: var(--lavender-soft); }
   .todo-item.done-item { opacity: 0.55; }
@@ -1560,7 +1564,7 @@
     font-weight: 500; font-size: 14px; font-family: inherit;
   }
   .modal button.secondary {
-    background: #faf8fd; color: var(--ink); border: 1px solid var(--line);
+    background:var(--surface-soft); color: var(--ink); border: 1px solid var(--line);
     padding: 10px 18px; border-radius: 12px; cursor: pointer;
     font-size: 14px; font-family: inherit;
   }
@@ -1879,8 +1883,8 @@
   .adm-table tr:hover td { background:var(--bg-1); }
   .adm-table .r { text-align:right; font-variant-numeric:tabular-nums; }
   .adm-pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; white-space:nowrap; }
-  .adm-pill-ok   { background:#dcfce7; color:#16a34a; }
-  .adm-pill-wait { background:#fef3c7; color:#b45309; }
+  .adm-pill-ok   { background:#dcfce7; color:var(--green); }
+  .adm-pill-wait { background:#fef3c7; color:var(--orange); }
   .adm-pill-took { background:#dbeafe; color:#1d4ed8; }
   .adm-pill-plan { background:#ede9fe; color:#6d28d9; }
   .adm-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
@@ -2684,7 +2688,7 @@
       <div style="display:flex;flex-direction:column;gap:10px;">
         <button class="secondary" onclick="cloudPull()" style="text-align:left;padding:12px 14px;">⬇️ <strong>Récupérer du cloud</strong><br><span style="font-size:12px;color:var(--ink-soft);">Remplace les données de CET appareil par celles du cloud (ex : rapatrier ce que tu as saisi sur le tél).</span></button>
         <button class="secondary" onclick="cloudPush()" style="text-align:left;padding:12px 14px;">⬆️ <strong>Envoyer vers le cloud</strong><br><span style="font-size:12px;color:var(--ink-soft);">Remplace les données du cloud par celles de CET appareil.</span></button>
-        <button class="secondary" onclick="cloudSignOut()" style="text-align:left;padding:12px 14px;color:#c75b4d;">🚪 <strong>Se déconnecter</strong><br><span style="font-size:12px;color:var(--ink-soft);">Tes données locales restent intactes.</span></button>
+        <button class="secondary" onclick="cloudSignOut()" style="text-align:left;padding:12px 14px;color:var(--red);">🚪 <strong>Se déconnecter</strong><br><span style="font-size:12px;color:var(--ink-soft);">Tes données locales restent intactes.</span></button>
         <button class="secondary" onclick="closeSyncMenu();openSettings('diagnostic')" style="text-align:left;padding:12px 14px;color:#8a7aaa;">🔍 <strong>Diagnostic sync</strong><br><span style="font-size:12px;color:var(--ink-soft);">Affiche l'état de la connexion Firebase (debug).</span></button>
         <a href="#" onclick="event.preventDefault();closeSyncMenu();openSupportContact()" style="text-align:left;padding:12px 14px;text-decoration:none;color:var(--ink);border-radius:10px;border:1px solid var(--line);display:block;">📧 <strong>Contacter le support</strong><br><span style="font-size:12px;color:var(--ink-soft);">Signaler un problème, une idée de fonctionnalité, ou toute autre remarque.</span></a>
       </div>
@@ -2872,7 +2876,7 @@
           <h2>⏱️ Saisie du temps de travail</h2>
           <span style="font-size:13px;color:var(--ink-soft);">En heures (ex: 3.5 = 3h30)</span>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;background:#faf8fd;padding:10px 12px;border-radius:12px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;background:var(--surface-soft);padding:10px 12px;border-radius:12px;">
           <label style="font-size:13px;color:var(--ink-soft);white-space:nowrap;">📅 Date :</label>
           <input type="date" id="timeWorkDate" style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;background:white;color:var(--ink);" />
           <button class="btn-soft" onclick="resetTimeDateToToday()" style="font-size:12px;padding:7px 12px;">Aujourd'hui</button>
@@ -3107,7 +3111,7 @@
         </div>
         <!-- Section suivi poids/composition (togglable via bodyComp) -->
         <div id="bodyCompSection">
-          <div style="background:#faf8fd;padding:8px 10px;border-radius:12px;margin-bottom:12px;">
+          <div style="background:var(--surface-soft);padding:8px 10px;border-radius:12px;margin-bottom:12px;">
             <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
               <input type="text" inputmode="decimal" id="weightBodyCompInput" placeholder="Poids kg"
                 oninput="this.value=this.value.replace(',','.');document.getElementById('weightInput').value=this.value"
@@ -3222,7 +3226,7 @@
             <div style="display:flex;gap:14px;flex-wrap:wrap;">
               <div style="text-align:center;">
                 <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Streak</div>
-                <strong id="pillStreakSante" style="font-size:20px;font-weight:700;color:#7c5cbf;">—</strong>
+                <strong id="pillStreakSante" style="font-size:20px;font-weight:700;color:var(--accent-ink);">—</strong>
               </div>
               <div style="text-align:center;">
                 <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;"><span id="pillPctLabel">Ce mois</span></div>
@@ -3531,12 +3535,12 @@
       <div id="catNatureNote" class="cat-note"></div>
       <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:8px;align-items:start;">
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses · tout <span id="catChartDepTotal" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses · tout <span id="catChartDepTotal" style="color:var(--red);"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatChart"></canvas></div>
           <div id="moneyCatLegend" class="cat-legend"></div>
         </div>
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🍰 Répartition <span id="catShareTotal" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🍰 Répartition <span id="catShareTotal" style="color:var(--red);"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatShare"></canvas></div>
           <div id="moneyCatShareLegend" class="cat-legend"></div>
         </div>
@@ -3546,17 +3550,17 @@
           <div id="moneyIncomeLegend" class="cat-legend"></div>
         </div>
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">✅ Essentielles <span id="catChartDepTotalEss" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">✅ Essentielles <span id="catChartDepTotalEss" style="color:var(--red);"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatChartEss"></canvas></div>
           <div id="moneyCatLegendEss" class="cat-legend"></div>
         </div>
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🎉 Plaisir <span id="catChartDepTotalFun" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🎉 Plaisir <span id="catChartDepTotalFun" style="color:var(--red);"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatChartFun"></canvas></div>
           <div id="moneyCatLegendFun" class="cat-legend"></div>
         </div>
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🧰 Pratique <span id="catChartDepTotalPra" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🧰 Pratique <span id="catChartDepTotalPra" style="color:var(--red);"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatChartPra"></canvas></div>
           <div id="moneyCatLegendPra" class="cat-legend"></div>
         </div>
@@ -3566,12 +3570,12 @@
       <summary style="margin:0;font-size:16px;font-weight:600;cursor:pointer;color:var(--ink);" id="moneyCatAllTitle">Par catégorie · Depuis le 26 mai 2026</summary>
       <div class="money-charts-grid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px;align-items:start;">
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses · tout <span id="catAllChartDepTotal" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">− Dépenses · tout <span id="catAllChartDepTotal" style="color:var(--red);"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllChart"></canvas></div>
           <div id="moneyCatAllLegend" class="cat-legend"></div>
         </div>
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🍰 Répartition <span id="catAllShareTotal" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🍰 Répartition <span id="catAllShareTotal" style="color:var(--red);"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllShare"></canvas></div>
           <div id="moneyCatAllShareLegend" class="cat-legend"></div>
         </div>
@@ -3581,17 +3585,17 @@
           <div id="moneyIncomeAllLegend" class="cat-legend"></div>
         </div>
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">✅ Essentielles <span id="catAllChartDepTotalEss" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">✅ Essentielles <span id="catAllChartDepTotalEss" style="color:var(--red);"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllChartEss"></canvas></div>
           <div id="moneyCatAllLegendEss" class="cat-legend"></div>
         </div>
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🎉 Plaisir <span id="catAllChartDepTotalFun" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🎉 Plaisir <span id="catAllChartDepTotalFun" style="color:var(--red);"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllChartFun"></canvas></div>
           <div id="moneyCatAllLegendFun" class="cat-legend"></div>
         </div>
         <div>
-          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🧰 Pratique <span id="catAllChartDepTotalPra" style="color:#c75b4d;"></span></p>
+          <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin:0 0 4px;font-weight:600;">🧰 Pratique <span id="catAllChartDepTotalPra" style="color:var(--red);"></span></p>
           <div class="chart-wrap" style="height:160px;"><canvas id="moneyCatAllChartPra"></canvas></div>
           <div id="moneyCatAllLegendPra" class="cat-legend"></div>
         </div>
@@ -3690,7 +3694,7 @@
         </div>
         <p style="color:var(--ink-soft);font-size:13px;margin:-4px 0 10px;">🚨 urgent · 🔴 haute · 🟠 moyenne · ⚪ faible</p>
         <!-- Formulaire ajout (masqué par défaut) -->
-        <div id="domTaskFormRow" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;background:#faf8fd;padding:12px;border-radius:14px;margin-bottom:14px;">
+        <div id="domTaskFormRow" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface-soft);padding:12px;border-radius:14px;margin-bottom:14px;">
           <input type="text" id="newDomTaskName" placeholder="Nouvelle tâche…"
             style="flex:1;min-width:160px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);"
             onkeydown="if(event.key==='Enter')addDomesticTask()" />
@@ -3749,7 +3753,7 @@
           <h2 style="margin:0;">👥 Repas avec amis</h2>
           <button class="btn-primary" onclick="showAddMealEventForm()">+ Ajouter</button>
         </div>
-        <div id="addMealEventForm" style="display:none;background:#faf8fd;padding:12px;border-radius:14px;margin-bottom:14px;border:1px solid var(--line);">
+        <div id="addMealEventForm" style="display:none;background:var(--surface-soft);padding:12px;border-radius:14px;margin-bottom:14px;border:1px solid var(--line);">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
             <input type="text" id="newMealEventName" placeholder="Nom (ex: Dîner copines)" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
             <input type="date" id="newMealEventDate" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
@@ -3780,7 +3784,7 @@
               <h2>🛒 Mes courses par événement <span class="count" id="groceriesCount"></span></h2>
               <button class="btn-soft" onclick="clearAllCheckedGroceries()">✕ Vider les cochés</button>
             </div>
-            <div style="display:flex;gap:8px;margin-bottom:14px;background:#faf8fd;padding:12px;border-radius:14px;">
+            <div style="display:flex;gap:8px;margin-bottom:14px;background:var(--surface-soft);padding:12px;border-radius:14px;">
               <input type="text" id="newEventName" placeholder="Nouvel événement (Course semaine, Dîner copines…)" style="flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);background:white;" />
               <button class="btn-primary" onclick="addGroceryEvent()">+ Créer</button>
             </div>
@@ -3821,7 +3825,7 @@
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px;" id="recipeCategoryTabs"></div>
-        <div id="recipeCatAddPanel" style="display:none;background:#faf8fd;border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+        <div id="recipeCatAddPanel" style="display:none;background:var(--surface-soft);border-radius:10px;padding:10px 12px;margin-bottom:12px;">
           <div style="display:flex;gap:8px;align-items:center;">
             <input type="text" id="recipeCatNewInput" placeholder="Nouvelle catégorie…"
               style="flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;"
@@ -3848,7 +3852,7 @@
         <p style="color:var(--ink-soft);font-size:12px;margin:-8px 0 10px;">Note les kcal d'aliments ou préparations avec leurs ingrédients (ex: Ube Latte → 10g Ube, 250ml lait…)</p>
         <input type="text" id="foodKcalSearch" placeholder="🔍 Rechercher un aliment…" oninput="renderFoodKcal()"
           style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);margin-bottom:12px;" />
-        <div id="foodKcalAddForm" style="display:none;background:#faf8fd;padding:12px;border-radius:14px;margin-bottom:12px;border:1px solid var(--line);">
+        <div id="foodKcalAddForm" style="display:none;background:var(--surface-soft);padding:12px;border-radius:14px;margin-bottom:12px;border:1px solid var(--line);">
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:8px;">
             <input type="text" id="fkName" placeholder="Nom (ex: Huile d'olive)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
             <input type="text" id="fkBrand" placeholder="Marque (ex: Monoprix Bio)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);" />
@@ -4019,7 +4023,7 @@
 
     <!-- Infos projet -->
     <div class="section-title">📁 Projet</div>
-    <div style="background:#faf8fd;border-radius:12px;padding:12px 14px;font-size:13px;line-height:2;">
+    <div style="background:var(--surface-soft);border-radius:12px;padding:12px 14px;font-size:13px;line-height:2;">
       <b>Fichier local :</b> <code>/Users/alexandramallah/Documents/Mon-Tableau-de-Vie/index.html</code><br>
       <b>GitHub :</b> <a href="https://github.com/AlexandraMllh/Mon-Tableau-de-Vie" target="_blank">github.com/AlexandraMllh/Mon-Tableau-de-Vie</a><br>
       <b>App live :</b> <a href="https://alexandramallah.github.io/Mon-Tableau-de-Vie" target="_blank">alexandramallah.github.io/Mon-Tableau-de-Vie</a><br>
@@ -4030,7 +4034,7 @@
     <div class="section-title">📋 Prompt à copier pour Claude</div>
     <div style="position:relative;">
       <textarea id="gestionPrompt" readonly
-        style="width:100%;height:220px;padding:12px;border:1px solid var(--line);border-radius:12px;font-family:inherit;font-size:12px;color:var(--ink);background:#faf8fd;resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
+        style="width:100%;height:220px;padding:12px;border:1px solid var(--line);border-radius:12px;font-family:inherit;font-size:12px;color:var(--ink);background:var(--surface-soft);resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
       <button onclick="copyGestionPrompt()"
         style="position:absolute;top:10px;right:10px;padding:5px 12px;border-radius:8px;border:none;background:var(--lilac);color:var(--on-accent);font-size:12px;font-weight:600;cursor:pointer;" id="gestionCopyBtn">
         📋 Copier
@@ -4039,7 +4043,7 @@
 
     <!-- Stack technique -->
     <div class="section-title">⚙️ Stack technique</div>
-    <div style="background:#faf8fd;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.9;">
+    <div style="background:var(--surface-soft);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.9;">
       HTML/CSS/JS vanilla · fichier unique · Chart.js 4 (CDN)<br>
       Firebase Firestore (auth Google) · localStorage <code>tableauDeVie_v3</code><br>
       PWA : Service Worker network-first · GitHub Pages<br>
@@ -4048,7 +4052,7 @@
 
     <!-- Firebase -->
     <div class="section-title">🔥 Firebase</div>
-    <div style="background:#faf8fd;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.9;">
+    <div style="background:var(--surface-soft);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.9;">
       <b>Project ID :</b> mon-tableau-de-vie<br>
       <b>Auth domain :</b> mon-tableau-de-vie.firebaseapp.com<br>
       <b>API key :</b> AIzaSyDPnPO3IQd3puR4qkx0nWFHLHSDAPuAGcM
@@ -4236,11 +4240,11 @@
       <div id="plantDetailFreq" style="font-size:13px;color:var(--ink-soft);margin-top:4px;"></div>
     </div>
     <div id="plantDetailStatus" style="text-align:center;margin-bottom:16px;"></div>
-    <div id="plantDetailNotes" style="background:#faf8fd;border-radius:12px;padding:14px 16px;font-size:14px;color:var(--ink);line-height:1.7;white-space:pre-wrap;min-height:60px;"></div>
+    <div id="plantDetailNotes" style="background:var(--surface-soft);border-radius:12px;padding:14px 16px;font-size:14px;color:var(--ink);line-height:1.7;white-space:pre-wrap;min-height:60px;"></div>
     <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
       <button class="btn-primary" onclick="waterPlantFromDetail()" id="plantDetailWaterBtn">💧 Arroser maintenant</button>
       <button onclick="editPlantFromDetail()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--lavender);background:white;color:var(--lavender);font-family:inherit;font-size:14px;cursor:pointer;">✏️ Modifier</button>
-      <button onclick="deletePlantFromDetail()" style="padding:9px 18px;border-radius:10px;border:1px solid #fca5a5;background:white;color:#dc2626;font-family:inherit;font-size:14px;cursor:pointer;">🗑️ Supprimer</button>
+      <button onclick="deletePlantFromDetail()" style="padding:9px 18px;border-radius:10px;border:1px solid #fca5a5;background:white;color:var(--red);font-family:inherit;font-size:14px;cursor:pointer;">🗑️ Supprimer</button>
       <button class="secondary" onclick="closePlantDetail()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;font-family:inherit;font-size:14px;cursor:pointer;">Fermer</button>
     </div>
   </div>
@@ -4781,7 +4785,7 @@
     <div id="aiRecipeStatus" style="font-size:13px;color:var(--ink);margin-top:8px;min-height:0;white-space:pre-wrap;background:#fde8e8;border-radius:10px;padding:0;"></div>
     <div class="actions">
       <button class="secondary" onclick="_resetAiChat()" title="Effacer la conversation en cours">🔄 Nouvelle conversation</button>
-      <button class="secondary" id="aiUndoBtn" onclick="undoLastAiChange()" title="Revenir en arrière sur la dernière modification faite par l'IA" style="display:none;color:#c75b4d;">↩️ Annuler</button>
+      <button class="secondary" id="aiUndoBtn" onclick="undoLastAiChange()" title="Revenir en arrière sur la dernière modification faite par l'IA" style="display:none;color:var(--red);">↩️ Annuler</button>
       <div class="spacer"></div>
       <button class="secondary" onclick="closeAiRecipeModal()">Fermer</button>
       <button class="primary" onclick="runAiAssistant()">✨ Envoyer</button>
@@ -5320,7 +5324,7 @@
   <div class="modal" style="max-width:640px;">
     <h2>📥 Mise à jour rapide</h2>
     <p style="color:var(--ink-soft);font-size:13px;margin:0 0 12px;">Colle ici le bloc JSON que Claude t'a fourni. Le contenu sera <strong>fusionné</strong> avec ton dashboard — rien d'autre n'est touché.</p>
-    <textarea id="patchInput" placeholder='Colle ici le JSON envoyé par Claude…' style="width:100%;min-height:280px;padding:14px;border:1px solid var(--line);border-radius:12px;font-family:'SF Mono','Monaco','Consolas',monospace;font-size:12px;background:#faf8fd;color:var(--ink);resize:vertical;"></textarea>
+    <textarea id="patchInput" placeholder='Colle ici le JSON envoyé par Claude…' style="width:100%;min-height:280px;padding:14px;border:1px solid var(--line);border-radius:12px;font-family:'SF Mono','Monaco','Consolas',monospace;font-size:12px;background:var(--surface-soft);color:var(--ink);resize:vertical;"></textarea>
     <div id="patchSummary" style="display:none;margin-top:14px;padding:14px;border-radius:12px;background:var(--mint-soft);font-size:13px;line-height:1.7;"></div>
     <div class="actions">
       <button class="secondary" onclick="loadPatchExample()">Voir un exemple</button>
@@ -6465,6 +6469,17 @@ function saveState(userAction = true) {
     }
   }
 }
+// Sauvegarde différée pour les champs de texte libre : la valeur est en mémoire tout de suite, mais
+// l'enregistrement complet (tout l'état + cloud) n'a lieu qu'après une pause de frappe — avant, il
+// avait lieu à CHAQUE lettre, ce qui faisait ramer la saisie sur téléphone. Envoyé aussi si la page se ferme.
+let _saveSoonTimer = null;
+function _saveStateSoon() {
+  window._lastLocalSave = Date.now(); // une synchro entrante attend la fin de la frappe
+  clearTimeout(_saveSoonTimer);
+  _saveSoonTimer = setTimeout(() => { _saveSoonTimer = null; saveState(); }, 600);
+}
+window.addEventListener("pagehide", () => { if (_saveSoonTimer) { clearTimeout(_saveSoonTimer); _saveSoonTimer = null; saveState(); } });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && _saveSoonTimer) { clearTimeout(_saveSoonTimer); _saveSoonTimer = null; saveState(); } });
 // Sauvegarde silencieuse : localStorage uniquement, sans toucher au lastModified ni Firebase
 function saveStateQuiet() { saveState(false); }
 let state = loadState();
@@ -6658,6 +6673,7 @@ async function fetchWeather(force) {
     document.getElementById("weatherFeels").textContent  = "Ressenti : " + Math.round(cur.apparent_temperature) + "°C";
     document.getElementById("weatherHumidity").textContent = "Humidité : " + cur.relative_humidity_2m + "%";
     document.getElementById("weatherWind").textContent   = "Vent : " + Math.round(cur.wind_speed_10m) + " km/h";
+    _weatherLoadedAt = Date.now();
     // Géoloc OK → on repasse en mode automatique (on oublie la ville fixée) + on masque les contrôles
     if (state.weatherCity) { state.weatherCity = ""; saveStateQuiet(); }
     const ctrl = document.getElementById("weatherControls");
@@ -6696,6 +6712,7 @@ async function fetchWeatherByCity() {
     document.getElementById("weatherFeels").textContent  = "Ressenti : " + Math.round(cur.apparent_temperature) + "°C";
     document.getElementById("weatherHumidity").textContent = "Humidité : " + cur.relative_humidity_2m + "%";
     document.getElementById("weatherWind").textContent   = "Vent : " + Math.round(cur.wind_speed_10m) + " km/h";
+    _weatherLoadedAt = Date.now();
     // Mémorise la ville pour les prochains chargements (plus besoin de la retaper)
     state.weatherCity = city; saveStateQuiet();
   } catch(e) {
@@ -6703,8 +6720,10 @@ async function fetchWeatherByCity() {
   }
 }
 
-// Charger la météo quand on est sur Aujourd'hui
-function maybeLoadWeather() { fetchWeather(); }
+// Charger la météo quand on est sur Aujourd'hui — au plus toutes les 20 min : avant, chaque retour sur
+// l'onglet relançait la localisation + 2 requêtes (et un « Chargement… » qui clignotait).
+var _weatherLoadedAt = 0;
+function maybeLoadWeather() { if (Date.now() - _weatherLoadedAt > 20 * 60 * 1000) fetchWeather(); }
 
 /* ========= TABS ========= */
 function setupTabs() {
@@ -7225,7 +7244,7 @@ function saveDreamInline(type, value) {
   const t = getToday();
   if (!t.dreamNotes) t.dreamNotes = {};
   t.dreamNotes[type] = value;
-  saveState();
+  _saveStateSoon();
 }
 
 /* ========= HABITS ========= */
@@ -8198,7 +8217,7 @@ function renderProjectFiche(p) {
         <h2>📜 Historique des cours <span class="count" id="teachingCount"></span></h2>
         <button class="btn-primary" onclick="openAddCourseForm()">+ Ajouter</button>
       </div>
-      <div id="addCourseForm" style="display:none;background:#faf8fd;border-radius:12px;padding:14px;margin-bottom:14px;">
+      <div id="addCourseForm" style="display:none;background:var(--surface-soft);border-radius:12px;padding:14px;margin-bottom:14px;">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(130px,100%),1fr));gap:8px;align-items:center;">
           <input type="text" id="newCourseYear" placeholder="2025-2026" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
           <input type="text" id="newCourseSchool" placeholder="Établissement" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
@@ -8419,7 +8438,7 @@ function _renderProjectCardFeatured(targetId, projectFilter, gradientCss, defaul
         <span>Cliquer pour éditer</span>
       </div>
     </div>
-    ${p.notes ? `<div style="margin-top:14px;font-size:13px;color:var(--ink);white-space:pre-wrap;background:#faf8fd;padding:14px;border-radius:12px;">${escapeHtml(p.notes)}</div>` : ""}
+    ${p.notes ? `<div style="margin-top:14px;font-size:13px;color:var(--ink);white-space:pre-wrap;background:var(--surface-soft);padding:14px;border-radius:12px;">${escapeHtml(p.notes)}</div>` : ""}
     ${doneHtml ? `<div style="margin-top:14px;">
       <div style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">✅ Récemment terminé</div>
       ${doneHtml}
@@ -8625,11 +8644,11 @@ function admRenderBudget() {
   var groups = (state.admin && state.admin.missionGroups) || [{ id: "mg-default", name: "Missions", emoji: "🧾" }];
 
   var resteStyle = reste > 0 ? "background:#fee2e2;border:1.5px solid #dc2626;" : "background:#dcfce7;";
-  var resteColor = reste > 0 ? "color:#dc2626;font-weight:700;" : "color:#16a34a;";
+  var resteColor = reste > 0 ? "color:var(--red);font-weight:700;" : "color:var(--green);";
 
   var kpis = '<div class="adm-kpis">'
     + '<div class="adm-kpi"><div class="kpi-label">Total missions</div><div class="kpi-val" style="font-size:16px;">' + admFormatEur(totalDep + totalAbo) + "</div></div>"
-    + '<div class="adm-kpi"><div class="kpi-label">Remboursé</div><div class="kpi-val" style="font-size:16px;color:#16a34a;">' + admFormatEur(totalRemb) + "</div></div>"
+    + '<div class="adm-kpi"><div class="kpi-label">Remboursé</div><div class="kpi-val" style="font-size:16px;color:var(--green);">' + admFormatEur(totalRemb) + "</div></div>"
     + '<div class="adm-kpi" style="' + resteStyle + '"><div class="kpi-label">Reste à rembourser</div><div class="kpi-val" style="font-size:16px;' + resteColor + '">' + admFormatEur(reste) + "</div></div>"
     + "</div>";
 
@@ -8649,7 +8668,7 @@ function admRenderBudget() {
         + '<td class="r">' + (m.essence ? admFormatEur(m.essence) : "-") + "</td>"
         + '<td class="r">' + (m.peage   ? admFormatEur(m.peage)   : "-") + "</td>"
         + '<td class="r" style="font-weight:700;">' + (tot > 0 ? admFormatEur(tot) : "-") + "</td>"
-        + '<td class="r" style="color:#16a34a;">' + (m.remb ? admFormatEur(m.remb) : "-") + "</td>"
+        + '<td class="r" style="color:var(--green);">' + (m.remb ? admFormatEur(m.remb) : "-") + "</td>"
         + '<td style="font-size:11px;">' + admFormatDate(m.dateRemb) + "</td>"
         + "<td>" + admStatutPill(m.statut) + "</td>"
         + '<td><button onclick="admOpenMission(\'' + m.id + '\')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 6px;">&#9998;</button></td>'
@@ -8783,7 +8802,7 @@ function admRenderConges() {
       var st = 'text-align:center;font-size:9px;padding:2px 1px;border-radius:3px;';
       var onclick = '', title = '';
       if (info.type === "we")   st += 'background:#f0f0f0;color:#bbb;';
-      else if (info.type === "fe") st += 'background:#fef3c7;color:#b45309;font-weight:700;';
+      else if (info.type === "fe") st += 'background:#fef3c7;color:var(--orange);font-weight:700;';
       else if (info.type === "cg") {
         var cat = cats.find(function(c){ return c.id === info.catId; }) || { color:'#555', colorBg:'#eee' };
         var alpha = info.statut === "Pris" ? '0.35' : '0.15';
@@ -8831,7 +8850,7 @@ function admRenderConges() {
   cats.forEach(function(cat) {
     var t = totals[cat.id] || { pris:0, plan:0 };
     var rest = cat.droits - t.pris - t.plan;
-    var restColor = rest < 0 ? "color:#dc2626;" : "color:#16a34a;";
+    var restColor = rest < 0 ? "color:var(--red);" : "color:var(--green);";
     summary += '<div style="background:' + _hexAlpha(cat.color, 0.1) + ';border-radius:10px;padding:12px 14px;">'
       + '<div style="font-weight:700;color:' + cat.color + ';font-size:13px;margin-bottom:8px;">' + escapeHtml(cat.label) + '</div>'
       + '<table style="width:100%;font-size:12px;border-collapse:collapse;"><tbody>'
@@ -9112,7 +9131,7 @@ function openCongesConfigModal() {
       + '<span style="flex:1;font-size:13px;font-weight:600;">' + escapeHtml(c.label) + '</span>'
       + '<input type="number" min="0" max="365" step="0.5" value="' + (c.droits||0) + '" onchange="_updateCongesCatDroits(' + idx + ',this.value)" style="width:64px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;text-align:center;" placeholder="Jours" />'
       + '<span style="font-size:11px;color:var(--ink-soft);">j</span>'
-      + '<button onclick="_deleteCongesCat(' + idx + ')" style="background:none;border:none;cursor:pointer;color:#c75b4d;font-size:14px;padding:2px 6px;" title="Supprimer">✕</button>'
+      + '<button onclick="_deleteCongesCat(' + idx + ')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:2px 6px;" title="Supprimer">✕</button>'
       + '</div>';
   }).join("");
   // Render holidays
@@ -9139,14 +9158,14 @@ function _renderCongesHolidaysList() {
     rows.push('<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:' + (isDel ? '#fee2e2' : '#fef9e7') + ';border-radius:8px;border:1px solid ' + (isDel ? '#fca5a5' : '#fde68a') + ';">'
       + '<span style="font-size:12px;flex:1;' + (isDel ? 'text-decoration:line-through;color:#9ca3af;' : '') + '">' + admFormatDate(d) + ' — <em style="font-size:11px;color:var(--ink-soft);">officiel</em></span>'
       + (isDel
-        ? '<button onclick="_restoreHoliday(\'' + d + '\')" style="background:none;border:1px solid #16a34a;border-radius:6px;cursor:pointer;color:#16a34a;font-size:11px;padding:2px 7px;">Restaurer</button>'
-        : '<button onclick="_deleteHoliday(\'' + d + '\')" style="background:none;border:none;cursor:pointer;color:#c75b4d;font-size:14px;padding:2px 6px;" title="Supprimer">✕</button>')
+        ? '<button onclick="_restoreHoliday(\'' + d + '\')" style="background:none;border:1px solid #16a34a;border-radius:6px;cursor:pointer;color:var(--green);font-size:11px;padding:2px 7px;">Restaurer</button>'
+        : '<button onclick="_deleteHoliday(\'' + d + '\')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:2px 6px;" title="Supprimer">✕</button>')
       + '</div>');
   });
   added.forEach(function(h, idx) {
     rows.push('<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f0fdf4;border-radius:8px;border:1px solid #86efac;">'
       + '<span style="font-size:12px;flex:1;">' + admFormatDate(h.date) + ' — ' + escapeHtml(h.name || "Personnalisé") + ' <em style="font-size:11px;color:var(--ink-soft);">+ ajouté</em></span>'
-      + '<button onclick="_removeCustomHoliday(\'' + h.date + '\')" style="background:none;border:none;cursor:pointer;color:#c75b4d;font-size:14px;padding:2px 6px;" title="Supprimer">✕</button>'
+      + '<button onclick="_removeCustomHoliday(\'' + h.date + '\')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:2px 6px;" title="Supprimer">✕</button>'
       + '</div>');
   });
   el.innerHTML = rows.length ? rows.join("") : '<div style="color:var(--ink-soft);font-size:13px;font-style:italic;">Aucune modification — jours fériés officiels actifs.</div>';
@@ -9241,7 +9260,7 @@ function _renderTimeCatsList() {
       + '<button onclick="_moveTimeCat(' + idx + ',-1)" style="background:none;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:12px;padding:2px 7px;color:var(--ink-soft);">▲</button>'
       + '<button onclick="_moveTimeCat(' + idx + ',1)" style="background:none;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:12px;padding:2px 7px;color:var(--ink-soft);">▼</button>'
       + '<button onclick="_editTimeCatModal(' + idx + ')" style="background:none;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:12px;padding:2px 8px;color:var(--ink-soft);">✏️</button>'
-      + '<button onclick="_deleteTimeCatByIdx(' + idx + ')" style="background:none;border:none;cursor:pointer;color:#c75b4d;font-size:14px;padding:2px 6px;" title="Supprimer">✕</button>'
+      + '<button onclick="_deleteTimeCatByIdx(' + idx + ')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:2px 6px;" title="Supprimer">✕</button>'
       + '</div>';
   }).join("");
 }
@@ -10171,7 +10190,7 @@ function renderTaskBilan() {
       <div class="stat-label">✓ 30 derniers jours</div>
       <div class="stat-val">${sets.month.length}</div>
     </div>
-    <div class="stat" style="background:${sets.overdue.length > 0 ? 'var(--rose-soft)' : '#faf8fd'};cursor:pointer;${active('overdue')}" onclick="filterTasksByBilan('overdue')" title="Voir les tâches en retard">
+    <div class="stat" style="background:${sets.overdue.length > 0 ? 'var(--rose-soft)' : 'var(--surface-soft)'};cursor:pointer;${active('overdue')}" onclick="filterTasksByBilan('overdue')" title="Voir les tâches en retard">
       <div class="stat-label">⏰ En retard</div>
       <div class="stat-val" style="${sets.overdue.length > 0 ? 'color:var(--red);' : ''}">${sets.overdue.length}</div>
     </div>
@@ -11528,7 +11547,7 @@ function showHormoneDetail(hId) {
   const d = _lastHormoneData[hId];
   if (!h || !d) return;
   const rows = d.days.map(day => {
-    const icon = day.active ? `<span style="color:#16a34a;font-size:16px;">✅</span>` : `<span style="color:#cbd5e1;font-size:14px;">○</span>`;
+    const icon = day.active ? `<span style="color:var(--green);font-size:16px;">✅</span>` : `<span style="color:#cbd5e1;font-size:14px;">○</span>`;
     const reasons = day.active ? `<span style="color:var(--ink-soft);font-size:12px;">${day.reasons.slice(0,3).join(" · ")}</span>` : `<span style="color:var(--ink-softer);font-size:12px;">—</span>`;
     return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);">
       ${icon}
@@ -12028,7 +12047,7 @@ function renderSportPlanning() {
     const isThisWeek = weekDays.some(d => d.isToday);
     const remaining = Math.max(0, GOAL - done);
     let statusMsg = done >= GOAL
-      ? `<span style="color:#16a34a;font-weight:600;">Objectif atteint 🎉</span>`
+      ? `<span style="color:var(--green);font-weight:600;">Objectif atteint 🎉</span>`
       : isThisWeek && remaining > 0
         ? `<span style="color:var(--ink-soft);">${remaining} séance${remaining>1?"s":""} à caler</span>`
         : `<span style="color:var(--ink-soft);">${done}/${GOAL}</span>`;
@@ -12475,11 +12494,13 @@ function _deleteRoutineItem(key, id) {
 // push) — c'est expliqué à l'utilisatrice dans la modale de réglages. Se déclenche au plus une fois
 // par jour (flag daté en localStorage) pour ne pas re-notifier en boucle.
 const PILL_NOTIFIED_KEY = "tableauDeVie_v3_pillNotifiedDate";
+var _pillNotifying = false; // (var : utilisable même si la fonction est appelée avant cette ligne)
 function _checkPillReminder() {
   const h = state.health || {};
   if (!h.pillReminderEnabled || !h.pillReminderTime) return;
   if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
-  const d = getToday();
+  if (_pillNotifying) return;
+  const d = getDay(todayKey()); // le vrai jour, même si on consulte un autre jour dans Aujourd'hui
   if (d.pillTaken) return;
   const dayInfo = _pillDayInfo(new Date());
   if (dayInfo && dayInfo.phase === "pause") return;
@@ -12488,14 +12509,22 @@ function _checkPillReminder() {
   const remMin = Number(h.pillReminderTime.slice(0,2)) * 60 + Number(h.pillReminderTime.slice(3,5));
   if (nowMin < remMin) return;
   const todayK = todayKey();
-  try {
-    if (localStorage.getItem(PILL_NOTIFIED_KEY) === todayK) return;
-    localStorage.setItem(PILL_NOTIFIED_KEY, todayK);
-  } catch (_) {}
-  try {
-    const n = new Notification("💊 Pilule du jour", { body: "Pense à la prendre — clique pour ouvrir Mon Tableau de Vie.", tag: "pill-reminder" });
-    n.onclick = () => { window.focus(); n.close(); };
-  } catch (_) {}
+  try { if (localStorage.getItem(PILL_NOTIFIED_KEY) === todayK) return; } catch (_) {}
+  // Marqué « notifié aujourd'hui » seulement une fois la notification réellement affichée (avant : marqué
+  // avant d'essayer → un échec empêchait tout nouvel essai de la journée).
+  const markDone = () => { try { localStorage.setItem(PILL_NOTIFIED_KEY, todayK); } catch (_) {} };
+  const title = "💊 Pilule du jour";
+  const opts = { body: "Pense à la prendre — touche pour ouvrir Mon Tableau de Vie.", tag: "pill-reminder", icon: "/Mon-Tableau-de-Vie/icon-192-v3.png" };
+  const direct = () => { const n = new Notification(title, opts); n.onclick = () => { window.focus(); n.close(); }; };
+  _pillNotifying = true;
+  // Chrome sur Android refuse « new Notification() » (« Illegal constructor ») : il faut passer par le
+  // service worker. Sur ordinateur, les deux fonctionnent.
+  const viaSW = navigator.serviceWorker?.ready
+    ? Promise.race([navigator.serviceWorker.ready, new Promise((_, rej) => setTimeout(rej, 3000))]).then(reg => reg.showNotification(title, opts))
+    : Promise.reject();
+  viaSW.then(markDone)
+    .catch(() => { try { direct(); markDone(); } catch (e) { console.warn("[rappel pilule]", e); } })
+    .finally(() => { _pillNotifying = false; });
 }
 setInterval(_checkPillReminder, 60000);
 function togglePill() {
@@ -13268,9 +13297,9 @@ function renderFoodLog() {
     if (totalCal >= calLimit) {
       const over = totalCal - calLimit;
       alertEl.style.display = "block";
-      alertEl.innerHTML = `<div style="background:#fee2e2;border:1.5px solid #dc2626;border-radius:10px;padding:8px 12px;font-size:13px;color:#dc2626;margin-bottom:10px;">
+      alertEl.innerHTML = `<div style="background:#fee2e2;border:1.5px solid #dc2626;border-radius:10px;padding:8px 12px;font-size:13px;color:var(--red);margin-bottom:10px;">
         ⚠️ <strong>Limite de ${calLimit} kcal atteinte</strong> — tu dépasses de ${over} kcal.
-        <button onclick="editCalLimit()" style="float:right;background:none;border:none;cursor:pointer;font-size:11px;color:#dc2626;text-decoration:underline;">Modifier l'objectif</button>
+        <button onclick="editCalLimit()" style="float:right;background:none;border:none;cursor:pointer;font-size:11px;color:var(--red);text-decoration:underline;">Modifier l'objectif</button>
       </div>`;
     } else if (totalCal > calLimit * 0.85) {
       alertEl.style.display = "block";
@@ -14113,7 +14142,7 @@ function renderHabitsTracking() {
           const [yy,mm,dd] = dk.split("-").map(Number);
           const label = new Date(yy,mm-1,dd).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
           const tip = `${label} · ${val} ${h.unit||""} (objectif ${target})`;
-          const barCol = isToday ? "#7c5cbf" : done ? col : (val > 0 ? "#ffe4b5" : "#f0eef5");
+          const barCol = isToday ? "var(--accent-ink)" : done ? col : (val > 0 ? "#ffe4b5" : "#f0eef5");
           const op = val > 0 || isToday ? "1" : "0.4";
           return `<div data-tip="${tip}" onmouseenter="showHoverTip(event,this.dataset.tip)" onmousemove="moveHoverTip(event)" onmouseleave="hideHoverTip()" style="flex:1;min-width:2px;max-width:14px;height:${Math.max(hPct,val>0?8:3)}%;background:${barCol};border-radius:3px 3px 0 0;opacity:${op};cursor:default;align-self:flex-end;"></div>`;
         }).join("") + `</div>`;
@@ -15263,9 +15292,8 @@ function _addSavingsAccount() {
   });
 }
 function saveMoneyNote() {
-  if (!state.moneyNote !== undefined) state.moneyNote = "";
   state.moneyNote = document.getElementById("moneyNote")?.value || "";
-  saveState();
+  _saveStateSoon();
 }
 function renderMoney() {
   const noteEl = document.getElementById("moneyNote");
@@ -15395,18 +15423,23 @@ const _ACC_EMOJIS = ["🏦","🏧","💳","💰","💵","💶","💴","🪙","�
 let _emojiPopupTarget = null;
 let _emojiPopupHiddenId = null;
 let _emojiPopupCallback = null;
+// Écouteur "clic à l'extérieur" du sélecteur : retiré à CHAQUE fermeture (avant, choisir un emoji ou
+// refermer avec le même bouton le laissait en place, et ils s'accumulaient).
+let _emojiPopupOutside = null;
+// (fermeture : _closeEmojiPopup(), plus bas — une seule fonction de ce nom)
 function _openEmojiPopup(btn, hiddenIdOrNull, callbackOrNull) {
   let popup = document.getElementById("_sharedEmojiPopup");
   if (!popup) {
     popup = document.createElement("div");
     popup.id = "_sharedEmojiPopup";
-    popup.style.cssText = "position:fixed;z-index:9999;background:white;border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-wrap:wrap;gap:4px;width:220px;box-shadow:0 6px 24px rgba(0,0,0,0.15);";
+    popup.style.cssText = "position:fixed;z-index:9999;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-wrap:wrap;gap:4px;width:220px;box-shadow:0 6px 24px rgba(0,0,0,0.15);";
     popup.innerHTML = _ACC_EMOJIS.map(e => `<button type="button" onclick="_pickSharedEmoji('${e}')" style="width:32px;height:32px;font-size:20px;border:none;background:none;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center;" title="${e}">${e}</button>`).join("");
     document.body.appendChild(popup);
   }
   if (_emojiPopupTarget === btn && popup.style.display !== "none") {
-    popup.style.display = "none"; _emojiPopupTarget = null; return;
+    _closeEmojiPopup(); _emojiPopupTarget = null; return;
   }
+  _closeEmojiPopup(); // un éventuel écouteur précédent
   _emojiPopupTarget = btn;
   _emojiPopupHiddenId = hiddenIdOrNull || null;
   _emojiPopupCallback = (typeof callbackOrNull === "function") ? callbackOrNull : null;
@@ -15416,18 +15449,16 @@ function _openEmojiPopup(btn, hiddenIdOrNull, callbackOrNull) {
   popup.style.left = Math.min(rect.left, window.innerWidth - 236) + "px";
   // close on outside click
   setTimeout(() => {
-    const handler = (ev) => {
-      if (!popup.contains(ev.target) && ev.target !== btn && !popup.contains(_modalMouseDownTarget)) {
-        popup.style.display = "none";
-        document.removeEventListener("click", handler, true);
-      }
+    _emojiPopupOutside = (ev) => {
+      if (!popup.contains(ev.target) && ev.target !== btn && !popup.contains(_modalMouseDownTarget)) _closeEmojiPopup();
     };
-    document.addEventListener("click", handler, true);
+    document.addEventListener("click", _emojiPopupOutside, true);
   }, 0);
 }
 function _pickSharedEmoji(emoji) {
   const popup = document.getElementById("_sharedEmojiPopup");
   if (popup) popup.style.display = "none";
+  if (_emojiPopupOutside) { document.removeEventListener("click", _emojiPopupOutside, true); _emojiPopupOutside = null; }
   if (_emojiPopupCallback) { _emojiPopupCallback(emoji); }
   else if (_emojiPopupHiddenId) {
     const inp = document.getElementById(_emojiPopupHiddenId);
@@ -15540,7 +15571,7 @@ function renderReimbursable() {
           <div style="font-size:11px;color:var(--ink-soft);margin:-4px 0 10px;line-height:1.5;">💡 Déjà remboursé (par exemple suivi dans Admin &gt; Mission, ou trop-perçu d'une autre mission) ? Clique sur <strong>« Déjà remboursé »</strong> : la dépense est soldée et rien n'est ajouté à ton solde.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button onclick="markReimbClaimed('${tx.id}')"
-              style="padding:5px 12px;border-radius:7px;border:1.5px solid #d97706;background:#fff7ed;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;">⏳ Lancé (pas encore reçu)</button>
+              style="padding:5px 12px;border-radius:7px;border:1.5px solid #d97706;background:#fff7ed;color:var(--orange);font-size:12px;font-weight:600;cursor:pointer;">⏳ Lancé (pas encore reçu)</button>
             <button onclick="confirmReimbursed('${tx.id}')"
               style="padding:5px 12px;border-radius:7px;border:none;background:#10b981;color:white;font-size:12px;font-weight:600;cursor:pointer;">✅ Reçu sur le compte</button>
             <button onclick="markReimbAlreadyReceived('${tx.id}')" title="Déjà remboursé ailleurs (ex. suivi Admin > Mission) : la dépense est soldée, rien n'est ajouté à ton solde"
@@ -15580,7 +15611,7 @@ function renderReimbursable() {
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             <button onclick='markGroupClaimed(${JSON.stringify(txs.map(t => t.id)).replace(/'/g,"&#39;")}, "${missionDateId}")'
-              style="padding:6px 12px;border-radius:7px;border:1.5px solid #d97706;background:#fff7ed;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;line-height:1.2;">⏳ Remboursement lancé</button>
+              style="padding:6px 12px;border-radius:7px;border:1.5px solid #d97706;background:#fff7ed;color:var(--orange);font-size:12px;font-weight:600;cursor:pointer;line-height:1.2;">⏳ Remboursement lancé</button>
             <button onclick='confirmGroupReimbursed(${JSON.stringify(txs.map(t => t.id)).replace(/'/g,"&#39;")}, "${missionDateId}", ${JSON.stringify(key || "").replace(/'/g,"&#39;")})'
               style="padding:6px 12px;border-radius:7px;border:none;background:#10b981;color:white;font-size:12px;font-weight:600;cursor:pointer;line-height:1.2;">✅ Remboursement reçu</button>
             <button onclick="document.getElementById('${missionDateId}_form').style.display='none'"
@@ -15643,7 +15674,7 @@ function renderReimbursable() {
               <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed #e8f5e9;font-size:12px;">
                 <div style="flex:1;color:var(--ink);">${escapeHtml(tx.category)} — ${escapeHtml(tx.note || "—")} · ${fmt(tx.date)}</div>
                 <span style="color:#6b7280;white-space:nowrap;">${tx.amount.toFixed(2)} €</span>
-                <span style="font-size:11px;background:#f0fdf4;color:#10b981;border-radius:5px;padding:2px 6px;white-space:nowrap;">
+                <span style="font-size:11px;background:#f0fdf4;color:var(--green);border-radius:5px;padding:2px 6px;white-space:nowrap;">
                   ✓ ${fmt(tx.reimbursedAt)}${tx.reimbursedAmount != null && tx.reimbursedAmount !== tx.amount ? ` · <strong>${tx.reimbursedAmount.toFixed(2)} €</strong>` : ''}
                 </span>
                 <button onclick="undoReimbursed('${tx.id}')" title="Annuler" style="padding:2px 6px;border-radius:5px;border:1px solid var(--line);background:white;color:var(--ink-softer);font-size:11px;cursor:pointer;">↩</button>
@@ -15884,8 +15915,8 @@ function openPartialReimbModal(id) {
       const d = new Date(r.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
       return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 0;border-bottom:1px solid var(--line);">
         <span style="color:var(--ink-soft);">${d} · ${r.account || '—'} · ${escapeHtml(r.note || '')}</span>
-        <span style="font-weight:600;color:#16a34a;">+${r.amount.toFixed(2)} €</span>
-        <button onclick="deletePartialReimb('${id}','${r.id}')" style="margin-left:8px;border:none;background:none;color:#dc2626;cursor:pointer;font-size:13px;">✕</button>
+        <span style="font-weight:600;color:var(--green);">+${r.amount.toFixed(2)} €</span>
+        <button onclick="deletePartialReimb('${id}','${r.id}')" style="margin-left:8px;border:none;background:none;color:var(--red);cursor:pointer;font-size:13px;">✕</button>
       </div>`;
     }).join("");
   } else {
@@ -16322,7 +16353,11 @@ function _accCalibrateNow() {
   state.accounts.courantStart = newStart;
   document.getElementById("accEditStart").value = newStart.toFixed(2);
 }
-function _closeEmojiPopup() { const p = document.getElementById("_sharedEmojiPopup"); if (p) p.style.display = "none"; _emojiPopupTarget = null; _emojiPopupHiddenId = null; }
+function _closeEmojiPopup() {
+  const p = document.getElementById("_sharedEmojiPopup"); if (p) p.style.display = "none";
+  _emojiPopupTarget = null; _emojiPopupHiddenId = null;
+  if (_emojiPopupOutside) { document.removeEventListener("click", _emojiPopupOutside, true); _emojiPopupOutside = null; }
+}
 function closeAccountEdit() {
   _closeEmojiPopup();
   document.getElementById("accountEditModal").classList.remove("open");
@@ -16657,7 +16692,7 @@ function renderPlanned() {
     const now = balanceCourant() + (state.accounts?.cashBalance || 0); // même base que la jauge Budget de vie
     const after = now + inc - out;
     sumEl.innerHTML = `<div style="background:var(--bg-2,#f6f2fb);border-radius:12px;padding:10px 12px;margin-bottom:6px;font-size:13px;line-height:1.7;color:var(--ink-soft);">
-      Prévu : <strong style="color:#c75b4d;">−${eur(out)}</strong> · <strong style="color:#4d9c7e;">+${eur(inc)}</strong><br>
+      Prévu : <strong style="color:var(--red);">−${eur(out)}</strong> · <strong style="color:#4d9c7e;">+${eur(inc)}</strong><br>
       Disponible (compte courant + espèces) : <strong style="color:var(--ink);">${eur(now)}</strong> → <strong style="color:${after < 0 ? "#dc2626" : "var(--ink)"};">${after < 0 ? "−" : ""}${eur(Math.abs(after))}</strong> si tout se passe comme prévu
     </div>`;
   }
@@ -17166,12 +17201,12 @@ function renderTxList() {
       <div class="tx-row">
         <div class="tx-dot" style="background:${dotColor}"></div>
         <div class="tx-info">
-          <div class="tx-cat">${tx.type === "cash-withdrawal" ? `💵 Retrait espèces depuis ${escapeHtml(tx.category)}` : escapeHtml(tx.category)}${tx.reimbursable ? ' <span style="font-size:11px;background:#fff3e0;color:#dc7014;border-radius:6px;padding:1px 5px;font-weight:600;">💼 frais pro</span>' : ''}${tx.fixedCharge ? ' <span style="font-size:11px;background:#f0eeff;color:#7c5cbf;border-radius:6px;padding:1px 5px;font-weight:600;">🏠 fixe</span>' : ''}${tx.exceptional ? ' <span style="font-size:11px;background:#fef9ec;color:#b45309;border-radius:6px;padding:1px 5px;font-weight:600;">✨ lissée</span>' : ''}${(tx.partialReimbursements && tx.partialReimbursements.length) ? ` <span style="font-size:11px;background:#dcfce7;color:#16a34a;border-radius:6px;padding:1px 5px;font-weight:600;">💸 remb. ${(tx.amount - txNetAmount(tx)).toFixed(0)} €</span>` : ''}</div>
+          <div class="tx-cat">${tx.type === "cash-withdrawal" ? `💵 Retrait espèces depuis ${escapeHtml(tx.category)}` : escapeHtml(tx.category)}${tx.reimbursable ? ' <span style="font-size:11px;background:#fff3e0;color:#dc7014;border-radius:6px;padding:1px 5px;font-weight:600;">💼 frais pro</span>' : ''}${tx.fixedCharge ? ' <span style="font-size:11px;background:#f0eeff;color:#7c5cbf;border-radius:6px;padding:1px 5px;font-weight:600;">🏠 fixe</span>' : ''}${tx.exceptional ? ' <span style="font-size:11px;background:#fef9ec;color:var(--orange);border-radius:6px;padding:1px 5px;font-weight:600;">✨ lissée</span>' : ''}${(tx.partialReimbursements && tx.partialReimbursements.length) ? ` <span style="font-size:11px;background:#dcfce7;color:var(--green);border-radius:6px;padding:1px 5px;font-weight:600;">💸 remb. ${(tx.amount - txNetAmount(tx)).toFixed(0)} €</span>` : ''}</div>
           <div class="tx-note">${escapeHtml(tx.note || "—")}${tx.reimbursedAt ? ' ✅' : ''}</div>
         </div>
         <div class="tx-amount ${tx.type}">${sign} ${Math.abs(tx.type === "expense" ? txNetAmount(tx) : tx.amount).toFixed(2)} €</div>
         <div class="tx-date">${dateStr}</div>
-        ${tx.type === "expense" ? `<button class="tx-edit" onclick="openPartialReimbModal('${tx.id}')" title="Saisir un remboursement" style="color:#16a34a;border-color:#bbf7d0;font-size:13px;">💸</button>` : ''}
+        ${tx.type === "expense" ? `<button class="tx-edit" onclick="openPartialReimbModal('${tx.id}')" title="Saisir un remboursement" style="color:var(--green);border-color:#bbf7d0;font-size:13px;">💸</button>` : ''}
         <button class="tx-edit" onclick="openTxModal('${tx.id}')" title="Modifier">✎</button>
         <button class="tx-del" onclick="deleteTx('${tx.id}')" title="Supprimer">✕</button>
       </div>`;
@@ -18468,10 +18503,10 @@ function renderBudgetGauge() {
 
   let alertHtml = "";
   if (remaining < 0) {
-    alertHtml = `<div style="margin-bottom:14px;padding:10px 14px;border-radius:12px;background:#fee2e2;border:1.5px solid #dc2626;font-size:13px;color:#dc2626;font-weight:600;">
+    alertHtml = `<div style="margin-bottom:14px;padding:10px 14px;border-radius:12px;background:#fee2e2;border:1.5px solid #dc2626;font-size:13px;color:var(--red);font-weight:600;">
       🚨 Budget dépassé de ${Math.abs(remaining).toFixed(0)} € — il reste ${daysLeft} jours</div>`;
   } else if (ratio >= 1.5) {
-    alertHtml = `<div style="margin-bottom:14px;padding:10px 14px;border-radius:12px;background:#fee2e2;border:1.5px solid #dc2626;font-size:13px;color:#dc2626;">
+    alertHtml = `<div style="margin-bottom:14px;padding:10px 14px;border-radius:12px;background:#fee2e2;border:1.5px solid #dc2626;font-size:13px;color:var(--red);">
       🔴 Rythme trop élevé (${dailyActual.toFixed(0)} €/j) — il te reste <strong>${remaining.toFixed(0)} € pour ${daysLeft} jours</strong> (${dailyLeft.toFixed(0)} €/j max)</div>`;
   } else if (ratio >= 1.1) {
     alertHtml = `<div style="margin-bottom:14px;padding:10px 14px;border-radius:12px;background:#fef3c7;border:1.5px solid #f59e0b;font-size:13px;color:#92400e;">
@@ -18694,11 +18729,11 @@ function renderForecast() {
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
       <div style="flex:1;min-width:100px;background:var(--mint-soft);border-radius:12px;padding:12px 14px;">
         <div style="font-size:10px;color:var(--ink-softer);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:5px;">Revenus attendus</div>
-        <div style="font-size:19px;font-weight:700;color:#16a34a;">+${avgIncome.toFixed(0)} €</div>
+        <div style="font-size:19px;font-weight:700;color:var(--green);">+${avgIncome.toFixed(0)} €</div>
       </div>
       <div style="flex:1;min-width:100px;background:var(--rose-soft);border-radius:12px;padding:12px 14px;">
         <div style="font-size:10px;color:var(--ink-softer);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:5px;">Dépenses prévues</div>
-        <div style="font-size:19px;font-weight:700;color:#dc2626;">−${totalExpense.toFixed(0)} €</div>
+        <div style="font-size:19px;font-weight:700;color:var(--red);">−${totalExpense.toFixed(0)} €</div>
       </div>
       <div style="flex:1;min-width:100px;background:${balance >= 0 ? "var(--mint-soft)" : "var(--rose-soft)"};border-radius:12px;padding:12px 14px;">
         <div style="font-size:10px;color:var(--ink-softer);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:5px;">Solde estimé</div>
@@ -19056,8 +19091,8 @@ function renderJournal() {
     const dateStr = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
     const badges = emotionBadgesHtml(analyzeJournal(v.journal || ""), true);
     const promptsHtml = [
-      v.accomplishment ? `<div style="margin-top:6px;font-size:13px;"><span style="color:#d97706;font-weight:600;">🏆</span> ${escapeHtml(v.accomplishment)}</div>` : "",
-      v.gratitude      ? `<div style="margin-top:4px;font-size:13px;"><span style="color:#b45309;font-weight:600;">🙏</span> ${escapeHtml(v.gratitude)}</div>` : "",
+      v.accomplishment ? `<div style="margin-top:6px;font-size:13px;"><span style="color:var(--orange);font-weight:600;">🏆</span> ${escapeHtml(v.accomplishment)}</div>` : "",
+      v.gratitude      ? `<div style="margin-top:4px;font-size:13px;"><span style="color:var(--orange);font-weight:600;">🙏</span> ${escapeHtml(v.gratitude)}</div>` : "",
       v.highlight      ? `<div style="margin-top:4px;font-size:13px;"><span style="color:#7c3aed;font-weight:600;">✨</span> ${escapeHtml(v.highlight)}</div>` : "",
     ].join("");
     return `
@@ -19248,7 +19283,7 @@ function _openPillarChooser(deactivated) {
     <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px;">Ces piliers ont été désactivés mais gardent leur configuration d'origine (indicateurs et objectifs). Tu peux en réactiver un, ou créer un pilier entièrement personnalisé.</p>
     ${rows}
     <button onclick="_createBlankPillar()" ${disabledAttr} style="width:100%;margin-top:14px;padding:10px;border-radius:10px;border:1.5px dashed var(--line);background:var(--bg-1);font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);${disabledStyle}">✨ Créer un pilier entièrement personnalisé</button>
-    ${canAddMore ? "" : `<p style="font-size:12px;color:#c75b4d;margin-top:10px;">⚠️ Maximum ${MAX_PILLARS} piliers en même temps.</p>`}
+    ${canAddMore ? "" : `<p style="font-size:12px;color:var(--red);margin-top:10px;">⚠️ Maximum ${MAX_PILLARS} piliers en même temps.</p>`}
   `;
   const actionsRow = document.querySelector("#pillarConfigModal .actions");
   if (actionsRow) actionsRow.style.display = "none";
@@ -19683,8 +19718,8 @@ function openPillarConfig(pillarId) {
     <div style="margin:14px 0;padding-bottom:14px;border-bottom:1.5px dashed var(--line);">
       ${canDelete
         ? (isCustom
-            ? `<a href="#" onclick="event.preventDefault();deletePillarFromConfig();" style="font-size:12px;color:#c75b4d;text-decoration:underline;cursor:pointer;">🗑️ Supprimer ce pilier</a>`
-            : `<a href="#" onclick="event.preventDefault();deletePillarFromConfig();" style="font-size:12px;color:#c75b4d;text-decoration:underline;cursor:pointer;">⏸️ Désactiver ce pilier</a> <span style="font-size:11px;color:var(--ink-softer);">— sa configuration reste enregistrée, tu pourras le réactiver via "+ Nouveau pilier"</span>`)
+            ? `<a href="#" onclick="event.preventDefault();deletePillarFromConfig();" style="font-size:12px;color:var(--red);text-decoration:underline;cursor:pointer;">🗑️ Supprimer ce pilier</a>`
+            : `<a href="#" onclick="event.preventDefault();deletePillarFromConfig();" style="font-size:12px;color:var(--red);text-decoration:underline;cursor:pointer;">⏸️ Désactiver ce pilier</a> <span style="font-size:11px;color:var(--ink-softer);">— sa configuration reste enregistrée, tu pourras le réactiver via "+ Nouveau pilier"</span>`)
         : `<span style="font-size:12px;color:var(--ink-softer);font-style:italic;">Il doit rester au moins un pilier.</span>`}
     </div>`;
   const typeLabels = {
@@ -21155,7 +21190,7 @@ function renderHolidaysCard() {
     const d = new Date(dk).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;color:var(--ink);">
       <span>✏️ ${d}</span>
-      <button onclick="removeCustomHoliday('${dk}')" style="background:none;border:none;cursor:pointer;font-size:12px;color:#c75b4d;padding:2px 6px;">✕</button>
+      <button onclick="removeCustomHoliday('${dk}')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--red);padding:2px 6px;">✕</button>
     </div>`;
   }).join("");
   el.innerHTML = `
@@ -23781,7 +23816,7 @@ function _domTaskEditRow(t) {
   const prioOpts = prios.map(([v,l]) => `<option value="${v}" ${t.priority===v?"selected":""}>${l}</option>`).join("");
   const inp = "padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;color:var(--ink);background:white;";
   return `
-    <div class="task-row" style="flex-wrap:wrap;gap:8px;align-items:center;background:#faf8fd;border-left:3px solid var(--lavender);">
+    <div class="task-row" style="flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface-soft);border-left:3px solid var(--lavender);">
       <input type="text" id="editDomName-${t.id}" value="${escapeHtml(t.name)}" style="flex:1;min-width:160px;${inp}"
         onkeydown="if(event.key==='Enter')saveEditDomesticTask('${t.id}');if(event.key==='Escape')cancelEditDomesticTask()" />
       <select id="editDomCat-${t.id}" style="${inp}">${catOpts}</select>
@@ -24716,7 +24751,7 @@ function _runPlantDetection(result) {
         const opts = FREQ_OPTS.map(o => `<option value="${o.v}"${Number(o.v) === p.wateringDays ? " selected" : ""}>${o.l}</option>`).join("");
         const alreadyNote = p.alreadyExists ? `<span style="font-size:11px;color:var(--orange);margin-left:6px;">(déjà présente)</span>` : "";
         return `
-          <div style="background:#faf8fd;border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:auto 28px 1fr auto;align-items:start;gap:8px;">
+          <div style="background:var(--surface-soft);border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:auto 28px 1fr auto;align-items:start;gap:8px;">
             <input type="checkbox" id="pdCheck${i}" ${p.alreadyExists ? "" : "checked"} style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);margin-top:2px;" />
             <input type="text" id="pdEmoji${i}" value="${p.emoji}" style="width:28px;padding:4px;border:1px solid var(--line);border-radius:8px;font-size:16px;text-align:center;background:white;" />
             <div>
@@ -24881,12 +24916,12 @@ function openPlantDetail(id) {
   if (lastW) {
     const days = Math.floor((Date.now() - new Date(lastW)) / 86400000);
     const next = p.wateringDays - days;
-    if (next <= 0) statusHtml = `<span style="background:#fee2e2;color:#dc2626;padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;">🔴 A soif ! (${Math.abs(next)} j de retard)</span>`;
-    else if (next <= 2) statusHtml = `<span style="background:#fef3c7;color:#d97706;padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;">🟠 À arroser dans ${next} j</span>`;
-    else statusHtml = `<span style="background:#dcfce7;color:#16a34a;padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;">🟢 Arrosée il y a ${days} j</span>`;
+    if (next <= 0) statusHtml = `<span style="background:#fee2e2;color:var(--red);padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;">🔴 A soif ! (${Math.abs(next)} j de retard)</span>`;
+    else if (next <= 2) statusHtml = `<span style="background:#fef3c7;color:var(--orange);padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;">🟠 À arroser dans ${next} j</span>`;
+    else statusHtml = `<span style="background:#dcfce7;color:var(--green);padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;">🟢 Arrosée il y a ${days} j</span>`;
     statusHtml += `<div style="font-size:12px;color:var(--ink-softer);margin-top:6px;">Dernière fois : ${new Date(lastW).toLocaleDateString("fr-FR", {day:"numeric",month:"long"})}</div>`;
   } else {
-    statusHtml = `<span style="background:#fef3c7;color:#d97706;padding:5px 12px;border-radius:20px;font-size:13px;">Jamais arrosée</span>`;
+    statusHtml = `<span style="background:#fef3c7;color:var(--orange);padding:5px 12px;border-radius:20px;font-size:13px;">Jamais arrosée</span>`;
   }
   document.getElementById("plantDetailStatus").innerHTML = statusHtml;
   document.getElementById("plantDetailNotes").textContent = p.notes || "Aucune note d'arrosage.";
@@ -25982,7 +26017,7 @@ function openShortcutsEditor() {
           <div style="font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--ink-softer);text-transform:uppercase;margin-bottom:6px;">${escapeHtml(group)}</div>
           <div style="display:flex;flex-direction:column;gap:8px;">
             ${SHORTCUT_CATALOG.filter(c => c.group === group).map(cat => `
-              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 10px;border-radius:10px;background:#faf8fd;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 10px;border-radius:10px;background:var(--surface-soft);">
                 <input type="checkbox" ${current.has(cat.id)?"checked":""} onchange="toggleShortcut('${cat.id}',this.checked)"
                   style="width:16px;height:16px;cursor:pointer;" />
                 <span style="font-size:16px;">${cat.emoji}</span>
@@ -27527,12 +27562,12 @@ function openBudgetDetail() {
     const total = txs.reduce((s, t) => s + txNetAmount(t), 0);
     body.innerHTML = txs.map(tx => {
       const d = new Date(tx.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-      const tag = tx.fixedCharge ? `<span style="font-size:10px;background:#f3ecff;color:#7c5cbf;border-radius:6px;padding:1px 5px;margin-left:4px;">fixe</span>` : tx.exceptional ? `<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 5px;margin-left:4px;">lissée</span>` : "";
+      const tag = tx.fixedCharge ? `<span style="font-size:10px;background:var(--lavender-soft);color:var(--accent-ink);border-radius:6px;padding:1px 5px;margin-left:4px;">fixe</span>` : tx.exceptional ? `<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 5px;margin-left:4px;">lissée</span>` : "";
       const net = txNetAmount(tx);
-      const reimbTag = net < tx.amount ? `<span style="font-size:10px;background:#dcfce7;color:#16a34a;border-radius:6px;padding:1px 5px;margin-left:4px;">💸 remb. ${(tx.amount - net).toFixed(0)}€</span>` : "";
+      const reimbTag = net < tx.amount ? `<span style="font-size:10px;background:#dcfce7;color:var(--green);border-radius:6px;padding:1px 5px;margin-left:4px;">💸 remb. ${(tx.amount - net).toFixed(0)}€</span>` : "";
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;">
         <div><span style="color:var(--ink-soft);min-width:52px;display:inline-block;">${d}</span> ${escapeHtml(tx.note || tx.category)}${tag}${reimbTag}</div>
-        <strong style="color:#c75b4d;white-space:nowrap;margin-left:8px;">−${net.toFixed(2)} €</strong>
+        <strong style="color:var(--red);white-space:nowrap;margin-left:8px;">−${net.toFixed(2)} €</strong>
       </div>`;
     }).join("") + `<div style="text-align:right;padding-top:8px;font-size:13px;font-weight:600;">Total : ${total.toFixed(2)} €</div>`;
   }
@@ -27684,6 +27719,9 @@ function cloudSignOut() {
 
 // Enregistrement du Service Worker (PWA)
 if ("serviceWorker" in navigator) {
+  // Page déjà contrôlée par un service worker au chargement ? Sinon (toute première visite), la prise de
+  // contrôle n'est pas une mise à jour : pas de rechargement (avant, la 1re ouverture se rechargeait).
+  const _hadSWController = !!navigator.serviceWorker.controller;
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/Mon-Tableau-de-Vie/sw.js", { updateViaCache: "none" })
       .then(reg => {
@@ -27706,7 +27744,7 @@ if ("serviceWorker" in navigator) {
     // (les notes sont protégées par _noteFlushToLocalStorage + pagehide)
     let _swRefreshing = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (_swRefreshing) return;
+      if (_swRefreshing || !_hadSWController) return;
       _swRefreshing = true;
       _noteFlushToLocalStorage && _noteFlushToLocalStorage();
       // Petit toast avant rechargement
