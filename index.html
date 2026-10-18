@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1347</title>
+<title>Mon Tableau de Vie 🌿 · v1348</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15416,7 +15416,7 @@ function renderReimbursable() {
     : "Tout remboursé ✓";
 
   const fmt = iso => new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayKey();
 
   // Grouper les pending par mission (clé "" = sans mission)
   const groups = {};
@@ -15647,7 +15647,7 @@ function markReimbAlreadyReceived(id) {
 function confirmReimbursed(id) {
   const tx = state.transactions.find(t => t.id === id);
   if (!tx) return;
-  const dateVal = document.getElementById("reimbDate_" + id)?.value || new Date().toISOString().slice(0, 10);
+  const dateVal = document.getElementById("reimbDate_" + id)?.value || todayKey();
   const _reimbInput = parseFloat(document.getElementById("reimbAmt_" + id)?.value);
   const reimbAmt = Number.isFinite(_reimbInput) ? _reimbInput : tx.amount;   // 0 € autorisé : déjà remboursé d'avance
   const dateIso = new Date(dateVal).toISOString();
@@ -15662,7 +15662,7 @@ function confirmReimbursed(id) {
 }
 
 function confirmGroupReimbursed(ids, dateInputId, mission) {
-  const dateVal = document.getElementById(dateInputId)?.value || new Date().toISOString().slice(0, 10);
+  const dateVal = document.getElementById(dateInputId)?.value || todayKey();
   const reimbAmt = parseFloat(document.getElementById(dateInputId + "_amt")?.value) || 0;
   const dateIso = new Date(dateVal).toISOString();
   const txs = ids.map(id => state.transactions.find(t => t.id === id)).filter(Boolean);
@@ -15691,7 +15691,7 @@ function _reimbRefresh() {
 function markReimbClaimed(id) {
   const tx = state.transactions.find(t => t.id === id);
   if (!tx) return;
-  const dateVal = document.getElementById("reimbDate_" + id)?.value || new Date().toISOString().slice(0, 10);
+  const dateVal = document.getElementById("reimbDate_" + id)?.value || todayKey();
   const amt = parseFloat(document.getElementById("reimbAmt_" + id)?.value);
   tx.reimbClaimedAt = new Date(dateVal).toISOString();
   tx.reimbClaimedAmount = isNaN(amt) ? tx.amount : amt;
@@ -15699,7 +15699,7 @@ function markReimbClaimed(id) {
   saveState(); renderMoney();
 }
 function markGroupClaimed(ids, dateInputId) {
-  const dateVal = document.getElementById(dateInputId)?.value || new Date().toISOString().slice(0, 10);
+  const dateVal = document.getElementById(dateInputId)?.value || todayKey();
   const iso = new Date(dateVal).toISOString();
   const amt = parseFloat(document.getElementById(dateInputId + "_amt")?.value);
   const txs = ids.map(id => state.transactions.find(t => t.id === id)).filter(Boolean);
@@ -15797,7 +15797,7 @@ function openPartialReimbModal(id) {
   const remaining = Math.max(0, tx.amount - alreadyReimb);
   document.getElementById("partialReimbTxInfo").textContent = `${tx.category} — ${tx.amount.toFixed(2)} €`;
   document.getElementById("partialReimbAmount").value = remaining.toFixed(2);
-  document.getElementById("partialReimbDate").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("partialReimbDate").value = todayKey();
   const accountSel = document.getElementById("partialReimbAccount");
   const accountOptions = ["💳 " + _courantName(), ...(state.savingsCategories || [])];
   accountSel.innerHTML = `<option value="">— Choisir un compte —</option>` + accountOptions.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
@@ -15828,7 +15828,7 @@ function savePartialReimb() {
   if (!tx) return;
   const amount = parseFloat(document.getElementById("partialReimbAmount").value);
   if (!amount || amount <= 0) { _needField("partialReimbAmount", "Entre un montant supérieur à 0."); return; }
-  const date = document.getElementById("partialReimbDate").value || new Date().toISOString().slice(0, 10);
+  const date = document.getElementById("partialReimbDate").value || todayKey();
   const account = document.getElementById("partialReimbAccount").value.trim();
   const note = document.getElementById("partialReimbNote").value.trim();
   if (!tx.partialReimbursements) tx.partialReimbursements = [];
@@ -16336,7 +16336,7 @@ function cashWithdrawal() {
   state.transactions.unshift({ id: txId, date: new Date().toISOString(), type: "expense", amount: amt, category: "Retrait espèces", note, reimbursable: false, mission: "", fixedCharge: false, exceptional: false, postdocMission: false, directSavingsAccount: "", fromSavingsAccount: "" });
   // 2. Ajoute aux espèces en gardant le lien avec la transaction
   if (!state.accounts.cashLog) state.accounts.cashLog = [];
-  state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount: amt, dir: "in", note, txId });
+  state.accounts.cashLog.push({ date: todayKey(), amount: amt, dir: "in", note, txId });
   state.accounts.cashBalance = (state.accounts.cashBalance || 0) + amt;
   document.getElementById("cashAmountInput").value = "";
   document.getElementById("cashNoteInput").value = "";
@@ -16349,7 +16349,7 @@ function promptAddCash() {
     const n = parseFloat(String(v).replace(",", "."));
     if (isNaN(n) || n <= 0) { showToast("⚠️ Montant invalide."); return; }
     if (!state.accounts.cashLog) state.accounts.cashLog = [];
-    const date = new Date().toISOString().slice(0,10);
+    const date = todayKey();
     state.accounts.cashLog.push({ date, amount: n, dir: "in", note: "Ajout manuel" });
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) + n;
     saveState(); renderCash(); renderAccounts();
@@ -16364,7 +16364,7 @@ function setCashBalance() {
     const diff = n - old;
     if (!state.accounts.cashLog) state.accounts.cashLog = [];
     if (diff !== 0) {
-      const date = new Date().toISOString().slice(0,10);
+      const date = todayKey();
       state.accounts.cashLog.push({ date, amount: Math.abs(diff), dir: diff > 0 ? "in" : "out", note: "Mise à jour manuelle" });
     }
     state.accounts.cashBalance = n;
@@ -16478,6 +16478,10 @@ function moneyCatMonthNav(delta) {
 // La période en cours se termine à "maintenant" (pas de fin connue).
 function _salaryPeriods() {
   const now = new Date();
+  // Fin de la période EN COURS = fin d'aujourd'hui (et non "maintenant") : une dépense datée
+  // d'aujourd'hui est enregistrée à 00:00 UTC (= 1 h / 2 h du matin en France) et était exclue
+  // du budget si on regardait entre minuit et 2 h. Les compteurs de jours utilisent "now" à part.
+  const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
   const salaires = state.mainSalaryCategory ? (state.transactions || [])
     .filter(tx => tx.type === 'income' && tx.category === state.mainSalaryCategory)
     .map(tx => new Date(tx.date))
@@ -16490,7 +16494,7 @@ function _salaryPeriods() {
   for (let i = 0; i < salaires.length; i++) {
     const start = new Date(salaires[i]); start.setHours(0, 0, 0, 0);
     const endRaw = i + 1 < salaires.length ? new Date(salaires[i + 1]) : now;
-    const end = i + 1 < salaires.length ? (endRaw.setHours(0, 0, 0, 0), endRaw) : now;
+    const end = i + 1 < salaires.length ? (endRaw.setHours(0, 0, 0, 0), endRaw) : endOfToday;
     const current = i === salaires.length - 1;
     periods.push({ start, end, label: start, current });
   }
@@ -16502,7 +16506,7 @@ function _salaryPeriods() {
     const anchorMonth = now.getDate() >= 26 ? now.getMonth() : now.getMonth() - 1;
     const anchorStart = new Date(now.getFullYear(), anchorMonth, 26);
     anchorStart.setHours(0, 0, 0, 0);
-    periods.push({ start: anchorStart, end: now, label: anchorStart, current: true });
+    periods.push({ start: anchorStart, end: endOfToday, label: anchorStart, current: true });
   }
   // Complète avec des périodes calendaires (au 26) pour avoir 12 mois au total (historique/nav).
   let refDate = salaires.length ? new Date(salaires[0]) : periods[0].start;
@@ -16524,12 +16528,16 @@ function currentMonthRange() {
 function currentMonthLabel() {
   const [start, end] = currentMonthRange();
   const fmt = d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-  const endDisplay = new Date(end); endDisplay.setDate(endDisplay.getDate() - 1);
+  const endDisplay = new Date(end - 1); // dernier jour inclus de la période (aujourd'hui pour celle en cours)
   return `${fmt(start)} → ${fmt(endDisplay)}`;
 }
-function initTxDate() {
+// Remet la date du formulaire à aujourd'hui si elle est vide, si c'était la date remplie automatiquement
+// (appli ouverte depuis la veille), ou après un ajout (force). Avant, après une saisie datée du 10,
+// toutes les suivantes restaient au 10.
+function initTxDate(force) {
   const el = document.getElementById("txDate");
-  if (el && !el.value) el.value = new Date().toISOString().slice(0, 10);
+  if (!el) return;
+  if (force || !el.value || el.value === el.dataset.autoVal) { el.value = todayKey(); el.dataset.autoVal = el.value; }
 }
 /* ===== PAIEMENTS PRÉVUS =====
    state.plannedPayments : dépenses / revenus que l'on sait à l'avance. Volontairement SANS effet sur la
@@ -16550,7 +16558,7 @@ function renderPlanned() {
   if (!listEl) return;
   _plannedFillCats();
   const dateEl = document.getElementById("plannedDate");
-  if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0, 10);
+  if (dateEl && !dateEl.value) dateEl.value = todayKey();
   const items = [...(state.plannedPayments || [])].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   const today = _plannedToday();
   const fmt = d => new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
@@ -16637,7 +16645,7 @@ function validatePlanned(id) {
   const p = (state.plannedPayments || []).find(x => x.id === id);
   if (!p) return;
   const planned = new Date(p.date + "T00:00:00");
-  const when = planned <= _plannedToday() ? p.date : new Date().toISOString().slice(0, 10);
+  const when = planned <= _plannedToday() ? p.date : todayKey();
   state.transactions.unshift({ id: "tx" + Date.now(), date: new Date(when).toISOString(), type: p.type, amount: p.amount, category: p.category, note: p.note || "", reimbursable: false, mission: "", fixedCharge: false, exceptional: false, postdocMission: false, directSavingsAccount: "", fromSavingsAccount: "", cashSrcAccount: "", externalAccountId: "" });
   if (p.type === "income" && state.mainSalaryCategory && p.category === state.mainSalaryCategory) _resetMoneyNav();
   state.plannedPayments = state.plannedPayments.filter(x => x.id !== id);
@@ -16685,19 +16693,19 @@ function addTransaction() {
   // Si prélevé sur les espèces (dépense), déduire du cashBalance
   if (fromSavingsAccount === "__cash__" && (txType === "expense" || txType === "external")) {
     if (!state.accounts.cashLog) state.accounts.cashLog = [];
-    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0, 10), amount, dir: "out", note: note || category });
+    state.accounts.cashLog.push({ date: todayKey(), amount, dir: "out", note: note || category });
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) - amount;
   }
   // Revenu versé directement en espèces (reçu en main propre) : ajouter au cashBalance
   if (directSavingsAccount === "__cash__" && txType === "income") {
     if (!state.accounts.cashLog) state.accounts.cashLog = [];
-    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0, 10), amount, dir: "in", note: note || category });
+    state.accounts.cashLog.push({ date: todayKey(), amount, dir: "in", note: note || category });
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) + amount;
   }
   // Retrait espèces : ajouter au cashBalance, retirer du compte source
   if (txType === "cash-withdrawal") {
     if (!state.accounts.cashLog) state.accounts.cashLog = [];
-    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0, 10), amount, dir: "in", note: `Retrait depuis ${cashSrcAccount === "__checking__" ? "compte courant" : cashSrcAccount}` });
+    state.accounts.cashLog.push({ date: todayKey(), amount, dir: "in", note: `Retrait depuis ${cashSrcAccount === "__checking__" ? "compte courant" : cashSrcAccount}` });
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) + amount;
     // Si depuis un compte épargne, créer aussi l'écriture savings-out correspondante
     if (cashSrcAccount !== "__checking__") {
@@ -16714,7 +16722,7 @@ function addTransaction() {
   if (lieuEl) lieuEl.value = "";
   togglePostdocMission(false);
   toggleMissionField("txMissionWrap", false);
-  initTxDate(); // remet à aujourd'hui après ajout
+  initTxDate(true); // remet à aujourd'hui après ajout
   saveState();
   if (postdocMission) { try { admRender(); } catch(e) {} } // rafraîchit le tableau missions
   renderMoney(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast();
@@ -16948,11 +16956,11 @@ function saveTxFromModal() {
   if (oldFromSav === "__cash__" && newFromSav !== "__cash__") {
     // N'était plus espèces — rembourser l'ancien montant
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) + oldAmount;
-    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount: oldAmount, dir: "in", note: "Correction édition — " + (tx.note || tx.category) });
+    state.accounts.cashLog.push({ date: todayKey(), amount: oldAmount, dir: "in", note: "Correction édition — " + (tx.note || tx.category) });
   } else if (oldFromSav !== "__cash__" && newFromSav === "__cash__") {
     // Maintenant espèces — déduire
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) - amount;
-    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount, dir: "out", note: note || category });
+    state.accounts.cashLog.push({ date: todayKey(), amount, dir: "out", note: note || category });
   } else if (oldFromSav === "__cash__" && newFromSav === "__cash__" && oldAmount !== amount) {
     // Montant modifié, compte espèces inchangé — ajuster la différence
     const diff = oldAmount - amount;
@@ -16961,10 +16969,10 @@ function saveTxFromModal() {
   // Idem pour un revenu versé directement en espèces
   if (oldDirectSav === "__cash__" && newDirectSav !== "__cash__") {
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) - oldAmount;
-    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount: oldAmount, dir: "out", note: "Correction édition — " + (tx.note || tx.category) });
+    state.accounts.cashLog.push({ date: todayKey(), amount: oldAmount, dir: "out", note: "Correction édition — " + (tx.note || tx.category) });
   } else if (oldDirectSav !== "__cash__" && newDirectSav === "__cash__") {
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) + amount;
-    state.accounts.cashLog.push({ date: new Date().toISOString().slice(0,10), amount, dir: "in", note: note || category });
+    state.accounts.cashLog.push({ date: todayKey(), amount, dir: "in", note: note || category });
   } else if (oldDirectSav === "__cash__" && newDirectSav === "__cash__" && oldAmount !== amount) {
     const diff = amount - oldAmount;
     state.accounts.cashBalance = (state.accounts.cashBalance || 0) + diff;
@@ -18298,7 +18306,7 @@ function renderBudgetGauge() {
   const start = period.start;
   const now = new Date();
   const isCurrent = _budgetMonthOffset === 0;
-  const end = isCurrent ? now : period.end;
+  const end = period.end; // période en cours : jusqu'à la fin d'aujourd'hui (voir _salaryPeriods)
 
   // Label navigation
   const labelEl = document.getElementById("budgetMonthLabel");
@@ -18763,18 +18771,24 @@ function monthlyEquivalent(amount, freq) {
   return amount; // monthly default
 }
 function nextOccurrence(isoDate, frequency) {
-  // Retourne la prochaine date future à partir d'une date de référence
-  let d = new Date(isoDate); d.setHours(0,0,0,0);
+  // Retourne la prochaine date future à partir d'une date de référence — en date LOCALE (avant :
+  // toISOString, un jour trop tôt) et sans dériver en fin de mois (un abonnement du 31 passait au
+  // 3 mars puis au 3 de chaque mois) : le jour d'origine est gardé, ramené au dernier jour du mois si besoin.
+  const [y0, m0, d0] = String(isoDate).slice(0, 10).split("-").map(Number);
+  if (!y0 || !m0 || !d0) return isoDate;
   const today = new Date(); today.setHours(0,0,0,0);
+  const at = (monthsAdded) => {
+    const y = y0, m = m0 - 1 + monthsAdded;
+    const last = new Date(y, m + 1, 0).getDate();
+    return new Date(y, m, Math.min(d0, last));
+  };
+  let d = new Date(y0, m0 - 1, d0);
   if (d >= today) return isoDate;
-  while (d < today) {
-    if      (frequency === "weekly")    d.setDate(d.getDate() + 7);
-    else if (frequency === "monthly")   d.setMonth(d.getMonth() + 1);
-    else if (frequency === "quarterly") d.setMonth(d.getMonth() + 3);
-    else if (frequency === "yearly")    d.setFullYear(d.getFullYear() + 1);
-    else break;
-  }
-  return d.toISOString().slice(0, 10);
+  const step = { monthly: 1, quarterly: 3, yearly: 12 }[frequency];
+  if (frequency === "weekly") { while (d < today) d.setDate(d.getDate() + 7); }
+  else if (step) { let k = 0; while (d < today) { k += step; d = at(k); } }
+  else return isoDate;
+  return todayKey(d);
 }
 const FREQ_LABEL = { weekly: "/sem", monthly: "/mois", quarterly: "/trim", yearly: "/an" };
 function renderSubs() {
@@ -20991,7 +21005,7 @@ function _easterDate(y) {
 function _joursFeriesFR(y) {
   const easter = _easterDate(y);
   const add = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
-  const fmt = d => d.toISOString().slice(0, 10);
+  const fmt = d => todayKey(d); // date LOCALE (toISOString donnait la veille : Pâques → dimanche, Ascension → mercredi…)
   return new Set([
     `${y}-01-01`, // Jour de l'An
     fmt(add(easter, 1)),  // Lundi de Pâques
@@ -21016,7 +21030,7 @@ function _isHoliday(dk) {
 function _holidayName(dk) {
   const y = parseInt(dk.slice(0, 4));
   const easter = _easterDate(y);
-  const fmt = d => d.toISOString().slice(0, 10);
+  const fmt = d => todayKey(d); // date LOCALE (toISOString donnait la veille : Pâques → dimanche, Ascension → mercredi…)
   const add = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
   const names = {
     [`${y}-01-01`]: "Jour de l'An",
@@ -21596,7 +21610,7 @@ function _renderPersoNotesList(pp) {
   if (!pp.notesList) {
     pp.notesList = [];
     if (pp.notes && pp.notes.trim()) {
-      pp.notesList.push({id:"pn"+Date.now(), title:"Note", content: pp.notes, date: new Date().toISOString().slice(0,10)});
+      pp.notesList.push({id:"pn"+Date.now(), title:"Note", content: pp.notes, date: todayKey()});
       pp.notes = "";
     }
   }
@@ -21604,7 +21618,7 @@ function _renderPersoNotesList(pp) {
   return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;">'
     + pp.notesList.map(n => {
         const preview = (n.content||"").slice(0,100).replace(/\n/g," ");
-        const rawDate = n.date || (n.createdAt ? new Date(n.createdAt).toISOString().slice(0,10) : null);
+        const rawDate = n.date || (n.createdAt ? todayKey(new Date(n.createdAt)) : null);
         const dateStr = rawDate ? new Date(rawDate).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}) : "";
         return '<div onclick="_openPersoNoteModal(\'' + pp.id + '\',\'' + n.id + '\')" style="background:var(--bg-1);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;transition:box-shadow 0.15s;min-width:0;" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(120,100,160,0.12)\'" onmouseout="this.style.boxShadow=\'none\'">'
           + '<div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(n.title||"Sans titre") + '</div>'
@@ -21627,7 +21641,7 @@ function _openPersoNoteModal(ppId, noteId) {
   document.getElementById("persoNoteEditId").value = noteId || "";
   document.getElementById("persoNoteTitle").value = n?.title || "";
   document.getElementById("persoNoteContent").value = n?.content || "";
-  const dateVal = n?.date || new Date().toISOString().slice(0,10);
+  const dateVal = n?.date || todayKey();
   document.getElementById("persoNoteDate").value = dateVal;
   const delBtn = document.getElementById("persoNoteDeleteBtn");
   if (delBtn) delBtn.style.display = noteId ? "inline-block" : "none";
@@ -21640,7 +21654,7 @@ function _savePersoNote() {
   const noteId = document.getElementById("persoNoteEditId").value;
   const title = document.getElementById("persoNoteTitle").value.trim();
   const content = document.getElementById("persoNoteContent").value;
-  const date = document.getElementById("persoNoteDate").value || new Date().toISOString().slice(0,10);
+  const date = document.getElementById("persoNoteDate").value || todayKey();
   if (!title && !content.trim()) return;
   const pp = (state.domestique.persoProjects||[]).find(p=>p.id===ppId);
   if (!pp) return;
@@ -21871,7 +21885,7 @@ function renderFreeNotes() {
   el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">` +
     notes.map(n => {
       const preview = (n.content || "").slice(0, 120).replace(/\n/g, " ");
-      const rawDate = n.date || (n.createdAt ? new Date(n.createdAt).toISOString().slice(0,10) : null);
+      const rawDate = n.date || (n.createdAt ? todayKey(new Date(n.createdAt)) : null);
       const date = rawDate ? new Date(rawDate).toLocaleDateString("fr-FR", {day:"numeric",month:"short"}) : "";
       return `<div onclick="_openFreeNoteModal('${n.id}')" style="background:var(--bg-1);border:1.5px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:box-shadow 0.15s;overflow:hidden;min-width:0;" onmouseover="this.style.boxShadow='0 4px 16px rgba(120,100,160,0.12)'" onmouseout="this.style.boxShadow='none'">
         <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(n.title || "Sans titre")}</div>
@@ -21886,7 +21900,7 @@ function _openFreeNoteModal(id) {
   document.getElementById("freeNoteEditId").value = id || "";
   document.getElementById("freeNoteTitle").value = n?.title || "";
   document.getElementById("freeNoteContent").value = n?.content || "";
-  const dateVal = n?.date || (n?.createdAt ? new Date(n.createdAt).toISOString().slice(0,10) : new Date().toISOString().slice(0,10));
+  const dateVal = n?.date || (n?.createdAt ? todayKey(new Date(n.createdAt)) : todayKey());
   document.getElementById("freeNoteDate").value = dateVal;
   const delBtn = document.getElementById("freeNoteDeleteBtn");
   if (delBtn) delBtn.style.display = id ? "inline-block" : "none";
@@ -21897,7 +21911,7 @@ function _closeFreeNoteModal() { document.getElementById("freeNoteModal").style.
 function _saveFreeNote() {
   const title   = document.getElementById("freeNoteTitle").value.trim();
   const content = document.getElementById("freeNoteContent").value;
-  const date    = document.getElementById("freeNoteDate").value || new Date().toISOString().slice(0,10);
+  const date    = document.getElementById("freeNoteDate").value || todayKey();
   const id      = document.getElementById("freeNoteEditId").value;
   if (!title && !content.trim()) return;
   if (!state.domestique.freeNotes) state.domestique.freeNotes = [];
@@ -27412,7 +27426,7 @@ function openBudgetDetail() {
   const period = _budgetRange();
   const start = period.start;
   const isCurrent = _budgetMonthOffset === 0;
-  const end = isCurrent ? new Date() : period.end;
+  const end = period.end; // période en cours : jusqu'à la fin d'aujourd'hui
   const label = isCurrent ? "Ce mois" : start.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   const txs = (state.transactions || [])
     .filter(tx => {
