@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
 <meta name="color-scheme" content="light" />
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
@@ -25,11 +25,11 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1349</title>
+<title>Mon Tableau de Vie 🌿 · v1350</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -41,8 +41,8 @@
     --bg-2: #f3ecff;
     --card: #ffffff;
     --ink: #4a4458;
-    --ink-soft: #8a8499;
-    --ink-softer: #b3adbf;
+    --ink-soft: #6f6880;   /* était #8a8499 (3,4:1) → 5,3:1 sur blanc */
+    --ink-softer: #948da4; /* était #b3adbf (2,2:1) → 3,2:1 : réservé aux petites indications */
     --line: #efeaf5;
 
     --lavender: #c9b6f0;
@@ -72,6 +72,11 @@
     --nav-bg: rgb(253, 246, 240);
     --nav-ink: var(--ink);
     --radius-card: 16px;
+    --radius-card-lg: 22px; /* anneaux, fenêtres, cartes stats (Sérieux : angles droits partout) */
+    /* Texte posé sur un bouton pastel (lavande / lilas) : le blanc y était illisible (1,8:1). */
+    --on-accent: var(--ink);
+    /* Encre d'accent (montants d'épargne, liens « Modifier »…) — suit le thème au lieu d'un violet fixe */
+    --accent-ink: #6b4d99;
     --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
   }
 
@@ -82,7 +87,7 @@
     --card: #ffffff;
     --ink: #1b2d3e;
     --ink-soft: #5c6e7e;
-    --ink-softer: #8aacca;
+    --ink-softer: #6f8fae; /* était #8aacca (2,4:1) */
     --line: #cfd8e6;
     --lavender: #6b9ec4;
     --lavender-soft: #d4e8f4;
@@ -108,10 +113,12 @@
     --nav-bg: rgb(27, 45, 62);
     --nav-ink: #e8f0f8;
     --radius-card: 8px;
+    --radius-card-lg: 8px;
+    --on-accent: #10202e;
+    --accent-ink: #2c5a80;
     --font-main: "IBM Plex Sans", "Segoe UI", sans-serif;
   }
 
-  /* ===== THÈME MINIMAL ===== */
   * { box-sizing: border-box; }
   /* Retire le délai/ambiguïté de détection du double-tap sur mobile (le navigateur hésite
      entre "tap simple" et "début d'un geste de zoom"), qui peut faire qu'un tap sur un champ
@@ -203,11 +210,9 @@
   .tab.active { color: var(--ink); font-weight: 600; border-color: transparent; box-shadow: var(--shadow); }
   .tab[data-view="today"].active { background: var(--lavender-soft); }
   .tab[data-view="work"].active { background: var(--lilac-soft); }
-  .tab[data-view="network"].active { background: var(--rose-soft); }
   .tab[data-view="activities"].active { background: var(--mint-soft); }
   .tab[data-view="health"].active { background: var(--sky-soft); }
   .tab[data-view="money"].active { background: var(--butter-soft); }
-  .tab[data-view="goals"].active { background: var(--peach-soft); }
   .tab[data-view="domestic"].active { background: var(--rose-soft); }
   .tab[data-view="calendar"].active { background: var(--sky-soft); }
   .tab[data-view="pillars"].active { background: var(--mint-soft); }
@@ -312,7 +317,7 @@
   /* ========= RINGS ========= */
   .rings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 18px; }
   .ring-card {
-    background: var(--card); border-radius: 22px; padding: 20px;
+    background: var(--card); border-radius: var(--radius-card-lg); padding: 20px;
     box-shadow: var(--shadow); display: flex; align-items: center; gap: 16px;
     transition: transform 0.2s, box-shadow 0.2s;
   }
@@ -474,7 +479,7 @@
   .water-count { margin-left: 10px; font-weight: 500; color: var(--ink-soft); font-size: 14px; }
 
   /* ========= MONEY ========= */
-  .money-stat { padding: 18px; border-radius: 18px; background: var(--card); box-shadow: var(--shadow); }
+  .money-stat { padding: 18px; border-radius: max(var(--radius-card), min(18px, var(--radius-card-lg))); background: var(--card); box-shadow: var(--shadow); }
   .money-stat .label { color: var(--ink-soft); font-size: 13px; margin-bottom: 6px; }
   .money-stat .value { font-size: 26px; font-weight: 600; }
   .tx-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; background: #faf8fd; padding: 12px; border-radius: 14px; }
@@ -493,7 +498,7 @@
   .tx-form .type-toggle button.active.external    { background: var(--butter-soft);  border-color: var(--butter);  color: var(--ink); }
   .tx-form .type-toggle button.active.savings-out { background: #e0f4f4;             border-color: #5bbcb8;        color: var(--ink); }
   .tx-form .type-toggle button.active.cash-withdrawal { background: #fff3cd;         border-color: #f0c040;        color: var(--ink); }
-  .tx-amount.savings { color: #6b4d99; }
+  .tx-amount.savings { color:var(--accent-ink); }
   .tx-amount.external { color: var(--orange); }
   .tx-amount.savings-out { color: #3aaba6; }
   .tx-amount.cash-withdrawal { color: #b08000; }
@@ -503,7 +508,7 @@
   }
   .tx-form input:focus, .tx-form select:focus { outline: 2px solid var(--lavender); }
   .tx-form .add-btn {
-    background: var(--lavender); color: white; border: none;
+    background: var(--lavender); color:var(--on-accent); border: none;
     padding: 10px 18px; border-radius: 10px; cursor: pointer;
     font-weight: 500; font-family: inherit;
   }
@@ -544,7 +549,7 @@
   .sub-freq-weekly { background: var(--mint-soft); color: #2f7a5a; }
   .sub-freq-monthly { background: var(--sky-soft); color: #2c6391; }
   .sub-freq-quarterly { background: var(--peach-soft); color: #8a5a2b; }
-  .sub-freq-yearly { background: var(--lavender-soft); color: #6b4d99; }
+  .sub-freq-yearly { background: var(--lavender-soft); color:var(--accent-ink); }
   .sub-renewal { font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
   .sub-renewal.urgent { color: var(--red); font-weight: 600; }
   .sub-actions { display: flex; gap: 4px; }
@@ -685,7 +690,7 @@
   .cal-day-event-row.manual { border-left-color: #c9b6f0; background: #f3ecff22; }
   .cal-event.manual { background: var(--lavender-soft); border-left: 2px solid var(--lavender); }
   .btn-primary {
-    background: var(--lilac); color: white; border: none;
+    background: var(--lilac); color:var(--on-accent); border: none;
     padding: 9px 16px; border-radius: 12px; cursor: pointer;
     font-weight: 500; font-family: inherit; font-size: 13px;
     transition: all 0.2s;
@@ -941,7 +946,7 @@
 
   /* ========= PILIERS ========= */
   .pillar-card {
-    background: var(--card); border-radius: 18px; padding: 18px;
+    background: var(--card); border-radius: max(var(--radius-card), min(18px, var(--radius-card-lg))); padding: 18px;
     margin-bottom: 12px; box-shadow: var(--shadow);
     display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center;
   }
@@ -1062,7 +1067,7 @@
   .cal-day.today { border-color: var(--lavender); background: var(--lavender-soft); }
   .cal-day.weekend { background: #f4f0fb; }
   .cal-day-num { font-size: 13px; font-weight: 600; color: var(--ink); }
-  .cal-day.today .cal-day-num { color: #6b4d99; }
+  .cal-day.today .cal-day-num { color:var(--accent-ink); }
   .cal-event {
     font-size: 10.5px; padding: 2px 6px; border-radius: 6px;
     margin-top: 4px; white-space: nowrap; overflow: hidden;
@@ -1077,7 +1082,6 @@
   .cal-event.comm { background: var(--peach-soft); border-left-color: var(--peach); }
   .cal-event.sub { background: var(--butter-soft); border-left-color: var(--butter); }
   .cal-event.plant { background: linear-gradient(90deg, rgba(174,224,200,0.4), rgba(174,224,200,0.18)); border-left-color: #4d9c7e; }
-  .cal-event.chore { background: linear-gradient(90deg, rgba(247,201,163,0.4), rgba(247,201,163,0.18)); border-left-color: #c08a4d; }
   .cal-event.ics { background: var(--mint-soft); border-left-color: var(--mint); }
   .cal-event.more { background: white; border-left-color: var(--ink-softer); font-style: italic; color: var(--ink-soft); }
   .cal-day-event-row {
@@ -1091,7 +1095,6 @@
   .cal-day-event-row.comm { border-left-color: var(--peach); }
   .cal-day-event-row.sub { border-left-color: var(--butter); }
   .cal-day-event-row.plant { border-left-color: #4d9c7e; }
-  .cal-day-event-row.chore { border-left-color: #c08a4d; }
   .cal-day-event-row.ics { border-left-color: var(--mint); }
   .cal-day-event-date { font-size: 12px; color: var(--ink-soft); font-weight: 600; min-width: 70px; }
   .cal-day-event-title { font-size: 14px; flex: 1; }
@@ -1247,7 +1250,7 @@
     border:1px solid var(--lavender); border-radius:8px; padding:5px 12px;
     font-family:inherit; font-weight:600; transition:all .15s; white-space:nowrap;
   }
-  .meal-courses-btn:hover { background:var(--lavender); color:white; }
+  .meal-courses-btn:hover { background:var(--lavender); color:var(--on-accent); }
 
   /* Bandeau liste courses liée/non liée */
   .meal-grocery-link {
@@ -1445,7 +1448,7 @@
   }
   .modal-bg.open { display: flex; }
   .modal {
-    background: var(--card); border-radius: 22px; padding: 28px;
+    background: var(--card); border-radius: var(--radius-card-lg); padding: 28px;
     width: 100%; max-width: 520px; max-height: 90vh; max-height: 90dvh; overflow-y: auto; overflow-x: hidden;
     box-sizing: border-box;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
@@ -1473,7 +1476,7 @@
      (confirmation immédiate, indépendante du scroll — l'aperçu en haut peut être hors champ). */
   .emoji-picker-btn.active::after {
     content: "✓"; position: absolute; bottom: -3px; right: -3px; width: 13px; height: 13px;
-    border-radius: 50%; background: var(--lavender); color: #fff; font-size: 9px; font-weight: 700;
+    border-radius: 50%; background: var(--lavender); color:var(--on-accent); font-size: 9px; font-weight: 700;
     line-height: 1; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--card);
   }
   @keyframes emojiPickPop { 0% { transform: scale(1); } 45% { transform: scale(1.4); } 100% { transform: scale(1); } }
@@ -1552,7 +1555,7 @@
   .modal .actions { display: flex; gap: 10px; margin-top: 22px; }
   .modal .actions .spacer { flex: 1; }
   .modal button.primary {
-    background: var(--lavender); color: white; border: none;
+    background: var(--lavender); color:var(--on-accent); border: none;
     padding: 10px 20px; border-radius: 12px; cursor: pointer;
     font-weight: 500; font-size: 14px; font-family: inherit;
   }
@@ -1647,7 +1650,6 @@
       padding-left: 1.4em;
       text-indent: -1.4em;
     }
-    #rechargerBtn { display: none; }
     /* Alexandra + Synchronisé sur leur propre ligne */
     .sync-row { flex-basis: 100%; }
 
@@ -1700,14 +1702,14 @@
     /* === Anneau Aujourd'hui === */
     .rings { grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .ring-card { padding: 12px 8px; }
-    .ring { width: 60px; height: 60px; }
-    .ring-val { font-size: 17px; }
+    .ring-svg { width: 56px; height: 56px; }
+    .ring-value { font-size: 17px; }
     .ring-label { font-size: 11px; }
     .ring-sub { font-size: 10px; }
     .day-nav-label { font-size: 13px; min-width: 120px; }
 
     /* === Cartes === */
-    .card { padding: 16px 14px; border-radius: 16px; }
+    .card { padding: 16px 14px; border-radius: var(--radius-card); }
 
     /* === Travail : grille Progression+Bilan → 1 colonne === */
     .work-stats-duo { grid-template-columns: 1fr !important; }
@@ -1812,7 +1814,7 @@
 
     /* === Mobile : suppression des scrolls horizontaux === */
     /* Stat grids */
-    .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 
     /* Santé — composition corporelle & date */
     .health-inputs-grid { grid-template-columns: 1fr !important; }
@@ -1862,7 +1864,7 @@
   /* === Gestion administrative === */
   .adm-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
   .adm-tab { padding:7px 18px; border-radius:999px; border:1.5px solid var(--line); background:white; color:var(--ink-soft); font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
-  .adm-tab.active { background:var(--lavender); color:white; border-color:var(--lavender); }
+  .adm-tab.active { background:var(--lavender); color:var(--on-accent); border-color:var(--lavender); }
   .adm-tab:hover:not(.active) { background:var(--bg-2); }
   .adm-kpis { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:10px; margin-bottom:18px; }
   .adm-kpi { background:var(--bg-1); border-radius:12px; padding:11px 14px; }
@@ -2045,6 +2047,26 @@
     }
     .money-stat .value { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
   }
+
+  /* ===== AUDIT DESIGN (v1350) ===== */
+  /* Fenêtres "maison" (note libre, note projet perso, hormones, raccourcis) : la boîte défile quand
+     elle dépasse l'écran (clavier ouvert) au lieu de cacher son haut ou « Enregistrer » ; arrondis du thème. */
+  div[style*="backdrop-filter"] > div {
+    max-height: calc(var(--vv-h, 100dvh) - 16px); overflow-y: auto; overscroll-behavior: contain;
+    border-radius: var(--radius-card-lg) !important;
+  }
+  /* Calendrier de 601 à 880 px (tablette, grand téléphone en paysage) : tenait sur 876 px minimum
+     et défilait de côté. */
+  @media (min-width: 601px) and (max-width: 880px) { .cal-grid { min-width: 0; } }
+  /* Navigation au clavier : contour visible sur l'élément actif (il avait été retiré partout). */
+  :focus-visible { outline: 2px solid var(--lavender); outline-offset: 2px; }
+  .scale button:focus-visible, .modal button:focus-visible { outline: 2px solid var(--lavender); outline-offset: 2px; }
+  /* Écran tactile : petites croix de suppression agrandies (zone de toucher ≥ 32 px). */
+  @media (hover: none) {
+    .budget-del, .meal-dish-del, .meal-ing-del, .tx-del, .tx-edit {
+      min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center;
+    }
+  }
 </style>
 <!-- PWA -->
 <link rel="manifest" href="manifest.json" />
@@ -2109,12 +2131,12 @@
       <button class="btn-icon" onclick="hideHeaderBand()" title="Masquer cette bande (un bouton « Remettre » apparaît en haut à droite)">🙈 Masquer</button>
       <!-- Thème visuel -->
       <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);">
-        <button id="themeBtnSmooth"  onclick="applyTheme('smooth')"  title="Smooth"  style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">🌸</button>
+        <button id="themeBtnSmooth"  onclick="applyTheme('smooth')"  title="Smooth"  style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:var(--lavender);color:var(--on-accent);font-family:inherit;">🌸</button>
         <button id="themeBtnSerieux" onclick="applyTheme('serieux')" title="Sérieux" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">💼</button>
       </div>
       <!-- Traduction -->
       <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);">
-        <button id="langFRBar" onclick="_setLang('fr')" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">FR</button>
+        <button id="langFRBar" onclick="_setLang('fr')" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:var(--lavender);color:var(--on-accent);font-family:inherit;">FR</button>
         <button id="langENBar" onclick="_setLang('en')" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">EN</button>
         <button id="langESBar" onclick="_setLang('es')" style="padding:5px 9px;border-radius:999px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">ES</button>
       </div>
@@ -2203,7 +2225,7 @@
         <button onclick="fetchWeather(true)" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.6);font-size:12px;cursor:pointer;color:var(--ink-soft);white-space:nowrap;" title="Utiliser ma position (géolocalisation)">📍 Autoriser la localisation</button>
         <div id="weatherCityInput" style="display:flex;gap:4px;">
           <input type="text" id="weatherManualCity" placeholder="Ou indique ta ville…" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;flex:1;min-width:0;font-family:inherit;" onkeydown="if(event.key==='Enter')fetchWeatherByCity()" />
-          <button onclick="fetchWeatherByCity()" style="padding:6px 12px;border-radius:7px;border:none;background:var(--lavender);color:white;font-size:12px;cursor:pointer;flex-shrink:0;">OK</button>
+          <button onclick="fetchWeatherByCity()" style="padding:6px 12px;border-radius:7px;border:none;background:var(--lavender);color:var(--on-accent);font-size:12px;cursor:pointer;flex-shrink:0;">OK</button>
         </div>
       </div>
     </div>
@@ -2328,7 +2350,7 @@
     <div class="card" style="margin-top:14px;display:none;" id="cycleDetailedCard">
       <div class="card-row" style="margin-bottom:10px;">
         <h2 style="margin:0;cursor:pointer;" onclick="_goToHealth('healthCycleCard')" title="Voir dans Santé">🌸 Cycle menstruel <span style="font-size:11px;color:var(--ink-softer);">↗</span></h2>
-        <span id="cycleDayBadge" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:var(--lavender-soft);color:#6b4d99;white-space:nowrap;"></span>
+        <span id="cycleDayBadge" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:var(--lavender-soft);color:var(--accent-ink);white-space:nowrap;"></span>
       </div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
         <div style="display:flex;gap:6px;" id="cycleDropsBig"></div>
@@ -2582,7 +2604,7 @@
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
         <button onclick="_closeEditTimeCatModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-        <button onclick="_saveEditTimeCat()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
+        <button onclick="_saveEditTimeCat()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
       </div>
     </div>
   </div>
@@ -3273,7 +3295,7 @@
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,var(--lavender-soft) 100%);position:relative;">
           <button onclick="openSavingsAccountsManager()" title="Gérer l'épargne" class="help-btn" style="position:absolute;top:8px;right:8px;font-size:11px;padding:3px 9px;">✦</button>
           <div class="label">🏦 Épargne totale</div>
-          <div class="value" id="accountEpargne" style="color:#6b4d99;">0,00 €</div>
+          <div class="value" id="accountEpargne" style="color:var(--accent-ink);">0,00 €</div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="accountEpargneDetail"></div>
         </div>
       </div>
@@ -3298,7 +3320,7 @@
               <input type="text" id="newFinanceCatInput" placeholder="Nouvelle catégorie…" maxlength="40"
                 style="flex:1;min-width:0;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);"
                 onkeydown="if(event.key==='Enter')_addFinanceCat()" />
-              <button onclick="_addFinanceCat()" style="padding:6px 12px;border-radius:8px;border:none;background:var(--lavender);color:white;font-size:13px;cursor:pointer;font-family:inherit;">+</button>
+              <button onclick="_addFinanceCat()" style="padding:6px 12px;border-radius:8px;border:none;background:var(--lavender);color:var(--on-accent);font-size:13px;cursor:pointer;font-family:inherit;">+</button>
             </div>
           </div>
           <div>
@@ -3441,16 +3463,16 @@
       <div style="display:flex;gap:24px;margin-bottom:14px;flex-wrap:wrap;">
         <div>
           <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Total</div>
-          <strong id="savingsTotal" style="color:#6b4d99;font-size:22px;font-weight:700;">0,00 €</strong>
+          <strong id="savingsTotal" style="color:var(--accent-ink);font-size:22px;font-weight:700;">0,00 €</strong>
         </div>
         <div>
           <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Ce mois</div>
-          <strong id="savingsMonth" style="color:#6b4d99;font-size:22px;font-weight:700;">+0,00 €</strong>
+          <strong id="savingsMonth" style="color:var(--accent-ink);font-size:22px;font-weight:700;">+0,00 €</strong>
         </div>
       </div>
       <div id="savingsBreakdown" style="margin-bottom:14px;"></div>
       <p style="color:var(--ink-soft);font-size:13px;margin:0 0 8px;">Pour ajouter une mise de côté : formulaire « Nouvelle transaction » au-dessus → choisis <strong>💰 Épargne</strong>. Pour modéliser un retrait, mets un montant négatif.</p>
-      <button onclick="openVirementModal()" style="background:var(--lavender-soft);border:1px solid var(--lavender);color:#6b4d99;border-radius:10px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px;">⇄ Faire un virement entre comptes</button>
+      <button onclick="openVirementModal()" style="background:var(--lavender-soft);border:1px solid var(--lavender);color:var(--accent-ink);border-radius:10px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px;">⇄ Faire un virement entre comptes</button>
       <div class="chart-wrap" style="height:200px;"><canvas id="savingsChart"></canvas></div>
     </div>
     <!-- Évolution du solde -->
@@ -3983,7 +4005,7 @@
       <textarea id="gestionPrompt" readonly
         style="width:100%;height:220px;padding:12px;border:1px solid var(--line);border-radius:12px;font-family:inherit;font-size:12px;color:var(--ink);background:#faf8fd;resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
       <button onclick="copyGestionPrompt()"
-        style="position:absolute;top:10px;right:10px;padding:5px 12px;border-radius:8px;border:none;background:var(--lilac);color:white;font-size:12px;font-weight:600;cursor:pointer;" id="gestionCopyBtn">
+        style="position:absolute;top:10px;right:10px;padding:5px 12px;border-radius:8px;border:none;background:var(--lilac);color:var(--on-accent);font-size:12px;font-weight:600;cursor:pointer;" id="gestionCopyBtn">
         📋 Copier
       </button>
     </div>
@@ -4048,7 +4070,7 @@
       <p style="font-size:11px;color:var(--ink-soft);margin:0;line-height:1.6;">💡 <strong>Le sexe</strong> sert au calcul des dépenses énergétiques (calories) et permet d'activer un suivi du cycle menstruel. <strong>Le genre</strong> permet à l'app de s'adresser à toi correctement. Les deux sont facultatifs et modifiables à tout moment dans <strong>Personnaliser</strong>.</p>
     </div>
 
-    <button onclick="_confirmGenderPrompt()" style="width:100%;padding:11px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Continuer</button>
+    <button onclick="_confirmGenderPrompt()" style="width:100%;padding:11px;border-radius:12px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Continuer</button>
     <a href="#" onclick="event.preventDefault();_confirmGenderPrompt(true)" style="display:inline-block;margin-top:12px;font-size:12px;color:var(--ink-softer);text-decoration:underline;cursor:pointer;">Passer pour l'instant</a>
   </div>
 </div>
@@ -4079,7 +4101,7 @@
         <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);width:fit-content;">
           <button id="genderF" onclick="_setGender('f')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Elle</button>
           <button id="genderM" onclick="_setGender('m')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">Il</button>
-          <button id="genderX" onclick="_setGender('x')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">Iel</button>
+          <button id="genderX" onclick="_setGender('x')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:var(--lavender);color:var(--on-accent);font-family:inherit;">Iel</button>
         </div>
       </div>
 
@@ -4130,7 +4152,7 @@
       <div class="section-title" style="margin-top:20px;">🌐 Langue</div>
       <p style="font-size:13px;color:var(--ink-soft);margin:-4px 0 12px;">Traduit l'interface (via Google Traduction).</p>
       <div style="display:flex;gap:2px;background:var(--bg-1);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow);width:fit-content;">
-        <button id="langFR" onclick="_setLang('fr')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:var(--lavender);color:white;font-family:inherit;">FR</button>
+        <button id="langFR" onclick="_setLang('fr')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:var(--lavender);color:var(--on-accent);font-family:inherit;">FR</button>
         <button id="langEN" onclick="_setLang('en')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">EN</button>
         <button id="langES" onclick="_setLang('es')" style="padding:6px 16px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:none;color:var(--ink-soft);font-family:inherit;">ES</button>
       </div>
@@ -4267,7 +4289,7 @@
     </div>
     <div id="helpBody" style="font-size:14px;color:var(--ink);line-height:1.7;text-align:justify;"></div>
     <div id="helpFooter" style="margin-top:18px;text-align:right;">
-      <button onclick="closeHelp()" style="padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Compris ✓</button>
+      <button onclick="closeHelp()" style="padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Compris ✓</button>
     </div>
   </div>
 </div>
@@ -4293,7 +4315,7 @@
     <input type="text" id="promptModalInput" style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--bg-1);box-sizing:border-box;margin-bottom:16px;" onkeydown="if(event.key==='Enter')_closePromptModal(true)" />
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button onclick="_closePromptModal(false)" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-      <button onclick="_closePromptModal(true)" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">OK</button>
+      <button onclick="_closePromptModal(true)" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">OK</button>
     </div>
   </div>
 </div>
@@ -4321,7 +4343,7 @@
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;" id="emEmojiGrid"></div>
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button onclick="_closeEmotionModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-      <button onclick="_saveEmotionModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
+      <button onclick="_saveEmotionModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
     </div>
   </div>
 </div>
@@ -4398,7 +4420,7 @@
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button onclick="_closeHabitModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-      <button onclick="_saveHabitModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
+      <button onclick="_saveHabitModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -4563,7 +4585,7 @@
 
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button onclick="_closeSymptomModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-      <button onclick="_saveSymptomModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
+      <button onclick="_saveSymptomModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
     </div>
   </div>
 </div>
@@ -4594,7 +4616,7 @@
     <div class="emoji-picker-grid" id="routineItemEmojiGrid" style="margin-bottom:16px;"></div>
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button onclick="_closeRoutineItemModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-      <button onclick="_saveRoutineItemModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
+      <button onclick="_saveRoutineItemModal()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
     </div>
   </div>
 </div>
@@ -4799,7 +4821,7 @@
     <select id="virFrom" onchange="_virUpdateHint()"></select>
 
     <div style="display:flex;justify-content:center;margin:10px 0 0;">
-      <button type="button" onclick="_virSwap()" title="Inverser source et destination" style="width:38px;height:38px;border-radius:50%;border:1px solid var(--lavender);background:var(--lavender-soft);color:#6b4d99;font-size:18px;cursor:pointer;font-family:inherit;line-height:1;">⇅</button>
+      <button type="button" onclick="_virSwap()" title="Inverser source et destination" style="width:38px;height:38px;border-radius:50%;border:1px solid var(--lavender);background:var(--lavender-soft);color:var(--accent-ink);font-size:18px;cursor:pointer;font-family:inherit;line-height:1;">⇅</button>
     </div>
 
     <label for="virTo" style="margin-top:0;">Vers (compte destination)</label>
@@ -4985,7 +5007,7 @@
     <details style="margin-top:14px;font-size:13px;">
       <summary style="cursor:pointer;color:var(--ink);font-weight:500;">📖 Comment obtenir cette URL ?</summary>
       <ol style="color:var(--ink-soft);line-height:1.7;padding-left:20px;margin-top:8px;">
-        <li>Va sur <a href="https://calendar.google.com" target="_blank" style="color:#6b4d99;">calendar.google.com</a> (sur ordi)</li>
+        <li>Va sur <a href="https://calendar.google.com" target="_blank" style="color:var(--accent-ink);">calendar.google.com</a> (sur ordi)</li>
         <li>Dans la barre de gauche, survole le calendrier voulu → clique sur ⋮ → <strong>Paramètres et partage</strong></li>
         <li>Scrolle jusqu'à <strong>« Adresse secrète au format iCal »</strong></li>
         <li>Clique sur l'URL pour la copier (elle commence par <code>https://calendar.google.com/calendar/ical/...</code>)</li>
@@ -4999,14 +5021,14 @@
       <div style="margin-top:10px;padding:12px;background:var(--bg-1);border-radius:10px;border:1px solid var(--line);">
         <p style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;line-height:1.5;">Si la connexion automatique échoue (proxies indisponibles), tu peux importer ton calendrier manuellement :</p>
         <ol style="font-size:12px;color:var(--ink-soft);line-height:1.7;padding-left:18px;margin:0 0 10px;">
-          <li>Va sur <a href="https://calendar.google.com" target="_blank" style="color:#6b4d99;">calendar.google.com</a></li>
+          <li>Va sur <a href="https://calendar.google.com" target="_blank" style="color:var(--accent-ink);">calendar.google.com</a></li>
           <li>Sur l'agenda voulu → ⋮ → <strong>Paramètres et partage</strong></li>
           <li>Scrolle jusqu'à <strong>« Adresse secrète au format iCal »</strong> → clique sur l'URL pour l'ouvrir dans un onglet</li>
           <li>Sélectionne tout le texte (Cmd+A) → Copie (Cmd+C)</li>
           <li>Colle ici ci-dessous :</li>
         </ol>
         <textarea id="gcalManualICS" rows="4" placeholder="Colle ici le contenu de l'ICS (BEGIN:VCALENDAR...)" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:11px;font-family:monospace;color:var(--ink);background:white;resize:vertical;"></textarea>
-        <button onclick="_importGcalManual()" style="margin-top:8px;padding:8px 16px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">📥 Importer ce contenu</button>
+        <button onclick="_importGcalManual()" style="margin-top:8px;padding:8px 16px;border-radius:10px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">📥 Importer ce contenu</button>
       </div>
     </details>
     <div class="actions">
@@ -5356,7 +5378,7 @@
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;">
       <button onclick="_closePersoExpenseModal()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-      <button id="persoExpenseSaveBtn" onclick="_savePersoExpense()" style="padding:9px 20px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
+      <button id="persoExpenseSaveBtn" onclick="_savePersoExpense()" style="padding:9px 20px;border-radius:10px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Ajouter</button>
     </div>
   </div>
 </div>
@@ -5379,7 +5401,7 @@
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;">
       <button onclick="_closePersoBudgetSectionModal()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:white;cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-      <button onclick="_savePersoBudgetSection()" style="padding:9px 20px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Créer</button>
+      <button onclick="_savePersoBudgetSection()" style="padding:9px 20px;border-radius:10px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Créer</button>
     </div>
   </div>
 </div>
@@ -5444,7 +5466,7 @@
         <input type="text" id="newTimeCatLabel" placeholder="Nom du projet" style="flex:1;min-width:120px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" onkeydown="if(event.key==='Enter')_createTimeCat()" />
         <input type="hidden" id="newTimeCatColor" value="" />
         <div id="newTimeCatColorPicker" style="display:flex;gap:5px;align-items:center;" title="Couleur (palette pastel de l'app)"></div>
-        <button onclick="_createTimeCat()" style="padding:8px 16px;border-radius:10px;border:none;background:var(--lavender);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Ajouter</button>
+        <button onclick="_createTimeCat()" style="padding:8px 16px;border-radius:10px;border:none;background:var(--lavender);color:var(--on-accent);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Ajouter</button>
       </div>
     </div>
   </div>
@@ -5477,7 +5499,7 @@
       </div>
     </div>
     <div style="display:flex;justify-content:flex-end;padding-top:14px;border-top:1px solid var(--line);margin-top:12px;">
-      <button onclick="saveCongesConfig()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Enregistrer</button>
+      <button onclick="saveCongesConfig()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:var(--on-accent);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -6673,6 +6695,9 @@ function setupTabs() {
   });
   document.querySelectorAll(".sub-tab").forEach(t => {
     t.addEventListener("click", () => {
+      // Boutons qui ont juste l'apparence d'un sous-onglet (ex. Santé : Poids / Masse grasse / Masse
+      // maigre) : pas de sous-vue à afficher. Avant, le clic faisait planter ce code.
+      if (!t.dataset.sub) return;
       const parent = t.closest(".view");
       parent.querySelectorAll(".sub-tab").forEach(x => x.classList.remove("active"));
       parent.querySelectorAll(".sub-view").forEach(v => v.classList.remove("active"));
@@ -7835,7 +7860,7 @@ function _renderProjFicheChecklist(projId) {
       <input type="text" id="projChecklistInput-${projId}" placeholder="Nouvelle entrée…" maxlength="200"
         onkeydown="if(event.key==='Enter')_addProjChecklist('${projId}')"
         style="flex:1;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" />
-      <button onclick="_addProjChecklist('${projId}')" style="padding:8px 14px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:600;cursor:pointer;font-family:inherit;font-size:13px;">+ Ajouter</button>
+      <button onclick="_addProjChecklist('${projId}')" style="padding:8px 14px;border-radius:10px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:600;cursor:pointer;font-family:inherit;font-size:13px;">+ Ajouter</button>
     </div>`;
 }
 function _addProjChecklist(projId) {
@@ -8046,7 +8071,7 @@ function _renderProjFicheLinks(projId) {
       <input type="url" id="projLinkUrl-${projId}" placeholder="https://…" maxlength="500"
         onkeydown="if(event.key==='Enter')_addProjLink('${projId}')"
         style="padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);background:white;" />
-      <button onclick="_addProjLink('${projId}')" style="padding:8px 14px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:600;cursor:pointer;font-family:inherit;font-size:13px;">+ Ajouter le lien</button>
+      <button onclick="_addProjLink('${projId}')" style="padding:8px 14px;border-radius:10px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:600;cursor:pointer;font-family:inherit;font-size:13px;">+ Ajouter le lien</button>
     </div>`;
 }
 function _addProjLink(projId) {
@@ -8132,7 +8157,7 @@ function renderProjectFiche(p) {
         <button class="btn-primary" onclick="openAddCourseForm()">+ Ajouter</button>
       </div>
       <div id="addCourseForm" style="display:none;background:#faf8fd;border-radius:12px;padding:14px;margin-bottom:14px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr 2fr 1fr 1fr 80px auto;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(130px,100%),1fr));gap:8px;align-items:center;">
           <input type="text" id="newCourseYear" placeholder="2025-2026" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
           <input type="text" id="newCourseSchool" placeholder="Établissement" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
           <input type="text" id="newCourseName" placeholder="Intitulé du cours" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
@@ -13379,12 +13404,13 @@ function renderPill() {
     label.innerHTML        = `Jour de pause (${dayInfo.packDay}/${dayInfo.pauseDays}) ${linkSpan("var(--ink-softer)")}`;
     label.style.color      = "var(--ink-soft)";
   } else if (taken) {
-    btn.style.borderColor  = "#7c5cbf";
-    btn.style.background   = "#f3eeff";
+    // Couleurs du thème (avant : violet fixe, même en thème Sérieux)
+    btn.style.borderColor  = "var(--accent-ink)";
+    btn.style.background   = "var(--lavender-soft)";
     check.style.opacity    = "1";
-    check.style.color      = "#7c5cbf";
-    label.innerHTML        = `Pilule prise ✓ <span style="font-size:11px;color:#9b7fd4;">${d.pillTakenAt || ""}</span> ${linkSpan("#9b7fd4")}`;
-    label.style.color      = "#7c5cbf";
+    check.style.color      = "var(--accent-ink)";
+    label.innerHTML        = `Pilule prise ✓ <span style="font-size:11px;color:var(--ink-soft);">${d.pillTakenAt || ""}</span> ${linkSpan("var(--ink-soft)")}`;
+    label.style.color      = "var(--accent-ink)";
   } else if (hourLate) {
     btn.style.borderColor  = "#d99a2b";
     btn.style.background   = "#fff8e8";
@@ -13394,7 +13420,7 @@ function renderPill() {
     label.style.color      = "#a3720f";
   } else {
     btn.style.borderColor  = "var(--line)";
-    btn.style.background   = "white";
+    btn.style.background   = "var(--card)";
     check.style.opacity    = "0.2";
     check.style.color      = "var(--ink-soft)";
     label.innerHTML        = `Pilule du jour ${linkSpan("var(--ink-softer)")}`;
@@ -15307,7 +15333,7 @@ function renderExternalSummary() {
     const d = new Date(tx.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
     const extId = tx.type === "expense" ? (tx.fromSavingsAccount||"").slice(4) : (tx.externalAccountId || "ext-default");
     const acc = accounts.find(a => a.id === extId);
-    const accLabel = acc && accounts.length > 1 ? `<span style="font-size:10px;background:var(--lavender-soft);border-radius:4px;padding:1px 5px;color:#6b4d99;">${acc.emoji} ${escapeHtml(acc.name)}</span>` : "";
+    const accLabel = acc && accounts.length > 1 ? `<span style="font-size:10px;background:var(--lavender-soft);border-radius:4px;padding:1px 5px;color:var(--accent-ink);">${acc.emoji} ${escapeHtml(acc.name)}</span>` : "";
     return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed #f0eaf8;font-size:12px;">
       <span style="flex:1;color:var(--ink-soft);">${escapeHtml(tx.category)} — ${escapeHtml(tx.note || "—")} ${accLabel}</span>
       <span style="color:var(--ink);">−${tx.amount.toFixed(2)} €</span>
@@ -15948,8 +15974,8 @@ function renderAccounts() {
   const startC = state.accounts?.courantStart || 0;
   const startE = state.accounts?.epargneStart || 0;
   const editLinks = (acc) => `
-    <a href="#" onclick="event.preventDefault();editAccountStart('${acc}')" style="color:#6b4d99;text-decoration:underline;cursor:pointer;font-weight:600;margin-right:10px;">✏️ Modifier départ</a>
-    <a href="#" onclick="event.preventDefault();setCurrentBalance('${acc}')" style="color:#6b4d99;text-decoration:underline;cursor:pointer;font-weight:600;">📍 Caler sur solde actuel</a>`;
+    <a href="#" onclick="event.preventDefault();editAccountStart('${acc}')" style="color:var(--accent-ink);text-decoration:underline;cursor:pointer;font-weight:600;margin-right:10px;">✏️ Modifier départ</a>
+    <a href="#" onclick="event.preventDefault();setCurrentBalance('${acc}')" style="color:var(--accent-ink);text-decoration:underline;cursor:pointer;font-weight:600;">📍 Caler sur solde actuel</a>`;
   document.getElementById("accountCourantDetail").innerHTML =
     `Solde de départ : ${startC.toFixed(2)} € · Variation : ${(c - startC >= 0 ? "+" : "")}${(c - startC).toFixed(2)} €<br>${editLinks("courant")}`;
   document.getElementById("accountEpargneDetail").innerHTML =
@@ -16054,7 +16080,7 @@ function openSecondaryAccountsManager() {
   const newNoteInp = document.createElement("input"); newNoteInp.id = "newSecNote"; newNoteInp.placeholder = "Note (optionnel)…";
   newNoteInp.style.cssText = "flex-basis:100%;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;color:var(--ink-soft);";
   const addBtn = document.createElement("button"); addBtn.textContent = "Ajouter"; addBtn.type = "button";
-  addBtn.style.cssText = "padding:7px 12px;border-radius:8px;border:none;background:var(--lavender-soft);color:#6b4d99;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;";
+  addBtn.style.cssText = "padding:7px 12px;border-radius:8px;border:none;background:var(--lavender-soft);color:var(--accent-ink);font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;";
   addBtn.onclick = () => {
     const name = newNameInp.value.trim(); if (!name) { showToast("⚠️ Entre un nom."); return; }
     const emoji = newEmojiInp.value || "🧾";
@@ -16082,7 +16108,7 @@ function openSecondaryAccountsManager() {
   bodyEl.appendChild(addRow);
   const saveRow = document.createElement("div"); saveRow.style.cssText="margin-top:12px;display:flex;justify-content:flex-end;";
   const saveBtn = document.createElement("button"); saveBtn.textContent="Enregistrer ✓";
-  saveBtn.style.cssText="padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;";
+  saveBtn.style.cssText="padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;";
   saveBtn.onclick = _saveAllAccounts;
   saveRow.appendChild(saveBtn); bodyEl.appendChild(saveRow);
   document.getElementById("helpModal").classList.add("open");
@@ -16149,10 +16175,10 @@ function openSavingsAccountsManager() {
       <button type="button" id="newSavEmojiBtn" onclick="_openEmojiPopup(this,'newSavEmoji')" style="width:38px;height:38px;font-size:20px;border:1px solid var(--line);border-radius:8px;background:var(--bg-1);cursor:pointer;flex-shrink:0;">🏦</button>
       <input type="hidden" id="newSavEmoji" value="🏦" />
       <input type="text" id="newSavAccName" placeholder="Nom du nouveau compte…" style="flex:1;min-width:100px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;color:var(--ink);" />
-      <button onclick="_addSavAccFromEdit()" style="padding:8px 14px;border-radius:10px;border:none;background:var(--lavender-soft);color:#6b4d99;font-weight:700;cursor:pointer;font-family:inherit;">Ajouter</button>
+      <button onclick="_addSavAccFromEdit()" style="padding:8px 14px;border-radius:10px;border:none;background:var(--lavender-soft);color:var(--accent-ink);font-weight:700;cursor:pointer;font-family:inherit;">Ajouter</button>
     </div>
     <div style="margin-top:14px;display:flex;justify-content:flex-end;">
-      <button onclick="_saveSavingsAccounts()" style="padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer ✓</button>
+      <button onclick="_saveSavingsAccounts()" style="padding:9px 22px;border-radius:12px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer ✓</button>
     </div>`;
   document.getElementById("helpModal").classList.add("open");
   const _hf = document.getElementById("helpFooter"); if (_hf) _hf.style.display = "none";
@@ -17072,10 +17098,10 @@ function renderTxList() {
       <div class="tx-row" style="background:var(--lavender-soft);border-radius:10px;margin-bottom:2px;">
         <div class="tx-dot" style="background:#c9b6f0"></div>
         <div class="tx-info">
-          <div class="tx-cat" style="color:#6b4d99;">⇄ ${escapeHtml(from)} → ${escapeHtml(to)}</div>
+          <div class="tx-cat" style="color:var(--accent-ink);">⇄ ${escapeHtml(from)} → ${escapeHtml(to)}</div>
           <div class="tx-note">${escapeHtml(label)}</div>
         </div>
-        <div class="tx-amount savings" style="color:#6b4d99;">${Math.abs(tx.amount).toFixed(2)} €</div>
+        <div class="tx-amount savings" style="color:var(--accent-ink);">${Math.abs(tx.amount).toFixed(2)} €</div>
         <div class="tx-date">${d}</div>
         <button class="tx-edit" style="visibility:hidden;">✎</button>
         <button class="tx-del" onclick="deleteVirement('${tx.virementId}')" title="Supprimer">✕</button>
@@ -19174,7 +19200,7 @@ function _openPillarChooser(deactivated) {
     <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);">
       <span style="font-size:20px;">${p.emoji}</span>
       <span style="flex:1;font-size:14px;font-weight:600;color:var(--ink);">${escapeHtml(p.name)}</span>
-      <button onclick="reactivatePillar('${p.id}')" ${disabledAttr} style="padding:6px 14px;border-radius:10px;border:none;background:var(--lavender);color:white;font-weight:600;cursor:pointer;font-family:inherit;font-size:13px;${disabledStyle}">Réactiver</button>
+      <button onclick="reactivatePillar('${p.id}')" ${disabledAttr} style="padding:6px 14px;border-radius:10px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:600;cursor:pointer;font-family:inherit;font-size:13px;${disabledStyle}">Réactiver</button>
     </div>`).join('');
   document.getElementById("pillarConfigBody").innerHTML = `
     <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px;">Ces piliers ont été désactivés mais gardent leur configuration d'origine (indicateurs et objectifs). Tu peux en réactiver un, ou créer un pilier entièrement personnalisé.</p>
@@ -24928,7 +24954,7 @@ function applyTheme(id, persist = true) {
     const card = document.getElementById("themeCard"  + key);
     if (btn) {
       btn.style.background  = t === id ? "var(--lavender)" : "none";
-      btn.style.color       = t === id ? "white" : "var(--ink-soft)";
+      btn.style.color       = t === id ? "var(--on-accent)" : "var(--ink-soft)";
       btn.style.fontWeight  = t === id ? "700" : "600";
     }
     if (chk)  chk.style.display  = t === id ? "" : "none";
@@ -24964,7 +24990,7 @@ function _refreshGenderButtons() {
     if (!btn) return;
     const active = g === cur;
     btn.style.background = active ? "var(--lavender)" : "none";
-    btn.style.color = active ? "white" : "var(--ink-soft)";
+    btn.style.color = active ? "var(--on-accent)" : "var(--ink-soft)";
     btn.style.fontWeight = active ? "700" : "600";
   });
 }
@@ -24982,7 +25008,7 @@ function _refreshSexButtons() {
     if (!btn) return;
     const active = s === cur;
     btn.style.background = active ? "var(--lavender)" : "none";
-    btn.style.color = active ? "white" : "var(--ink-soft)";
+    btn.style.color = active ? "var(--on-accent)" : "var(--ink-soft)";
     btn.style.fontWeight = active ? "700" : "600";
   });
 }
@@ -25016,7 +25042,7 @@ function _gpPick(kind, value) {
     const active = b.getAttribute(attr) === value;
     b.style.background = active ? "var(--lavender)" : "none";
     b.style.borderColor = active ? "var(--lavender)" : "var(--line)";
-    b.style.color = active ? "white" : "var(--ink-soft)";
+    b.style.color = active ? "var(--on-accent)" : "var(--ink-soft)";
     b.style.fontWeight = active ? "700" : "600";
   });
 }
@@ -25923,7 +25949,7 @@ function openShortcutsEditor() {
           </div>
         </div>`).join("")}
     </div>
-    <button onclick="this.closest('[style*=position]').remove()" style="margin-top:16px;width:100%;padding:10px;border-radius:10px;border:none;background:var(--lilac);color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Fermer</button>
+    <button onclick="this.closest('[style*=position]').remove()" style="margin-top:16px;width:100%;padding:10px;border-radius:10px;border:none;background:var(--lilac);color:var(--on-accent);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Fermer</button>
   </div>`;
   modal.onclick = e => { if (e.target === modal && _modalMouseDownTarget === modal) modal.remove(); };
   document.body.appendChild(modal);
@@ -28074,7 +28100,7 @@ function _micPulse(on) {
       <button id="freeNoteDeleteBtn" onclick="_deleteFreeNoteFromModal()" style="padding:10px 16px;border-radius:12px;border:1.5px solid #ffb3b3;background:white;color:#e06060;cursor:pointer;font-family:inherit;font-size:14px;display:none;">🗑️ Supprimer</button>
       <div style="flex:1;"></div>
       <button onclick="_closeFreeNoteModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-      <button onclick="_saveFreeNote()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
+      <button onclick="_saveFreeNote()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -28098,7 +28124,7 @@ function _micPulse(on) {
       <button id="persoNoteDeleteBtn" onclick="_deletePersoNoteFromModal()" style="padding:10px 16px;border-radius:12px;border:1.5px solid #ffb3b3;background:white;color:#e06060;cursor:pointer;font-family:inherit;font-size:14px;display:none;">🗑️ Supprimer</button>
       <div style="flex:1;"></div>
       <button onclick="_closePersoNoteModal()" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--line);background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
-      <button onclick="_savePersoNote()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
+      <button onclick="_savePersoNote()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;">Enregistrer</button>
     </div>
   </div>
 </div>

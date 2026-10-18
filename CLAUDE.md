@@ -200,6 +200,13 @@ function renderTodayView() {
 - `.habit` / `.habit-numeric` — ligne d'habitude
 - `.btn-icon` — bouton pill dans le header
 
+### Couleurs à utiliser (depuis v1350)
+- Texte sur un bouton lavande / lilas : `color: var(--on-accent)` (jamais `white` : 1,8:1, illisible)
+- Encre d'accent (montants épargne, liens) : `var(--accent-ink)` (jamais `#6b4d99` en dur)
+- Arrondis : `var(--radius-card)` (cartes) / `var(--radius-card-lg)` (anneaux, fenêtres) — Sérieux = 8px
+- Ne pas remettre `maximum-scale` / `user-scalable=no` dans le viewport (zoom à deux doigts)
+- Un bouton qui a juste le style `.sub-tab` sans `data-sub` est ignoré par `setupTabs`
+
 ### Design system
 Style pastel féminin, doux. Arrondis généreux (12-16px). Pas de couleurs criardes. Palette : lavande, mint, peach, rose, sky, butter.
 
