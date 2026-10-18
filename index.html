@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1345</title>
+<title>Mon Tableau de Vie 🌿 · v1346</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6374,7 +6374,18 @@ function saveState(userAction = true) {
     window._lastLocalSave = Date.now();
     _fbQueueSave();
   }
-  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  } catch (e) {
+    // Stockage du navigateur plein : on libère d'abord la copie de travail de la synchro (elle est
+    // aussi gardée en mémoire), puis on réessaie. En dernier recours, on prévient au lieu d'échouer
+    // en silence (avant, l'erreur interrompait l'action en cours sans rien dire).
+    try { localStorage.removeItem("tableauDeVie_v3_cloudBase"); localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+    catch (e2) {
+      console.warn("[saveState] stockage plein", e2);
+      if (!window._quotaWarned) { window._quotaWarned = true; showToast("⚠️ Mémoire du navigateur pleine — tes modifs partent au cloud mais ne sont plus gardées sur l'appareil. Exporte une sauvegarde.", 8000); }
+    }
+  }
 }
 // Sauvegarde silencieuse : localStorage uniquement, sans toucher au lastModified ni Firebase
 function saveStateQuiet() { saveState(false); }
@@ -20157,6 +20168,7 @@ function renderCalUpcoming() {
   const limit = new Date(now); limit.setDate(now.getDate() + 7);
   const events = getAllCalEvents()
     .filter(e => {
+      if (typeof e.date !== "string") return false; // événement mal formé (import) : ignoré plutôt que bloquer l'appli
       const [y, m, d] = e.date.split("-").map(Number);
       const ed = new Date(y, m - 1, d);
       return ed >= now && ed <= limit;
@@ -20401,7 +20413,7 @@ function _importGcalManual() {
 function disconnectGoogleCal() {
   _showConfirm("Déconnecter Google Agenda ?<br><small style='opacity:0.7'>Les événements importés seront supprimés. Tes autres données ne sont pas touchées.</small>", () => {
     state.googleCal = { url: "", lastSync: null };
-    state.calEvents = [];
+    state.calEvents = state.calEvents.filter(e => e.sourceId === "manual"); // les RDV créés à la main restent
     saveState(); closeGoogleCalModal(); renderCalendar();
     showToast("Google Agenda déconnecté");
   }, { icon: "🔌", okLabel: "Déconnecter", okColor: "#f08080" });
@@ -24900,14 +24912,8 @@ function _confirmGenderPrompt(skip) {
 // Exporte TOUT le localStorage au format {clé: valeur} (compatible avec les anciennes sauvegardes manuelles)
 function exportData() {
   try {
-    const dump = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      dump[k] = localStorage.getItem(k);
-    }
-    const d = new Date();
-    const stamp = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-    const blob = new Blob([JSON.stringify(dump)], { type: "application/json" });
+    const stamp = todayKey();
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -24944,11 +24950,18 @@ function importData() {
       }
       _showConfirm("⚠️ Importer va REMPLACER toutes tes données actuelles par celles du fichier.<br><small style='opacity:0.7'>💡 Exporte d'abord une sauvegarde si tu veux garder l'état actuel.</small>", () => {
         try {
+          // Les infos internes de synchro du fichier ne sont pas restaurées (elles décrivent le cloud
+          // au moment de l'export, plus celui d'aujourd'hui).
+          const SYNC_KEYS = [CLOUD_BASE_KEY, CLOUD_SYNCED_KEY, "_lastLoginUid"];
           if (isDump) {
-            for (const k in data) localStorage.setItem(k, data[k]);
+            for (const k in data) if (!SYNC_KEYS.includes(k)) localStorage.setItem(k, data[k]);
           } else {
             localStorage.setItem(STORE_KEY, JSON.stringify(data));
           }
+          // Au rechargement, les données importées REMPLACENT celles du cloud (c'est ce que l'on demande),
+          // au lieu d'être recouvertes par le cloud dont l'horodatage est plus récent.
+          localStorage.removeItem(CLOUD_BASE_KEY);
+          localStorage.setItem(IMPORT_PUSH_KEY, "1");
           showToast("📤 Données importées — rechargement…");
           setTimeout(() => location.reload(), 700);
         } catch (err) {
@@ -25047,14 +25060,8 @@ document.getElementById("settingsModal").addEventListener("click", e => { if (e.
 });
 
 /* ========= EXPORT / IMPORT ========= */
-function exportData() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = `tableau-de-vie-${todayKey()}.json`; a.click();
-  URL.revokeObjectURL(url);
-}
-function importData() { document.getElementById("importFile").click(); }
+// (exportData / importData : voir plus haut, une seule version — il en existait deux, et la seconde,
+// celle qui s'appliquait, vidait l'appli avec une sauvegarde au format "dump" de l'ancien export.)
 
 function resetAllData() {
   _showConfirm("⚠️ Effacer TOUTES tes données ?<br><small style='opacity:0.7'>Cela remet l'appli à zéro (habitudes, finances, journal, santé…). Ton compte Google reste connecté. Cette action est irréversible.</small>", () => {
@@ -25097,22 +25104,6 @@ async function _deleteAccountNow() {
   showToast("✅ Compte supprimé. Rechargement…");
   setTimeout(() => { window.location.href = window.location.pathname + "?_r=" + Date.now(); }, 1400);
 }
-document.getElementById("importFile").addEventListener("change", e => {
-  const f = e.target.files[0]; if (!f) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const imported = JSON.parse(ev.target.result);
-      _showConfirm("Cela remplacera toutes tes données actuelles. Continuer ?", () => {
-        state = migrate({ ...DEFAULT_STATE, ...imported });
-        saveState(); renderAll();
-      }, { icon: "⚠️", okLabel: "Remplacer", okColor: "#f08080" });
-    } catch (err) { showToast("❌ Fichier invalide : " + err.message); }
-  };
-  reader.readAsText(f);
-  e.target.value = "";
-});
-
 /* ========= CHART BASE ========= */
 function baseChartOpts() {
   return {
@@ -26414,9 +26405,11 @@ try {
       <p style="font-size:14px;">Une erreur JavaScript s'est produite au chargement.</p>
       <pre style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px;font-size:12px;overflow-x:auto;white-space:pre-wrap;">${String(e)}\n\n${e.stack||''}</pre>
       <p style="font-size:12px;color:#888;">Fais un screenshot de cette page et envoie-le.</p>
-      <button onclick="localStorage.clear();location.reload()" style="margin-top:16px;padding:10px 20px;background:#dc7014;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;">
-        🔄 Réinitialiser et recharger
-      </button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+        <button onclick="location.reload()" style="padding:10px 20px;background:#dc7014;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;">🔄 Recharger</button>
+        <button onclick="(function(){var b=new Blob([localStorage.getItem('tableauDeVie_v3')||'{}'],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='tableau-de-vie-secours.json';document.body.appendChild(a);a.click();})()" style="padding:10px 20px;background:white;color:#333;border:1px solid #ddd;border-radius:8px;font-size:14px;cursor:pointer;">💾 Télécharger mes données (secours)</button>
+      </div>
+      <p style="font-size:12px;color:#888;">Tes données ne sont pas effacées : elles restent sur cet appareil et dans le cloud.</p>
     </div>`;
 }
 // Synchro Google Agenda automatique au démarrage (si URL configurée et dernière sync > 30 min)
@@ -26607,6 +26600,10 @@ function _readCloudState(data) {
 
 function _coreForCloud() {
   const s = JSON.parse(JSON.stringify(state));
+  // Les événements importés (Google Agenda, .ics) restent locaux — chaque appareil les réimporte —
+  // mais les événements créés À LA MAIN n'existent nulle part ailleurs : sans ça, un RDV saisi sur
+  // le téléphone n'apparaissait jamais sur l'ordinateur.
+  s.calManualEvents = (s.calEvents || []).filter(e => e.sourceId === "manual");
   delete s.calEvents;
   delete s.work;
   delete s.transactions;
@@ -26640,7 +26637,8 @@ function _assembleRemote(stateData, workData, transactionsData, domestiqueData) 
 // Fusionne une version venue du cloud SANS perdre les données locales que le cloud ne stocke pas.
 function _mergeFromCloud(remote) {
   const merged = migrate({ ...DEFAULT_STATE, ...remote });
-  merged.calEvents = state.calEvents || []; // le cloud ne contient pas le calendrier → garder le local
+  merged.calEvents = state.calEvents || []; // le cloud ne contient pas le calendrier importé → garder le local
+  delete merged.calManualEvents; // (réunis par l'appelant)
   // Clés API de l'Assistant IA : fusionnées (union), jamais remplacées en bloc — une clé
   // saisie sur un appareil ne doit pas disparaître parce qu'un autre appareil, pas encore à
   // jour, a resauvegardé sa version locale sans cette clé entre-temps.
@@ -26731,6 +26729,139 @@ function _markCloudSynced(uid) {
     if (!list.includes(uid)) { list.push(uid); localStorage.setItem(CLOUD_SYNCED_KEY, JSON.stringify(list)); }
   } catch(e) {}
 }
+
+// ── Fusion à 3 voies ─────────────────────────────────────────────────────────
+// Avant : "le plus récent écrase tout" + des filets basés sur la TAILLE des données. Conséquences :
+// une grosse suppression revenait toute seule (le cloud "plus gros" gagnait), et un appareil resté
+// en veille pouvait écraser ce qui avait été saisi ailleurs entre-temps.
+// Maintenant, chaque appareil retient la "base" = la dernière version du cloud qu'il connaît
+// (chargée ou envoyée par lui). Pour fusionner, on compare ce qui a changé DE CHAQUE CÔTÉ depuis
+// cette base : ce qui n'a bougé que d'un côté est pris de ce côté (suppressions comprises) ; ce qui
+// a bougé des deux côtés est fusionné élément par élément (listes par id, objets clé par clé) ;
+// en cas de vrai conflit sur une même valeur, cet appareil l'emporte.
+const CLOUD_BASE_KEY = "tableauDeVie_v3_cloudBase";
+const IMPORT_PUSH_KEY = "tableauDeVie_v3_importPending"; // posé par importData() : envoyer au cloud au prochain chargement
+let _cloudBase = null;      // base en mémoire (copie profonde)
+let _fbLoaded = false;      // aucune sauvegarde cloud tant que le 1er chargement n'a pas fusionné
+let _fbSaving = false, _fbSaveAgain = false;
+// Empreinte d'une valeur, indépendante de l'ordre des clés (le cloud et l'appareil ne rangent pas
+// forcément les champs dans le même ordre). Mémoïsée par objet, le temps d'UNE fusion seulement
+// (l'état est modifié ensuite) : _freshJ() repart d'un cache vide.
+function _canonFactory() {
+  const memo = new WeakMap();
+  const f = x => {
+    if (x === null || typeof x !== "object") return JSON.stringify(x);
+    let s = memo.get(x);
+    if (s !== undefined) return s;
+    if (Array.isArray(x)) s = "[" + x.map(v => (v === undefined ? "null" : f(v))).join(",") + "]";
+    else s = "{" + Object.keys(x).sort().filter(k => x[k] !== undefined && typeof x[k] !== "function")
+      .map(k => JSON.stringify(k) + ":" + f(x[k])).join(",") + "}";
+    memo.set(x, s);
+    return s;
+  };
+  return f;
+}
+let _j = _canonFactory();
+function _freshJ() { _j = _canonFactory(); }
+// Forme "cloud" de l'état : tout sauf le calendrier importé, + les événements manuels.
+function _cloudView(s) {
+  const v = JSON.parse(JSON.stringify(s));
+  v.calManualEvents = (v.calEvents || []).filter(e => e.sourceId === "manual");
+  delete v.calEvents;
+  return v;
+}
+function _setCloudBase(view) {
+  _cloudBase = view ? JSON.parse(JSON.stringify(view)) : null;
+  try {
+    if (!view || !_fbUser) { localStorage.removeItem(CLOUD_BASE_KEY); return; }
+    localStorage.setItem(CLOUD_BASE_KEY, JSON.stringify({ uid: _fbUser.uid, z: LZString.compressToUTF16(JSON.stringify(view)) }));
+  } catch (e) { try { localStorage.removeItem(CLOUD_BASE_KEY); } catch (_) {} } // stockage plein : la base reste en mémoire
+}
+function _getCloudBase() {
+  if (_cloudBase) return _cloudBase;
+  try {
+    const raw = JSON.parse(localStorage.getItem(CLOUD_BASE_KEY) || "null");
+    if (raw && raw.uid === _fbUser?.uid) _cloudBase = JSON.parse(LZString.decompressFromUTF16(raw.z));
+  } catch (e) { _cloudBase = null; }
+  return _cloudBase;
+}
+const _isPlainObj = x => x !== null && typeof x === "object" && !Array.isArray(x);
+const _isIdList = a => Array.isArray(a) && a.every(x => _isPlainObj(x) && x.id != null);
+function _merge3(base, local, remote) {
+  const sl = _j(local), sr = _j(remote);
+  if (sl === sr) return local;
+  const sb = _j(base);
+  if (sl === sb) return remote;   // changé seulement dans le cloud
+  if (sr === sb) return local;    // changé seulement ici
+  // Changé des deux côtés
+  if (_isPlainObj(local) && _isPlainObj(remote)) {
+    const b = _isPlainObj(base) ? base : {};
+    const out = {};
+    for (const k of new Set([...Object.keys(local), ...Object.keys(remote)])) {
+      const inL = k in local, inR = k in remote;
+      if (inL && inR) out[k] = _merge3(b[k], local[k], remote[k]);
+      else if (inL) { if (!((k in b) && _j(b[k]) === _j(local[k]))) out[k] = local[k]; } // retiré dans le cloud et pas touché ici → retiré
+      else          { if (!((k in b) && _j(b[k]) === _j(remote[k]))) out[k] = remote[k]; }
+    }
+    return out;
+  }
+  if (_isIdList(local) && _isIdList(remote)) return _merge3Ids(_isIdList(base) ? base : [], local, remote);
+  return local;
+}
+function _merge3Ids(base, local, remote) {
+  const key = x => String(x.id);
+  const bm = new Map(base.map(x => [key(x), x]));
+  const lm = new Map(local.map(x => [key(x), x]));
+  const rm = new Map(remote.map(x => [key(x), x]));
+  const out = [];
+  for (const l of local) {
+    const id = key(l);
+    if (rm.has(id)) out.push(_merge3(bm.get(id), l, rm.get(id)));
+    else if (!(bm.has(id) && _j(bm.get(id)) === _j(l))) out.push(l); // nouveau ou modifié ici → gardé ; sinon supprimé ailleurs
+  }
+  remote.forEach((r, i) => {
+    const id = key(r);
+    if (lm.has(id)) return;
+    if (bm.has(id) && _j(bm.get(id)) === _j(r)) return; // supprimé ici, pas touché ailleurs → reste supprimé
+    // Ajouté (ou modifié) dans le cloud : on l'insère juste après l'élément qui le précède dans le cloud
+    let pos = 0;
+    for (let k = i - 1; k >= 0; k--) {
+      const p = out.findIndex(x => key(x) === key(remote[k]));
+      if (p >= 0) { pos = p + 1; break; }
+    }
+    out.splice(pos, 0, r);
+  });
+  return out;
+}
+// Fusionne la version du cloud avec l'état local. Retourne { view, changedLocal, needsPush }.
+function _merge3WithCloud(remote) {
+  _freshJ();
+  const base0 = _getCloudBase();
+  const localView = _cloudView(state);
+  const remoteView = { ...remote };
+  // Cloud écrit par une ancienne version de l'app (sans événements manuels) : "pas d'info", on garde le local.
+  if (!("calManualEvents" in remoteView)) remoteView.calManualEvents = localView.calManualEvents;
+  // Base d'avant cette fonctionnalité : les événements manuels des deux appareils sont réunis.
+  const base = base0 && !("calManualEvents" in base0) ? { ...base0, calManualEvents: [] } : base0;
+  const view = _merge3(base, localView, remoteView);
+  return { view, changedLocal: _j(view) !== _j(localView), needsPush: _j(view) !== _j(remoteView) };
+}
+// Applique une vue fusionnée à l'état (en gardant le calendrier importé et les clés IA de cet appareil).
+function _applyCloudView(view) {
+  const s = { ...view };
+  const manual = s.calManualEvents || [];
+  delete s.calManualEvents;
+  s.calEvents = [...(state.calEvents || []).filter(e => e.sourceId !== "manual"), ...manual];
+  const merged = migrate({ ...structuredClone(DEFAULT_STATE), ...s });
+  merged.aiAssistant = merged.aiAssistant || { provider: "groq", keys: {} };
+  merged.aiAssistant.keys = { ...(merged.aiAssistant.keys || {}), ...(state.aiAssistant?.keys || {}) };
+  if (state.aiAssistant?.provider) merged.aiAssistant.provider = state.aiAssistant.provider;
+  return merged;
+}
+function _readRemoteFromSnaps(snaps) {
+  const [st, wk, tx, dm] = snaps.map(d => d ? _readCloudState(d) : null);
+  return _assembleRemote(st, wk, tx, dm);
+}
 async function _fbLoad() {
   try {
     _fbSetStatus("syncing");
@@ -26753,7 +26884,35 @@ async function _fbLoad() {
     const domestiqueData   = domestiqueSnap.exists   ? _readCloudState(domestiqueSnap.data())   : null;
     const remote = _assembleRemote(stateData, workData, transactionsData, domestiqueData);
 
-    if (remote) {
+    let importPending = false;
+    try { importPending = localStorage.getItem(IMPORT_PUSH_KEY) === "1"; } catch (e) {}
+    if (importPending) {
+      // Sauvegarde importée sur cet appareil : elle remplace le cloud.
+      _fbLoaded = true;
+      state.lastModified = Date.now();
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      if (await _fbSaveNow({ force: true })) {
+        try { localStorage.removeItem(IMPORT_PUSH_KEY); } catch (e) {}
+        showToast("☁️ Données importées envoyées vers le cloud ✅");
+      }
+    } else if (remote && _getCloudBase() && _hasEverSyncedCloud(_fbUser.uid)) {
+      // Cas normal : cet appareil connaît la dernière version du cloud qu'il a vue → vraie fusion.
+      const { view, changedLocal, needsPush } = _merge3WithCloud(remote);
+      _setCloudBase(remote);
+      if (changedLocal) {
+        state = _applyCloudView(view);
+        window._lastLocalSave = 0;
+        localStorage.setItem(STORE_KEY, JSON.stringify(state));
+        renderAll();
+        renderShortcutsBar();
+        _noteRefreshFromState();
+        showToast("✨ Données synchronisées avec le cloud");
+      }
+      _fbLoaded = true;
+      if (needsPush) { state.lastModified = Date.now(); await _fbSaveNow(); }
+    } else if (remote) {
+      // Pas encore de "base" sur cet appareil (première synchro, ou première ouverture depuis la
+      // mise à jour qui l'a introduite) : ancienne règle, puis on mémorise la base.
       const localTs  = state.lastModified || 0;
       const remoteTs = remote.lastModified || 0;
       // Sur la toute première synchro de cet appareil pour ce compte, on ne pousse JAMAIS
@@ -26763,17 +26922,26 @@ async function _fbLoad() {
       // cloud, ce qui écraserait les vraies données de tous les autres appareils synchronisés
       // (c'est exactement ce qui est arrivé une fois — voir mémoire du 2026-09-06).
       const firstSyncEver = !_hasEverSyncedCloud(_fbUser.uid);
+      _setCloudBase(remote);
+      _fbLoaded = true;
       if (remoteTs > localTs || firstSyncEver) {
         state = _mergeFromCloud(remote);
+        // Événements manuels déjà dans le cloud (autre appareil à jour) : réunis avec ceux d'ici
+        if (Array.isArray(remote.calManualEvents)) {
+          const ids = new Set(state.calEvents.map(e => e.id));
+          remote.calManualEvents.forEach(e => { if (!ids.has(e.id)) state.calEvents.push(e); });
+        }
         window._lastLocalSave = 0; // protéger le lastModified cloud contre saveState post-render
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
         renderAll();
         renderShortcutsBar();
+        _noteRefreshFromState();
         showToast("✨ Données chargées depuis le cloud !");
       } else if (localTs > remoteTs) {
         await _fbSaveNow();
       }
     } else {
+      _fbLoaded = true;
       await _fbSaveNow();
       showToast("☁️ Données envoyées vers le cloud ✅");
     }
@@ -26812,6 +26980,9 @@ async function _fbLoad() {
   } catch(e) {
     console.warn("[Firebase] load error", e);
     _fbSetStatus("error");
+    // Rien n'est envoyé au cloud tant que ce chargement n'a pas réussi (sinon on écraserait le cloud
+    // sans l'avoir lu) : on réessaie un peu plus tard. Les saisies restent enregistrées sur l'appareil.
+    if (!_fbLoaded) setTimeout(() => { if (_fbUser && !_fbLoaded) _fbLoad(); }, 30000);
   }
 }
 
@@ -26832,18 +27003,36 @@ function _fbListen() {
 }
 
 function _applyRemoteSnaps() {
-  // Ignorer les snapshots qui arrivent juste après le chargement initial (même données)
-  if (Date.now() - _fbLoadTime < 4000) { _fbSetStatus("ok"); return; }
-  // Ignorer si on vient de saisir localement
+  if (!_fbLoaded) return; // le chargement initial s'en charge
+  // Saisie en cours ici (ou envoi en cours) : on n'interrompt pas — mais on REPROGRAMME, au lieu
+  // d'ignorer la modif de l'autre appareil (avant, elle était perdue puis écrasée).
   const secsSince = (Date.now() - (window._lastLocalSave||0)) / 1000;
-  if (secsSince < 6) { _fbSetStatus("ok"); return; }
-
-  const stateData        = _snapCache.state        ? _readCloudState(_snapCache.state)        : null;
-  const workData         = _snapCache.work         ? _readCloudState(_snapCache.work)         : null;
-  const transactionsData = _snapCache.transactions ? _readCloudState(_snapCache.transactions) : null;
-  const domestiqueData   = _snapCache.domestique   ? _readCloudState(_snapCache.domestique)   : null;
-  const remote = _assembleRemote(stateData, workData, transactionsData, domestiqueData);
+  if (secsSince < 6 || _fbSaving) {
+    clearTimeout(_fbListenTimer);
+    _fbListenTimer = setTimeout(_applyRemoteSnaps, Math.max(500, (6 - secsSince) * 1000));
+    return;
+  }
+  const remote = _readRemoteFromSnaps([_snapCache.state, _snapCache.work, _snapCache.transactions, _snapCache.domestique]);
   if (!remote) { _fbSetStatus("ok"); return; }
+
+  if (_getCloudBase()) {
+    _freshJ();
+    if (_j(remote) === _j(_cloudBase)) { _fbSetStatus("ok"); return; } // rien de nouveau (écho de notre envoi)
+    const { view, changedLocal, needsPush } = _merge3WithCloud(remote);
+    _setCloudBase(remote);
+    if (changedLocal) {
+      state = _applyCloudView(view);
+      window._lastLocalSave = 0;
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      renderAll();
+      renderShortcutsBar();
+      _noteRefreshFromState();
+      showToast("🔄 Mis à jour depuis un autre appareil");
+    }
+    if (needsPush) saveState(); // nos modifs locales pas encore dans le cloud
+    _fbSetStatus("ok");
+    return;
+  }
 
   const remoteTs = remote.lastModified || 0;
   const localTs  = state.lastModified  || 0;
@@ -26950,39 +27139,44 @@ function openSupportContact() {
   document.getElementById("supportContactModal").classList.add("open");
 }
 function closeSupportContact() { document.getElementById("supportContactModal").classList.remove("open"); }
-async function _fbSaveNow() {
-  if (!_fbUser || !_fbDb) return;
+async function _fbSaveNow(opts = {}) {
+  if (!_fbUser || !_fbDb || !_fbLoaded) return;
+  // Hors ligne : rien à faire maintenant, l'envoi repart au retour du réseau (écouteur "online").
+  if (navigator.onLine === false) { _fbSetStatus("error"); return; }
+  if (_fbSaving) { _fbSaveAgain = true; return; }
+  _fbSaving = true;
   try {
-    // Garde-fou avant d'écraser le cloud : jusqu'ici, cette fonction remplaçait toujours les
-    // documents cloud par la copie locale, sans jamais vérifier si un AUTRE appareil avait déjà
-    // écrit quelque chose de plus riche entre-temps (ex : une transaction ajoutée sur le
-    // téléphone, puis effacée par l'ordi qui pousse sa propre copie restée en mémoire, plus
-    // ancienne). _mergeFromCloud avait déjà ce filet côté lecture (voir incident du 2026-09-06),
-    // il lui manquait côté écriture. _snapCache contient la dernière version connue du cloud
-    // via le listener temps réel — si elle est nettement plus riche que ce qu'on s'apprête à
-    // écrire, on la fusionne d'abord dans le local au lieu d'écraser.
-    const cachedRemote = _assembleRemote(
-      _readCloudState(_snapCache.state), _readCloudState(_snapCache.work),
-      _readCloudState(_snapCache.transactions), _readCloudState(_snapCache.domestique)
-    );
-    if (cachedRemote) {
-      let mergedSomething = false;
-      ["work", "transactions", "domestique"].forEach(key => {
-        const localSize  = JSON.stringify(state[key] || (key === "transactions" ? [] : {})).length;
-        const remoteSize = JSON.stringify(cachedRemote[key] || (key === "transactions" ? [] : {})).length;
-        if (remoteSize > localSize * 1.2) { state[key] = cachedRemote[key]; mergedSomething = true; }
-      });
-      // Clés API de l'Assistant IA : union avec ce que le cloud connaît déjà, jamais un
-      // remplacement en bloc — sinon une clé tout juste saisie ailleurs se ferait écraser par
-      // une copie locale qui ne la connaît pas encore.
-      const remoteAiKeys = cachedRemote.aiAssistant?.keys || {};
-      if (Object.keys(remoteAiKeys).some(k => !state.aiAssistant?.keys?.[k])) {
-        if (!state.aiAssistant) state.aiAssistant = { provider: "groq", keys: {} };
-        state.aiAssistant.keys = { ...remoteAiKeys, ...state.aiAssistant.keys };
-        mergedSomething = true;
+    // 1. Garde-fou avant d'écrire : un AUTRE appareil a-t-il écrit depuis la dernière version du
+    //    cloud que cet appareil connaît ? (Le document "state" porte l'horodatage de chaque envoi.)
+    //    Si oui → on relit tout et on fusionne d'abord, au lieu d'écraser ses modifications.
+    //    opts.force (bouton "⬆️ Envoyer : remplacer le cloud") saute volontairement cette étape.
+    const base = _getCloudBase();
+    if (!opts.force && base) {
+      const stSnap = await _fbDocRef("state").get();
+      const cloudTs = stSnap.exists ? (_readCloudState(stSnap.data())?.lastModified || 0) : 0;
+      if (stSnap.exists && cloudTs !== (base.lastModified || 0)) {
+        const others = await Promise.all(["work", "transactions", "domestique"].map(n => _fbDocRef(n).get()));
+        const raw = [stSnap, ...others].map(d => (d.exists ? d.data() : null));
+        _CLOUD_DOC_NAMES.forEach((n, i) => { if (raw[i]) _snapCache[n] = raw[i]; });
+        const remote = _readRemoteFromSnaps(raw);
+        if (remote) {
+          const { view, changedLocal } = _merge3WithCloud(remote);
+          _setCloudBase(remote);
+          if (changedLocal) {
+            state = _applyCloudView(view);
+            state.lastModified = Date.now();
+            localStorage.setItem(STORE_KEY, JSON.stringify(state));
+            renderAll();
+            renderShortcutsBar();
+            _noteRefreshFromState();
+            showToast("🔄 Fusionné avec les modifs d'un autre appareil");
+          }
+        }
       }
-      if (mergedSomething) { localStorage.setItem(STORE_KEY, JSON.stringify(state)); renderAll(); }
     }
+    // 2. Envoi. La vue est calculée dans le même instant que les documents envoyés : elle devient
+    //    la nouvelle "base" une fois l'envoi réussi.
+    const sentView = _cloudView(state);
     const { corePayload, workPayload, transactionsPayload, domestiquePayload, sizes, maxKo, maxDocName } = _computeCloudSizes();
     _updateCloudSizeBadge(sizes, maxDocName);
     const payloadsByName = { state: corePayload, work: workPayload, transactions: transactionsPayload, domestique: domestiquePayload };
@@ -26994,12 +27188,28 @@ async function _fbSaveNow() {
     }
     const toSave = _CLOUD_DOC_NAMES.filter(name => !oversized.includes(name));
     await Promise.all(toSave.map(name => _fbDocRef(name).set(payloadsByName[name])));
+    toSave.forEach(name => { _snapCache[name] = payloadsByName[name]; });
+    // 3. Nouvelle base = ce qui est réellement dans le cloud maintenant.
+    let newBase = sentView;
+    if (oversized.length && base) {
+      if (oversized.includes("state")) {
+        newBase = { ...base };
+        ["work", "transactions", "domestique"].forEach(k => { if (!oversized.includes(k)) newBase[k] = sentView[k]; });
+      } else {
+        oversized.forEach(k => { newBase[k] = base[k]; });
+      }
+    }
+    _setCloudBase(newBase);
     _fbSetStatus(oversized.length ? "error" : "ok");
     if (!oversized.length) _fbLastSyncOkAt = Date.now();
+    return !oversized.length;
   } catch(e) {
     console.warn("[Firebase] save error", e);
     _fbSetStatus("error");
     showToast("❌ Échec de la synchronisation cloud — vérifie ta connexion", 5000);
+  } finally {
+    _fbSaving = false;
+    if (_fbSaveAgain) { _fbSaveAgain = false; _fbQueueSave(); }
   }
 }
 // Filet de secours contre une synchro cassée en silence (ex. session Google interrompue par un
@@ -27024,16 +27234,25 @@ function _fbQueueSave() {
   if (!_fbUser || !_fbDb) return;
   _fbSetStatus("syncing");
   clearTimeout(_fbSaveTimer);
-  _fbSaveTimer = setTimeout(_fbSaveNow, 800); // réduit de 2500ms à 800ms
+  _fbSaveTimer = setTimeout(() => { _fbSaveTimer = null; _fbSaveNow(); }, 800); // null = plus rien en attente (lu par _fbFlushPending)
 }
 
 // Force l'envoi immédiat de la sauvegarde en attente (avant que le tél gèle/ferme l'onglet).
 // Crucial sur mobile : sinon les modifs restent coincées localement et ne montent jamais au cloud.
 function _fbFlushPending() {
   if (!_fbUser || !_fbDb) return;
-  if (_fbSaveTimer) { clearTimeout(_fbSaveTimer); _fbSaveTimer = null; }
+  _noteFlushToLocalStorage(); // une note en cours de frappe met en file sa propre sauvegarde
+  // Seulement s'il y a VRAIMENT une sauvegarde en attente : avant, chaque passage en arrière-plan
+  // renvoyait tout l'état — y compris celui d'un appareil qui sortait de veille avec une vieille copie.
+  if (!_fbSaveTimer) return;
+  clearTimeout(_fbSaveTimer); _fbSaveTimer = null;
   _fbSaveNow().catch(() => {});
 }
+// Retour du réseau : renvoyer ce qui a été saisi hors ligne (ou refaire le 1er chargement raté).
+window.addEventListener("online", () => {
+  if (!_fbUser || !_fbDb) return;
+  if (!_fbLoaded) _fbLoad(); else _fbQueueSave();
+});
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") {
     _fbFlushPending();
@@ -27169,8 +27388,11 @@ async function cloudPull() {
     const localFood = state.history?.[dk]?.foodLog || [];
     const cloudFood = remote.history?.[dk]?.foodLog || [];
     state = migrate({ ...DEFAULT_STATE, ...remote });
-    state.calEvents = calEvents;
+    // Événements importés gardés ; les événements manuels sont ceux du cloud
+    state.calEvents = [...calEvents.filter(e => e.sourceId !== "manual"), ...(remote.calManualEvents || calEvents.filter(e => e.sourceId === "manual"))];
+    delete state.calManualEvents;
     state.calSources = calSources;
+    _setCloudBase(remote); // au rechargement, cet appareil est à jour avec le cloud
     if (localFood.length > 0 && cloudFood.length >= 0) {
       if (!state.history[dk]) state.history[dk] = {};
       const merged = [...cloudFood];
@@ -27189,7 +27411,7 @@ async function cloudPush() {
   if (!_fbUser || !_fbDb) return;
   _showConfirm("⬆️ Envoyer les données de CET appareil vers le cloud et REMPLACER celles du cloud ?", async () => {
   state.lastModified = Date.now();
-  await _fbSaveNow();
+  await _fbSaveNow({ force: true });
   closeSyncMenu();
   showToast("⬆️ Données envoyées vers le cloud");
   }, { icon: "⬆️", okLabel: "Envoyer", okColor: "#9d82d6" });
@@ -27235,6 +27457,7 @@ function cloudSignOut() {
         _fbLoad();
       } else {
         if (_fbUnsub) { _fbUnsub(); _fbUnsub = null; }
+        _fbLoaded = false; _cloudBase = null;
         const btn = document.getElementById("syncSignInBtn");
         if (btn) btn.style.display = "";
         _fbSetStatus("off");
@@ -27452,6 +27675,7 @@ function _openNoteEditor(g, n) {
   _autoResizeNoteTitle(titleEl);
   const ed = document.getElementById("noteContentInput");
   ed.innerHTML = n.content || "";
+  _noteLoaded = { title: titleEl.value, content: ed.innerHTML };
   document.getElementById("noteAutoSaveLabel").textContent = n.updatedAt ? "Sauvegardé " + new Date(n.updatedAt).toLocaleString("fr-FR") : "";
   // Mobile : passer en mode "éditeur" (cache la sidebar)
   if (window.innerWidth <= 640) {
@@ -27469,28 +27693,55 @@ function notesBackToList() {
   document.getElementById("notesLayout").classList.remove("note-open");
 }
 
-// Flush immédiat vers localStorage (appelé à chaque frappe ET avant tout rechargement)
+// Contenu de l'éditeur au moment où il a été rempli (ouverture) ou enregistré pour la dernière fois.
+// L'éditeur n'est "modifié" que s'il en diffère : sans ça, une note restée ouverte (même onglet
+// quitté) était réenregistrée toutes les minutes avec le texte AFFICHÉ — qui pouvait être plus
+// ancien que la version arrivée d'un autre appareil — et l'écrasait.
+let _noteLoaded = { title: null, content: null };
+function _noteIsDirty() {
+  if (!_currentNoteGroupId || !_currentNoteId) return false;
+  const t = document.getElementById("noteTitleInput"), c = document.getElementById("noteContentInput");
+  if (!t || !c) return false;
+  return t.value !== _noteLoaded.title || c.innerHTML !== _noteLoaded.content;
+}
+// Après une synchro : si la note ouverte n'est pas en cours de modification, afficher sa version à jour.
+function _noteRefreshFromState() {
+  try {
+    if (!_currentNoteGroupId || !_currentNoteId || _noteIsDirty()) return;
+    const g = (state.work.workNotes||[]).find(x => x.id === _currentNoteGroupId);
+    const n = g?.notes.find(x => x.id === _currentNoteId);
+    if (!n) { _currentNoteId = null; showNoteEditor(false); return; }
+    if ((n.title || "") === _noteLoaded.title && (n.content || "") === _noteLoaded.content) return;
+    const t = document.getElementById("noteTitleInput"), c = document.getElementById("noteContentInput");
+    t.value = n.title || ""; c.innerHTML = n.content || "";
+    _noteLoaded = { title: t.value, content: c.innerHTML };
+  } catch (e) { console.warn("[notes] refresh", e); }
+}
+// Flush immédiat vers localStorage (appelé à chaque frappe ET avant tout rechargement) —
+// uniquement si l'éditeur a réellement été modifié.
 function _noteFlushToLocalStorage() {
-  if (!_currentNoteGroupId || !_currentNoteId) return;
+  if (!_noteIsDirty()) return false;
   const g = (state.work.workNotes||[]).find(x => x.id === _currentNoteGroupId);
   const n = g?.notes.find(x => x.id === _currentNoteId);
-  if (!n) return;
+  if (!n) return false;
   const titleEl = document.getElementById("noteTitleInput");
   const contentEl = document.getElementById("noteContentInput");
-  if (titleEl) n.title = titleEl.value;
-  if (contentEl) n.content = contentEl.innerHTML;
+  n.title = titleEl.value;
+  n.content = contentEl.innerHTML;
+  _noteLoaded = { title: n.title, content: n.content };
   n.updatedAt = new Date().toISOString();
   state.lastModified = Date.now();
   window._lastLocalSave = Date.now(); // protège la note en cours contre un écrasement par la synchro cloud
   try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e) {}
+  _fbQueueSave();
+  return true;
 }
 // Protection : sauvegarde d'urgence si la page se ferme / recharge
 window.addEventListener("pagehide", _noteFlushToLocalStorage);
 window.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") _noteFlushToLocalStorage(); });
 // Sauvegarde automatique de la note ouverte toutes les 60 s (local + cloud), sans casser la frappe
 setInterval(() => {
-  if (!_currentNoteId || !document.getElementById("noteContentInput")) return;
-  _noteFlushToLocalStorage();
+  if (!_noteFlushToLocalStorage()) return; // rien de modifié → rien à envoyer
   saveState(); // → localStorage + envoi cloud, sans re-render (ne perturbe pas la saisie)
   const label = document.getElementById("noteAutoSaveLabel");
   if (label) label.textContent = "Sauvegardé à " + new Date().toLocaleTimeString("fr-FR");
@@ -27517,6 +27768,7 @@ function saveCurrentNote() {
   if (!n) return;
   n.title = document.getElementById("noteTitleInput").value;
   n.content = document.getElementById("noteContentInput").innerHTML;
+  _noteLoaded = { title: n.title, content: n.content };
   n.updatedAt = new Date().toISOString();
   const label = document.getElementById("noteAutoSaveLabel");
   if (label) label.textContent = "Sauvegardé à " + new Date().toLocaleTimeString("fr-FR");

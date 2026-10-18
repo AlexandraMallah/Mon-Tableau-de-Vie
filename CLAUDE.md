@@ -140,7 +140,8 @@ function getToday() { /* retourne state.history[getSelectedDayKey()] */ }
 
 ### Clé de date
 ```javascript
-function todayKey(d = new Date()) { return d.toISOString().slice(0, 10); } // "2026-05-28"
+function todayKey(d = new Date()) { /* heure LOCALE (getFullYear/getMonth/getDate) */ } // "2026-05-28"
+// ⚠️ Ne jamais faire d.toISOString().slice(0,10) pour une date du jour : c'est l'heure UTC → la veille entre 0 h et 2 h en France
 ```
 
 ### Structure `state.history[dateKey]`
@@ -230,11 +231,17 @@ Style pastel féminin, doux. Arrondis généreux (12-16px). Pas de couleurs cria
 - Couleurs individuelles des événements : `ev.color || src?.color || "#aee0c8"`
 - `GCAL_COLORS` — map nom couleur → hex (tomato, flamingo, peacock, etc.)
 
-### Firebase sync
+### Firebase sync (fusion à 3 voies depuis v1346)
 - `onAuthStateChanged` gère tout — ne jamais montrer le bouton sign-in avant que ça fire
-- `_fbLoad()` / `_fbSave()` — chargement/sauvegarde Firestore
-- Résolution conflits : `lastModified` timestamp, le plus récent gagne
-- Debounce 2500ms sur saveState avant d'écrire dans Firebase
+- 4 documents : `state` (cœur + `calManualEvents`), `work`, `transactions`, `domestique`
+- **Base** = dernière version du cloud connue de l'appareil (`_cloudBase`, copie compressée dans `localStorage["tableauDeVie_v3_cloudBase"]`). `_merge3(base, local, cloud)` : ce qui n'a changé que d'un côté est pris de ce côté (suppressions comprises), listes fusionnées par `id`, objets clé par clé, conflit réel → l'appareil local gagne
+- `_fbLoad()` fusionne ; `_fbSaveNow()` relit l'horodatage du doc `state` avant d'écrire et fusionne d'abord si un autre appareil a écrit ; `_applyRemoteSnaps()` fusionne (et se reprogramme pendant une saisie au lieu d'ignorer)
+- Aucune écriture tant que `_fbLoaded` est faux (1er chargement pas fini) ; arrière-plan = envoi seulement si une sauvegarde est en attente (`_fbSaveTimer`)
+- Événements de calendrier **manuels** (`sourceId:"manual"`) synchronisés ; les importés (ICS/Google) restent locaux
+- Import d'une sauvegarde → drapeau `tableauDeVie_v3_importPending` → au chargement suivant, envoi forcé (le fichier remplace le cloud)
+- Bouton « ⬆️ Envoyer » = `_fbSaveNow({ force: true })` (remplace le cloud sans fusion)
+- ⚠️ Ne jamais revenir à « le plus récent / le plus gros gagne » : c'est ce qui faisait revenir les suppressions et écrasait les saisies d'un autre appareil
+- Debounce 800ms sur saveState avant d'écrire dans Firebase
 
 ### Navigation jours précédents
 - Flèches ◀ ▶ dans l'onglet Aujourd'hui
@@ -398,6 +405,9 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 | Contenu qui déborde / est coupé sur téléphone (320-430 px) | Audité sur 5 largeurs (320, 360, 375, 390, 412, 430) en mode normal + édition + toutes les fenêtres : plus aucun débordement. Bloc « ANTI-DÉBORDEMENT MOBILE » à la fin du CSS : champs `min-width:0`, grilles `minmax(0,1fr)`, `canvas{max-width:100%}`, boutons de pied de fenêtre qui passent à la ligne, libellés `…` qui passent à la ligne, toasts/pastille bornés à `100vw`. Pour toute nouvelle grille : `minmax(0,1fr)` (jamais `1fr` seul), et `min-width:0` sur les enfants de flex/grid contenant du texte ou des champs. |
 | Symbole (€, %, kg, kcal, h…) seul sur une ligne | Toujours une **espace insécable** (`\u00a0`) entre le nombre et l'unité, jamais une espace normale : `${x.toFixed(2)}\u00a0€`. Balayé sur toute l'appli (v1277). |
 | Mot seul sur une ligne (« Cumulé » / « épargné : 5000 € », « : » en fin de ligne, dernière ligne d'un seul mot) | Script de typographie (après la mesure de `--sticky-stack-bottom`), appliqué à l'affichage sur tous les nœuds de texte, y compris ceux ajoutés plus tard : « libellé : valeur » court = un bloc, deux derniers mots collés, libellés ≤ 20 caractères / 3 mots jamais coupés, emoji collé au mot voisin (espaces insécables). Plus `text-wrap: pretty` (corps) / `balance` (titres). Pas besoin d'y penser en écrivant du HTML. Attention : un libellé collé ne peut plus se couper → dans une grille étroite, prévoir `auto-fit/minmax` plutôt que `repeat(3,1fr)`. |
+| Suppressions qui reviennent / appareil en veille qui écrase le cloud / note ouverte qui écrase la version d'un autre appareil | Fusion à 3 voies (voir « Firebase sync »). Notes : l'éditeur n'est réenregistré que s'il diffère de ce qui y a été chargé (`_noteLoaded`), et il est rafraîchi après une synchro (`_noteRefreshFromState`). |
+| Import qui vidait l'appli | Il existait 2 `importData` ; une seule reste (gère « dump localStorage » et « état direct »). |
+| Écran « L'app n'a pas pu démarrer » qui effaçait tout (`localStorage.clear()`) | Remplacé par « Recharger » + « Télécharger mes données (secours) ». Ne jamais remettre de bouton qui efface. |
 | Fenêtre (modale) dont « Annuler/Valider » est inaccessible sur téléphone quand le clavier est ouvert | Overlay des fenêtres calé sur `visualViewport` (`--vv-h` / `--vv-top`, posés en JS) ; `.modal .actions` collée en bas (`position:sticky`) ; toucher une zone vide de la fenêtre range le clavier. Tout refus de validation (champ obligatoire vide) doit afficher un message via `_needField(id, msg)` — jamais de `return` silencieux, sinon on croit que « Valider ne marche pas ». |
 
 ---
