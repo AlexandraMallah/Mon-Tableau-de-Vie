@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1358</title>
+<title>Mon Tableau de Vie 🌿 · v1359</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6903,8 +6903,13 @@ function ringSvg(pct, idx) {
 }
 function renderRings() {
   const today = getToday();
-  const _hab = _activeHabits();
-  const habitsDone = _hab.filter(h => isHabitDone(h, today.habits[h.id])).length;
+  // Anneau « Habitudes » = habitudes actives (carte « Mes habitudes ») + étapes des routines matin / soir
+  // (une étape cochée = today.habits[id] vrai). Choix d'Alexandra (19/10/2026) : les routines comptent.
+  const _act = _activeHabits();
+  const _R = getRoutines();
+  const _steps = [...(_R.matin || []), ...(_R.soir || [])].filter((st, i, a) => st && st.id && a.findIndex(x => x.id === st.id) === i && !_act.some(h => h.id === st.id));
+  const _hab = [..._act, ..._steps];
+  const habitsDone = _act.filter(h => isHabitDone(h, today.habits[h.id])).length + _steps.filter(st => !!today.habits[st.id]).length;
   const habitsPct = _hab.length ? habitsDone / _hab.length : 0;
   const moodPct = today.mood ? today.mood / 5 : 0;
   const sleepPct = today.sleep != null
@@ -14503,6 +14508,7 @@ function toggleSkincare(id) {
   saveState();
   renderSkincare();
   renderHabits();
+  renderRings(); // l'anneau « Habitudes » compte aussi les routines
 }
 
 let _stepsMonthOffset = 0;
