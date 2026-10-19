@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1357</title>
+<title>Mon Tableau de Vie 🌿 · v1358</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3499,7 +3499,8 @@
         </div>
         <div>
           <div style="font-size:11px;color:var(--ink-softer);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Ce mois</div>
-          <strong id="savingsMonth" style="color:var(--accent-ink);font-size:22px;font-weight:700;">+0,00 €</strong>
+          <strong id="savingsMonth" style="color:var(--accent-ink);font-size:22px;font-weight:700;">+0,00 €</strong>
+          <div id="savingsMonthGains" style="display:none;font-size:12px;color:var(--ink-soft);margin-top:2px;"></div>
         </div>
       </div>
       <div id="savingsBreakdown" style="margin-bottom:14px;"></div>
@@ -17549,17 +17550,48 @@ function renderBalanceEvolutionChart() {
   });
 }
 
+/* ===== ÉPARGNE « VRAIMENT MISE DE CÔTÉ » =====
+   L'épargne d'un mois = ce qui est passé du courant vers l'épargne, moins ce qui en est ressorti.
+   Ne comptent PAS : les gains / pertes de placement (ajustements « Intérêts / Valorisation »,
+   « Frais / Moins-value » : t.isAdjustment) — affichés à part — ni les virements entre deux comptes
+   épargne (PEA → ETF), qui ne changent pas ce qui est mis de côté. Les soldes, eux, comptent tout. */
+function _savInternalIds(txs) {
+  const legs = {};
+  for (const t of txs) if (t.virementId && (t.type === "savings" || t.type === "savings-out")) (legs[t.virementId] = legs[t.virementId] || new Set()).add(t.type);
+  return new Set(Object.keys(legs).filter(k => legs[k].size === 2));
+}
+function _savKind(t, internal) {
+  if (t.type !== "savings" && t.type !== "savings-out") return null;
+  if (t.isAdjustment) return "gain";            // gain ou perte de placement
+  if (t.virementId && internal.has(t.virementId)) return "internal";
+  return "real";
+}
+function _savFlow(txs) {
+  const internal = _savInternalIds(state.transactions);
+  let inn = 0, out = 0, gains = 0;
+  for (const t of txs) {
+    const k = _savKind(t, internal);
+    if (k === "gain") gains += t.type === "savings" ? t.amount : -t.amount;
+    else if (k === "real") { if (t.type === "savings") inn += t.amount; else out += t.amount; }
+  }
+  return { in: inn, out, net: inn - out, gains };
+}
+function _inRangeTx(start, end) { return state.transactions.filter(t => { const d = new Date(t.date); return d >= start && d < end; }); }
 function renderSavings() {
   const all = state.transactions.filter(t => t.type === "savings");
   // Total = solde réel du compte épargne (solde de départ + toutes les transactions)
   const total = balanceEpargne();
   const [start, end] = currentMonthRange();
-  const allOut = state.transactions.filter(t => t.type === "savings-out");
-  const thisMonthIn  = all.filter(t => { const d = new Date(t.date); return d >= start && d < end; }).reduce((s, t) => s + t.amount, 0);
-  const thisMonthOut = allOut.filter(t => { const d = new Date(t.date); return d >= start && d < end; }).reduce((s, t) => s + t.amount, 0);
-  const thisMonth = thisMonthIn - thisMonthOut;
+  const _flow = _savFlow(_inRangeTx(start, end));
+  const thisMonth = _flow.net; // vraiment mis de côté (sans les gains de placement)
   document.getElementById("savingsTotal").textContent = total.toFixed(2) + " €";
   document.getElementById("savingsMonth").textContent = (thisMonth >= 0 ? "+" : "") + thisMonth.toFixed(2) + " €";
+  const gEl = document.getElementById("savingsMonthGains");
+  if (gEl) {
+    const g = Math.round(_flow.gains * 100) / 100;
+    gEl.textContent = g ? `${g > 0 ? "📈 +" : "📉 −"}${Math.abs(g).toFixed(2)}\u00a0€ de ${g > 0 ? "gains" : "pertes"} de placement (à part)` : "";
+    gEl.style.display = g ? "" : "none";
+  }
 
   // Répartition par compte
   const breakdown = state.accounts.savingsBreakdown || {};
@@ -17801,11 +17833,7 @@ function renderSavingsChart() {
   const allPeriods = _salaryPeriods();
   const periods = allPeriods.slice(-9); // 9 mois : trois barres par mois, 12 serait trop serré
   const labels = periods.map(p => _periodLabel(p).replace(/\s\d{4}$/, v => " '" + v.trim().slice(2)));
-  const data = periods.map(({ start, end }) => {
-    const inAmt  = state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "savings"; }).reduce((s, t) => s + t.amount, 0);
-    const outAmt = state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "savings-out"; }).reduce((s, t) => s + t.amount, 0);
-    return Math.max(0, inAmt - outAmt);
-  });
+  const data = periods.map(({ start, end }) => Math.max(0, _savFlow(_inRangeTx(start, end)).net)); // sans gains de placement
   const incomeData = periods.map(({ start, end }) =>
     state.transactions.filter(t => { const td = new Date(t.date); return td >= start && td < end && t.type === "income"; }).reduce((s, t) => s + t.amount, 0)
   );
@@ -18095,10 +18123,25 @@ function _showBarDetail({ start, end }, kind, color) {
     sub = t => t.category || "";
   } else {
     label = "Épargne";
-    // mêmes transactions que la barre : mises de côté moins retraits
-    txs = state.transactions.filter(t => inRange(t) && (t.type === "savings" || t.type === "savings-out"));
-    signedAmount = t => t.type === "savings-out" ? -t.amount : t.amount;
-    sub = t => t.type === "savings-out" ? `${t.category || "épargne"} → courant` : `courant → ${t.category || "épargne"}`;
+    // Mêmes opérations que la barre : mises de côté moins retraits. Les gains / pertes de placement
+    // sont listés à la fin, entre parenthèses, et ne comptent pas dans le total. Les virements entre
+    // deux comptes épargne n'apparaissent pas (rien n'est mis de côté ni retiré).
+    const internal = _savInternalIds(state.transactions);
+    txs = state.transactions.filter(t => inRange(t) && ["real", "gain"].includes(_savKind(t, internal)));
+    const isGain = t => _savKind(t, internal) === "gain";
+    signedAmount = t => isGain(t) ? 0 : (t.type === "savings-out" ? -t.amount : t.amount);
+    sub = t => isGain(t)
+      ? (t.type === "savings" ? `📈 gain de placement · ${t.category || "épargne"} · hors épargne du mois` : `📉 perte / frais · ${t.category || "épargne"} · hors épargne du mois`)
+      : (t.type === "savings-out" ? `${t.category || "épargne"} → courant` : `courant → ${t.category || "épargne"}`);
+    const _gainAmt = t => `(${t.type === "savings" ? "+" : "−"}${t.amount.toFixed(2)}\u00a0€)`;
+    txs.sort((a, b) => (isGain(a) - isGain(b)) || (new Date(b.date) - new Date(a.date)));
+    const total = txs.reduce((s, t) => s + signedAmount(t), 0);
+    const gains = _savFlow(txs).gains;
+    const fmtS = v => (v < 0 ? "−" : "+") + Math.abs(v).toFixed(2) + "\u00a0€";
+    _showTxListPopup(label + " · " + _periodLabel({ start }), color, fmtS(total) + (gains ? `  ·  ${gains > 0 ? "📈" : "📉"} ${fmtS(gains)} à part` : ""),
+      txs.map(t => ({ id: t.id, main: t.note || t.description || t.category || "—", sub: sub(t), amount: isGain(t) ? _gainAmt(t) : fmtS(signedAmount(t)), tx: t })),
+      "Rien ce mois-là.");
+    return;
   }
   txs.sort((a, b) => new Date(b.date) - new Date(a.date));
   const total = txs.reduce((s, t) => s + signedAmount(t), 0);
@@ -19480,9 +19523,7 @@ function computeMetric(m, override) {
   }
   if (m.type === "savings-month") {
     const [start, end] = currentMonthRange();
-    const savings    = state.transactions.filter(t => { const d = new Date(t.date); return d >= start && d < end && t.type === "savings"; }).reduce((s, t) => s + t.amount, 0);
-    const savingsOut = state.transactions.filter(t => { const d = new Date(t.date); return d >= start && d < end && t.type === "savings-out"; }).reduce((s, t) => s + t.amount, 0);
-    const net = savings - savingsOut;
+    const net = _savFlow(_inRangeTx(start, end)).net; // vraiment mis de côté, sans gains de placement
     return { score: Math.min(1, Math.max(0, net) / m.target), value: net.toFixed(0) + " € net", label: m.label };
   }
   if (m.type === "groceries-done") {
@@ -19613,8 +19654,9 @@ function computeMetricDetails(m) {
     state.transactions.filter(t => new Date(t.date) >= sevenAgo).forEach(t => lines.push(`${t.date} — ${t.label || t.category || t.note || "transaction"} : ${t.amount} €`));
   } else if (m.type === "savings-month") {
     const [start, end] = currentMonthRange();
-    state.transactions.filter(t => { const d = new Date(t.date); return d >= start && d < end && (t.type === "savings" || t.type === "savings-out"); })
-      .forEach(t => lines.push(`${t.date} — ${t.type === "savings" ? "➕" : "➖"} ${t.amount} € ${t.label || t.category || ""}`));
+    const internal = _savInternalIds(state.transactions);
+    _inRangeTx(start, end).filter(t => _savKind(t, internal) === "real")
+      .forEach(t => lines.push(`${String(t.date).slice(0, 10)} — ${t.type === "savings" ? "➕" : "➖"} ${t.amount} € ${t.label || t.category || ""}`));
   } else if (m.type === "meal-events-count") {
     (state.domestique?.mealEvents || []).filter(e => (e.date || "") >= k7).forEach(e => lines.push(`${e.date} — ${e.title || e.name || "repas"}`));
   } else if (m.type === "cal-keywords-count") {

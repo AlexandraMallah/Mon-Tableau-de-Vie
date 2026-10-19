@@ -338,6 +338,7 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 - **Évolution du solde** : courbe 90 jours (`balanceEvolutionChart`)
 - **Comparaison N vs N-1** : carte `⚖️ Mois en mois`
 - Cycle financier : du 26 du mois précédent au 25 du mois courant (`currentMonthRange()`)
+- **Épargne du mois** = seulement ce qui est vraiment mis de côté (courant → épargne, moins épargne → courant) : `_savFlow(txs)` → `{in, out, net, gains}`. Les ajustements de placement (`isAdjustment` : « Intérêts / Valorisation », « Frais / Moins-value ») vont dans `gains`, affichés à part ; les virements entre deux comptes épargne (`virementId` avec les deux jambes) sont ignorés. Les soldes comptent tout. Tout nouveau calcul « épargne du mois » doit passer par `_savFlow`.
 - Formulaire "Nouvelle transaction" remonté en haut de page
 
 ### Santé
