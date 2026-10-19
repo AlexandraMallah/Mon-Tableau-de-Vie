@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1355</title>
+<title>Mon Tableau de Vie 🌿 · v1356</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5939,14 +5939,24 @@ const DEFAULT_STATE = {
 };
 
 function loadState() {
+  let raw = null;
   try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return migrate({ ...DEFAULT_STATE, ...JSON.parse(raw) });
+    raw = localStorage.getItem(STORE_KEY);
+    if (raw) return migrate({ ...structuredClone(DEFAULT_STATE), ...JSON.parse(raw) });
     for (const k of LEGACY_KEYS) {
       const old = localStorage.getItem(k);
-      if (old) return migrate({ ...DEFAULT_STATE, ...JSON.parse(old) });
+      if (old) return migrate({ ...structuredClone(DEFAULT_STATE), ...JSON.parse(old) });
     }
-  } catch (e) { console.warn("load error", e); }
+  } catch (e) {
+    console.warn("load error", e);
+    // Données de l'appareil illisibles : avant, l'appli repartait à vide sans rien dire puis les écrasait.
+    // Maintenant : copie de secours du contenu brut (récupérable), et la mémoire de synchro est oubliée —
+    // sinon la synchro prendrait cet état vide pour des suppressions volontaires et viderait le cloud.
+    // Au prochain chargement cloud, ce sont les données du cloud qui reviennent.
+    try { if (raw) localStorage.setItem("tableauDeVie_v3_secours_" + new Date().toISOString().slice(0, 19).replace(/:/g, "-"), raw); } catch (_) {}
+    try { localStorage.removeItem("tableauDeVie_v3_cloudBase"); } catch (_) {}
+    window._loadStateError = String(e && e.message || e);
+  }
   return migrate(structuredClone(DEFAULT_STATE));
 }
 function migrate(s) {
@@ -6354,6 +6364,10 @@ function migrate(s) {
     }
   }
   // Admin : init vide — les données perso (missions, congés) viennent du Firestore uniquement
+  // (Réinitialisation seulement si la section n'existe pas ou est vide — avant, une sauvegarde ou un état
+  // sans le marqueur _seeded voyait ses missions et congés remis à zéro.)
+  const _admHasData = s.admin && ((s.admin.missions || []).length || (s.admin.congesPeriodes || []).length || (s.admin.abonnement || []).length);
+  if (s.admin && !s.admin._seeded && _admHasData) s.admin._seeded = true;
   if (!s.admin || !s.admin._seeded) {
     s.admin = {
       _seeded: true,
@@ -6371,6 +6385,8 @@ function migrate(s) {
   }
   if (!s.work) s.work = {};
   if (!s.work.workNotes) s.work.workNotes = [];
+  // Noms de projets enregistrés avec des espaces insécables (copiés depuis l'affichage) → espaces normales
+  (s.work.postdocProjects || []).forEach(p => { if (p && typeof p.name === "string" && p.name.includes("\u00a0")) p.name = p.name.replace(/\u00a0/g, " "); });
   if (!s.shortcuts) s.shortcuts = [];
   // Fonctionnalité bibliographie retirée (2026-09) : purge le champ chez les utilisatrices qui
   // l'avaient déjà rempli, sinon ces données (jusqu'à ~580 Ko) restent en mémoire et dans le
@@ -6447,13 +6463,16 @@ function migrate(s) {
   }
 
   // Migration : supprimer les comptes épargne vides inutiles
+  const _savHasTx = c => (s.transactions || []).some(t => (t.type === "savings" || t.type === "savings-out") && t.category === c);
   const toRemove = ["Compte épargne", "Autre épargne", "Frais annuels / Projets"];
   s.savingsCategories = (s.savingsCategories || []).filter(c => {
     if (!toRemove.includes(c)) return true;
-    return (s.accounts?.savingsBreakdown?.[c] || 0) !== 0; // garder si solde non nul
+    // garder si solde non nul OU s'il a des opérations (sinon l'écran Épargne le recréait aussitôt
+    // et l'enregistrait : boucle supprimé / recréé à chaque ouverture, et entre deux appareils)
+    return (s.accounts?.savingsBreakdown?.[c] || 0) !== 0 || _savHasTx(c);
   });
   toRemove.forEach(c => {
-    if ((s.accounts?.savingsBreakdown?.[c] || 0) === 0) delete s.accounts?.savingsBreakdown?.[c];
+    if ((s.accounts?.savingsBreakdown?.[c] || 0) === 0 && !_savHasTx(c)) delete s.accounts?.savingsBreakdown?.[c];
   });
 
   // Migration : timeCats créés avant le fix → transformer en postdocProjects
@@ -9700,7 +9719,8 @@ function _pickProjectColor(containerId, hiddenId, color) {
   _renderColorSwatches(containerId, hiddenId, color);
 }
 function _projectNameSuggest(el) {
-  document.getElementById("projectModalName").value = el.textContent;
+  // espaces insécables posées par le script de typographie → espaces normales dans le nom enregistré
+  document.getElementById("projectModalName").value = el.textContent.replace(/\u00a0/g, " ").trim();
   document.getElementById("projectModalName").focus();
 }
 function openProjectModal(id) {
@@ -10534,6 +10554,8 @@ function saveTaskEdit() {
   // la tâche.
   const linkedCand = t.candId ? (state.work.candidatures || []).find(c => c.id === t.candId) : null;
   if (linkedCand) { linkedCand.notes = notesVal; linkedCand.deadline = t.deadline; linkedCand.institution = t.name; }
+  // Événement du calendrier lié : suit le nom et la date de la tâche
+  if (t.calEventId) { const ev = state.calEvents.find(e => e.id === t.calEventId); if (ev) { ev.title = t.name; if (t.deadline) ev.date = t.deadline; } }
   else { t.notes = notesVal; }
   _pendingNewTaskId = null; // nommée et enregistrée → Annuler ne doit plus jamais la supprimer
   saveState();
@@ -13299,7 +13321,7 @@ function renderFoodLog() {
   // Météo
   ["1","2","3"].forEach(n => {
     const btn = document.getElementById("foodMood"+n);
-    if (btn) btn.style.background = btn.textContent.trim() === mood ? "var(--mint-soft)" : "white";
+    if (btn) btn.style.background = btn.textContent.replace(/\u00a0/g, " ").trim() === mood ? "var(--mint-soft)" : "white";
   });
   const lbl = document.getElementById("foodMoodLabel");
   if (lbl) lbl.textContent = mood === "😊" ? "Bonne journée alimentaire !" : mood === "😐" ? "Journée moyenne" : mood === "😔" ? "Journée difficile — c'est ok 🤍" : "";
@@ -20165,7 +20187,8 @@ function getAllCalEvents() {
     if (t.deadline && !t.done) {
       const isEv = t.kind === "event";
       // Si la tâche-événement est liée à un calEvent manuel, elle y est déjà → pas de doublon
-      if (isEv && t.calEventId) continue;
+      // (seulement si cet événement existe vraiment — sinon la tâche disparaissait du calendrier)
+      if (isEv && t.calEventId && state.calEvents.some(e => e.id === t.calEventId)) continue;
       events.push({
         date: t.deadline,
         type: isEv ? "work-event" : "task",
@@ -20519,8 +20542,8 @@ function closeManualEventModal() {
 function saveManualEvent() {
   const title = document.getElementById("manualEventName").value.trim();
   const date = document.getElementById("manualEventDate").value;
-  if (!title) { document.getElementById("manualEventName").focus(); return; }
-  if (!date) { document.getElementById("manualEventDate").focus(); return; }
+  if (!title) return _needField("manualEventName", "Donne un titre à l'événement");
+  if (!date) return _needField("manualEventDate", "Choisis une date");
   const id = document.getElementById("manualEventId").value;
   const ev = {
     id: id || ("manual-" + Date.now()),
@@ -20535,6 +20558,8 @@ function saveManualEvent() {
   if (id) {
     const idx = state.calEvents.findIndex(e => e.id === id);
     if (idx >= 0) state.calEvents[idx] = ev;
+    // La tâche liée suit le nouveau titre et la nouvelle date (avant : elle gardait les anciens)
+    state.work.postdocTasks.filter(t => t.calEventId === id).forEach(t => { t.name = title; t.deadline = date; });
   } else {
     state.calEvents.push(ev);
     // Créer aussi une tâche liée si la checkbox est cochée
@@ -20564,7 +20589,9 @@ function deleteManualEvent() {
   if (!id) return;
   _showConfirm("Supprimer cet événement ?", () => {
     state.calEvents = state.calEvents.filter(e => e.id !== id);
-    saveState(); closeManualEventModal(); renderCalendar();
+    // Tâche liée : on la garde, mais elle n'est plus rattachée (elle réapparaît seule dans le calendrier)
+    state.work.postdocTasks.filter(t => t.calEventId === id).forEach(t => { delete t.calEventId; });
+    saveState(); closeManualEventModal(); renderCalendar(); renderTasks();
     showToast("🗑️ Événement supprimé");
   });
 }
@@ -25196,7 +25223,11 @@ function exportData() {
   try {
     const stamp = todayKey();
     const name = `tableau-de-vie-${stamp}.json`;
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    // Les clés de l'Assistant IA ne partent PAS dans le fichier (un fichier envoyé à quelqu'un lui aurait
+    // donné tes clés). Elles restent dans le cloud et sur tes appareils ; un import garde celles de l'appareil.
+    const exported = JSON.parse(JSON.stringify(state));
+    if (exported.aiAssistant) exported.aiAssistant = { ...exported.aiAssistant, keys: {} };
+    const blob = new Blob([JSON.stringify(exported, null, 2)], { type: "application/json" });
     // iPhone / iPad : le téléchargement direct s'ouvre souvent en simple aperçu (surtout dans l'appli de
     // l'écran d'accueil). La feuille de partage propose « Enregistrer dans Fichiers ».
     const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -25248,10 +25279,20 @@ function importData() {
           // Les infos internes de synchro du fichier ne sont pas restaurées (elles décrivent le cloud
           // au moment de l'export, plus celui d'aujourd'hui).
           const SYNC_KEYS = [CLOUD_BASE_KEY, CLOUD_SYNCED_KEY, "_lastLoginUid"];
+          // Clés de l'Assistant IA absentes du fichier (export sans clés) : on garde celles de cet appareil
+          const keepAiKeys = obj => {
+            if (obj && typeof obj === "object" && !Object.keys(obj.aiAssistant?.keys || {}).length && Object.keys(state.aiAssistant?.keys || {}).length)
+              obj.aiAssistant = { ...(obj.aiAssistant || {}), provider: obj.aiAssistant?.provider || state.aiAssistant.provider, keys: { ...state.aiAssistant.keys } };
+            return obj;
+          };
           if (isDump) {
-            for (const k in data) if (!SYNC_KEYS.includes(k)) localStorage.setItem(k, data[k]);
+            for (const k in data) if (!SYNC_KEYS.includes(k)) {
+              let v = data[k];
+              if (k === STORE_KEY) { try { v = JSON.stringify(keepAiKeys(JSON.parse(v))); } catch (_) {} }
+              localStorage.setItem(k, v);
+            }
           } else {
-            localStorage.setItem(STORE_KEY, JSON.stringify(data));
+            localStorage.setItem(STORE_KEY, JSON.stringify(keepAiKeys(data)));
           }
           // Au rechargement, les données importées REMPLACENT celles du cloud (c'est ce que l'on demande),
           // au lieu d'être recouvertes par le cloud dont l'horodatage est plus récent.
@@ -26701,6 +26742,7 @@ try {
   if (window._pendingTheme) applyTheme(window._pendingTheme, false);
   renderAll();
   checkSeedBanner();
+  if (window._loadStateError) setTimeout(() => _showAlert("⚠️ Les données de cet appareil n'ont pas pu être lues (" + window._loadStateError + ").<br><br>Une copie de secours a été gardée sur l'appareil. Si tu es connectée, tes données vont revenir depuis le cloud dans quelques secondes. Sinon, utilise « Importer mes données » avec ta dernière sauvegarde, et préviens le support."), 1200);
   // Météo au démarrage (onglet Aujourd'hui actif par défaut)
   setTimeout(fetchWeather, 800);
 } catch(e) {
@@ -27246,7 +27288,8 @@ async function _fbLoad() {
       // sauvegarde locale anodine avant même la connexion) qui bat artificiellement celui du
       // cloud, ce qui écraserait les vraies données de tous les autres appareils synchronisés
       // (c'est exactement ce qui est arrivé une fois — voir mémoire du 2026-09-06).
-      const firstSyncEver = !_hasEverSyncedCloud(_fbUser.uid);
+      // Données locales illisibles au démarrage (voir loadState) : le cloud gagne, comme pour une 1re synchro
+      const firstSyncEver = !_hasEverSyncedCloud(_fbUser.uid) || !!window._loadStateError;
       _setCloudBase(remote);
       _fbLoaded = true;
       if (remoteTs > localTs || firstSyncEver) {
@@ -27829,19 +27872,41 @@ if ("serviceWorker" in navigator) {
       })
       .catch(err => console.warn("[SW] erreur :", err));
 
-    // Rechargement auto quand le nouveau SW prend le contrôle
-    // (les notes sont protégées par _noteFlushToLocalStorage + pagehide)
-    let _swRefreshing = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (_swRefreshing || !_hadSWController) return;
+    // Rechargement auto quand le nouveau SW prend le contrôle — mais JAMAIS au milieu d'une saisie :
+    // avant, la page se rechargeait 1,2 s après la détection d'une mise à jour, même avec une fenêtre
+    // ouverte en cours de remplissage (transaction, tâche…) → saisie perdue. On attend que ce soit sûr :
+    // aucune fenêtre ouverte, aucun champ actif, rien tapé depuis 15 s, aucune sauvegarde en cours.
+    // Si l'appli passe en arrière-plan entre-temps, elle se recharge à son retour.
+    let _swRefreshing = false, _swUpdatePending = false;
+    const _userBusy = () => {
+      if (document.querySelector(".modal-bg.open")) return true;
+      if ([...document.querySelectorAll('div[style*="backdrop-filter"]')].some(el => getComputedStyle(el).display !== "none")) return true;
+      const a = document.activeElement;
+      if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return true;
+      if (Date.now() - (window._lastTypingAt || 0) < 15000) return true;
+      if (typeof _noteIsDirty === "function" && _noteIsDirty()) return true;
+      if (_saveSoonTimer || _fbSaveTimer || _fbSaving) return true;
+      return false;
+    };
+    const _swReloadNow = () => {
+      if (_swRefreshing) return;
       _swRefreshing = true;
       _noteFlushToLocalStorage && _noteFlushToLocalStorage();
       // Petit toast avant rechargement
       const t = document.createElement("div");
-      t.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center;background:var(--card);color:var(--ink);padding:12px 20px;border-radius:14px;box-shadow:0 8px 28px rgba(120,100,160,0.22);z-index:9999;font-size:13px;font-weight:500;border:1px solid var(--lavender);";
+      t.style.cssText = "position:fixed;bottom:calc(env(safe-area-inset-bottom, 0px) + 24px);left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center;background:var(--card);color:var(--ink);padding:12px 20px;border-radius:14px;box-shadow:0 8px 28px rgba(120,100,160,0.22);z-index:9999;font-size:13px;font-weight:500;border:1px solid var(--lavender);pointer-events:none;";
       t.textContent = "🔄 Mise à jour — rechargement…";
       document.body.appendChild(t);
       setTimeout(() => { window.location.href = "/Mon-Tableau-de-Vie/?_r=" + Date.now(); }, 1200);
+    };
+    const _swTryReload = () => { if (_swUpdatePending && !_swRefreshing && !_userBusy()) _swReloadNow(); };
+    document.addEventListener("input", () => { window._lastTypingAt = Date.now(); }, true);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") setTimeout(_swTryReload, 800); });
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (_swRefreshing || !_hadSWController || _swUpdatePending) return;
+      _swUpdatePending = true;
+      _swTryReload();
+      setInterval(_swTryReload, 3000);
     });
   });
 }
