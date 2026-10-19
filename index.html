@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1356</title>
+<title>Mon Tableau de Vie 🌿 · v1357</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -622,40 +622,6 @@
   }
 
   /* ========= GOALS ========= */
-  .goal-list { display: flex; flex-direction: column; gap: 14px; }
-  .goal { padding: 16px; border-radius: 16px; background:var(--surface-soft); transition: all 0.2s; }
-  .goal:hover { background: var(--peach-soft); }
-  .goal-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
-  .goal-name { font-weight: 600; font-size: 15px; }
-  .goal-deadline { font-size: 12px; color: var(--ink-soft); }
-  .goal-bar-wrap { background: white; height: 10px; border-radius: 999px; overflow: hidden; margin-bottom: 8px; }
-  .goal-bar { height: 100%; background: linear-gradient(90deg, var(--peach), var(--pink)); border-radius: 999px; transition: width 0.6s; }
-  .goal-footer { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--ink-soft); }
-  .goal-controls { display: flex; gap: 6px; align-items: center; }
-  .goal-controls input {
-    width: 70px; padding: 6px 8px; border: 1px solid var(--line);
-    border-radius: 8px; font-family: inherit; font-size: 13px; text-align: center;
-  }
-  .goal-controls input:focus { outline: 2px solid var(--peach); }
-  .goal-controls .del {
-    background: none; border: none; color: var(--ink-soft); cursor: pointer;
-    font-size: 14px; padding: 4px 6px; border-radius: 6px;
-  }
-  .goal-controls .del:hover { background: var(--rose-soft); color: var(--red); }
-  .add-goal-form {
-    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 8px; margin-top: 14px;
-    background:var(--surface-soft); padding: 12px; border-radius: 14px;
-  }
-  .add-goal-form input {
-    padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px;
-    font-family: inherit; font-size: 13px; background: white; color: var(--ink);
-  }
-  .add-goal-form input:focus { outline: 2px solid var(--peach); }
-  .add-goal-form button {
-    background: var(--peach); color: var(--ink); border: none;
-    padding: 9px 16px; border-radius: 10px; cursor: pointer;
-    font-weight: 500; font-family: inherit;
-  }
 
   /* ========= JOURNAL ========= */
   .journal-input {
@@ -1088,6 +1054,8 @@
   .cal-event.article { background: var(--pink-soft); border-left-color: var(--pink); }
   .cal-event.comm { background: var(--peach-soft); border-left-color: var(--peach); }
   .cal-event.sub { background: var(--butter-soft); border-left-color: var(--butter); }
+  .cal-event.domtask { background: var(--peach-soft); border-left-color: var(--orange); }
+  .cal-day-event-row.domtask { border-left-color: var(--orange); }
   .cal-event.plant { background: linear-gradient(90deg, rgba(174,224,200,0.4), rgba(174,224,200,0.18)); border-left-color: #4d9c7e; }
   .cal-event.ics { background: var(--mint-soft); border-left-color: var(--mint); }
   .cal-event.more { background: white; border-left-color: var(--ink-softer); font-style: italic; color: var(--ink-soft); }
@@ -1608,8 +1576,6 @@
     .grid-two, .grid-two-eq { grid-template-columns: 1fr; }
     .tx-form-inputs { grid-template-columns: 1fr 1fr; }
     .tx-form-inputs .add-btn { grid-column: span 2; }
-    .add-goal-form { grid-template-columns: 1fr 1fr; }
-    .add-goal-form button { grid-column: span 2; }
     .add-task-form { display: flex; flex-wrap: wrap; gap: 8px; }
     .add-task-form #newTaskName { flex: 0 0 100%; }
     .modal .grid-2 { grid-template-columns: 1fr; }
@@ -2056,6 +2022,8 @@
   }
 
   /* ===== AUDIT DESIGN (v1350) ===== */
+  /* Message « Aucun… » d'une liste vide : un seul style partout (avant : une vingtaine de variantes) */
+  .empty-state, .todo-empty { color: var(--ink-soft); font-size: 13.5px; text-align: center; padding: 16px 12px; margin: 0; line-height: 1.45; }
   /* iPhone (v1353) — viewport-fit=cover : la page occupe tout l'écran, on garde donc nous-mêmes les marges
      de l'encoche (paysage) et de la barre d'accueil (en bas, appli installée). env() vaut 0 ailleurs. */
   body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
@@ -2106,6 +2074,13 @@
   div[style*="backdrop-filter"] > div {
     max-height: calc(var(--vv-h, 100dvh) - 16px); overflow-y: auto; overscroll-behavior: contain;
     border-radius: var(--radius-card-lg) !important;
+  }
+  /* Harmonisation : ces fenêtres « maison » prennent l'apparence des fenêtres standard (.modal-bg / .modal) —
+     même voile, et sur téléphone même « feuille » posée en bas avec des marges réduites. */
+  div[style*="backdrop-filter"] { background: rgba(74, 68, 88, 0.4) !important; }
+  @media (max-width: 600px) {
+    div[style*="backdrop-filter"] { align-items: flex-end !important; padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)) !important; }
+    div[style*="backdrop-filter"] > div { width: 100% !important; max-width: none !important; padding: 20px 16px !important; }
   }
   /* Calendrier de 601 à 880 px (tablette, grand téléphone en paysage) : tenait sur 876 px minimum
      et défilait de côté. */
@@ -5766,6 +5741,47 @@ document.addEventListener("click", e => {
   if (inPanel && (!e.target.closest("button, a, [onclick]") || e.target.closest("[id^=themeBtn], [id^=lang]"))) return;
   toggleHeaderMenu(false);
 });
+/* Accessibilité (clavier, lecteur d'écran) — appliquée à l'affichage, y compris à tout ce qui est
+   ajouté plus tard, sans toucher aux ~180 gabarits HTML :
+   - un élément cliquable qui n'est pas un vrai bouton (<div onclick>, <span onclick>…) devient
+     atteignable avec Tab (tabindex=0), annoncé comme bouton (role=button) et activable avec Entrée / Espace ;
+     les fonds de fenêtre (clic à l'extérieur pour fermer) et les boîtes qui bloquent juste la propagation
+     du clic sont laissés de côté ;
+   - un champ sans étiquette reçoit comme nom son texte d'exemple (placeholder) ou son titre. */
+(function() {
+  const SKIP_ONCLICK = /^\s*(event\.stopPropagation\(\);?\s*$|event\.target\s*===?\s*this)/;
+  const enhance = root => {
+    if (!root.querySelectorAll) return;
+    const els = root.matches?.("[onclick]") ? [root, ...root.querySelectorAll("[onclick]")] : root.querySelectorAll("[onclick]");
+    els.forEach(el => {
+      if (/^(BUTTON|A|INPUT|SELECT|TEXTAREA|LABEL|OPTION|SUMMARY)$/.test(el.tagName) || el.hasAttribute("tabindex")) return;
+      const oc = el.getAttribute("onclick") || "";
+      if (SKIP_ONCLICK.test(oc) || el.classList.contains("modal-bg") || el.classList.contains("modal")) return;
+      el.setAttribute("tabindex", "0");
+      if (!el.hasAttribute("role")) el.setAttribute("role", "button");
+    });
+    const fields = root.matches?.("input,select,textarea") ? [root] : root.querySelectorAll("input:not([type=hidden]),select,textarea");
+    fields.forEach(f => {
+      if (f.hasAttribute("aria-label") || f.hasAttribute("aria-labelledby") || (f.id && document.querySelector(`label[for="${CSS.escape(f.id)}"]`)) || f.closest("label")) return;
+      const name = f.getAttribute("placeholder") || f.getAttribute("title");
+      if (name) f.setAttribute("aria-label", name.replace(/\u00a0/g, " "));
+    });
+  };
+  document.addEventListener("keydown", e => {
+    if ((e.key === "Enter" || e.key === " ") && e.target?.getAttribute?.("role") === "button" && !/^(BUTTON|A|INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) {
+      e.preventDefault(); e.target.click();
+    }
+  });
+  let pending = [], scheduled = false;
+  new MutationObserver(ms => {
+    for (const m of ms) m.addedNodes.forEach(n => { if (n.nodeType === 1) pending.push(n); });
+    if (pending.length && !scheduled) {
+      scheduled = true;
+      (window.requestIdleCallback || setTimeout)(() => { scheduled = false; const p = pending; pending = []; p.forEach(enhance); }, { timeout: 500 });
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+  enhance(document.body);
+})();
 /* Masquer / remettre la bande du haut (boutons + onglets). Rien n'est enregistré : un rechargement de la page
    remet la bande, pour ne jamais rester sans navigation. */
 function hideHeaderBand() {
@@ -6850,6 +6866,7 @@ function _checkDayChange() {
   if (k === _lastRenderedDayKey) return;
   _lastRenderedDayKey = k;
   if (_selectedDayKey === k) _selectedDayKey = null;
+  _carryOverTodos();
   renderAll();
 }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") _checkDayChange(); });
@@ -8417,7 +8434,7 @@ function renderProjects() {
   const grid = document.getElementById("projectsGrid");
   if (grid) {
     if (!otherProjects.length) {
-      grid.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;grid-column:1/-1;text-align:center;padding:20px;">Aucun autre projet — utilise "+ Nouveau projet" pour en ajouter (ex: collaboration ponctuelle, projet annexe).</p>`;
+      grid.innerHTML = `<p class="empty-state" style="grid-column:1/-1;">Aucun autre projet — utilise "+ Nouveau projet" pour en ajouter (ex: collaboration ponctuelle, projet annexe).</p>`;
     } else {
       grid.innerHTML = otherProjects.map(p => {
         const taskCount = state.work.postdocTasks.filter(t => t.projectId === p.id).length;
@@ -8465,7 +8482,7 @@ function _renderProjectCardFeatured(targetId, projectFilter, gradientCss, defaul
             <button class="task-del" onclick="deleteTask('${t.id}')" title="Supprimer">✕</button>
           </div>`;
       }).join("")
-    : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:14px;">Aucune tâche en cours pour ce projet 🎉</p>`;
+    : `<p class="empty-state">Aucune tâche en cours pour ce projet 🎉</p>`;
 
   // Dernières tâches terminées (max 4, les plus récentes en tête)
   const recentDone = doneTasks.slice(-4).reverse();
@@ -9481,7 +9498,7 @@ function renderAutreView() {
           <button class="task-del" onclick="deleteTask('${t.id}')" title="Supprimer">✕</button>
         </div>`;
       }).join("")
-    : `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:14px;">Aucune tache en cours 🎉</p>`;
+    : `<p class="empty-state">Aucune tache en cours 🎉</p>`;
 
   // --- log des heures "Autre" ---
   const entries = [];
@@ -9535,7 +9552,7 @@ function renderAutreView() {
     }
     html += `</tbody></table></div>`;
   } else {
-    html += `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:10px;">Aucune heure "Autre" saisie &mdash; utilise l'onglet <strong>Temps</strong>.</p>`;
+    html += `<p class="empty-state">Aucune heure "Autre" saisie &mdash; utilise l'onglet <strong>Temps</strong>.</p>`;
   }
 
   logEl.innerHTML = html;
@@ -9623,7 +9640,7 @@ function renderTaskProgress() {
       </div>`;
   }
   if (!html) {
-    html = `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:14px;">Pas encore de tâches.</p>`;
+    html = `<p class="empty-state">Pas encore de tâches.</p>`;
   }
   target.innerHTML = html;
 }
@@ -9831,7 +9848,7 @@ function renderTasks() {
   document.getElementById("taskCount").textContent = `(${open} en cours / ${tasks.length})`;
   renderCustomSectionChips();
   if (!tasks.length) {
-    document.getElementById("taskList").innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucune tâche pour l'instant.</p>`;
+    document.getElementById("taskList").innerHTML = `<p class="empty-state">Aucune tâche pour l'instant.</p>`;
     renderDeadlineCalendar();
     return;
   }
@@ -11415,13 +11432,13 @@ function _getPal() {
 
 /* ── Hormones ──────────────────────────────────────────────────────── */
 const HORMONES = [
-  { id: "endorphines", label: "Endorphines", emoji: "🏃", color: "#a8e6cf", colorS: "#a0c0a8", colorM: "#555", desc: "Effort physique, sport",        target: 4, unit: "j",
+  { id: "endorphines", label: "Endorphines", emoji: "🏃", color: "#a8e6cf", colorS: "#a0c0a8", desc: "Effort physique, sport",        target: 4, unit: "j",
     longDesc: "Libérées par l'effort physique, elles réduisent la perception de la douleur et procurent une sensation de bien-être, voire d'euphorie légère." },
-  { id: "dopamine",    label: "Dopamine",    emoji: "🎯", color: "#ffd3a8", colorS: "#e0c4a0", colorM: "#777", desc: "Accomplissement, plaisir",     target: 5, unit: "j",
+  { id: "dopamine",    label: "Dopamine",    emoji: "🎯", color: "#ffd3a8", colorS: "#e0c4a0", desc: "Accomplissement, plaisir",     target: 5, unit: "j",
     longDesc: "Le circuit de la récompense : elle monte quand tu accomplis quelque chose, atteins un objectif, apprends ou anticipes un plaisir." },
-  { id: "serotonine",  label: "Sérotonine",  emoji: "☀️", color: "#ffe89a", colorS: "#a4cce0", colorM: "#999", desc: "Calme, créativité, nature",    target: 5, unit: "j",
+  { id: "serotonine",  label: "Sérotonine",  emoji: "☀️", color: "#ffe89a", colorS: "#a4cce0", desc: "Calme, créativité, nature",    target: 5, unit: "j",
     longDesc: "L'hormone de l'apaisement et de la stabilité de l'humeur — favorisée par le calme, la nature, un bon sommeil et un esprit détendu." },
-  { id: "ocytocine",   label: "Ocytocine",   emoji: "🤗", color: "#ffc8dd", colorS: "#d0ac84", colorM: "#666", desc: "Lien social, affection",       target: 3, unit: "j",
+  { id: "ocytocine",   label: "Ocytocine",   emoji: "🤗", color: "#ffc8dd", colorS: "#d0ac84", desc: "Lien social, affection",       target: 3, unit: "j",
     longDesc: "L'hormone du lien : elle monte lors des moments de connexion, d'affection, de tendresse et de proximité avec les autres." },
 ];
 function _hormoneColor(h) {
@@ -12436,8 +12453,8 @@ function _routineColor(key) {
   return meta.color;
 }
 const ROUTINES_META = {
-  matin: { label: "Routine matin", emoji: "☀️", color: "#f7c9a3", colorS: "#e0c4a0", colorM: "#777" },
-  soir:  { label: "Routine soir",  emoji: "🌙", color: "#c9b6f0", colorS: "#a4cce0", colorM: "#555" },
+  matin: { label: "Routine matin", emoji: "☀️", color: "#f7c9a3", colorS: "#e0c4a0" },
+  soir:  { label: "Routine soir",  emoji: "🌙", color: "#c9b6f0", colorS: "#a4cce0" },
 };
 function getRoutines() {
   if (!state.routines) state.routines = {
@@ -13151,45 +13168,6 @@ function _parseFoodQuery(query) {
   return { name: name || query.trim(), grams };
 }
 
-async function searchFoodCalories(query) {
-  const sug = document.getElementById("foodCalSuggestions");
-  if (!query || query.length < 2) { if (sug) sug.style.display = "none"; return; }
-  clearTimeout(_foodCalTimer);
-  _foodCalTimer = setTimeout(async () => {
-    try {
-      const { name: searchName, grams } = _parseFoodQuery(query);
-      const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(searchName)}&action=process&json=1&page_size=5&fields=product_name,nutriments&lc=fr`);
-      const data = await res.json();
-      const products = (data.products||[]).filter(p => p.nutriments?.["energy-kcal_100g"] > 0);
-      if (!products.length) { sug.style.display = "none"; return; }
-      sug.innerHTML = products.map(p => {
-        const kcal100 = Math.round(p.nutriments["energy-kcal_100g"]);
-        const name = p.product_name || searchName;
-        const kcalPortion = grams ? Math.round(kcal100 * grams / 100) : null;
-        const calLabel = kcalPortion
-          ? `<span style="color:var(--green);font-weight:700;">${kcalPortion} kcal</span><span style="color:var(--ink-softer);font-size:11px;"> pour ${grams}g</span>`
-          : `<span style="color:var(--orange);">${kcal100} kcal/100g</span>`;
-        const calToApply = kcalPortion || kcal100;
-        return `<div onclick="applyCal(${_jsq(name.slice(0,50))}, ${calToApply})"
-          style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--line);"
-          onmouseover="this.style.background='var(--lavender-soft)'"
-          onmouseout="this.style.background='white'">
-          <span style="font-weight:500;">${escapeHtml(name.slice(0,50))}</span>
-          <span style="float:right;">${calLabel}</span>
-        </div>`;
-      }).join("") + `<div style="padding:5px 12px;font-size:11px;color:var(--ink-softer);text-align:center;">
-        ${grams ? `Calculé pour ${grams}g · ` : ""}Source : Open Food Facts
-      </div>`;
-      sug.style.display = "block";
-    } catch(e) { sug.style.display = "none"; }
-  }, 600);
-}
-
-function applyCal(name, kcal) {
-  const calInput = document.getElementById("foodEntryCalories");
-  if (calInput && !calInput.value) calInput.value = kcal;
-  document.getElementById("foodCalSuggestions").style.display = "none";
-}
 
 function closeFoodEntry() { document.getElementById("foodEntryModal").classList.remove("open"); }
 
@@ -13329,7 +13307,7 @@ function renderFoodLog() {
   const el = document.getElementById("foodLogList");
   if (!el) return;
   if (!list.length) {
-    el.innerHTML = '<p style="color:var(--ink-softer);font-size:13px;text-align:center;padding:10px;">Aucune entrée — clique + Ajouter pour commencer</p>';
+    el.innerHTML = '<p class="empty-state">Aucune entrée — clique + Ajouter pour commencer</p>';
     // Journée vide → effacer le total et l'alerte (sinon ils restent collés de la veille)
     const totalEl = document.getElementById("foodCalDayTotal");
     if (totalEl) totalEl.textContent = "";
@@ -14800,30 +14778,6 @@ function renderBodyComboChart() {
         }
       }
     }
-  });
-}
-function renderWellbeingChart() {
-  const dates = lastDates(30);
-  const labels = dates.map(d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }));
-  if (wellbeingChart) wellbeingChart.destroy();
-  wellbeingChart = new Chart(document.getElementById("wellbeingChart"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        { label: "Humeur", data: dates.map(d => state.history[todayKey(d)]?.mood ?? null), borderColor: "#f5b6c9", borderWidth: 2.5, spanGaps: true, yAxisID: "y5" },
-        { label: "Énergie", data: dates.map(d => state.history[todayKey(d)]?.energy ?? null), borderColor: "#f7c9a3", borderWidth: 2.5, spanGaps: true, yAxisID: "y5" },
-        { label: "Sommeil (h)", data: dates.map(d => state.history[todayKey(d)]?.sleep ?? null), borderColor: "#b4d4f1", borderWidth: 2.5, spanGaps: true, yAxisID: "y12" },
-      ],
-    },
-    options: {
-      ...baseChartOpts(),
-      scales: {
-        x: { grid: { display: false }, ticks: { color: "#8a8499", maxTicksLimit: 6 } },
-        y5: { position: "left", min: 0, max: 5, grid: { color: "#f3eef9" }, ticks: { color: "#8a8499", stepSize: 1 } },
-        y12: { position: "right", min: 0, max: 24, grid: { display: false }, ticks: { color: "#8a8499", stepSize: 4, callback: v => v + "h" } },
-      },
-    },
   });
 }
 
@@ -16506,21 +16460,6 @@ function renderCash() {
     }).join('') : '<span style="font-size:12px;color:var(--ink-softer);">Aucun mouvement enregistré</span>';
   }
 }
-function cashWithdrawal() {
-  const amt = parseFloat(document.getElementById("cashAmountInput").value);
-  if (!amt || amt <= 0) { showToast("💰 Entre un montant de retrait."); return; }
-  const note = document.getElementById("cashNoteInput").value.trim() || "Retrait espèces";
-  // 1. Retire du compte courant via une transaction
-  const txId = "tx" + Date.now();
-  state.transactions.unshift({ id: txId, date: new Date().toISOString(), type: "expense", amount: amt, category: "Retrait espèces", note, reimbursable: false, mission: "", fixedCharge: false, exceptional: false, postdocMission: false, directSavingsAccount: "", fromSavingsAccount: "" });
-  // 2. Ajoute aux espèces en gardant le lien avec la transaction
-  if (!state.accounts.cashLog) state.accounts.cashLog = [];
-  state.accounts.cashLog.push({ date: todayKey(), amount: amt, dir: "in", note, txId });
-  state.accounts.cashBalance = (state.accounts.cashBalance || 0) + amt;
-  document.getElementById("cashAmountInput").value = "";
-  document.getElementById("cashNoteInput").value = "";
-  saveState(); renderMoney(); renderAccounts();
-}
 // Ajoute du liquide reçu hors circuit suivi (cadeau, remboursement en main propre…) —
 // contrairement à "💵 Retrait espèces" (Nouvelle transaction), ça ne vient d'aucun compte suivi.
 function promptAddCash() {
@@ -17220,11 +17159,11 @@ function renderTxList() {
     ? `${total} résultat${total>1?"s":""} (${state.transactions.length} total)`
     : state.transactions.length + " au total";
   if (!state.transactions.length) {
-    document.getElementById("txList").innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucune transaction pour l'instant.</p>`;
+    document.getElementById("txList").innerHTML = `<p class="empty-state">Aucune transaction pour l'instant.</p>`;
     return;
   }
   if (!list.length) {
-    document.getElementById("txList").innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucun résultat pour "${escapeHtml(search)}".</p>`;
+    document.getElementById("txList").innerHTML = `<p class="empty-state">Aucun résultat pour "${escapeHtml(search)}".</p>`;
     return;
   }
   const seenVirIds = new Set();
@@ -17433,7 +17372,7 @@ function openDayDetail(d) {
     totalOut > 0 ? `−${totalOut.toFixed(2)} €` : totalIn > 0 ? `+${totalIn.toFixed(2)} €` : "0 €";
   document.getElementById("catDetailTotal").style.color = totalOut > totalIn ? "var(--rose)" : "var(--mint)";
   if (!txs.length) {
-    document.getElementById("catDetailList").innerHTML = `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:16px 0;">Aucune transaction ce jour.</p>`;
+    document.getElementById("catDetailList").innerHTML = `<p class="empty-state">Aucune transaction ce jour.</p>`;
   } else {
     document.getElementById("catDetailList").innerHTML = txs.map(tx => {
       const isIncome = tx.type === "income";
@@ -17724,7 +17663,7 @@ function openSavingsAccountModal(cat) {
   const listEl = document.getElementById("savingsAccountModalList");
 
   if (txs.length === 0 && startVal === 0) {
-    listEl.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;text-align:center;margin:20px 0;">Aucun mouvement enregistré</p>`;
+    listEl.innerHTML = `<p class="empty-state">Aucun mouvement enregistré</p>`;
   } else {
     const startHtml = startVal !== 0 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--bg-1);border-radius:8px;border:1px solid var(--line);">
       <div>
@@ -18646,7 +18585,7 @@ function renderBudgetFeedback() {
     </div>`;
 
   if (!allCats.length) {
-    el.innerHTML = addForm + `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:16px 0;">Aucun objectif encore — ajoute ta première catégorie ci-dessus.</p>`;
+    el.innerHTML = addForm + `<p class="empty-state">Aucun objectif encore — ajoute ta première catégorie ci-dessus.</p>`;
     return;
   }
 
@@ -18718,7 +18657,7 @@ function renderForecast() {
   );
 
   if (!usedMonths.length) {
-    el.innerHTML = `<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:16px 0;">Pas encore assez de données — enregistre au moins un mois de dépenses pour voir apparaître une prévision ici.</p>`;
+    el.innerHTML = `<p class="empty-state">Pas encore assez de données — enregistre au moins un mois de dépenses pour voir apparaître une prévision ici.</p>`;
     return;
   }
 
@@ -18976,7 +18915,7 @@ function renderSubs() {
   const total = list.reduce((s, sub) => s + monthlyEquivalent(sub.amount, sub.frequency), 0);
   document.getElementById("subTotal").textContent = total.toFixed(2) + " €";
   if (!list.length) {
-    document.getElementById("subList").innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:18px;">Aucun abonnement enregistré. Clique sur "+ Ajouter" pour suivre tes paiements récurrents (Netflix, salle, Navigo, assurance…).</p>`;
+    document.getElementById("subList").innerHTML = `<p class="empty-state">Aucun abonnement enregistré. Clique sur "+ Ajouter" pour suivre tes paiements récurrents (Netflix, salle, Navigo, assurance…).</p>`;
     return;
   }
   const sorted = [...list].sort((a, b) => (a.nextRenewal || "9999-12-31").localeCompare(b.nextRenewal || "9999-12-31"));
@@ -19069,52 +19008,6 @@ function deleteSubDirect(id) {
   });
 }
 
-/* ========= GOALS ========= */
-function renderGoals() {
-  const countEl = document.getElementById("goalCount");
-  const listEl = document.getElementById("goalList");
-  if (!countEl || !listEl) return; // section retirée du DOM
-  countEl.textContent = state.goals.length ? `(${state.goals.length})` : "";
-  if (!state.goals.length) {
-    listEl.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Ajoute ton premier objectif ci-dessous ✨</p>`;
-    return;
-  }
-  listEl.innerHTML = state.goals.map(g => {
-    const pct = Math.min(100, Math.round((g.current / g.target) * 100));
-    const deadline = g.deadline ? formatDeadline(g.deadline) : "Pas d'échéance";
-    return `
-      <div class="goal">
-        <div class="goal-head">
-          <div class="goal-name">${escapeHtml(g.name)}</div>
-          <div class="goal-deadline">📅 ${deadline}</div>
-        </div>
-        <div class="goal-bar-wrap"><div class="goal-bar" style="width:${pct}%;"></div></div>
-        <div class="goal-footer">
-          <span>${g.current} / ${g.target} ${escapeHtml(g.unit || "")} — ${pct}%</span>
-          <div class="goal-controls">
-            <input type="number" step="any" value="${g.current}" onchange="updateGoal('${g.id}', this.value)" />
-            <button class="del" onclick="deleteGoal('${g.id}')">✕</button>
-          </div>
-        </div>
-      </div>`;
-  }).join("");
-}
-function addGoal() {
-  const name = document.getElementById("newGoalName").value.trim();
-  const target = Number(document.getElementById("newGoalTarget").value);
-  const unit = document.getElementById("newGoalUnit").value.trim();
-  const deadline = document.getElementById("newGoalDeadline").value;
-  if (!name || !target) return;
-  state.goals.push({ id: "g" + Date.now(), name, target, unit, deadline, current: 0 });
-  ["newGoalName", "newGoalTarget", "newGoalUnit", "newGoalDeadline"].forEach(i => document.getElementById(i).value = "");
-  saveState();
-  renderGoals();
-}
-function updateGoal(id, val) {
-  const g = state.goals.find(x => x.id === id);
-  if (g) { g.current = Number(val) || 0; saveState(); renderGoals(); }
-}
-function deleteGoal(id) { state.goals = state.goals.filter(g => g.id !== id); saveState(); renderGoals(); }
 
 /* ========= JOURNAL ========= */
 function renderJournalMoodTags(text) {
@@ -20213,15 +20106,23 @@ function getAllCalEvents() {
   for (const s of state.subscriptions) {
     if (s.nextRenewal) { const effDate = nextOccurrence(s.nextRenewal, s.frequency); events.push({ date: effDate, type: "sub", title: `${s.name} (${s.amount} €)`, source: "Abonnement" }); }
   }
-  // Plantes — prochain arrosage
+  // Tâches Domestique avec échéance (non faites) — en retard : affichées aujourd'hui
+  const _todayK = todayKey();
+  for (const t of (state.domestique?.tasks || [])) {
+    if (!t.deadline || t.done) continue;
+    const late = t.deadline < _todayK;
+    events.push({ date: late ? _todayK : t.deadline, type: "domtask", title: `🏠 ${t.name}${late ? " (en retard)" : ""}`, source: "Domestique" });
+  }
+  // Plantes — prochain arrosage (en retard : affiché aujourd'hui, plus à une date passée qu'on ne regarde plus)
   for (const p of (state.domestique?.plants || [])) {
     if (!p.lastWatered || !p.wateringDays) continue;
     const [y, m, d] = p.lastWatered.split("-").map(Number);
     const next = new Date(y, m - 1, d);
     next.setDate(next.getDate() + p.wateringDays);
+    const nk = todayKey(next), late = nk < _todayK;
     events.push({
-      date: todayKey(next), type: "plant",
-      title: `${p.emoji || "🌱"} Arroser ${p.name}`,
+      date: late ? _todayK : nk, type: "plant",
+      title: `${p.emoji || "🌱"} Arroser ${p.name}${late ? " (en retard)" : ""}`,
       source: "Plantes", time: "",
     });
   }
@@ -20431,7 +20332,7 @@ function showCalDayDetails(dateKey) {
   if (!listEl) return;
   const addBtn = `<button onclick="openManualEventModal('${dateKey}')" style="display:flex;align-items:center;gap:6px;background:var(--lavender-soft);border:1px dashed var(--lavender);color:var(--ink);border-radius:10px;padding:7px 14px;cursor:pointer;font-size:13px;font-family:inherit;margin-bottom:10px;">✚ Ajouter un événement ce jour</button>`;
   if (!events.length) {
-    listEl.innerHTML = addBtn + `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:10px;">Aucun événement ce jour-là.</p>`;
+    listEl.innerHTML = addBtn + `<p class="empty-state">Aucun événement ce jour-là.</p>`;
     return;
   }
   listEl.innerHTML = addBtn + events.map(e => {
@@ -20471,7 +20372,7 @@ function renderCalUpcoming() {
     })
     .sort((a, b) => a.date.localeCompare(b.date));
   if (!events.length) {
-    listEl.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:14px;">Aucun événement dans les 7 prochains jours.</p>`;
+    listEl.innerHTML = `<p class="empty-state">Aucun événement dans les 7 prochains jours.</p>`;
     return;
   }
   listEl.innerHTML = events.map(e => {
@@ -21112,7 +21013,7 @@ function _renderTimeStats(target, datesOrDays, periodLabel, totalNote) {
   const totals = _sumWorkTime(dates);
   const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0);
   if (grandTotal === 0) {
-    target.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucune heure saisie sur les ${periodLabel}.</p>`;
+    target.innerHTML = `<p class="empty-state">Aucune heure saisie sur les ${periodLabel}.</p>`;
     return;
   }
   const noteHtml = totalNote ? `<span style="font-size:15px;color:var(--ink);font-weight:700;white-space:nowrap;">${totalNote}</span>` : "";
@@ -21550,6 +21451,28 @@ function renderTimeDonutAllChart() {
 // deux suivaient le jour affiché : en consultant hier dans Aujourd'hui, la to-do de Domestique
 // affichait aujourd'hui mais ajoutait / cochait dans hier.
 function _todoDay(dom) { return dom ? getDay(todayKey()) : getToday(); }
+// Report des to-do non faites : une fois par jour, celles des jours précédents (30 derniers jours) sont
+// DÉPLACÉES vers aujourd'hui (même identifiant → pas de doublon si deux appareils le font).
+function _carryOverTodos() {
+  const k = todayKey(), today = getDay(k);
+  if (today.todoCarriedAt === k) return 0;
+  let moved = 0;
+  for (let i = 1; i <= 30; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const dk = todayKey(d), day = state.history[dk];
+    if (!day || !Array.isArray(day.todo) || !day.todo.some(t => !t.done)) continue;
+    const keep = [];
+    day.todo.forEach(t => {
+      if (t.done) { keep.push(t); return; }
+      if (!today.todo.some(x => x.id === t.id)) { today.todo.push({ ...t, carriedFrom: t.carriedFrom || dk }); moved++; }
+    });
+    day.todo = keep;
+  }
+  today.todoCarriedAt = k;
+  if (moved) { saveState(); showToast(`↪️ ${moved} to-do non faite${moved > 1 ? "s" : ""} reportée${moved > 1 ? "s" : ""} à aujourd'hui`); }
+  else saveStateQuiet();
+  return moved;
+}
 function _renderTodoWidget(listId, countId, doneLabelId) {
   const dom = listId === "todoList";
   const today = _todoDay(dom);
@@ -21566,7 +21489,7 @@ function _renderTodoWidget(listId, countId, doneLabelId) {
     ? items.map(t => `
         <div class="todo-item${t.done ? " done-item" : ""}">
           <div class="todo-cb" onclick="toggleTodoItem('${t.id}', ${dom})"></div>
-          <span class="todo-text" onclick="toggleTodoItem('${t.id}', ${dom})">${escapeHtml(t.text)}</span>
+          <span class="todo-text" onclick="toggleTodoItem('${t.id}', ${dom})">${escapeHtml(t.text)}${t.carriedFrom && !t.done ? ` <span class="todo-carried" title="Reportée depuis le ${new Date(t.carriedFrom + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}">↪️</span>` : ""}</span>
           <button class="todo-del" onclick="deleteTodoItem('${t.id}', ${dom})" title="Supprimer">✕</button>
         </div>`).join("")
     : `<div class="todo-empty">Rien pour l'instant — ajoute ta première tâche ✨</div>`;
@@ -22065,7 +21988,7 @@ function renderFreeNotes() {
   const el = document.getElementById("freeNotesList");
   if (!el) return;
   const notes = state.domestique?.freeNotes || [];
-  if (!notes.length) { el.innerHTML = `<p style="color:var(--ink-softer);font-size:13px;text-align:center;padding:14px;">Aucune note. Clique sur "+ Note" pour commencer.</p>`; return; }
+  if (!notes.length) { el.innerHTML = `<p class="empty-state">Aucune note. Clique sur "+ Note" pour commencer.</p>`; return; }
   el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">` +
     notes.map(n => {
       const preview = (n.content || "").slice(0, 120).replace(/\n/g, " ");
@@ -23647,8 +23570,8 @@ function renderFoodKcal() {
   const search = (document.getElementById('foodKcalSearch')?.value || '').toLowerCase().trim();
   let items = state.domestique.foodKcal || [];
   if (search) items = items.filter(f => f.name?.toLowerCase().includes(search) || f.brand?.toLowerCase().includes(search));
-  if (!(state.domestique.foodKcal || []).length) { el.innerHTML = '<p style="color:var(--ink-soft);font-size:13px;text-align:center;margin:16px 0;">Aucun aliment enregistré</p>'; return; }
-  if (!items.length) { el.innerHTML = '<p style="color:var(--ink-soft);font-size:13px;text-align:center;margin:16px 0;">Aucun résultat pour « ' + escapeHtml(search) + ' »</p>'; return; }
+  if (!(state.domestique.foodKcal || []).length) { el.innerHTML = '<p class="empty-state">Aucun aliment enregistré</p>'; return; }
+  if (!items.length) { el.innerHTML = '<p class="empty-state">Aucun résultat pour « ' + escapeHtml(search) + ' »</p>'; return; }
   el.innerHTML = items.map(f => {
     const ingHtml = (f.ingredients || []).length ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">${
       f.ingredients.map(i => `<span style="font-size:11px;background:var(--bg-2);border-radius:6px;padding:2px 7px;color:var(--ink-soft);">${escapeHtml(i.name)}${i.qty ? ' · ' + escapeHtml(i.qty) : ''}${i.kcal ? ' · ' + i.kcal + ' kcal' : ''}</span>`).join('')
@@ -24053,7 +23976,7 @@ function renderMealEvents() {
   const recipeNameOf = id => { const r = (state.domestique?.recipes || []).find(x => x.id === id); return r ? ((typeof recipeEmoji === "function" ? recipeEmoji(r) + " " : "") + r.name) : ""; };
   const events = state.domestique.mealEvents || [];
   if (!events.length) {
-    target.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px 0;">Aucun repas planifié encore — crée ton premier dîner, brunch ou repas entre amis ✨</p>`;
+    target.innerHTML = `<p class="empty-state">Aucun repas planifié encore — crée ton premier dîner, brunch ou repas entre amis ✨</p>`;
     return;
   }
   const sorted = [...events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
@@ -24398,7 +24321,7 @@ function renderGroceryEvents() {
   const target = document.getElementById("groceryEventsList");
   if (!target) return;
   if (!events.length) {
-    target.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucun événement de courses encore. Crée le tien (ex: « Course semaine », « Dîner copines »…) avec le formulaire au-dessus.</p>`;
+    target.innerHTML = `<p class="empty-state">Aucun événement de courses encore. Crée le tien (ex: « Course semaine », « Dîner copines »…) avec le formulaire au-dessus.</p>`;
     return;
   }
   const sorted = [...events].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
@@ -24412,7 +24335,7 @@ function renderGroceryEvents() {
           <div class="gi-name">${escapeHtml(i.name)}</div>
           <button class="gi-del" onclick="deleteGrocery('${i.id}')" title="Supprimer">✕</button>
         </div>`).join("")
-      : `<p style="color:var(--ink-softer);font-size:12px;text-align:center;padding:6px;">Aucun article — ajoute-en ci-dessus.</p>`;
+      : `<p class="empty-state">Aucun article — ajoute-en ci-dessus.</p>`;
 
     const editing = _editingGroceryEvent === ev.id;
     const headerHtml = editing
@@ -24448,7 +24371,7 @@ function renderGlobalGroceries() {
   const target = document.getElementById("globalGroceryList");
   if (!target) return;
   if (!state.domestique.groceries.length) {
-    target.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:14px;">Aucun article encore.</p>`;
+    target.innerHTML = `<p class="empty-state">Aucun article encore.</p>`;
     return;
   }
   // Fusion par nom (case-insensitive) — tous les articles, cochés ou non
@@ -24639,49 +24562,6 @@ function choreStatus(c) {
   if (since < c.frequencyDays * 0.7) return { cls: "dom-status-ok", label: `Il y a ${since} j`, state: "ok" };
   if (since < c.frequencyDays) return { cls: "dom-status-soon", label: `Il y a ${since} j (bientôt)`, state: "soon" };
   return { cls: "dom-status-late", label: `En retard de ${since - c.frequencyDays} j`, state: "late" };
-}
-function renderChores() {
-  const list = state.domestique.chores;
-  const lateCount = list.filter(c => choreStatus(c).state === "late").length;
-  const el = document.getElementById("choresCount");
-  if (el) el.textContent = list.length ? `(${lateCount > 0 ? lateCount + " en retard / " : ""}${list.length})` : "";
-  const target = document.getElementById("choresList");
-  if (!target) return;
-  if (!list.length) {
-    target.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucune tâche ménagère configurée.</p>`;
-    return;
-  }
-  const orderStates = { late: 0, soon: 1, ok: 2 };
-  const sorted = [...list].sort((a, b) => orderStates[choreStatus(a).state] - orderStates[choreStatus(b).state]);
-  target.innerHTML = sorted.map(c => {
-    const s = choreStatus(c);
-    return `
-      <div class="dom-row">
-        <div class="dom-emoji">🧹</div>
-        <div class="dom-name"><strong>${escapeHtml(c.name)}</strong><div class="dom-meta">${frequencyLabel(c.frequencyDays)}</div></div>
-        <span class="dom-status-badge ${s.cls}">${s.label}</span>
-        <button class="dom-btn" onclick="markChoreDone('${c.id}')">✓ Fait</button>
-        <button class="dom-del" onclick="deleteChore('${c.id}')" title="Supprimer">✕</button>
-      </div>`;
-  }).join("");
-}
-function addChore() {
-  const name = document.getElementById("newChoreName").value.trim();
-  const freq = Number(document.getElementById("newChoreFreq").value) || 7;
-  if (!name) return;
-  state.domestique.chores.push({ id: "ch" + Date.now(), name, frequencyDays: freq, lastDone: null });
-  document.getElementById("newChoreName").value = "";
-  saveState(); renderChores();
-}
-function markChoreDone(id) {
-  const c = state.domestique.chores.find(x => x.id === id);
-  if (c) { c.lastDone = todayKey(); saveState(); renderChores(); renderCalendar(); }
-}
-function deleteChore(id) {
-  _showConfirm("Supprimer cette tâche ménagère ?", () => {
-    state.domestique.chores = state.domestique.chores.filter(c => c.id !== id);
-    saveState(); renderChores();
-  });
 }
 
 // --- Plantes — détection depuis ICS ---
@@ -24947,7 +24827,7 @@ function renderPlants() {
   const target = document.getElementById("plantsList");
   if (!target) return;
   if (!list.length) {
-    target.innerHTML = `<p style="color:var(--ink-soft);font-size:14px;text-align:center;padding:20px;">Aucune plante enregistrée. Importe-les depuis ton Google Agenda !</p>`;
+    target.innerHTML = `<p class="empty-state">Aucune plante enregistrée. Importe-les depuis ton Google Agenda !</p>`;
     return;
   }
   const orderStates = { late: 0, soon: 1, ok: 2 };
@@ -24985,7 +24865,6 @@ function openPlantDetail(id) {
   document.getElementById("plantDetailName").textContent = p.name;
   document.getElementById("plantDetailFreq").textContent = "Arrosage : " + frequencyLabel(p.wateringDays);
   // Statut
-  const s = choreStatus ? null : null;
   const lastW = p.lastWatered;
   let statusHtml = "";
   if (lastW) {
@@ -25640,7 +25519,6 @@ function applyPatch(p) {
 }
 
 /* ========= SEED / PRE-FILL ========= */
-function checkSeedBanner() { /* bannière supprimée */ }
 function dismissSeed() {}
 function confirmReseed() {}
 function showToast(message, duration = 2400) {
@@ -25677,344 +25555,6 @@ function showToast(message, duration = 2400) {
     toast.style.transform = `translateX(-50%) translateY(${top ? -10 : 10}px)`;
     toast._hideTimer = setTimeout(() => { toast.style.visibility = "hidden"; }, 320); // après le fondu
   }, duration);
-}
-function loadInitialData() {
-  // Nettoyage des anciens seeds éventuels (idempotent)
-  state.work.postdocProjects = state.work.postdocProjects.filter(p => !String(p.id || "").startsWith("p-seed-"));
-  state.work.postdocTasks = state.work.postdocTasks.filter(t => !String(t.id || "").startsWith("t-seed-"));
-  state.work.candidatures = state.work.candidatures.filter(c => !String(c.id || "").startsWith("c-seed-"));
-  state.work.articles = state.work.articles.filter(a => !String(a.id || "").startsWith("ar-seed-"));
-  state.work.communications = state.work.communications.filter(c => !String(c.id || "").startsWith("co-seed-"));
-
-  // Le nom vient du compte Google (onAuthStateChanged) — ne pas écraser
-  const now = new Date().toISOString();
-
-  // ===== HABITUDES (remplace les défauts) =====
-  state.habits = [
-    { id: "h-pas", name: "9000 pas", type: "numeric", target: 9000, unit: "pas" },
-    { id: "h-eau", name: "1 L d'eau", type: "numeric", target: 4, unit: "verres" },
-    { id: "h-lecture", name: "Lire 30 min" },
-  ];
-
-  // ===== CATÉGORIES — merge in any missing defaults =====
-  DEFAULT_STATE.categories.forEach(c => { if (!state.categories.includes(c)) state.categories.push(c); });
-  DEFAULT_STATE.incomeCategories.forEach(c => { if (!state.incomeCategories.includes(c)) state.incomeCategories.push(c); });
-  // savingsCategories : pas de merge automatique — chaque utilisateur configure ses propres comptes épargne
-
-  // ===== PROJETS POSTDOC =====
-  state.work.postdocProjects.push(
-    {
-      id: "p-seed-postdoc",
-      name: "Postdoc",
-      progress: 0,
-      notes: "« Les élites mobiles des Hauts-de-France : modes d'habiter et choix résidentiels ».\n\nLARSH, Université Polytechnique Hauts-de-France (Valenciennes). Du 12 janvier 2026 au 12 février 2027.\nEncadrants : Guillaume Schmitt + Thomas Pfirsch.\nInscrit dans l'axe 6 « Impacts socio-économiques » du projet RITMEA.\n\nMéthodes : entretiens semi-directifs, observation, compilation/analyse de données quantitatives sur les choix résidentiels, géotracking (en fin d'enquête)."
-    },
-    {
-      id: "p-seed-valo",
-      name: "Valorisation",
-      progress: 0,
-      notes: "Thèse soutenue le 14 novembre 2025 : « Géographie de l'invisible : les territoires de la mémoire des femmes » — UMR Géographie-cités (EHESS), dir. Nicolas Verdier.\n\nJury : D. Chevalier, K. Duplan, B. Fraenkel, F. Giraut, R. Sénac, C. Schmoll, V. Veschambre.\nComité : F. Ripoll, M. Lieber, D. Zeneidi, L. Marinier.\n\nObjectifs : articles + communications issus de la thèse."
-    },
-    {
-      id: "p-seed-enseignement",
-      name: "Enseignement",
-      progress: 95,
-      notes: "294 h équivalent TD cumulé sur 5 ans (depuis 2021) — Université Paris 1 Panthéon-Sorbonne, EHESS, CNAM, Univ. Catholique de l'Ouest d'Angers, UPEC.\n\nEn cours (2025-2026) : TD « Cartographie et graphique » (L1, Paris 1, 24h, S2).\n\n✓ Copies corrigées — il reste juste à les rendre au secrétariat.\n\nThèmes : cartographie, analyse statistique, protocoles de recherche, diagnostic de terrain, géographie sociale, mémoire, matrimoine."
-    },
-    {
-      id: "p-seed-autre",
-      name: "Autre",
-      progress: 0,
-      notes: "Travail non categorise : jurys de these, soutenances blanches, formations, syndicat, colloques ponctuels, etc."
-    },
-    {
-      id: "p-seed-affiliations",
-      name: "Affiliations & réseaux",
-      progress: 0,
-      notes: "• Membre du réseau international de la Chaire UNESCO en toponymie inclusive « Dénommer le monde », Université de Genève.\n\n• Membre de la transversalité « Réflexivité dans la pratique de la recherche » du laboratoire Géographie-cités (UMR 8504).\n\n• Membre du comité scientifique du Colloque International UNESCO toponymie (18-20 juin 2026, Montpellier).\n\n• Co-direction d'un mémoire de M2 avec Claire Hancock (A. Hamdoune, 2023, UPEC)."
-    },
-    {
-      id: "p-seed-candidatures",
-      name: "Candidatures",
-      progress: 0,
-      notes: "Candidatures MCF, MSCA, CNRS, ERC en cours."
-    }
-  );
-
-  // ===== TÂCHES =====
-  state.work.postdocTasks.unshift(
-    // 🚨 URGENT
-    { id: "t-seed-amsterdam", name: "Finaliser communication Amsterdam (répéter à l'oral + imprimer)", projectId: "p-seed-valo", priority: "urgent", deadline: "2026-05-28", done: false, createdAt: now },
-    { id: "t-seed-msca-final", name: "Finaliser candidature MSCA (tout relire)", projectId: "p-seed-candidatures", priority: "urgent", deadline: "2026-05-30", done: false, createdAt: now },
-    { id: "t-seed-copies", name: "Rendre les copies corrigées au secrétariat (Paris 1)", projectId: "p-seed-enseignement", priority: "high", deadline: "", done: false, createdAt: now },
-    { id: "t-seed-odonymes", name: "Commencer l'article international (odonymes & collages féminicides Paris)", projectId: "p-seed-valo", priority: "urgent", deadline: "2026-06-30", done: false, createdAt: now },
-
-    // 🔴 HAUTE
-    { id: "t-seed-muti-confirm", name: "Confirmer avec G. Muti : créneau (matin/AM) + durée + cadrage", projectId: "p-seed-valo", priority: "high", deadline: "2026-06-10", done: false, createdAt: now },
-    { id: "t-seed-reunion-11juin", name: "Préparer réunion postdoc du 11 juin", projectId: "p-seed-postdoc", priority: "high", deadline: "2026-06-11", done: false, createdAt: now },
-    { id: "t-seed-entretien1", name: "Entretien valorisation thèse (1/2)", projectId: "p-seed-valo", priority: "high", deadline: "2026-06-12", done: false, createdAt: now },
-    { id: "t-seed-entretien2", name: "Entretien valorisation thèse (2/2)", projectId: "p-seed-valo", priority: "high", deadline: "2026-06-13", done: false, createdAt: now },
-    { id: "t-seed-topo", name: "Finaliser communication Montpellier (répéter à l'oral + imprimer)", projectId: "p-seed-valo", priority: "high", deadline: "2026-06-15", done: false, createdAt: now },
-    { id: "t-seed-slides-muti", name: "Envoyer slides à G. Muti pour traduction italienne", projectId: "p-seed-valo", priority: "high", deadline: "2026-06-18", done: false, createdAt: now },
-    { id: "t-seed-visio", name: "Faire communication Varèse / Insubria (oral + ppt, visio Teams)", projectId: "p-seed-valo", priority: "high", deadline: "2026-06-23", done: false, createdAt: now },
-    { id: "t-seed-pantheon", name: "Finaliser modifs mineures — article Panthéon (NQF)", projectId: "p-seed-valo", priority: "high", deadline: "2026-07-01", done: false, createdAt: now },
-    { id: "t-seed-tina", name: "Envoyer formulaire de consentement à Tina (enquêtée)", projectId: "p-seed-postdoc", priority: "high", deadline: "", done: false, createdAt: now },
-    { id: "t-seed-geotrack-doc", name: "Finaliser documents — dossier traitement données géotracking", projectId: "p-seed-postdoc", priority: "high", deadline: "", done: false, createdAt: now },
-
-    // 🟠 MOYENNE
-    { id: "t-seed-revueodo", name: "Choisir la revue internationale pour l'article odonymes", projectId: "p-seed-valo", priority: "medium", deadline: "2026-06-30", done: false, createdAt: now }
-  );
-
-  // ===== CANDIDATURES =====
-  state.work.candidatures.push(
-    {
-      id: "c-seed-mcf", type: "MCF",
-      institution: "Section CNU 23 — Géographie (universités à cibler)",
-      deadline: "2027-03-25", status: "À préparer",
-      notes: "Tenté à Amiens en 2025-2026 — pas auditionnée. Cibler la campagne synchronisée Galaxie 2027.\n\nVérifier qualif CNU (dossier ~mi-octobre 2026, résultats février 2027).",
-      createdAt: now
-    },
-    {
-      id: "c-seed-cnrs", type: "CNRS",
-      institution: "Section 39 — Espaces, territoires, sociétés",
-      deadline: "2027-01-06", status: "À préparer",
-      notes: "Tu m'as dit section 42 — la section géographie humaine au CNRS est traditionnellement la 39. À vérifier sur le portail CNRS.",
-      createdAt: now
-    },
-    {
-      id: "c-seed-msca", type: "MSCA",
-      institution: "Université de Genève — accueil F. Giraut",
-      deadline: "2026-09-10", status: "En rédaction",
-      notes: "Premier jet terminé. Deadline indicative — confirmer sur Funding & Tenders (call PF 2026 typiquement mi-septembre).",
-      createdAt: now
-    },
-    {
-      id: "c-seed-erc", type: "ERC ACCESS",
-      institution: "À explorer",
-      deadline: "", status: "À préparer",
-      notes: "Programme d'accompagnement à la candidature ERC — à explorer si pertinent dans ta trajectoire. Sinon, supprimer cette carte.",
-      createdAt: now
-    }
-  );
-
-  // ===== ARTICLES =====
-  state.work.articles.push(
-    {
-      id: "ar-seed-annales",
-      title: "Présentes mais invisibles : les femmes dans la toponymie parisienne",
-      journal: "Annales de Géographie, n°764 (4), 2025, p. 76-101",
-      status: "Publié",
-      coauthors: "",
-      submittedDate: "2025-12-01",
-      notes: "Article publié dans le n°4/2025 d'Annales de Géographie.\n\nC'est cet article qui a déclenché l'invitation de G. Muti & V. Pecorelli pour le colloque visio du 23 juin 2026 (recommandation F. Giraut).\n\nhttps://www.revues.armand-colin.com/geographie/annales-geographie/annales-geographie-ndeg-764-42025/presentes-invisibles-femmes-toponymie-parisienne"
-    },
-    {
-      id: "ar-seed-mosaique",
-      title: "Les collages contre les féminicides : le signe de l'appropriation de l'espace public",
-      journal: "Mosaïque, n°21, 2024",
-      status: "Publié",
-      coauthors: "",
-      submittedDate: "",
-      notes: "Article publié en 2024 dans la revue Mosaïque (en ligne)."
-    },
-    {
-      id: "ar-seed-pantheon",
-      title: "Le Panthéon sous tension : quand le matrimoine fait vaciller les grands hommes",
-      journal: "Nouvelles Questions Féministes, n°46/1 (2027, à paraître)",
-      status: "Accepté",
-      coauthors: "",
-      submittedDate: "",
-      notes: "Article accepté — modifs mineures à rendre pour le 1er juillet 2026."
-    },
-    {
-      id: "ar-seed-odonymes",
-      title: "Analyse géographique des odonymes féminins et des collages féminicides à Paris",
-      journal: "Revue internationale (à identifier)",
-      status: "Rédaction",
-      coauthors: "",
-      submittedDate: "",
-      notes: "Objectif : finir la rédaction pour fin juin 2026. Revue cible à choisir."
-    },
-    {
-      id: "ar-seed-chap1-denoel",
-      title: "La rue, un espace de domination masculine",
-      journal: "in Notre colère sur vos murs, Paris, Denoël, 2021, p. 48-50",
-      status: "Publié",
-      coauthors: "",
-      submittedDate: "",
-      notes: "Chapitre d'ouvrage."
-    },
-    {
-      id: "ar-seed-chap2-denoel",
-      title: "Le déséquilibre spatial des collages dans Paris",
-      journal: "in Notre colère sur vos murs, Paris, Denoël, 2021, p. 60-67",
-      status: "Publié",
-      coauthors: "",
-      submittedDate: "",
-      notes: "Chapitre d'ouvrage."
-    },
-    {
-      id: "ar-seed-chap3-denoel",
-      title: "Les collages comme moyen de se réapproprier l'espace urbain",
-      journal: "in Notre colère sur vos murs, Paris, Denoël, 2021, p. 51-59",
-      status: "Publié",
-      coauthors: "",
-      submittedDate: "",
-      notes: "Chapitre d'ouvrage."
-    },
-    {
-      id: "ar-seed-vulg-ehess",
-      title: "Raconte-moi ta thèse #13 | Ce que le matrimoine fait au patrimoine",
-      journal: "EHESS Alumni — vulgarisation, 6 octobre 2022",
-      status: "Publié",
-      coauthors: "",
-      submittedDate: "2022-10-06",
-      notes: "Article de vulgarisation : la reconnaissance de nouveaux usages."
-    }
-  );
-
-  // ===== COMMUNICATIONS =====
-  state.work.communications.push(
-    {
-      id: "co-seed-visio-muti",
-      event: "Colloque toponymie critique — Università dell'Insubria",
-      location: "Visio Teams (Côme/Varèse)",
-      date: "2026-06-23",
-      type: "invité",
-      status: "Accepté",
-      link: "https://www.ageiweb.it/gruppi-di-lavoro/toponomastica-critica-politiche-di-denominazione-e-spazializzazione-della-memoria-2/",
-      notes: "Allocution d'ouverture le 23 juin (matin ~10h ou après-midi ~14h, à confirmer).\n\nColloque sur 2 jours (22-23 juin) — toponymie critique, noms de rues dédiés à des figures féminines (région insubre), tables rondes avec institutions et associations féministes.\n\nInvitée par Giuseppe Muti & Valeria Pecorelli (Università dell'Insubria) sur recommandation de F. Giraut, à la suite de l'article publié dans Annales de géographie.\n\nPrésentation en français — slides à envoyer quelques jours avant pour traduction italienne."
-    },
-    {
-      id: "co-seed-topo-mtp",
-      event: "Colloque UNESCO « Pour une approche interdisciplinaire de la toponymie »",
-      location: "Montpellier",
-      date: "2026-06-18",
-      type: "oral",
-      status: "Accepté",
-      link: "https://toponymie.sciencesconf.org/",
-      notes: "Du 18 au 20 juin 2026. Co-organisé par Chaire UNESCO Genève + Univ. Montpellier Paul-Valéry + Univ. Rouen.\n\nTitre : « Les odonymes féminins à Paris, une reproduction spatiale des inégalités de genre à l'œuvre dans la société ? »\n\n+ Je suis membre du comité scientifique du colloque (évaluation en double aveugle des propositions de communication)."
-    },
-    {
-      id: "co-seed-amsterdam",
-      event: "« When the street becomes a site of memory » — ERC Frictions of Space",
-      location: "Amsterdam & Wageningen",
-      date: "2026-06-01",
-      type: "oral",
-      status: "Accepté",
-      link: "https://emmanueladuampong.com/tourism-memory-and-heritage-conference2026/",
-      notes: "Conférence internationale ERC « Frictions of Space » : Tourism, Memory and Heritage. Emotional geographies of cultural production, memory-making and commemoration.\n\nDu 1er au 3 juin 2026.\n\nTitre : « When the street becomes a site of memory: emotions, narration and contested heritage in femicide memorials in Paris »."
-    },
-    {
-      id: "co-seed-dublin-2024",
-      event: "35th International Geographical Congress (UGI)",
-      location: "Dublin",
-      date: "2024-08-24",
-      type: "oral",
-      status: "Présenté",
-      link: "",
-      notes: "« Strategies for urban space appropriation. The case of Collages Féminicides Paris ». Congrès UGI, 24-30 août 2024."
-    },
-    {
-      id: "co-seed-toulouse-2023",
-      event: "3e Congrès International Institut du Genre",
-      location: "Toulouse",
-      date: "2023-07-04",
-      type: "oral",
-      status: "Présenté",
-      link: "",
-      notes: "« No(s) Futur(s). Genre : bouleversements, utopies, impatiences ». 4-7 juillet 2023.\n\nTitre : « Les odonymes féminins à Paris : vers un paysage mémoriel plus inclusif »."
-    },
-    {
-      id: "co-seed-cmarne-2023",
-      event: "Colloque « Créatrices dans la cité »",
-      location: "Champs-sur-Marne (Univ. Gustave Eiffel)",
-      date: "2023-06-12",
-      type: "oral",
-      status: "Présenté",
-      link: "",
-      notes: "« Penser la ville avec les femmes, de la Cité des Dames aux promenades du matrimoine ». 12-14 juin 2023.\n\nTitre : « Ce que les collages contre les féminicides font à la ville »."
-    },
-    {
-      id: "co-seed-cedaw-2024",
-      event: "CEDAW (ONU) — Towards a gender inclusive cityscape",
-      location: "Genève",
-      date: "2024-02-12",
-      type: "invité",
-      status: "Présenté",
-      link: "",
-      notes: "Événement parallèle à la 87e session du Comité CEDAW de l'ONU. Organisé par la Chaire UNESCO en toponymie inclusive."
-    },
-    {
-      id: "co-seed-ehess-genev-2024",
-      event: "Journée d'étude « Enjeux féministes au prisme des graphies exposées »",
-      location: "Aubervilliers",
-      date: "2024-11-27",
-      type: "oral",
-      status: "Présenté",
-      link: "",
-      notes: "Journée d'étude internationale EHESS / Université de Genève — que J'AI ORGANISÉE (financement UMR Géographie-cités + Univ. Genève). Discutantes : Béatrice Fraenkel, Sophie Blanchard.\n\nTitre : « À l'intersection de la commémoration et des mobilisations sociales, les collages commémorant des victimes de féminicides »."
-    },
-    // Journées d'étude (passé)
-    { id: "co-seed-jd-aub-2026", event: "JE « Les interdisciplinarités de la géographie avec les sciences sociales »", location: "Aubervilliers", date: "2026-03-26", type: "oral", status: "Présenté", link: "", notes: "26-27 mars 2026. Titre : « La fabrique de l'interdisciplinarité : géographie et gender studies en dialogue dans le cadre d'une recherche doctorale »." },
-    { id: "co-seed-jd-paris-2026", event: "JE « Du réel aux modèles : concilier l'objectif d'abstraction et l'imprécision de l'information »", location: "Paris", date: "2026-01-30", type: "oral", status: "Présenté", link: "", notes: "30 janvier 2026. Titre : « Cartographier les collages contre les féminicides à Paris »." },
-    { id: "co-seed-jd-stetienne-2025", event: "JE SFR ALLHiS « Genre, mémoire et sources »", location: "Saint-Etienne", date: "2025-04-10", type: "oral", status: "Présenté", link: "", notes: "10-11 avril 2025. JE internationale jeunes chercheur·ses. Titre : « Mémoire des genres : l'espace urbain comme une archive »." },
-    { id: "co-seed-jd-grenoble-2023", event: "Colloque interdisciplinaire doctorants « Signes, symboles, symptômes »", location: "Grenoble", date: "2023-03-01", type: "oral", status: "Présenté", link: "", notes: "1-2 mars 2023. Titre : « De la signature au monument : de quoi les collages contre les féminicides sont-ils le signe ? »." },
-    { id: "co-seed-jd-cmarne-2022", event: "JE « Femmes et odonymes » — séminaire PROGEVI (Lab'URBA)", location: "Champs-sur-Marne", date: "2022-01-13", type: "oral", status: "Présenté", link: "", notes: "13 janvier 2022. Titre : « Quelles représentations de la mémoire des femmes dans l'espace public parisien : le cas des odonymes »." },
-    // Séminaires de recherche
-    { id: "co-seed-sem-roscoff-2024", event: "AG UMR 8504 Géographie-cités — Atelier « Matérialité »", location: "Roscoff", date: "2024-04-03", type: "invité", status: "Présenté", link: "", notes: "3-5 avril 2024. Titre : « Les odonymes féminins à Paris, une politique volontariste qui pose question »." },
-    { id: "co-seed-sem-chaignes-2024", event: "Séminaire équipe EHGO (Géographie-cités)", location: "Chaîgnes", date: "2024-07-03", type: "oral", status: "Présenté", link: "", notes: "3-5 juillet 2024. Titre : « Peut-on parler de pôles de mémoire du genre à Paris ? »." },
-    { id: "co-seed-sem-chaignes-2023", event: "Séminaire équipe EHGO (Géographie-cités)", location: "Chaîgnes", date: "2023-06-28", type: "oral", status: "Présenté", link: "", notes: "28-30 juin 2023. Titre : « Comprendre les enjeux mémoriels des collages féministes par le prisme de l'espace »." },
-    { id: "co-seed-sem-fontaine-2022", event: "Séminaire équipe EHGO (Géographie-cités)", location: "Fontainebleau", date: "2022-01-27", type: "oral", status: "Présenté", link: "", notes: "27-28 janvier 2022. Titre : « Quelles représentations de la mémoire des femmes dans l'espace public parisien ? Le cas des odonymes »." },
-    // Invitations événements scientifiques
-    { id: "co-seed-inv-genev-2023", event: "Symposium Chaire UNESCO « Genre, noms de lieux et espace public »", location: "Genève", date: "2023-04-05", type: "invité", status: "Présenté", link: "", notes: "5-6 avril 2023. Symposium international." },
-    { id: "co-seed-inv-aub-2024", event: "Modération axe « Récits, représentations, imaginaires » — master TES EHESS", location: "Aubervilliers", date: "2024-04-25", type: "invité", status: "Présenté", link: "", notes: "25 avril 2024." },
-    // Médiation scientifique & culturelle
-    { id: "co-seed-med-pantin-2026", event: "Projet pédagogique collège A.L. Lavoisier × France Culture / Radio Campus", location: "Pantin", date: "2026-03-19", type: "invité", status: "Présenté", link: "", notes: "19 mars 2026. Production de podcast avec les élèves, présentation des métiers de la recherche, vulgarisation matrimoine." },
-    { id: "co-seed-med-philharm-2024", event: "Philharmonie de Paris — table ronde « Matrimoine : (pour) faire genre ? »", location: "Paris", date: "2024-03-09", type: "invité", status: "Présenté", link: "", notes: "9 mars 2024. « Archives et traces : de la difficulté de constituer un matrimoine »." },
-    { id: "co-seed-med-vh-2023", event: "Lycée Victor Hugo (classes de première) — odonymes féminins", location: "Paris", date: "2023-04-18", type: "invité", status: "Présenté", link: "", notes: "Interventions le 13 mai 2022 + le 18 avril 2023." },
-    { id: "co-seed-med-ign-2022", event: "IGN — Institut national de l'information géographique et forestière", location: "Paris", date: "2022-03-08", type: "invité", status: "Présenté", link: "", notes: "8 mars 2022. « Quelles représentations de la mémoire des femmes dans l'espace public parisien ? »." },
-    // Interventions médiatiques
-    { id: "co-seed-media-monde-2026", event: "[Média] Le Monde — Rues Simone-Veil, Rosa-Parks…", location: "Le Monde", date: "2026-01-11", type: "invité", status: "Présenté", link: "", notes: "11 janvier 2026. Entretien par Adel Miliani et Manon Romain." },
-    { id: "co-seed-media-libe-2024", event: "[Média] Libération — #MeToo odonymique (abbé Pierre)", location: "Libération", date: "2024-10-09", type: "invité", status: "Présenté", link: "", notes: "9 octobre 2024. Entretien par Margaux Gable." },
-    { id: "co-seed-media-huma-2024", event: "[Média] l'Humanité — 5 ans de Collages Féminicides Paris", location: "l'Humanité", date: "2024-11-15", type: "invité", status: "Présenté", link: "", notes: "15 novembre 2024. Entretien par Léa Petit Scalogna." },
-    { id: "co-seed-media-fi-2023", event: "[Média] France Inter — Pantin/Pantine", location: "France Inter", date: "2023-01-04", type: "invité", status: "Présenté", link: "", notes: "4 janvier 2023. Entretien par Juliette Geay." },
-    { id: "co-seed-media-parisien-2023", event: "[Média] Le Parisien — Pantine, pourquoi ça crispe", location: "Le Parisien", date: "2023-01-04", type: "invité", status: "Présenté", link: "", notes: "4 janvier 2023. Entretien par Christine Mateus." },
-    { id: "co-seed-media-fc-2022", event: "[Média] France Culture — « Géographie à la carte » (avec F. Giraut)", location: "France Culture", date: "2022-10-13", type: "invité", status: "Présenté", link: "", notes: "13 octobre 2022. « 5 ans après #MeToo, a-t-on féminisé les noms de lieux »." }
-  );
-
-
-  // ===== ACTIVITÉS — assurer que les 3 essentielles existent (idempotent) =====
-  if (!Array.isArray(state.activities)) state.activities = [];
-  const ensureAct = (regex, name, emoji, fallbackId) => {
-    const existing = state.activities.find(a => new RegExp(regex, "i").test(a.name));
-    if (existing) {
-      // Mise à jour du nom/emoji pour cohérence
-      existing.name = name;
-      existing.emoji = emoji;
-    } else {
-      state.activities.push({ id: fallbackId, name, emoji });
-    }
-  };
-  ensureAct("sport|salle", "Sport", "🏋️", "a-sport");
-  ensureAct("médit", "Méditation", "🧘", "a-medit");
-  ensureAct("danse", "Danse", "💃", "a-danse");
-  ensureAct("cuisine|baking|pâtiss|patiss", "Cuisine", "🍳", "a-cuisine");
-  // Retirer marche / course si encore présent
-  state.activities = state.activities.filter(a => !/marche|course/i.test(a.name));
-  // Migration : ajouter les hormones aux activités qui n'en ont pas encore
-  state.activities.forEach(a => { if (!a.hormones) a.hormones = autoHormones(a.name); });
-
-  // ===== JOURNAL =====
-  const today = getToday();
-  if (!today.journal || !today.journal.trim()) {
-    today.journal = "Premier jour sur mon tableau de vie ✨";
-  }
-
-  state.seeded = true;
-  saveState();
-  document.getElementById("seedBanner").style.display = "none";
-  renderAll();
 }
 
 /* ========= MAIN ========= */
@@ -26709,7 +26249,6 @@ function renderAll() {
   renderHealth();
   renderMoney();
   renderSubs();
-  renderGoals();
   renderDomestique();
   renderCalendar();
   renderPillars();
@@ -26740,8 +26279,8 @@ try {
   setTxType('expense');
   // Appliquer le thème AVANT renderAll() pour que les couleurs JS soient correctes
   if (window._pendingTheme) applyTheme(window._pendingTheme, false);
+  try { _carryOverTodos(); } catch (e) { console.warn("[to-do] report", e); }
   renderAll();
-  checkSeedBanner();
   if (window._loadStateError) setTimeout(() => _showAlert("⚠️ Les données de cet appareil n'ont pas pu être lues (" + window._loadStateError + ").<br><br>Une copie de secours a été gardée sur l'appareil. Si tu es connectée, tes données vont revenir depuis le cloud dans quelques secondes. Sinon, utilise « Importer mes données » avec ta dernière sauvegarde, et préviens le support."), 1200);
   // Météo au démarrage (onglet Aujourd'hui actif par défaut)
   setTimeout(fetchWeather, 800);
@@ -28126,8 +27665,13 @@ function _noteRefreshFromState() {
 }
 // Flush immédiat vers localStorage (appelé à chaque frappe ET avant tout rechargement) —
 // uniquement si l'éditeur a réellement été modifié.
-function _noteFlushToLocalStorage() {
-  if (!_noteIsDirty()) return false;
+let _noteLsTimer = null;
+function _noteFlushToLocalStorage(immediate = true) {
+  if (!_noteIsDirty()) {
+    // une écriture différée en attente doit quand même partir si on ferme la page
+    if (immediate && _noteLsTimer) { clearTimeout(_noteLsTimer); _noteLsTimer = null; try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
+    return false;
+  }
   const g = (state.work.workNotes||[]).find(x => x.id === _currentNoteGroupId);
   const n = g?.notes.find(x => x.id === _currentNoteId);
   if (!n) return false;
@@ -28139,7 +27683,11 @@ function _noteFlushToLocalStorage() {
   n.updatedAt = new Date().toISOString();
   state.lastModified = Date.now();
   window._lastLocalSave = Date.now(); // protège la note en cours contre un écrasement par la synchro cloud
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e) {}
+  // Pendant la frappe : écriture de tout l'état sur l'appareil regroupée (≤ 1 fois / 0,5 s) au lieu d'à
+  // chaque lettre — c'était lent avec beaucoup de données. Fermeture de page / arrière-plan : immédiat.
+  clearTimeout(_noteLsTimer); _noteLsTimer = null;
+  const write = () => { _noteLsTimer = null; try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e) {} };
+  if (immediate) write(); else _noteLsTimer = setTimeout(write, 500);
   _fbQueueSave();
   return true;
 }
@@ -28155,8 +27703,8 @@ setInterval(() => {
 }, 60000);
 
 function scheduleNoteSave() {
-  // 1. Sauvegarde immédiate dans localStorage (pas de perte si rechargement)
-  _noteFlushToLocalStorage();
+  // 1. Enregistrement dans l'état tout de suite, écriture sur l'appareil regroupée (voir _noteFlushToLocalStorage)
+  _noteFlushToLocalStorage(false);
   // 2. Mise à jour immédiate du titre dans la sidebar
   const titleVal = document.getElementById("noteTitleInput")?.value;
   if (titleVal !== undefined && _currentNoteId) {
