@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1359</title>
+<title>Mon Tableau de Vie 🌿 · v1360</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17454,9 +17454,9 @@ function _patrimoineNav(delta) {
   renderBalanceEvolutionChart();
 }
 function renderBalanceEvolutionChart() {
-  // Fenêtre glissante de 6 mois (180 jours)
+  // Fenêtre glissante de 6 mois (180 jours) — ◀ ▶ reculent / avancent de 6 mois
   const today = new Date(); today.setHours(0,0,0,0);
-  const windowDays = 90;
+  const windowDays = 180;
   const endOffset = -_patrimoineOffset * windowDays; // offset en jours depuis aujourd'hui
   const end = new Date(today); end.setDate(end.getDate() - endOffset);
   const days = [];
@@ -17504,8 +17504,8 @@ function renderBalanceEvolutionChart() {
     }
     return bal;
   });
-  // Labels : 1 sur 10 pour ne pas surcharger sur 3 mois
-  const labels = days.map((d, i) => i % 10 === 0 ? d.toLocaleDateString("fr-FR", { day:"numeric", month:"short" }) : "");
+  // Labels : le 1er de chaque mois (6 repères sur 6 mois) ; la date exacte s'affiche au survol
+  const labels = days.map(d => d.getDate() === 1 ? d.toLocaleDateString("fr-FR", { month: "short" }) : "");
   if (balanceEvolutionChart) balanceEvolutionChart.destroy();
   const ctx = document.getElementById("balanceEvolutionChart");
   if (!ctx) return;
@@ -17544,7 +17544,7 @@ function renderBalanceEvolutionChart() {
         },
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#8a8499", maxRotation: 0 } },
+        x: { grid: { display: false }, ticks: { color: "#8a8499", maxRotation: 0, autoSkip: false } } /* un repère par mois, sans en sauter */,
         y: {
           grid: { color: "#f3eef9" },
           ticks: { color: "#8a8499", callback: v => v.toFixed(0) + " €" },
@@ -18465,6 +18465,8 @@ function openCatDetail(cat, type = "expense", courantes = false) {
   const txs = _catDetailInRange(cat, type, courantes, d => d >= start && d < end);
   _catDetailShow(cat, type, txs, "");
 }
+// Écart rythme actuel / idéal en pourcentage signé : 1.154 → "+15 %", 0.92 → "−8 %"
+function _pctGap(ratio) { const p = Math.round((ratio - 1) * 100); return (p > 0 ? "+" : p < 0 ? "−" : "") + Math.abs(p) + "\u00a0%"; }
 function renderBudgetGauge() {
   const el = document.getElementById("budgetGauge");
   if (!el) return;
@@ -18583,7 +18585,7 @@ function renderBudgetGauge() {
     </div>
     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);">
       <span>Jour <strong>${daysElapsed}</strong>/${totalDays} · <strong>${daysLeft}</strong> jours restants</span>
-      <span>Idéal : ${dailyIdeal.toFixed(0)} €/j · Rythme actuel : <strong style="color:${dailyActual > dailyIdeal * 1.1 ? "#f59e0b" : "var(--ink)"};">${dailyActual.toFixed(0)} €/j</strong></span>
+      <span>Idéal : ${dailyIdeal.toFixed(0)} €/j · Rythme actuel : <strong style="color:${ratio >= 1.1 ? color : "var(--ink)"};">${dailyActual.toFixed(0)} €/j</strong>${dailyIdeal > 0 ? ` <span title="Écart entre ton rythme actuel et le rythme idéal — c'est lui qui donne la couleur de la jauge" style="font-weight:600;color:${ratio >= 1.1 ? color : "var(--green)"};">(${_pctGap(ratio)})</span>` : ""}</span>
     </div>
     ${plannedLine}
     ${(fixedTotal > 0 || exceptionalTotal > 0) ? `<div style="margin-top:8px;font-size:12px;color:var(--ink-softer);border-top:1px solid var(--line);padding-top:8px;">${fixedTotal > 0 ? `🏠 Charges fixes : <strong>${fixedTotal.toFixed(0)} €</strong>` : ""}${fixedTotal > 0 && exceptionalTotal > 0 ? " · " : ""}${exceptionalTotal > 0 ? `✨ Dépenses lissées : <strong>${exceptionalTotal.toFixed(0)} €</strong>` : ""} · Total réel ce mois : ${spentRaw.toFixed(0)} €</div>` : ""}
@@ -18594,7 +18596,13 @@ function renderBudgetGauge() {
         + Solde compte courant actuel : <strong>${balanceCourant().toFixed(2)} €</strong><br>
         + Espèces en poche : <strong>${(state.accounts?.cashBalance || 0).toFixed(2)} €</strong><br>
         = Budget total : <strong>${budget.toFixed(2)} €</strong><br>
-        <span style="color:var(--ink-soft);">Le "budget" n'est pas un montant fixe : il reflète ton solde réel, donc il bouge à chaque revenu ou dépense sur le compte courant — pas seulement ceux de ce mois.</span>
+        <span style="color:var(--ink-soft);">Le "budget" n'est pas un montant fixe : il reflète ton solde réel, donc il bouge à chaque revenu ou dépense sur le compte courant — pas seulement ceux de ce mois.</span><br><br>
+        <strong style="color:var(--ink-soft);">Couleur de la jauge</strong> — elle compare ton rythme actuel (dépensé ÷ jours écoulés) au rythme idéal (budget ÷ jours du mois), <em>en pourcentage</em> :<br>
+        🟢 <strong>vert</strong> : moins de 10 % au-dessus de l'idéal (ou en dessous)<br>
+        🟠 <strong>orange</strong> : de +10 % à +50 %<br>
+        🔴 <strong>rouge</strong> : +50 % ou plus, ou budget dépassé<br>
+        Aujourd'hui : ${dailyActual.toFixed(2)} €/j ÷ ${dailyIdeal.toFixed(2)} €/j = <strong>${_pctGap(ratio)}</strong>.<br>
+        <span style="color:var(--ink-soft);">C'est un écart relatif : 2 € de plus par jour pèsent plus sur un petit rythme idéal (+12 % sur 16 €/j → orange) que sur un grand (+3 % sur 70 €/j → vert). Les montants affichés sont arrondis à l'euro, le pourcentage est calculé sur les valeurs exactes.</span>
       </div>
     </details>` : ""}`;
 }
