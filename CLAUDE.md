@@ -20,6 +20,20 @@ Cette règle existe parce que fixer à l'aveugle a causé des heures de perte de
 
 ---
 
+## 📝 RÈGLE ABSOLUE — METTRE À JOUR CE FICHIER APRÈS CHAQUE MODIF
+
+**Chaque modification de l'appli (nouvelle fonction, correction, changement de comportement) se termine par une mise à jour de `CLAUDE.md`, dans le MÊME commit que le code.** Alexandra travaille depuis plusieurs ordinateurs et plusieurs sessions Claude : ce fichier est la seule mémoire commune. Sans lui, la prochaine session recasse ce qui vient d'être réparé.
+
+- ✅ Nouvelle fonctionnalité → la décrire dans « Fonctionnalités importantes » (nom des fonctions clés, où elle vit, ce qu'elle ne doit pas casser)
+- ✅ Bug corrigé → une ligne dans « Problèmes résolus — ne pas recasser » : symptôme | cause + solution
+- ✅ Règle qui s'impose pour la suite (couleurs, dates, tailles, pièges…) → la noter dans la bonne section
+- ✅ Décision d'Alexandra (« on veut que… ») → la noter avec la date
+- ✅ Information devenue fausse → la corriger ou la supprimer (ne jamais laisser deux versions contradictoires)
+- ❌ Pas de journal de bord ni de liste de commits : seulement ce qu'une future session doit savoir pour bien travailler
+- ❌ Ne pas gonfler le fichier : une ligne vaut mieux qu'un paragraphe
+
+---
+
 ## ⚠️ RÈGLE ABSOLUE — MOBILE FIRST
 
 **Toute nouvelle fonctionnalité doit être adaptée à l'interface téléphone (Samsung, iOS).**
@@ -77,10 +91,12 @@ Le repo est configuré et les credentials GitHub sont dans le trousseau macOS. A
 
 ```bash
 cd /Users/alexandramallah/Documents/Mon-Tableau-de-Vie
-git add index.html
+git add index.html CLAUDE.md
 git commit -m "description du changement"
 git push origin main
 ```
+
+(Toujours `CLAUDE.md` avec `index.html` : voir la règle « mettre à jour ce fichier après chaque modif » en haut.)
 
 GitHub Pages se met à jour en ~2 minutes. **Ne jamais dire à Alexandra d'uploader manuellement** — tout se fait via git push désormais.
 
@@ -384,6 +400,17 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 - **Fix emoji modal émotion** : `_pickEmSuggest(i)` met à jour emoji ET label (plus d'apostrophe qui casse l'`onclick`)
 - **Thème Minimal supprimé** : variables `_hbM` et `_isM` entièrement retirées, 2 thèmes restants : 🌸 Smooth et 💼 Sérieux
 
+### Finances : salaire, paiements prévus, familles de dépenses, graphiques (oct. 2026)
+- **Mois financier** : `state.mainSalaryCategory` (⭐ dans Gérer les catégories) ancre les périodes (`_salaryPeriods()`) ; sans lui, cycle calendaire au 26 (la période récente part du bon 26 : celui de ce mois si on l'a dépassé). Migration corrective : `loadState` fait `{...DEFAULT_STATE, ...saved}` AVANT `migrate`, donc un champ ajouté à DEFAULT_STATE vaut déjà `null`, jamais `undefined` — ne jamais garder une migration sur `=== undefined`.
+- Le champ `date` d'une transaction n'a que le jour (pas d'heure). Une dépense saisie le jour du salaire tombe dans le NOUVEAU mois (décision : ne pas départager par l'heure de l'id, ça excluait le salaire de son propre mois). Pour la garder dans l'ancien mois : mettre la veille.
+- **📅 Paiements prévus** : `state.plannedPayments = [{id,type,date,amount,category,note}]`, carte sous « Budget de vie » (`renderPlanned`, `addPlanned`, `editPlanned`, `validatePlanned`, `deletePlanned`). SANS effet sur jauge/graphiques/épargne/soldes tant que non validés ; « Valider » crée une vraie transaction (date prévue si passée/aujourd'hui, sinon aujourd'hui). La jauge Budget de vie les prolonge d'une partie claire (`plannedOut`) : seulement les dépenses tombant dans la période, rythme jugé à la date du DERNIER paiement prévu (`daysRef`), revenus prévus ignorés.
+- **Familles de dépenses** : `state.categoryNature = {catégorie: "essentiel"|"plaisir"|"pratique"}` (pastille ⚪✅🎉🧰 dans Gérer les catégories, `_cycleCatNature`). Carte « Par catégorie » en 2 lignes de 3 : Dépenses·tout / 🍰 Répartition / Revenus, puis Essentielles / Plaisir / Pratique (`_CAT_VARIANTS`, `_renderCatExpenseChart`, `_renderCatShareChart`, `_catDonut`). Case « hors charges fixes & exceptionnelles » (localStorage `catHorsFixes`), Ronds/Barres (`catChartStyle`) dans l'en-tête à gauche de ▶. Couleurs de la Répartition = charte du thème (`_catFamilyColor`). Clic sur un rond/une barre/une légende → fenêtre `#catDetailModal` (`_showTxListPopup`).
+- **Ordre** : légendes sous les graphiques = par MONTANT décroissant (choix d'Alexandra). Listes déroulantes et Gérer les catégories = ALPHABÉTIQUE via `_alpha()` (tri à l'affichage seulement : l'ordre stocké de `state.categories` donne les couleurs via `catColor`, ne jamais le trier).
+- **Graphique Épargne** : 9 mois, 3 barres superposées (épargne devant à droite, dépenses au milieu jaune/brun selon le thème, revenus gagnés derrière à gauche, hors remboursements). Le décalage n'existe qu'au DESSIN (plugin `beforeDatasetDraw`/`afterDatasetDraw`) : le test de clic est refait dans `onClick`. Clic = `_showBarDetail` (épargne = mises de côté − retraits). Pourcentages dans les barres : `onComplete`.
+- Migration `_natureV2` (3e famille « pratique » + poste « Vêtements ») réservée au compte d'Alexandra (reconnu à ses catégories « Investissement AirBnB », « Logistique », « Entretien vêtements »).
+- **Journal alimentaire** : un repas tiré d'une recette = kcal/portion × portions + ingrédients ajoutés (`_foodPortionKcal`, `baseKcal` mémorisé) ; ses ingrédients `fromRecipe` décrivent le plat ENTIER, ne pas les additionner. Choisir un aliment dans les suggestions l'ajoute comme ingrédient (nom déduit à l'enregistrement si vide).
+- La fenêtre « Modifier la transaction » (`#txModal`) a z-index 300 : elle s'ouvre devant les fenêtres de détail (100). Son « Compte débité » liste aussi les comptes secondaires (`ext:<id>`, ex. Compte Papa).
+
 ## iPhone / Safari iOS (audit v1353)
 - `viewport-fit=cover` : toute la page va jusqu'aux bords → marges avec `env(safe-area-inset-*)` (body gauche/droite, `.container` et `.modal-bg` en bas, bandeau mode édition, `#bandRestorePill`, toast). Tout nouvel élément `position:fixed` en bas : `bottom: calc(env(safe-area-inset-bottom, 0px) + Xpx)`.
 - Zoom automatique d'iOS au toucher d'un champ < 16 px : règle 16 px pour `input, select, textarea, [contenteditable]` sur `(max-width:700px), (hover:none) and (pointer:coarse)` (téléphone couché, iPad compris). Ne pas la restreindre à la largeur.
@@ -451,6 +478,11 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 | Import qui vidait l'appli | Il existait 2 `importData` ; une seule reste (gère « dump localStorage » et « état direct »). |
 | Écran « L'app n'a pas pu démarrer » qui effaçait tout (`localStorage.clear()`) | Remplacé par « Recharger » + « Télécharger mes données (secours) ». Ne jamais remettre de bouton qui efface. |
 | Fenêtre (modale) dont « Annuler/Valider » est inaccessible sur téléphone quand le clavier est ouvert | Overlay des fenêtres calé sur `visualViewport` (`--vv-h` / `--vv-top`, posés en JS) ; `.modal .actions` collée en bas (`position:sticky`) ; toucher une zone vide de la fenêtre range le clavier. Tout refus de validation (champ obligatoire vide) doit afficher un message via `_needField(id, msg)` — jamais de `return` silencieux, sinon on croit que « Valider ne marche pas ». |
+| Liste de suggestions sous un champ (ex. « cordon bleu ») impossible à choisir sur téléphone | La règle « toucher une zone vide d'une fenêtre range le clavier » prenait la liste pour une zone vide. Les listes de suggestions portent `data-keep-keyboard` (exemptées) + `onmousedown="event.preventDefault()"`. |
+| Fenêtre ouverte depuis une autre fenêtre qui s'affiche DERRIÈRE | Même z-index 100 → la plus basse dans le HTML perd. Donner un z-index supérieur à la fenêtre ouverte depuis une autre (`#txModal` : 300) ; confirmations à 9000. |
+| Un `style="…text-overflow:ellipsis"` inline repasse à la ligne sur mobile | La règle anti-débordement force `white-space:normal !important` sur ces styles inline : mettre ce CSS dans une classe (`.cat-note`). |
+| Graphique « jauge prévue » rouge à tort / mois qui sautent | Rythme jugé à la date du dernier paiement prévu, pas à aujourd'hui ; hauteur des graphiques de catégories fixe (ligne de note à hauteur fixe). |
+| Fiche d'un projet perso (Domestique) qui ne change pas après « Enregistrer » | `savePersoProject` reconstruit la fiche (`renderPersoProjects`, qui restaure l'onglet actif) ; l'ancienne mise à jour partielle ne marchait pas pour un premier budget ni pour le titre. |
 
 ---
 
@@ -472,11 +504,11 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 
 1. Lire ce fichier en entier
 2. `Read /Users/alexandramallah/Documents/Mon-Tableau-de-Vie/index.html` pour voir le code actuel
-3. Faire les modifications demandées
+3. Faire les modifications demandées, puis mettre à jour `CLAUDE.md` (règle en haut de ce fichier)
 4. Pousser :
 ```bash
 cd /Users/alexandramallah/Documents/Mon-Tableau-de-Vie
-git add index.html
+git add index.html CLAUDE.md
 git commit -m "feat: description"
 git push origin main
 ```
