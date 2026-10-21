@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1361</title>
+<title>Mon Tableau de Vie 🌿 · v1362</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26768,8 +26768,14 @@ function _merge3(base, local, remote) {
     return out;
   }
   if (_isIdList(local) && _isIdList(remote)) return _merge3Ids(_isIdList(base) ? base : [], local, remote);
+  // Vrai conflit sur une valeur simple. Un côté "vide" (humeur/sommeil/journal d'un jour juste ouvert,
+  // champ jamais rempli) n'est pas un choix : on garde la valeur de l'autre côté, sinon la page
+  // « Aujourd'hui » vide d'un appareil écrasait la saisie faite sur l'autre.
+  if (_isEmptyVal(local) && !_isEmptyVal(remote)) return remote;
   return local;
 }
+const _isEmptyVal = x => x == null || x === "" || x === 0 || x === false ||
+  (Array.isArray(x) && x.length === 0) || (_isPlainObj(x) && Object.keys(x).length === 0);
 function _merge3Ids(base, local, remote) {
   const key = x => String(x.id);
   const bm = new Map(base.map(x => [key(x), x]));
