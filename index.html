@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1362</title>
+<title>Mon Tableau de Vie 🌿 · v1363</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12856,6 +12856,7 @@ function openFoodEntry(id) {
   const recBtn = document.getElementById("foodFromRecipeBtn");
   if (recBtn) recBtn.style.display = e ? "none" : "block";
   document.getElementById('foodEntryPortionHint').textContent = baseKcal ? refPortion + ' = ' + baseKcal + ' kcal' : '';
+  _syncFoodPortionRow();
   document.getElementById("foodEntryModal").classList.add("open");
   setTimeout(() => document.getElementById("foodEntryName").focus(), 50);
 }
@@ -13132,7 +13133,17 @@ async function searchIngCalories(idx, query) {
   }, 700);
 }
 
+// Le champ « Nombre d'unités » du bas ne sert qu'à un repas tiré d'une recette (portions d'un plat) ou à un repas
+// à calories seules : avec des ingrédients saisis à la main, c'est le « × n u. » de chaque ingrédient qui compte.
+function _syncFoodPortionRow() {
+  const row = document.getElementById('foodEntryPortionRow');
+  if (!row) return;
+  const ings = _foodIngredients || [];
+  const show = !!(_foodPortionBase && _foodPortionBase.baseKcal) && (!ings.length || ings.some(i => i.fromRecipe));
+  row.style.display = show ? '' : 'none';
+}
 function updateIngTotal() {
+  _syncFoodPortionRow();
   const total = _foodIngredients.reduce((s,i) => s+(i.kcal||0), 0);
   const el = document.getElementById("foodIngCalTotal");
   if (el) el.textContent = total > 0 ? 'Total ingrédients : '+total+' kcal' : '';
