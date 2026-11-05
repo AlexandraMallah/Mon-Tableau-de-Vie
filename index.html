@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1363</title>
+<title>Mon Tableau de Vie 🌿 · v1364</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -641,6 +641,40 @@
   .tasks-layout { display: grid; grid-template-columns: 1fr 234px; gap: 22px; align-items: start; }
   @media (max-width: 860px) { .tasks-layout { grid-template-columns: 1fr; } }
   .tasks-right-col { position: sticky; top: var(--sticky-stack-bottom, 74px); display: flex; flex-direction: column; gap: 14px; }
+  /* Planning mensuel des tâches (onglet Travail → Tâches) */
+  .planner-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .planner-btn { background: var(--surface-soft); border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 5px 10px; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .planner-month { font-weight: 700; font-size: 14px; min-width: 120px; text-align: center; text-transform: capitalize; }
+  .pl-head, .pl-body { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .pl-head div { text-align: center; font-size: 10px; font-weight: 700; color: var(--ink-softer); padding-bottom: 4px; }
+  .pl-week { position: relative; min-height: 74px; border-top: 1px solid var(--line); }
+  .pl-bg { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .pl-cell { border-left: 1px solid var(--line); }
+  .pl-cell:last-child { border-right: 1px solid var(--line); }
+  .pl-cell.weekend { background: var(--surface-weekend); }
+  .pl-cell.other { background: var(--surface-soft); }
+  .pl-cell.today { background: var(--lavender-soft); }
+  .pl-body { position: relative; row-gap: 2px; padding-bottom: 4px; }
+  .pl-dn { font-size: 11px; font-weight: 600; color: var(--ink); padding: 2px 4px; grid-row: 1; }
+  .pl-dn.other { opacity: 0.45; }
+  .pl-dn.today { color: var(--accent-ink); font-weight: 800; }
+  .pl-bar { height: 18px; line-height: 18px; margin: 0 2px; padding: 0 5px; font-size: 10.5px; border-radius: 5px; border-left: 3px solid; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; min-width: 0; }
+  .pl-bar.cont-l { margin-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+  .pl-bar.cont-r { margin-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+  .pl-bar.p-urgent { background: #fecaca; border-left-color: #dc2626; }
+  .pl-bar.p-high { background: #fed7aa; border-left-color: #ea580c; }
+  .pl-bar.p-medium { background: #fde68a; border-left-color: #f59e0b; }
+  .pl-bar.p-low { background: #e2e8f0; border-left-color: #94a3b8; }
+  .pl-bar.late { box-shadow: inset 0 0 0 1.5px var(--red); }
+  .pl-bar.chip { background: var(--rose-soft); border-left-color: var(--red); }
+  .pl-bar.event { background: #e0f2fe; border-left-color: #0369a1; }
+  .pl-more { grid-column: 1 / -1; font-size: 10px; color: var(--ink-softer); padding: 0 6px; }
+  .pl-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; font-size: 11px; color: var(--ink-soft); }
+  .pl-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+  .pl-todo-wrap { margin-top: 12px; font-size: 12px; color: var(--ink-soft); }
+  .pl-todo { display: inline-block; margin: 3px 4px 0 0; padding: 3px 9px; border-radius: 999px; border: 1px dashed var(--lavender); background: var(--lavender-soft); color: var(--ink); cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top; }
+  .cal-event.task-work { background: var(--lavender-soft); border-left-color: var(--lavender); }
+  .cal-day-event-row.task-work { border-left-color: var(--lavender); }
   .deadline-cal-wrap { background: var(--bg-1); border-radius: 16px; padding: 14px; }
   .claude-card { background: var(--lavender-soft); border: 1px solid var(--lavender); border-radius: 16px; padding: 14px; }
   .deadline-cal-title { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
@@ -2829,6 +2863,21 @@
           <div style="height:8px;"></div>
           <div class="chart-wrap" style="height:120px;"><canvas id="bilanChart"></canvas></div>
         </div>
+      </div>
+      <div class="card" id="plannerCard" style="margin-bottom:14px;">
+        <div class="work-header" style="margin-bottom:6px;">
+          <h2 style="margin:0;">🗓️ Planning de mes tâches</h2>
+          <div class="planner-nav">
+            <button type="button" class="planner-btn" onclick="plannerNav(-1)" title="Mois précédent">◀</button>
+            <span class="planner-month" id="plannerMonthLabel"></span>
+            <button type="button" class="planner-btn" onclick="plannerNav(1)" title="Mois suivant">▶</button>
+            <button type="button" class="planner-btn" onclick="plannerNav(0)">Aujourd'hui</button>
+          </div>
+        </div>
+        <p style="color:var(--ink-soft);font-size:13px;margin:0 0 10px;">Dans une tâche (✏️), indique « Je travaille dessus du … au … » : elle apparaît ici en barre colorée, et dans le calendrier général. Touche une barre pour la modifier.</p>
+        <div id="plannerGrid"></div>
+        <div class="pl-legend" id="plannerLegend"></div>
+        <div class="pl-todo-wrap" id="plannerTodo"></div>
       </div>
       <div class="card">
         <div class="work-header">
@@ -5186,6 +5235,14 @@
         <label>Date limite</label>
         <input type="date" id="taskEditDeadline" />
       </div>
+    </div>
+    <div id="taskEditWorkRow">
+      <label>Je travaille dessus <span style="font-size:11px;color:var(--ink-softer);font-weight:400;">(pour le planning)</span></label>
+      <div class="grid-2">
+        <div><label style="font-size:12px;">Du</label><input type="date" id="taskEditWorkStart" /></div>
+        <div><label style="font-size:12px;">Au</label><input type="date" id="taskEditWorkEnd" /></div>
+      </div>
+      <div style="margin:-4px 0 8px;"><button type="button" class="planner-btn" style="font-size:12px;padding:3px 9px;" onclick="document.getElementById('taskEditWorkStart').value='';document.getElementById('taskEditWorkEnd').value='';">Effacer la période</button></div>
     </div>
     <label>Projet lié</label>
     <select id="taskEditProject" onchange="_onTaskProjectChange()"></select>
@@ -9856,6 +9913,7 @@ function renderTasks() {
   if (!tasks.length) {
     document.getElementById("taskList").innerHTML = `<p class="empty-state">Aucune tâche pour l'instant.</p>`;
     renderDeadlineCalendar();
+    renderTaskPlanner();
     return;
   }
   // Filtre par deadline si une date est sélectionnée dans le calendrier
@@ -9924,6 +9982,7 @@ function renderTasks() {
       </div>`;
   }).join("");
   renderDeadlineCalendar();
+  renderTaskPlanner();
   renderClaudeTasks();
   updateWorkTabBadges();
 }
@@ -9984,6 +10043,86 @@ function unflagClaudeMilestone(taskId, i) {
   t.milestones[i].forClaude = false;
   saveState();
   renderClaudeTasks();
+}
+// ── Planning mensuel des tâches ──────────────────────────────────────────────
+// t.workStart / t.workEnd ("AAAA-MM-JJ", "" = pas planifiée) = période où Alexandra travaille sur la tâche.
+// Une tâche avec période = barre sur ses jours ; une deadline (hors fin de barre) = pastille ⏰ ; un événement = 📅.
+let _plannerMonth = null; // 1er jour du mois affiché (null = mois en cours)
+function plannerNav(delta) {
+  const now = new Date();
+  if (!delta || !_plannerMonth) _plannerMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  if (delta) _plannerMonth = new Date(_plannerMonth.getFullYear(), _plannerMonth.getMonth() + delta, 1);
+  renderTaskPlanner();
+}
+function renderTaskPlanner() {
+  const grid = document.getElementById("plannerGrid");
+  if (!grid) return;
+  if (!_plannerMonth) { const n = new Date(); _plannerMonth = new Date(n.getFullYear(), n.getMonth(), 1); }
+  const y = _plannerMonth.getFullYear(), m = _plannerMonth.getMonth();
+  document.getElementById("plannerMonthLabel").textContent = _plannerMonth.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  // Éléments à placer : barres (période), pastilles deadline, événements
+  const items = [];
+  for (const t of state.work.postdocTasks) {
+    if (t.done) continue;
+    const isEv = t.kind === "event";
+    const hasBar = !isEv && t.workStart && t.workEnd;
+    if (hasBar) {
+      const late = !!t.deadline && t.workEnd > t.deadline;
+      items.push({ id: t.id, start: t.workStart, end: t.workEnd, cls: "p-" + (t.priority || "medium") + (late ? " late" : ""),
+        label: t.name + (t.deadline && t.workEnd === t.deadline ? " ⏰" : ""),
+        tip: t.name + " — du " + t.workStart.split("-").reverse().join("/") + " au " + t.workEnd.split("-").reverse().join("/") +
+          (t.deadline ? " · deadline " + t.deadline.split("-").reverse().join("/") : "") + (late ? " (dépasse la deadline !)" : "") });
+    }
+    if (t.deadline && !(hasBar && t.workEnd === t.deadline)) {
+      items.push({ id: t.id, start: t.deadline, end: t.deadline, cls: isEv ? "event" : "chip", label: (isEv ? "📅 " : "⏰ ") + t.name,
+        tip: (isEv ? "Événement : " : "Deadline : ") + t.name + " — " + t.deadline.split("-").reverse().join("/") });
+    }
+  }
+  const first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
+  const gridStart = new Date(first); gridStart.setDate(1 - ((first.getDay() + 6) % 7));
+  const todayK = todayKey();
+  let html = `<div class="pl-head">${["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map(d => `<div>${d}</div>`).join("")}</div>`;
+  const MAX_LANES = 4;
+  for (let w = 0; ; w++) {
+    const ws = new Date(gridStart); ws.setDate(ws.getDate() + w * 7);
+    if (ws > last) break;
+    const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(ws); d.setDate(d.getDate() + i); return d; });
+    const keys = days.map(d => todayKey(d));
+    // Segments de la semaine : colonnes de début/fin, puis rangées (une pastille par rangée, sans chevauchement)
+    const segs = items.filter(it => it.end >= keys[0] && it.start <= keys[6]).map(it => {
+      const a = Math.max(0, keys.findIndex(k => k >= it.start)), bIdx = keys.map(k => k <= it.end).lastIndexOf(true);
+      return { it, a, b: bIdx, contL: it.start < keys[0], contR: it.end > keys[6] };
+    }).sort((p, q) => p.a - q.a || (q.b - q.a) - (p.b - p.a));
+    const lanes = [];
+    for (const sg of segs) {
+      let li = lanes.findIndex(l => l.every(o => o.b < sg.a || o.a > sg.b));
+      if (li < 0) { lanes.push([]); li = lanes.length - 1; }
+      lanes[li].push(sg); sg.lane = li;
+    }
+    const shown = segs.filter(sg => sg.lane < MAX_LANES), hidden = segs.length - shown.length;
+    html += `<div class="pl-week"><div class="pl-bg">${days.map((d, i) =>
+      `<div class="pl-cell${i >= 5 ? " weekend" : ""}${d.getMonth() !== m ? " other" : ""}${keys[i] === todayK ? " today" : ""}"></div>`).join("")}</div>
+      <div class="pl-body">${days.map((d, i) =>
+        `<div class="pl-dn${d.getMonth() !== m ? " other" : ""}${keys[i] === todayK ? " today" : ""}" style="grid-column:${i + 1};">${d.getDate()}</div>`).join("")}
+      ${shown.map(sg => `<div class="pl-bar ${sg.it.cls}${sg.contL ? " cont-l" : ""}${sg.contR ? " cont-r" : ""}"
+        style="grid-column:${sg.a + 1} / ${sg.b + 2};grid-row:${sg.lane + 2};" title="${escapeHtml(sg.it.tip)}"
+        onclick="openTaskEditModal('${sg.it.id}')">${escapeHtml(sg.it.label)}</div>`).join("")}
+      ${hidden > 0 ? `<div class="pl-more" style="grid-row:${MAX_LANES + 2};">+ ${hidden} autre${hidden > 1 ? "s" : ""} cette semaine</div>` : ""}
+      </div></div>`;
+  }
+  grid.innerHTML = html;
+  document.getElementById("plannerLegend").innerHTML =
+    `<span><i style="background:#dc2626"></i>Urgent</span><span><i style="background:#ea580c"></i>Haute</span><span><i style="background:#f59e0b"></i>Moyenne</span><span><i style="background:#94a3b8"></i>Faible</span>` +
+    `<span>⏰ deadline</span><span><i style="background:#0369a1"></i>Événement</span><span style="color:var(--red);">▭ contour rouge = dépasse la deadline</span>`;
+  // Tâches pas encore placées
+  const rank = { urgent: 0, high: 1, medium: 2, low: 3 };
+  const todo = state.work.postdocTasks.filter(t => !t.done && t.kind !== "event" && !(t.workStart && t.workEnd))
+    .sort((a, b) => (rank[a.priority] ?? 2) - (rank[b.priority] ?? 2) || (a.deadline || "9999").localeCompare(b.deadline || "9999"));
+  const todoEl = document.getElementById("plannerTodo");
+  todoEl.innerHTML = todo.length
+    ? `À placer sur le planning (touche pour choisir les dates) :<br>${todo.slice(0, 12).map(t =>
+        `<span class="pl-todo" onclick="openTaskEditModal('${t.id}')">${escapeHtml(t.name)}</span>`).join("")}${todo.length > 12 ? ` <span style="color:var(--ink-softer);">+ ${todo.length - 12} autres</span>` : ""}`
+    : "";
 }
 const PRIO_DOT_COLORS = { urgent: "#dc2626", high: "#ea580c", medium: "#f59e0b", low: "#94a3b8" };
 function renderDeadlineCalendar() {
@@ -10102,6 +10241,8 @@ function setModalKind(k) {
   const eBtn = document.getElementById("kindToggleEvent");
   if (tBtn) { tBtn.classList.toggle("active", k === "task"); tBtn.classList.toggle("is-task", k === "task"); }
   if (eBtn) { eBtn.classList.toggle("active", k === "event"); }
+  const wr = document.getElementById("taskEditWorkRow"); // pas de période de travail pour un événement
+  if (wr) wr.style.display = k === "event" ? "none" : "";
 }
 function getModalKind() {
   const eBtn = document.getElementById("kindToggleEvent");
@@ -10510,6 +10651,8 @@ function openTaskEditModal(id) {
   document.getElementById("taskEditForAI").checked = !!t.forAI;
   document.getElementById("taskEditPriority").value = t.priority || "medium";
   document.getElementById("taskEditDeadline").value = t.deadline || "";
+  document.getElementById("taskEditWorkStart").value = t.workStart || "";
+  document.getElementById("taskEditWorkEnd").value = t.workEnd || "";
   const pSel = document.getElementById("taskEditProject");
   const sectionIds = ["p-seed-postdoc", "p-seed-candidatures", "p-seed-prixthese", "p-seed-valo", "p-seed-enseignement", "p-seed-autre"];
   const fixedProjects2 = state.work.postdocProjects.filter(p => sectionIds.includes(p.id));
@@ -10553,6 +10696,12 @@ function saveTaskEdit() {
   if (!t) return;
   const name = document.getElementById("taskEditName").value.trim();
   if (!name) { _needField("taskEditName", "Donne un nom à la tâche."); return; }
+  // Période de travail : une seule date remplie = un seul jour ; la fin ne peut pas précéder le début
+  let ws = document.getElementById("taskEditWorkStart").value, we = document.getElementById("taskEditWorkEnd").value;
+  if (ws && !we) we = ws;
+  if (we && !ws) ws = we;
+  if (ws > we) { _needField("taskEditWorkEnd", "La fin doit être après le début."); return; }
+  t.workStart = ws; t.workEnd = we;
   t.name      = name;
   t.forAI     = document.getElementById("taskEditForAI").checked;
   t.priority  = document.getElementById("taskEditPriority").value;
@@ -20155,6 +20304,15 @@ function getAllCalEvents() {
         title: isEv ? "📅 " + t.name : t.name,
         source: isEv ? "Événement" : "Tâche"
       });
+    }
+  }
+  // Période de travail d'une tâche (planning de l'onglet Tâches) : une entrée par jour
+  for (const t of state.work.postdocTasks) {
+    if (t.done || t.kind === "event" || !t.workStart || !t.workEnd) continue;
+    const [sy, sm, sd] = t.workStart.split("-").map(Number);
+    const cur = new Date(sy, sm - 1, sd);
+    for (let g = 0; g < 120 && todayKey(cur) <= t.workEnd; g++, cur.setDate(cur.getDate() + 1)) {
+      events.push({ date: todayKey(cur), type: "task-work", title: "🛠️ " + t.name, source: "Planning des tâches" });
     }
   }
   // Candidatures

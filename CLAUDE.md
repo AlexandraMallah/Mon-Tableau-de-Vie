@@ -240,6 +240,7 @@ Style pastel féminin, doux. Arrondis généreux (12-16px). Pas de couleurs cria
 - **Barre de couleur** : rouge (0%) → orange → jaune → vert (100%) via `hsl(pct*1.2, 72%, 52%)`
 - **Mini calendrier deadlines** à droite de la liste (30 jours, points colorés par priorité)
 - Filtre par deadline en cliquant sur un jour du calendrier
+- **🗓️ Planning de mes tâches** (nov. 2026, demande d'Alexandra) : carte mensuelle pleine largeur au-dessus de « Toutes mes tâches » (`renderTaskPlanner`, `plannerNav`, mois affiché `_plannerMonth`). Une tâche a une période de travail `t.workStart` / `t.workEnd` (`"AAAA-MM-JJ"`, `""` = non planifiée), saisie par deux champs « Du / Au » dans la fenêtre « Modifier la tâche » (masqués pour un événement ; une seule date = un jour ; fin avant début refusée). Affichage : barre colorée par priorité sur ses jours (découpée par semaine, rangées sans chevauchement, 4 rangées max puis « + n autres »), pastille ⏰ pour une deadline hors fin de barre, 📅 pour un événement, contour rouge si la période dépasse la deadline, liste « À placer sur le planning » pour les tâches sans dates. Tâches faites = absentes. Le calendrier général reçoit une entrée par jour de période (`getAllCalEvents`, type `task-work`, 🛠️). Les textes tronqués passent par des classes (`.pl-bar`), jamais en `style` inline (règle mobile anti-débordement). Pas de glisser-déposer (choix : dates dans la fiche).
 
 ### Analyse émotionnelle du journal
 - `analyzeJournal(text)` → détecte 8 émotions (Joie, Gratitude, Motivation, Sérénité, Stress, Fatigue, Tristesse, Irritation)
