@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1365</title>
+<title>Mon Tableau de Vie 🌿 · v1366</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22981,7 +22981,7 @@ function addRecipeIngredient(ing) {
       oninput="_recScaleFromUnit(this.closest('div'))" />
     <input type="text" value="${escapeHtml(ing.name||"")}" placeholder="Ingrédient" class="rec-ing-name" list="foodKcalDatalist"
       style="flex:1;min-width:0;padding:7px 7px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;"
-      onchange="_autoFillRecipeIngKcal(this.closest('div'))" oninput="_autoFillRecipeIngKcal(this.closest('div'))" />
+      onchange="_autoFillRecipeIngKcal(this.closest('div'))" oninput="_autoFillRecipeIngKcal(this.closest('div'), true)" />
     <input type="number" min="0" value="${ing.kcal>0?ing.kcal:""}" placeholder="kcal" class="rec-ing-kcal" oninput="updateRecipeTotals()"
       style="width:50px;flex-shrink:0;padding:7px 5px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
     <button onclick="this.parentElement.remove();updateRecipeTotals()" style="flex-shrink:0;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:transparent;cursor:pointer;color:var(--ink-softer);">✕</button>`;
@@ -23040,7 +23040,10 @@ function _updateFoodIngKcal(idx, portionInput) {
   }
 }
 
-function _autoFillRecipeIngKcal(row) {
+// exactOnly = true pendant la frappe : seul un nom COMPLET reconnu remplit la ligne (sinon « pai » figeait le
+// premier aliment contenant ces lettres, et « pain de mie » gardait ses grammes/kcal). Au changement (onchange),
+// une correspondance partielle est acceptée.
+function _autoFillRecipeIngKcal(row, exactOnly) {
   const nameInput = row.querySelector('.rec-ing-name');
   const qtyInput  = row.querySelector('.rec-ing-qty');
   const unitInput = row.querySelector('.rec-ing-unit');
@@ -23049,19 +23052,32 @@ function _autoFillRecipeIngKcal(row) {
   if (!name) return;
   const local = _lookupLocalFood(name);
   if (!local) return;
+  if (local.name.trim().toLowerCase() !== name.toLowerCase()) {
+    // Nom partiel (« pain ») : jamais pendant la frappe ; au changement, seulement s'il n'y a qu'un aliment possible
+    if (exactOnly) return;
+    const n = name.toLowerCase();
+    if ((state.domestique?.foodKcal || []).filter(f => f.name.toLowerCase().includes(n)).length > 1) return;
+  }
 
-  // Si l'aliment vient d'être sélectionné (pas encore de base stockée), initialiser
-  if (!row.dataset.baseKcal) {
+  // Aliment nouveau pour cette ligne (premier choix, ou nom changé) : on (ré)initialise la base de référence
+  if (row.dataset.foodName !== local.name) {
     const baseG = local.refQty || parseFloat(local.portion) || 100;
     const baseKcal = local.kcal || 0;
     const baseUnits = _portionsFromUnitLabel(local.unitLabel);
+    // Poids resté tel que rempli automatiquement (ou vide) → remplacé ; poids saisi à la main → gardé
+    const wasAuto = !qtyInput.value || qtyInput.value === row.dataset.autoQty;
+    row.dataset.foodName = local.name;
     row.dataset.baseG = baseG;
     row.dataset.baseKcal = baseKcal;
     row.dataset.baseUnits = baseUnits;
-    // Remplir les champs avec les valeurs de référence
-    if (qtyInput && !qtyInput.value) qtyInput.value = baseG;
-    if (unitInput && !unitInput.value) unitInput.value = baseUnits > 1 ? baseUnits : '';
-    if (kcalInput) { kcalInput.value = baseKcal; updateRecipeTotals(); }
+    row.dataset.hasUnits = local.unitLabel ? '1' : ''; // aliment compté en unités (ex. 1 tranche = 33 g)
+    if (wasAuto) {
+      if (qtyInput) { qtyInput.value = baseG; row.dataset.autoQty = String(baseG); }
+      if (unitInput) unitInput.value = local.unitLabel ? baseUnits : '';
+      if (kcalInput) { kcalInput.value = baseKcal; updateRecipeTotals(); }
+    } else {
+      _recScaleFromG(row);
+    }
     return;
   }
 
@@ -23085,7 +23101,7 @@ function _recScaleFromG(row) {
   const newG = parseFloat(qtyInput?.value);
   if (!newG || !baseG) return;
   if (kcalInput) kcalInput.value = Math.round(baseKcal * newG / baseG);
-  if (unitInput && baseUnits > 1) unitInput.value = +(baseUnits * newG / baseG).toFixed(2);
+  if (unitInput && row.dataset.hasUnits) unitInput.value = +(baseUnits * newG / baseG).toFixed(2);
   updateRecipeTotals();
 }
 
