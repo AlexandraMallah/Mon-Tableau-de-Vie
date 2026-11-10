@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1367</title>
+<title>Mon Tableau de Vie 🌿 · v1368</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26968,10 +26968,15 @@ function _merge3(base, local, remote) {
   // Vrai conflit sur une valeur simple. Un côté "vide" (humeur/sommeil/journal d'un jour juste ouvert,
   // champ jamais rempli) n'est pas un choix : on garde la valeur de l'autre côté, sinon la page
   // « Aujourd'hui » vide d'un appareil écrasait la saisie faite sur l'autre.
+  // Deux niveaux : « jamais rempli » (null, "") perd contre TOUT, y compris 0 (vraie réponse des échelles
+  // 0-4 Mal de ventre / Endométriose : 0 = « Ok 😌 ») ; une valeur par défaut (0, false, [], {}) perd contre une vraie valeur.
+  if (_isNullish(local) && !_isNullish(remote)) return remote;
+  if (_isNullish(remote) && !_isNullish(local)) return local;
   if (_isEmptyVal(local) && !_isEmptyVal(remote)) return remote;
   return local;
 }
-const _isEmptyVal = x => x == null || x === "" || x === 0 || x === false ||
+const _isNullish = x => x == null || x === "";
+const _isEmptyVal = x => _isNullish(x) || x === 0 || x === false ||
   (Array.isArray(x) && x.length === 0) || (_isPlainObj(x) && Object.keys(x).length === 0);
 function _merge3Ids(base, local, remote) {
   const key = x => String(x.id);
