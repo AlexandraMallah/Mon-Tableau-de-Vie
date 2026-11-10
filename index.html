@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1368</title>
+<title>Mon Tableau de Vie 🌿 · v1369</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26521,6 +26521,10 @@ function renderAll() {
 // emprunté. Bug trouvé le 22/09 (Alexandra : "l'app n'a pas pu démarrer", 2 fois en 2 min).
 let _fbDb = null, _fbAuth = null, _fbUser = null;
 let _fbSaveTimer = null, _fbUnsub = null;
+// Envoi en attente / raté : _fbDirty reste vrai tant qu'une modif n'est pas PARTIE avec succès (voir _fbSaveNow),
+// et un envoi raté est retenté tout seul (sinon une saisie faite juste avant de quitter l'appli, sur téléphone,
+// restait sur l'appareil sans jamais monter au cloud). Déclarés ici : saveState peut tourner avant la suite du script.
+let _fbDirty = false, _fbDirtySeq = 0, _fbRetryTimer = null, _fbRetryDelay = 5000;
 let _fbListenTimer = null, _fbLoadTime = 0;
 let _snapCache = { state: null, work: null, transactions: null, domestique: null };
 
@@ -27316,6 +27320,7 @@ async function _fbSaveNow(opts = {}) {
   if (navigator.onLine === false) { _fbSetStatus("error"); return; }
   if (_fbSaving) { _fbSaveAgain = true; return; }
   _fbSaving = true;
+  const seq0 = _fbDirtySeq; // modifs déjà connues au départ de cet envoi
   try {
     // 1. Garde-fou avant d'écrire : un AUTRE appareil a-t-il écrit depuis la dernière version du
     //    cloud que cet appareil connaît ? (Le document "state" porte l'horodatage de chaque envoi.)
@@ -27372,12 +27377,21 @@ async function _fbSaveNow(opts = {}) {
     }
     _setCloudBase(newBase);
     _fbSetStatus(oversized.length ? "error" : "ok");
-    if (!oversized.length) _fbLastSyncOkAt = Date.now();
+    if (!oversized.length) {
+      _fbLastSyncOkAt = Date.now();
+      _fbRetryDelay = 5000;
+      if (_fbDirtySeq === seq0) _fbDirty = false; // rien de nouveau saisi pendant l'envoi → tout est parti
+    }
     return !oversized.length;
   } catch(e) {
     console.warn("[Firebase] save error", e);
     _fbSetStatus("error");
-    showToast("❌ Échec de la synchronisation cloud — vérifie ta connexion", 5000);
+    // Nouvel essai automatique (5 s, 10 s, 20 s… jusqu'à 2 min) ; le message n'apparaît qu'au 1er échec d'une série
+    _fbDirty = true;
+    if (_fbRetryDelay <= 5000) showToast("❌ Échec de la synchronisation cloud — nouvel essai automatique", 5000);
+    clearTimeout(_fbRetryTimer);
+    _fbRetryTimer = setTimeout(() => { _fbRetryTimer = null; _fbQueueSave(); }, _fbRetryDelay);
+    _fbRetryDelay = Math.min(_fbRetryDelay * 2, 120000);
   } finally {
     _fbSaving = false;
     if (_fbSaveAgain) { _fbSaveAgain = false; _fbQueueSave(); }
@@ -27403,6 +27417,7 @@ setInterval(() => {
 
 function _fbQueueSave() {
   if (!_fbUser || !_fbDb) return;
+  _fbDirty = true; _fbDirtySeq++;
   _fbSetStatus("syncing");
   clearTimeout(_fbSaveTimer);
   _fbSaveTimer = setTimeout(() => { _fbSaveTimer = null; _fbSaveNow(); }, 800); // null = plus rien en attente (lu par _fbFlushPending)
@@ -27415,7 +27430,7 @@ function _fbFlushPending() {
   _noteFlushToLocalStorage(); // une note en cours de frappe met en file sa propre sauvegarde
   // Seulement s'il y a VRAIMENT une sauvegarde en attente : avant, chaque passage en arrière-plan
   // renvoyait tout l'état — y compris celui d'un appareil qui sortait de veille avec une vieille copie.
-  if (!_fbSaveTimer) return;
+  if (!_fbSaveTimer && !_fbDirty) return; // _fbDirty : envoi interrompu/raté ou encore en cours
   clearTimeout(_fbSaveTimer); _fbSaveTimer = null;
   _fbSaveNow().catch(() => {});
 }
@@ -27430,6 +27445,7 @@ document.addEventListener("visibilitychange", () => {
   } else if (document.visibilityState === "visible" && _fbUser && _fbDb) {
     // Reconnexion du listener Firestore au retour au premier plan
     _fbListen();
+    if (_fbDirty) _fbQueueSave(); // un envoi resté en suspens quand l'appli est partie en arrière-plan
     setTimeout(() => _applyRemoteSnaps(), 1500);
   }
 });
