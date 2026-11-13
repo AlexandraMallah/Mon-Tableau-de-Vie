@@ -269,6 +269,10 @@ Style pastel féminin, doux. Arrondis généreux (12-16px). Pas de couleurs cria
 - Debounce 800ms sur saveState avant d'écrire dans Firebase
 - **Envoi raté ou interrompu = retenté tout seul** (10/11/2026) : `_fbDirty` (vrai dès `_fbQueueSave`, remis à faux seulement quand un envoi complet réussit sans nouvelle modif, via `_fbDirtySeq`) ; échec → nouvel essai après 5 s, 10 s, 20 s… jusqu'à 2 min (`_fbRetryTimer`/`_fbRetryDelay`, toast au 1er échec seulement) ; `_fbFlushPending` (appli en arrière-plan) et le retour au premier plan renvoient si `_fbDirty`. Avant : un envoi coupé (téléphone mis en veille juste après une saisie, réseau instable) n'était jamais retenté → la valeur restait sur le téléphone sans monter au cloud. Ces variables sont déclarées dans le bloc `let` du début (TDZ : `saveState` peut tourner avant la suite du script).
 
+### Jours fériés et temps de travail (13/11/2026)
+- Source unique pour le temps de travail : `_isHoliday(dk)` = fériés français auto (`_joursFeriesFR`, dont le 11 novembre) + jours ajoutés à la main (`state.customHolidays`, carte « Jours fériés » de la vue Temps). Utilisée par la moyenne h/j de « Cette semaine » (`renderTimeStatsWeek`) ET par l'objectif hebdo des Piliers (`countHolidaysInWeek` → `worktime-sum`, −8 h par férié en jour ouvré). Avant, les Piliers ignoraient les jours ajoutés à la main (`getFrenchHolidays`). Ne pas y réintroduire une 2e liste.
+- Le module Congés (`_congesHolidays`, `state.admin.congesConfig.customHolidays` avec drapeau `deleted`) garde sa propre liste pour l'affichage du calendrier de congés : elle n'alimente PAS le temps de travail.
+
 ### Navigation jours précédents
 - Flèches ◀ ▶ dans l'onglet Aujourd'hui
 - `navDay(delta)` — change `_selectedDayKey`
