@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1371</title>
+<title>Mon Tableau de Vie 🌿 · v1372</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -645,18 +645,20 @@
   .planner-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .planner-btn { background: var(--surface-soft); border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 5px 10px; font-size: 13px; cursor: pointer; font-family: inherit; }
   .planner-month { font-weight: 700; font-size: 14px; min-width: 120px; text-align: center; text-transform: capitalize; }
-  .pl-head, .pl-body { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .pl-head, .pl-body { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); } /* jours ouvrés seulement */
   .pl-head div { text-align: center; font-size: 10px; font-weight: 700; color: var(--ink-softer); padding-bottom: 4px; }
   .pl-week { position: relative; min-height: 74px; border-top: 1px solid var(--line); }
-  .pl-bg { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .pl-bg { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .pl-cell { border-left: 1px solid var(--line); }
   .pl-cell:last-child { border-right: 1px solid var(--line); }
-  .pl-cell.weekend { background: var(--surface-weekend); }
+  .pl-cell.off { background: #dcdde3; } /* jour férié ou congé déclaré */
   .pl-cell.other { background: var(--surface-soft); }
   .pl-cell.today { background: var(--card); box-shadow: inset 0 0 0 2px var(--red); } /* aujourd'hui : contour rouge, fond neutre (le bleu se confondait avec les week-ends) */
   .pl-body { position: relative; row-gap: 2px; padding-bottom: 4px; }
   .pl-dn { font-size: 11px; font-weight: 600; color: var(--ink); padding: 2px 4px; grid-row: 1; }
   .pl-dn.other { opacity: 0.45; }
+  .pl-dn.off { color: var(--ink-soft); }
+  .pl-offlbl { font-size: 9px; font-weight: 600; margin-left: 4px; color: var(--ink-soft); }
   .pl-dn.today { justify-self: start; width: 22px; height: 22px; line-height: 22px; padding: 0; margin: 2px 3px; text-align: center; border-radius: 50%; background: var(--red); color: #fff; font-weight: 800; }
   .pl-bar { height: 18px; line-height: 18px; margin: 0 2px; padding: 0 5px; font-size: 10.5px; border-radius: 5px; border-left: 3px solid; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; min-width: 0; }
   .pl-bar.cont-l { margin-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
@@ -2874,7 +2876,7 @@
             <button type="button" class="planner-btn" onclick="plannerNav(0)">Aujourd'hui</button>
           </div>
         </div>
-        <p style="color:var(--ink-soft);font-size:13px;margin:0 0 10px;">Dans une tâche (✏️), indique « Je travaille dessus du … au … » : elle apparaît ici en barre colorée, et dans le calendrier général. Touche une barre pour la modifier.</p>
+        <p style="color:var(--ink-soft);font-size:13px;margin:0 0 10px;">Dans une tâche (✏️), indique « Je travaille dessus du … au … » : elle apparaît ici en barre colorée, et dans le calendrier général. Touche une barre pour la modifier. Jours ouvrés seulement (lundi → vendredi) ; les jours fériés et tes congés déclarés sont en gris.</p>
         <div id="plannerGrid"></div>
         <div class="pl-legend" id="plannerLegend"></div>
         <div class="pl-todo-wrap" id="plannerTodo"></div>
@@ -10081,18 +10083,29 @@ function renderTaskPlanner() {
   const first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
   const gridStart = new Date(first); gridStart.setDate(1 - ((first.getDay() + 6) % 7));
   const todayK = todayKey();
-  let html = `<div class="pl-head">${["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map(d => `<div>${d}</div>`).join("")}</div>`;
+  let html = `<div class="pl-head">${["Lun","Mar","Mer","Jeu","Ven"].map(d => `<div>${d}</div>`).join("")}</div>`;
   const MAX_LANES = 4;
   for (let w = 0; ; w++) {
     const ws = new Date(gridStart); ws.setDate(ws.getDate() + w * 7);
     if (ws > last) break;
-    const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(ws); d.setDate(d.getDate() + i); return d; });
+    const days = Array.from({ length: 5 }, (_, i) => { const d = new Date(ws); d.setDate(d.getDate() + i); return d; }); // lundi → vendredi
+    if (!days.some(d => d.getMonth() === m)) continue; // semaine sans aucun jour ouvré dans ce mois (ex. 26 → 30 oct. vu de novembre)
     const keys = days.map(d => todayKey(d));
+    const sat = new Date(ws); sat.setDate(sat.getDate() + 5); const sun = new Date(ws); sun.setDate(sun.getDate() + 6);
+    const kSat = todayKey(sat), kSun = todayKey(sun);
     // Segments de la semaine : colonnes de début/fin, puis rangées (une pastille par rangée, sans chevauchement)
-    const segs = items.filter(it => it.end >= keys[0] && it.start <= keys[6]).map(it => {
-      const a = Math.max(0, keys.findIndex(k => k >= it.start)), bIdx = keys.map(k => k <= it.end).lastIndexOf(true);
-      return { it, a, b: bIdx, contL: it.start < keys[0], contR: it.end > keys[6] };
-    }).sort((p, q) => p.a - q.a || (q.b - q.a) - (p.b - p.a));
+    const segs = [];
+    for (const it of items) {
+      if (it.end >= keys[0] && it.start <= keys[4]) { // touche au moins un jour ouvré : barre coupée au vendredi
+        const a = Math.max(0, keys.findIndex(k => k >= it.start)), b = keys.map(k => k <= it.end).lastIndexOf(true);
+        segs.push({ it, a, b, contL: it.start < keys[0], contR: it.end > keys[4] });
+      } else if (it.start >= kSat && it.end <= kSun) { // entièrement un week-end : posée sur le vendredi, pour ne pas disparaître
+        segs.push({ it, a: 4, b: 4, contL: false, contR: false, suffix: it.start === it.end ? (it.start === kSat ? " (sam.)" : " (dim.)") : " (week-end)" });
+      }
+    }
+    segs.sort((p, q) => p.a - q.a || (q.b - q.a) - (p.b - p.a));
+    // Jours grisés : fériés (liste du temps de travail) et congés déclarés
+    const off = keys.map(k => _isHoliday(k) ? { lbl: "férié", tip: _holidayName(k) } : _isDayConge(k) ? { lbl: "congé", tip: "Jour de congé" } : null);
     const lanes = [];
     for (const sg of segs) {
       let li = lanes.findIndex(l => l.every(o => o.b < sg.a || o.a > sg.b));
@@ -10101,19 +10114,19 @@ function renderTaskPlanner() {
     }
     const shown = segs.filter(sg => sg.lane < MAX_LANES), hidden = segs.length - shown.length;
     html += `<div class="pl-week"><div class="pl-bg">${days.map((d, i) =>
-      `<div class="pl-cell${i >= 5 ? " weekend" : ""}${d.getMonth() !== m ? " other" : ""}${keys[i] === todayK ? " today" : ""}"></div>`).join("")}</div>
+      `<div class="pl-cell${off[i] ? " off" : ""}${d.getMonth() !== m ? " other" : ""}${keys[i] === todayK ? " today" : ""}"></div>`).join("")}</div>
       <div class="pl-body">${days.map((d, i) =>
-        `<div class="pl-dn${d.getMonth() !== m ? " other" : ""}${keys[i] === todayK ? " today" : ""}" style="grid-column:${i + 1};">${d.getDate()}</div>`).join("")}
+        `<div class="pl-dn${d.getMonth() !== m ? " other" : ""}${keys[i] === todayK ? " today" : ""}${off[i] ? " off" : ""}" style="grid-column:${i + 1};"${off[i] ? ` title="${escapeHtml(off[i].tip)}"` : ""}>${d.getDate()}${off[i] && keys[i] !== todayK ? `<span class="pl-offlbl">${off[i].lbl}</span>` : ""}</div>`).join("")}
       ${shown.map(sg => `<div class="pl-bar ${sg.it.cls}${sg.contL ? " cont-l" : ""}${sg.contR ? " cont-r" : ""}"
         style="grid-column:${sg.a + 1} / ${sg.b + 2};grid-row:${sg.lane + 2};" title="${escapeHtml(sg.it.tip)}"
-        onclick="openTaskEditModal('${sg.it.id}')">${escapeHtml(sg.it.label)}</div>`).join("")}
+        onclick="openTaskEditModal('${sg.it.id}')">${escapeHtml(sg.it.label + (sg.suffix || ""))}</div>`).join("")}
       ${hidden > 0 ? `<div class="pl-more" style="grid-row:${MAX_LANES + 2};">+ ${hidden} autre${hidden > 1 ? "s" : ""} cette semaine</div>` : ""}
       </div></div>`;
   }
   grid.innerHTML = html;
   document.getElementById("plannerLegend").innerHTML =
     `<span><i style="background:#dc2626"></i>Urgent</span><span><i style="background:#ea580c"></i>Haute</span><span><i style="background:#f59e0b"></i>Moyenne</span><span><i style="background:#94a3b8"></i>Faible</span>` +
-    `<span>⏰ deadline</span><span><i style="background:#0369a1"></i>Événement</span><span style="color:var(--red);">▭ contour rouge = dépasse la deadline</span>`;
+    `<span>⏰ deadline</span><span><i style="background:#0369a1"></i>Événement</span><span><i style="background:#dcdde3"></i>férié / congé</span><span style="color:var(--red);">▭ contour rouge = dépasse la deadline</span>`;
   // Tâches pas encore placées
   const rank = { urgent: 0, high: 1, medium: 2, low: 3 };
   const todo = state.work.postdocTasks.filter(t => !t.done && t.kind !== "event" && !(t.workStart && t.workEnd))
