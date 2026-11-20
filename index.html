@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1373</title>
+<title>Mon Tableau de Vie 🌿 · v1374</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13067,8 +13067,8 @@ function _portionsFromUnitLabel(unitLabel) {
 }
 
 function _ingBaseWeight(ing) {
-  const m = (ing._basePortion || ing.portion || '').match(/^(\d+\.?\d*)(.*)/);
-  return m ? { val: parseFloat(m[1]), unit: m[2] } : null;
+  const m = String(ing._basePortion || ing.portion || '').match(/^(\d+(?:[.,]\d+)?)(.*)/); // « 18,75 » : virgule décimale française
+  return m ? { val: parseFloat(m[1].replace(',', '.')), unit: m[2] } : null;
 }
 
 function _ingSetFields(i, portions, weight, kcal) {
@@ -13084,17 +13084,34 @@ function _ingSetFields(i, portions, weight, kcal) {
   updateIngTotal();
 }
 
+// Poids en grammes (ou ml) d'un texte comme « 200 », « 54,75 », « 200g », « 20cl » ; 0 si illisible
+function _gramsOf(val) { return _parseFoodQuery(String(val == null ? '' : val).replace(',', '.')).grams || 0; }
 function _updateIngByWeight(i, val) {
   const ing = _foodIngredients[i];
   if (!ing) return;
+  const oldG = _gramsOf(ing.portion), oldKcal = ing.kcal || 0; // avant d'écraser le poids
   ing.portion = val;
   const base = _ingBaseWeight(ing);
   if (!base || !base.val || !ing._baseKcal) {
-    // Pas de base → recalcul kcal via référence locale
+    // Pas de « base » enregistrée dans l'ingrédient. On recalcule SUR PLACE, sans réseau (avant, chaque changement de poids
+    // redemandait à Open Food Facts, qui tombe souvent en panne → les calories ne bougeaient plus, surtout sur téléphone).
+    // Ordre : 1) l'aliment est dans la liste « Kcal aliments » (avec un poids de référence) ; 2) règle de trois sur le couple
+    // poids/kcal AFFICHÉ avant la modification ; 3) kcal pour 100 g mémorisées (venues d'Open Food Facts : peuvent être
+    // périmées sur un vieux repas, d'où la dernière place).
+    const g = _gramsOf(val);
+    if (g > 0) {
+      const local = (ing._localRef && ing._localRef.refQty) ? ing._localRef : _lookupLocalFood(ing.name || '');
+      if (local && local.refQty) { _updateFoodIngKcal(i, { value: val }); return; }
+      if (!(ing._propG > 0) && oldG > 0 && oldKcal > 0) { ing._propG = oldG; ing._propKcal = oldKcal; }
+      let k = null;
+      if (ing._propG > 0) k = ing._propKcal * g / ing._propG;
+      else if (ing.kcal100g > 0) k = ing.kcal100g * g / 100;
+      if (k !== null) { ing.kcal = Math.round(k); _ingSetFields(i, undefined, undefined, ing.kcal); return; }
+    }
     _updateFoodIngKcal(i, { value: val });
     return;
   }
-  const entered = parseFloat(val);
+  const entered = parseFloat(String(val).replace(',', '.')); // virgule décimale du clavier français
   if (isNaN(entered) || entered <= 0) return;
   const factor = entered / base.val;
   const newKcal = Math.round(ing._baseKcal * factor);
@@ -13109,7 +13126,12 @@ function _updateIngByKcal(i, val) {
   if (!ing) return;
   const newKcal = parseInt(val) || 0;
   ing.kcal = newKcal;
-  if (!ing._baseKcal || !newKcal) { updateIngTotal(); return; }
+  if (!ing._baseKcal || !newKcal) {
+    // Kcal corrigées à la main : elles deviennent la nouvelle référence pour la règle de trois du poids
+    const g = _gramsOf(ing.portion);
+    ing.kcal100g = null; ing._propG = g > 0 && newKcal > 0 ? g : 0; ing._propKcal = newKcal;
+    updateIngTotal(); return;
+  }
   const factor = newKcal / ing._baseKcal;
   const base = _ingBaseWeight(ing);
   const newPortions = Math.round(factor * (ing._basePortions || 1) * 10) / 10;
@@ -13285,19 +13307,15 @@ async function searchIngCalories(idx, query) {
   clearTimeout(_foodCalTimer);
   _foodCalTimer = setTimeout(async () => {
     try {
-      const res = await fetch('https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(name)+'&action=process&json=1&page_size=1&fields=product_name,nutriments&lc=fr');
-      const data = await res.json();
-      const p = (data.products||[]).find(x => x.nutriments?.["energy-kcal_100g"] > 0);
+      const p = (await _offSearch(name)).find(x => x.nutriments?.["energy-kcal_100g"] > 0); // avec réessais (le service renvoie souvent 503)
       if (!p) return;
       const kcal100 = p.nutriments["energy-kcal_100g"];
       const ing2 = _foodIngredients[idx];
       if (!ing2) return;
       const portionParsed = _parseFoodQuery(ing2.portion||'');
       const grams2 = portionParsed.grams || grams || 100;
-      const portionUnit = (ing2.portion||'').match(/cl/i) ? 'cl' : 'ml';
-      const mult = portionUnit === 'cl' ? 10 : 1;
-      ing2.kcal100g = kcal100;
-      ing2.kcal = Math.round(kcal100 * grams2 * mult / 100);
+      ing2.kcal100g = kcal100; // grams2 est déjà converti en g/ml par _parseFoodQuery (cl × 10)
+      ing2.kcal = Math.round(kcal100 * grams2 / 100);
       renderFoodIngredients();
       updateIngTotal();
     } catch(e) {}
@@ -13340,6 +13358,7 @@ function _foodPortionKcal() {
 
 // Extrait la quantité en grammes d'une chaîne (ex: "poulet 200g" → {name:"poulet", grams:200})
 function _parseFoodQuery(query) {
+  query = String(query == null ? '' : query).replace(/(\d),(\d)/g, '$1.$2'); // « 18,75g » = 18.75 g (sinon lu comme 75 g)
   const match = query.match(/(\d+\.?\d*)\s*(g|gr|kg|ml|cl|l)/i);
   if (!match) {
     // Nombre seul sans unité → grammes par défaut
