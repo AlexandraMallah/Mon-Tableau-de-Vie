@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1375</title>
+<title>Mon Tableau de Vie 🌿 · v1376</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3371,6 +3371,7 @@
         <div class="money-stat" id="accountCourantCard" style="background:linear-gradient(135deg,white 0%,var(--sky-soft) 100%);position:relative;">
           <div class="label" id="accountCourantLabel">💳 Compte courant</div>
           <div class="value" id="accountCourant">0,00 €</div>
+          <div id="accountCourantPending" style="display:none;font-size:12px;color:var(--orange);font-weight:600;margin-top:4px;"></div>
           <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="accountCourantDetail"></div>
         </div>
         <div class="money-stat" style="background:linear-gradient(135deg,white 0%,#fff8e1 100%);position:relative;">
@@ -5419,24 +5420,25 @@
       <div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;">Lieu / description *</label>
         <input type="text" id="admMLieu" placeholder="ex : Colloque Montpellier" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" /></div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;">
-      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Train (€)</label>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px;">
+      <div id="admMF_train" style="min-width:0;"><label id="admML_train" style="font-size:11px;color:var(--ink-soft);display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px;">Train (€)</label>
         <input type="number" id="admMTrain" step="0.01" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
-      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Repas (€)</label>
+      <div id="admMF_repas" style="min-width:0;"><label id="admML_repas" style="font-size:11px;color:var(--ink-soft);display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px;">Repas (€)</label>
         <input type="number" id="admMRepas" step="0.01" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
-      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Taxi (€)</label>
+      <div id="admMF_taxi" style="min-width:0;"><label id="admML_taxi" style="font-size:11px;color:var(--ink-soft);display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px;">Taxi (€)</label>
         <input type="number" id="admMTaxi" step="0.01" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;">
-      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Km parcourus</label>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px;">
+      <div id="admMF_km" style="min-width:0;"><label id="admML_km" style="font-size:11px;color:var(--ink-soft);display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px;">Km parcourus</label>
         <input type="number" id="admMKm" step="1" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
-      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Essence (€)</label>
+      <div id="admMF_essence" style="min-width:0;"><label id="admML_essence" style="font-size:11px;color:var(--ink-soft);display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px;">Essence (€)</label>
         <input type="number" id="admMEssence" step="0.01" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
-      <div><label style="font-size:11px;color:var(--ink-soft);display:block;margin-bottom:3px;">Péage (€)</label>
+      <div id="admMF_peage" style="min-width:0;"><label id="admML_peage" style="font-size:11px;color:var(--ink-soft);display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px;">Péage (€)</label>
         <input type="number" id="admMPeage" step="0.01" min="0" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>
     </div>
     <div id="admMExtrasWrap">
       <div id="admMExtras"></div>
+      <div id="admMRestore" style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;"></div>
       <div style="margin-bottom:12px;"><button type="button" onclick="admAddMissionCat()" style="font-size:12px;padding:6px 12px;border-radius:10px;border:1.5px dashed var(--lavender);background:transparent;color:var(--accent-ink);cursor:pointer;font-family:inherit;">➕ Nouvelle catégorie de frais…</button></div>
     </div>
     <div style="background:var(--bg-1);border-radius:10px;padding:12px;margin-bottom:12px;">
@@ -6463,6 +6465,7 @@ function migrate(s) {
       missions: [],
       abonnement: [],
       missionCats: [],
+      missionBase: {},
       congesConfig: { droitsCA:25, droitsRTT:0 },
       congesPeriodes: []
     };
@@ -6471,6 +6474,7 @@ function migrate(s) {
     s.admin.abonnement     = s.admin.abonnement     || [];
     s.admin.missionGroups  = s.admin.missionGroups  || [{ id: "mg-default", name: "Missions", emoji: "🧾" }];
     s.admin.missionCats    = s.admin.missionCats    || [];
+    s.admin.missionBase    = s.admin.missionBase    || {};
     s.admin.congesConfig   = s.admin.congesConfig   || { droitsCA:27, droitsRTT:20 };
     s.admin.congesPeriodes = s.admin.congesPeriodes || [];
   }
@@ -8754,6 +8758,28 @@ function admFormatDate(d) {
 // Catégories de frais ajoutées par Alexandra (en plus de Train/Repas/Taxi/Km/Essence/Péage) : state.admin.missionCats = [{id,label}],
 // montants dans m.extras = { idCatégorie: montant }
 function admMissionCats() { return (state.admin && state.admin.missionCats) || []; }
+// Catégories d'origine : libellé et masquage modifiables (state.admin.missionBase = { train:{label,hidden}, … })
+var ADM_BASE_CATS = [
+  { id:"train",   label:"Train",         head:"Train",   emoji:"🚆" },
+  { id:"repas",   label:"Repas",         head:"Repas",   emoji:"🍽️" },
+  { id:"taxi",    label:"Taxi",          head:"Taxi",    emoji:"🚕" },
+  { id:"km",      label:"Km parcourus",  head:"Km",      emoji:"🛣️", km:true },
+  { id:"essence", label:"Essence",       head:"Essence", emoji:"⛽" },
+  { id:"peage",   label:"Péage",         head:"Péage",   emoji:"🛣️" }
+];
+function _admBaseCfg(id) { return ((state.admin && state.admin.missionBase) || {})[id] || {}; }
+// Toutes les catégories affichées : d'origine non retirées + ajoutées. { id, label, head, base, km }
+function admAllCats() {
+  var out = [];
+  ADM_BASE_CATS.forEach(function(b) {
+    var cfg = _admBaseCfg(b.id); if (cfg.hidden) return;
+    var l = cfg.label || null;
+    out.push({ id:b.id, label:l || b.label, head:l || b.head, base:true, km:!!b.km, emoji:b.emoji });
+  });
+  admMissionCats().forEach(function(c) { out.push({ id:c.id, label:c.label, head:c.label, base:false }); });
+  return out;
+}
+function admCatValue(m, c) { return c.base ? m[c.id] : (m.extras || {})[c.id]; }
 function admMissionTotal(m) {
   var t = (m.train || 0) + (m.repas || 0) + (m.taxi || 0) + (m.essence || 0) + (m.peage || 0);
   var ex = m.extras || {};
@@ -8774,6 +8800,7 @@ function admStatutPill(s, type) {
 }
 
 function admRenderBudget() {
+  try { _renderCourantPending(); } catch (e) {}
   var el = document.getElementById("admBudgetContent");
   if (!el) return;
   var missions   = (state.admin && state.admin.missions)   || [];
@@ -8801,8 +8828,8 @@ function admRenderBudget() {
     + "</div>";
 
   // Construire une section par groupe
-  var xCats = admMissionCats();
-  var xHead = xCats.map(function(c) { return "<th>" + escapeHtml(c.label) + "</th>"; }).join("");
+  var xCats = admAllCats();
+  var xHead = xCats.map(function(c) { return "<th>" + escapeHtml(c.head) + "</th>"; }).join("");
   var groupsSections = groups.map(function(g) {
     var gMissions = missions.filter(function(m){ return (m.groupId || "mg-default") === g.id; });
     var sorted = gMissions.slice().sort(function(a,b){ return (a.date||"").localeCompare(b.date||""); });
@@ -8811,13 +8838,11 @@ function admRenderBudget() {
       return "<tr>"
         + "<td>" + admFormatDate(m.date) + "</td>"
         + '<td style="font-weight:500;">' + escapeHtml(m.lieu || "") + "</td>"
-        + '<td class="r">' + (m.train   ? admFormatEur(m.train)   : "-") + "</td>"
-        + '<td class="r">' + (m.repas   ? admFormatEur(m.repas)   : "-") + "</td>"
-        + '<td class="r">' + (m.taxi    ? admFormatEur(m.taxi)    : "-") + "</td>"
-        + '<td class="r" style="color:var(--ink-soft);font-size:11px;">' + (m.km ? m.km + " km" : "-") + "</td>"
-        + '<td class="r">' + (m.essence ? admFormatEur(m.essence) : "-") + "</td>"
-        + '<td class="r">' + (m.peage   ? admFormatEur(m.peage)   : "-") + "</td>"
-        + xCats.map(function(c) { var v = (m.extras || {})[c.id]; return '<td class="r">' + (v ? admFormatEur(v) : "-") + "</td>"; }).join("")
+        + xCats.map(function(c) {
+            var v = admCatValue(m, c);
+            if (c.km) return '<td class="r" style="color:var(--ink-soft);font-size:11px;">' + (v ? v + " km" : "-") + "</td>";
+            return '<td class="r">' + (v ? admFormatEur(v) : "-") + "</td>";
+          }).join("")
         + '<td class="r" style="font-weight:700;">' + (tot > 0 ? admFormatEur(tot) : "-") + "</td>"
         + '<td class="r" style="color:var(--green);">' + (m.remb ? admFormatEur(m.remb) : "-") + "</td>"
         + '<td style="font-size:11px;">' + admFormatDate(m.dateRemb) + "</td>"
@@ -8834,8 +8859,8 @@ function admRenderBudget() {
       + (canDelete ? '<button onclick="admDeleteMissionGroup(\'' + g.id + '\')" style="margin-left:6px;font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:white;color:var(--ink-soft);cursor:pointer;font-family:inherit;">Supprimer</button>' : "")
       + "</div>"
       + '<div class="adm-table-wrap"><table class="adm-table"><thead><tr>'
-      + "<th>Date</th><th>Lieu</th><th>Train</th><th>Repas</th><th>Taxi</th><th>Km</th><th>Essence</th><th>Péage</th>" + xHead + "<th>Total</th><th>Remb.</th><th>Date remb.</th><th>Statut</th><th></th>"
-      + "</tr></thead><tbody>" + (mRows || "<tr><td colspan='" + (13 + xCats.length) + "' style='color:var(--ink-softer);font-style:italic;text-align:center;padding:10px;'>Aucune entrée — clique sur + Ajouter</td></tr>") + "</tbody></table></div>"
+      + "<th>Date</th><th>Lieu</th>" + xHead + "<th>Total</th><th>Remb.</th><th>Date remb.</th><th>Statut</th><th></th>"
+      + "</tr></thead><tbody>" + (mRows || "<tr><td colspan='" + (7 + xCats.length) + "' style='color:var(--ink-softer);font-style:italic;text-align:center;padding:10px;'>Aucune entrée — clique sur + Ajouter</td></tr>") + "</tbody></table></div>"
       + "</div>";
   }).join("");
 
@@ -8844,7 +8869,7 @@ function admRenderBudget() {
     var a = abonnement[i];
     aRows += "<tr>"
       + "<td>" + admFormatDate(a.date) + "</td>"
-      + '<td colspan="' + (7 + xCats.length) + '">' + escapeHtml(a.description || "Abonnement") + "</td>"
+      + '<td colspan="' + (1 + xCats.length) + '">' + escapeHtml(a.description || "Abonnement") + "</td>"
       + '<td class="r" style="font-weight:700;">' + admFormatEur(a.montant) + "</td>"
       + '<td colspan="2"></td>'
       + "<td>" + admStatutPill(a.statut) + "</td>"
@@ -8863,8 +8888,8 @@ function admRenderBudget() {
     + '<button class="btn-primary" onclick="admOpenAbo()" style="font-size:12px;padding:5px 14px;">+ Ajouter</button></div>'
     + '<p style="font-size:11px;color:var(--ink-softer);margin:-4px 0 8px;">Abonnements mensuels/annuels liés à ton travail (Claude, outils, logiciels…)</p>'
     + '<div class="adm-table-wrap"><table class="adm-table"><thead><tr>'
-    + '<th>Date</th><th colspan="' + (7 + xCats.length) + '">Description</th><th>Montant</th><th colspan="2"></th><th>Statut</th><th></th>'
-    + "</tr></thead><tbody>" + (aRows || "<tr><td colspan='" + (13 + xCats.length) + "' style='color:var(--ink-softer);font-style:italic;text-align:center;padding:10px;'>Aucun abonnement — clique sur + Ajouter</td></tr>") + "</tbody></table></div>";
+    + '<th>Date</th><th colspan="' + (1 + xCats.length) + '">Description</th><th>Montant</th><th colspan="2"></th><th>Statut</th><th></th>'
+    + "</tr></thead><tbody>" + (aRows || "<tr><td colspan='" + (7 + xCats.length) + "' style='color:var(--ink-softer);font-style:italic;text-align:center;padding:10px;'>Aucun abonnement — clique sur + Ajouter</td></tr>") + "</tbody></table></div>";
 }
 
 function admAddMissionGroup(cb) {
@@ -9107,17 +9132,36 @@ function admOpenMission(id, groupId) {
   _admRenderExtras(m.extras || {});
   document.getElementById("admMissionModal").classList.add("open");
 }
-// Champs des catégories de frais ajoutées (valeurs = { idCatégorie: montant })
+// Étiquette d'un champ de catégorie : nom + ✎ renommer + ✕ retirer
+function _admCatLabelHtml(c) {
+  return '<span style="min-width:0;overflow-wrap:break-word;">' + escapeHtml(c.label) + (c.km ? '' : ' (€)') + '</span><span style="white-space:nowrap;flex-shrink:0;">'
+    + '<button type="button" title="Renommer" onclick="admRenameMissionCat(' + _jsq(c.id) + ')" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:12px;padding:0 3px;">✎</button>'
+    + '<button type="button" title="Retirer cette catégorie" onclick="admDeleteMissionCat(' + _jsq(c.id) + ')" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:12px;padding:0 2px;">✕</button></span>';
+}
+// Affiche les champs : catégories d'origine (libellé, masquage), catégories ajoutées, liste des retirées à remettre
 function _admRenderExtras(vals) {
+  vals = vals || {};
+  ADM_BASE_CATS.forEach(function(b) {
+    var f = document.getElementById("admMF_" + b.id), l = document.getElementById("admML_" + b.id); if (!f || !l) return;
+    var cfg = _admBaseCfg(b.id);
+    f.style.display = cfg.hidden ? "none" : "";
+    l.innerHTML = _admCatLabelHtml({ id:b.id, label:cfg.label || b.label, km:!!b.km });
+  });
   var el = document.getElementById("admMExtras"); if (!el) return;
   var cats = admMissionCats();
   el.innerHTML = cats.length ? '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px;">'
     + cats.map(function(c) {
       var v = vals[c.id];
-      return '<div><label style="font-size:11px;color:var(--ink-soft);display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px;"><span>' + escapeHtml(c.label) + ' (€)</span>'
-        + '<button type="button" title="Supprimer cette catégorie" onclick="admDeleteMissionCat(' + _jsq(c.id) + ')" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:12px;padding:0 2px;">✕</button></label>'
+      return '<div style="min-width:0;"><label style="font-size:11px;color:var(--ink-soft);display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px;">' + _admCatLabelHtml(c) + '</label>'
         + '<input type="number" data-xcat="' + escapeHtml(c.id) + '" step="0.01" min="0" placeholder="0" value="' + (v ? escapeHtml(String(v)) : "") + '" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;" /></div>';
     }).join("") + '</div>' : "";
+  var rs = document.getElementById("admMRestore");
+  if (rs) {
+    var hidden = ADM_BASE_CATS.filter(function(b) { return _admBaseCfg(b.id).hidden; });
+    rs.innerHTML = hidden.length ? 'Catégories retirées : ' + hidden.map(function(b) {
+      return '<button type="button" onclick="admRestoreMissionCat(' + _jsq(b.id) + ')" style="font-size:12px;padding:3px 8px;margin:2px 4px 2px 0;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--accent-ink);cursor:pointer;font-family:inherit;">↩️ ' + escapeHtml(_admBaseCfg(b.id).label || b.label) + '</button>';
+    }).join("") : "";
+  }
 }
 function _admReadExtras() {
   var out = {};
@@ -9127,22 +9171,51 @@ function _admReadExtras() {
   });
   return out;
 }
+function _admRefreshCats() { _admRenderExtras(_admReadExtras()); admRenderBudget(); }
+function admRenameMissionCat(id) {
+  var base = ADM_BASE_CATS.find(function(b) { return b.id === id; });
+  var cur = base ? (_admBaseCfg(id).label || base.label) : (admMissionCats().find(function(c) { return c.id === id; }) || {}).label;
+  if (cur === undefined) return;
+  _showPrompt("Nouveau nom de la catégorie", cur, function(name) {
+    name = (name || "").trim(); if (!name || name === cur) return;
+    if (admAllCats().some(function(c) { return c.id !== id && c.label.toLowerCase() === name.toLowerCase(); })) { showToast("Cette catégorie existe déjà."); return; }
+    if (base) { if (!state.admin.missionBase) state.admin.missionBase = {}; state.admin.missionBase[id] = Object.assign({}, _admBaseCfg(id), { label: name }); }
+    else state.admin.missionCats = admMissionCats().map(function(c) { return c.id === id ? { id:c.id, label:name } : c; });
+    saveState(); _admRefreshCats();
+  });
+}
+function admRestoreMissionCat(id) {
+  if (!state.admin.missionBase) state.admin.missionBase = {};
+  state.admin.missionBase[id] = Object.assign({}, _admBaseCfg(id), { hidden: false });
+  saveState(); _admRefreshCats();
+}
 function admAddMissionCat() {
   _showPrompt("Nom de la nouvelle catégorie de frais (ex : Hébergement, Inscription…)", "", function(name) {
     name = (name || "").trim(); if (!name) return;
-    if (admMissionCats().some(function(c) { return c.label.toLowerCase() === name.toLowerCase(); })) { showToast("Cette catégorie existe déjà."); return; }
+    if (admAllCats().some(function(c) { return c.label.toLowerCase() === name.toLowerCase(); })) { showToast("Cette catégorie existe déjà."); return; }
     var vals = _admReadExtras();
     state.admin.missionCats = admMissionCats().concat([{ id: "mc" + Date.now(), label: name }]);
     saveState(); _admRenderExtras(vals); admRenderBudget();
   });
 }
 function admDeleteMissionCat(id) {
-  var c = admMissionCats().find(function(x) { return x.id === id; }); if (!c) return;
-  _showConfirm("Supprimer la catégorie « " + escapeHtml(c.label) + " » ?<br><small>Les montants déjà saisis dans cette catégorie seront effacés de toutes les missions.</small>", function() {
-    var vals = _admReadExtras(); delete vals[id];
-    state.admin.missionCats = admMissionCats().filter(function(x) { return x.id !== id; });
-    state.admin.missions.forEach(function(m) { if (m.extras) { delete m.extras[id]; if (!Object.keys(m.extras).length) delete m.extras; } });
-    saveState(); _admRenderExtras(vals); admRenderBudget();
+  var base = ADM_BASE_CATS.find(function(b) { return b.id === id; });
+  var c = base ? { label: _admBaseCfg(id).label || base.label } : admMissionCats().find(function(x) { return x.id === id; });
+  if (!c) return;
+  var n = (state.admin.missions || []).filter(function(m) { return Number(base ? m[id] : (m.extras || {})[id]) > 0; }).length;
+  _showConfirm("Retirer la catégorie « " + escapeHtml(c.label) + " » ?<br><small>" + (n ? "Les montants saisis dans cette catégorie (" + n + " mission" + (n > 1 ? "s" : "") + ") seront effacés." : "Aucun montant n'y est saisi.") + (base ? " Tu pourras la remettre ensuite." : "") + "</small>", function() {
+    if (base) {
+      var tf = { train:"admMTrain", repas:"admMRepas", taxi:"admMTaxi", km:"admMKm", essence:"admMEssence", peage:"admMPeage" }[id];
+      var inp = document.getElementById(tf); if (inp) inp.value = "";
+      if (!state.admin.missionBase) state.admin.missionBase = {};
+      state.admin.missionBase[id] = Object.assign({}, _admBaseCfg(id), { hidden: true });
+      state.admin.missions.forEach(function(m) { m[id] = null; });
+    } else {
+      var vals = _admReadExtras(); delete vals[id];
+      state.admin.missionCats = admMissionCats().filter(function(x) { return x.id !== id; });
+      state.admin.missions.forEach(function(m) { if (m.extras) { delete m.extras[id]; if (!Object.keys(m.extras).length) delete m.extras; } });
+    }
+    saveState(); _admRefreshCats();
   });
 }
 function admCloseMission() { document.getElementById("admMissionModal").classList.remove("open"); }
@@ -15338,12 +15411,12 @@ const PRO_CATEGORIES = ["🚆 Transport", "🏨 Hébergement", "🍽️ Repas", 
 function togglePostdocMission(show) {
   const f = document.getElementById("txPostdocFields");
   if (f) f.style.display = show ? "flex" : "none";
-  // Ajoute au menu « Type de frais » les catégories créées dans les missions
+  // « Type de frais » : suit les catégories (renommées, retirées, ajoutées) des missions
   const sel = document.getElementById("txMissionType");
   if (sel) {
     const cur = sel.value;
-    sel.querySelectorAll("option[data-x]").forEach(o => o.remove());
-    admMissionCats().forEach(c => { const o = document.createElement("option"); o.value = "x:" + c.id; o.textContent = "➕ " + c.label; o.setAttribute("data-x", "1"); sel.appendChild(o); });
+    sel.innerHTML = "";
+    admAllCats().filter(c => !c.km).forEach(c => { const o = document.createElement("option"); o.value = c.base ? c.id : "x:" + c.id; o.textContent = (c.emoji ? c.emoji + " " : "➕ ") + c.label; sel.appendChild(o); });
     if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
   }
 }
@@ -16333,7 +16406,30 @@ function balanceEpargne() {
   const transfers = Object.values(trDelta).reduce((sum, v) => sum + v, 0);
   return startTotal + savings + directIncome - savingsOut - fromSavExp + transfers;
 }
+// Frais avancés pour le travail (missions postdoc) pas encore remboursés ET absents de Finances :
+// ils ont quitté la banque mais ne sont pas dans le solde de l'appli → on affiche le solde réel en banque.
+function _pendingMissionAdvance() {
+  let total = 0;
+  for (const m of (state.admin?.missions || [])) {
+    if (m.statut === "Rembourse") continue;
+    const due = Math.max(0, admMissionTotal(m) - (Number(m.remb) || 0));
+    // déjà dans Finances (frais pro rattaché à cette mission) = déjà déduit du solde
+    const inFinance = state.transactions.filter(t => t.postdocMissionId === m.id && t.type === "expense").reduce((a, t) => a + t.amount, 0);
+    total += Math.max(0, due - inFinance);
+  }
+  return Math.round(total * 100) / 100;
+}
+function _renderCourantPending() {
+  const el = document.getElementById("accountCourantPending"); if (!el) return;
+  const adv = _pendingMissionAdvance();
+  if (adv <= 0) { el.style.display = "none"; el.textContent = ""; return; }
+  const real = balanceCourant() - adv;
+  el.style.display = "";
+  el.title = "Missions postdoc (Travail › Postdoc) avancées de ta poche et pas encore remboursées, qui ne sont pas saisies dans Finances";
+  el.textContent = "⏳ " + adv.toFixed(2).replace(".", ",") + "\u00a0€ avancés, à te faire rembourser → en banque : " + real.toFixed(2).replace(".", ",") + "\u00a0€";
+}
 function renderAccounts() {
+  _renderCourantPending();
   const c = balanceCourant();
   const e = balanceEpargne();
   document.getElementById("accountCourant").textContent = c.toFixed(2) + " €";
