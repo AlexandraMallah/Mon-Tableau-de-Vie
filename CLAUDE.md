@@ -407,6 +407,12 @@ IDs fixes : `p-seed-postdoc` · `p-seed-candidatures` · `p-seed-valo` · `p-see
 - **Fix emoji modal émotion** : `_pickEmSuggest(i)` met à jour emoji ET label (plus d'apostrophe qui casse l'`onclick`)
 - **Thème Minimal supprimé** : variables `_hbM` et `_isM` entièrement retirées, 2 thèmes restants : 🌸 Smooth et 💼 Sérieux
 
+### Missions postdoc : catégories de frais personnalisées (21/11/2026, demande d'Alexandra)
+- Les 6 colonnes de base (Train, Repas, Taxi, Km, Essence, Péage) restent. Alexandra peut en ajouter via « ➕ Nouvelle catégorie de frais… » dans la fenêtre mission (`admAddMissionCat`) et les supprimer par le ✕ du champ (`admDeleteMissionCat`, efface aussi les montants déjà saisis, avec confirmation). Liste commune à toutes les missions : `state.admin.missionCats = [{id,label}]` ; montants dans `m.extras = { idCat: montant }`.
+- Une catégorie ajoutée = une colonne du tableau (après Péage), un champ du formulaire (`_admRenderExtras`/`_admReadExtras`) et elle compte dans le total (`admMissionTotal` somme toutes les clés de `extras`). Les `colspan` des lignes Abonnements s'adaptent (`7 + nb de catégories`). Masqué en mode abonnement.
+- Le menu « Type de frais » des frais pro rattachés aux missions (Finances) propose aussi ces catégories (valeur `"x:<id>"`, géré dans `addExpenseToPostdocMission` et `_adjustTxMission`).
+- ⚠️ `admSaveMission` REMPLACE l'objet mission par un nouveau : ne pas garder de référence à l'ancien.
+
 ### Finances : salaire, paiements prévus, familles de dépenses, graphiques (oct. 2026)
 - **Mois financier** : `state.mainSalaryCategory` (⭐ dans Gérer les catégories) ancre les périodes (`_salaryPeriods()`) ; sans lui, cycle calendaire au 26 (la période récente part du bon 26 : celui de ce mois si on l'a dépassé). Migration corrective : `loadState` fait `{...DEFAULT_STATE, ...saved}` AVANT `migrate`, donc un champ ajouté à DEFAULT_STATE vaut déjà `null`, jamais `undefined` — ne jamais garder une migration sur `=== undefined`.
 - Le champ `date` d'une transaction n'a que le jour (pas d'heure). Une dépense saisie le jour du salaire tombe dans le NOUVEAU mois (décision : ne pas départager par l'heure de l'id, ça excluait le salaire de son propre mois). Pour la garder dans l'ancien mois : mettre la veille.
