@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1377</title>
+<title>Mon Tableau de Vie 🌿 · v1378</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6015,6 +6015,7 @@ const DEFAULT_STATE = {
   calEvents: [],
   calSources: [],
   googleCal: { url: "", lastSync: null },
+  friendNames: null, // prénoms d'amis [{id,name}] : un événement d'agenda qui en contient un compte comme « moment avec des amis » (sauf mot de travail)
   history: {},
   work: {
     postdocTasks: [],
@@ -6126,6 +6127,9 @@ function migrate(s) {
   // Migration : transactions external sans externalAccountId → compte par défaut
   s.transactions.forEach(t => { if (t.type === "external" && !t.externalAccountId) t.externalAccountId = "ext-default"; });
   s.googleCal = s.googleCal || { url: "", lastSync: null };
+  // Prénoms d'amis du pilier Loisirs & Social : liste de départ tirée de l'agenda d'Alexandra (modifiable dans le détail du pilier).
+  if (s.friendNames == null) s.friendNames = ["Clem", "Clément", "Sarah", "Fanny", "Thomas", "Pauline", "Louis", "Victor", "Helo", "Henri", "Laurène", "Mathilde", "Marine", "Gaëlle", "Agathe", "Mélanie", "Duncan", "Alice", "Iris", "Lorraine", "Antoine", "Louise", "Jimmy", "Joumana", "Irving", "Laulau", "Nicolas"]
+    .map(n => ({ id: _normName(n), name: n }));
   // Migration : événements ICS existants sans sourceId → source par défaut
   if (s.calEvents.length > 0 && !s.calEvents[0].sourceId) {
     let defaultSrc = s.calSources.find(x => x.id === "src-default");
@@ -19628,7 +19632,7 @@ const PILLAR_DEFS = [
   {
     id: "fun-social", name: "Loisirs & Social", emoji: "🎉", color: "#fbbf24", bg: "#fffbeb",
     metrics: [
-      { type: "cal-keywords-count", keywords: ["\\bami(e|s|es)?\\b", "copain", "copine", "copines", "pote", "soirée", "apéro", "déjeuner", "dejeuner", "dîner", "diner", "brunch", "repas", "goûter", "gouter", "lunch", "west coast", "west-coast", "danse", "\\bbar\\b", "resto", "restau", "ciném", "cinema", "expo.*\\bavec\\b", "\\bavec\\b.*expo"], target: 2, label: "Moments avec des amis (obj. 2/sem)" },
+      { type: "cal-keywords-count", keywords: ["\\bami(e|s|es)?\\b", "copain", "copine", "copines", "pote", "soirée", "apéro", "déjeuner", "dejeuner", "dîner", "diner", "brunch", "repas", "goûter", "gouter", "lunch", "west coast", "west-coast", "danse", "\\bbar\\b", "resto", "restau", "ciném", "cinema", "expo.*\\bavec\\b", "\\bavec\\b.*expo"], useFriends: true, target: 2, label: "Moments avec des amis (obj. 2/sem)" },
       { type: "cal-keywords-count", keywords: ["famille", "maman", "papa", "parents", "frère", "sœur", "soeur", "frangine", "frangin", "mamie", "papi", "vacances", "week-end famille", "retrouvailles"], target: 1, label: "Moments en famille (obj. 1/sem)" },
       { type: "activity-sessions", regex: "lecture|podcast|film|ciné|série|musique|guitare|piano|dessin|peinture|créat|art|photo|jeu|danse|concert|expo|musée|balade|promenade|jardinage|cuisine|bak|pâtiss|sortie", calKeywords: ["west coast", "west-coast", "danse", "ciném", "cinema", "concert", "expo", "musée", "balade", "promenade", "spectacle", "théâtr", "festival", "vernissage", "film"], target: 3, label: "Activités plaisir (obj. 3/sem)", description: "ex : lecture, film, musique, dessin, jardinage, balade, cuisine, expo, concert…" },
       { type: "cal-keywords-count", keywords: ["concert", "expo", "musée", "théâtr", "ciném", "spectacle", "festival", "vernissage"], target: 1, label: "Sortie culturelle (obj. 1/sem)" },
@@ -19729,7 +19733,7 @@ const BASE_METRIC_CATALOGUE = [
   {_catId:"dom-meals",  group:"🏠 Domestique", type:"meal-plan-active", label:"Planning repas fait", target:3},
   {_catId:"dom-plants", group:"🏠 Domestique", type:"plants-uptodate", label:"Plantes arrosées"},
   // Social / Calendrier
-  {_catId:"cal-amis",   group:"🎉 Social", type:"cal-keywords-count", keywords:["\\bami(e|s|es)?\\b","copain","copine","copines","soirée","apéro","dîner","brunch","repas","pote", "west coast", "west-coast", "danse", "\\bbar\\b", "resto", "restau", "ciném", "cinema", "expo.*\\bavec\\b", "\\bavec\\b.*expo"], label:"Moments avec des amis", target:2},
+  {_catId:"cal-amis",   group:"🎉 Social", type:"cal-keywords-count", keywords:["\\bami(e|s|es)?\\b","copain","copine","copines","soirée","apéro","dîner","brunch","repas","pote", "west coast", "west-coast", "danse", "\\bbar\\b", "resto", "restau", "ciném", "cinema", "expo.*\\bavec\\b", "\\bavec\\b.*expo"], useFriends:true, label:"Moments avec des amis", target:2},
   {_catId:"cal-fam",    group:"🎉 Social", type:"cal-keywords-count", keywords:["famille","maman","papa","parents","frère","sœur","soeur","mamie","papi"], label:"Moments en famille", target:1},
   {_catId:"cal-culture",group:"🎉 Social", type:"cal-keywords-count", keywords:["concert","expo","musée","théâtr","ciném","spectacle","festival","vernissage"], label:"Sorties culturelles", target:1},
   // Journal
@@ -19836,12 +19840,26 @@ function countHolidaysInWeek(weekDates) {
 // Événements du calendrier dont le titre contient un des mots-clés, sur les 7 derniers jours (même règle pour le score ET le détail).
 // Un événement compte s'il chevauche la fenêtre (fin >= il y a 7 jours ET début <= aujourd'hui). Les futurs ne comptent pas.
 // Les « mots-clés » sont joints par « | » dans une RegExp : on peut y mettre des motifs (\\bbar\\b = le mot bar entier).
-function _calKwEvents(keywords) {
+// Prénom d'ami dans le titre : compte, SAUF si le titre parle de travail (« visio Lorraine », « réunion Nicolas » : on ne sait pas si c'est
+// une amie ou une collègue → pas compté). Sans accents ni majuscules.
+function _normName(s) { return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }
+const _WORK_TITLE_RE = /\b(visio|reunion|rdv|rendez-vous|call|zoom|teams|meet|meeting|seminaire|colloque|cours|entretien|jury|comite|soutenance|webinaire|conference|atelier|formation|point|appel|labo)\b/;
+function _friendNameRe() {
+  const names = (state.friendNames || []).map(f => _normName(f.name)).filter(Boolean).map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  return names.length ? new RegExp("\\b(" + names.join("|") + ")\\b") : null;
+}
+function _calKwEvents(keywords, useFriends) {
   const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
   const k7 = todayKey(sevenAgo), kNow = todayKey(new Date());
   const re = new RegExp((keywords || []).join("|"), "i");
+  const nameRe = useFriends ? _friendNameRe() : null;
   return (state.calEvents || []).filter(e => {
-    if (!re.test(e.title || "")) return false;
+    const t = e.title || "";
+    if (!re.test(t)) {
+      if (!nameRe) return false;
+      const nt = _normName(t);
+      if (!nameRe.test(nt) || _WORK_TITLE_RE.test(nt)) return false;
+    }
     const eStart = e.date || "", eEnd = e.endDate || e.date || "";
     return eEnd >= k7 && eStart <= kNow;
   });
@@ -20035,7 +20053,7 @@ function computeMetric(m, override) {
   }
   // Événements calendrier correspondant à des mots-clés (amis, famille…)
   if (m.type === "cal-keywords-count") {
-    const count = _calKwEvents(m.keywords).length;
+    const count = _calKwEvents(m.keywords, m.useFriends).length;
     const unit = count > 1 ? " évén." : " évén.";
     return { score: Math.min(1, count / m.target), value: count === 0 ? "aucun" : count + unit, label: m.label };
   }
@@ -20077,7 +20095,7 @@ function computeMetricDetails(m) {
   } else if (m.type === "meal-events-count") {
     (state.domestique?.mealEvents || []).filter(e => (e.date || "") >= k7).forEach(e => lines.push(`${e.date} — ${e.title || e.name || "repas"}`));
   } else if (m.type === "cal-keywords-count") {
-    _calKwEvents(m.keywords).forEach(e => lines.push(`${e.date}${e.endDate && e.endDate !== e.date ? " → " + e.endDate : ""} — ${e.title || "événement"}`));
+    _calKwEvents(m.keywords, m.useFriends).forEach(e => lines.push(`${e.date}${e.endDate && e.endDate !== e.date ? " → " + e.endDate : ""} — ${e.title || "événement"}`));
   } else if (m.type === "groceries-done" || m.type === "groceries-active") {
     const open = (state.domestique?.groceries || []).filter(g => !g.checked);
     if (!open.length) lines.push("Liste de courses à jour ✓");
@@ -20110,8 +20128,42 @@ function showPillarDetail(pillarId, idx) {
     `<div style="font-size:14px;margin-bottom:12px;">${escapeHtml(computed.label)} — <strong style="color:${pillar.color};">${escapeHtml(computed.value)}</strong></div>`
     + (lines.length
       ? lines.map(l => `<div style="padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink);">${escapeHtml(l)}</div>`).join("")
-      : `<div style="color:var(--ink-softer);font-size:13px;padding:8px 0;">Aucun élément compté cette semaine.</div>`);
+      : `<div style="color:var(--ink-softer);font-size:13px;padding:8px 0;">Aucun élément compté cette semaine.</div>`)
+    + (mdef.useFriends ? _friendNamesEditorHtml() : "");
+  _pdCur = { pillarId, idx };
   document.getElementById("pillarDetailModal").classList.add("open");
+}
+// Éditeur des prénoms d'amis (dans le détail de « Moments avec des amis »)
+let _pdCur = null;
+function _friendNamesEditorHtml() {
+  const chips = (state.friendNames || []).slice().sort((a, b) => a.name.localeCompare(b.name, "fr")).map(f =>
+    `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 4px 3px 10px;margin:3px 4px 3px 0;border-radius:14px;background:var(--surface-soft);border:1px solid var(--line);font-size:13px;color:var(--ink);">${escapeHtml(f.name)}<button type="button" title="Retirer" onclick="removeFriendName(${_jsq(f.id)})" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:0 5px;">✕</button></span>`).join("");
+  return `<div style="margin-top:18px;padding-top:14px;border-top:1.5px dashed var(--line);">
+    <div style="font-size:13px;font-weight:700;margin-bottom:4px;">👯 Prénoms d'amis</div>
+    <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;">Un événement de l'agenda qui contient un de ces prénoms compte comme un moment avec des amis — sauf s'il parle de travail (visio, réunion, rdv, cours, séminaire…), car on ne sait pas si c'est une amie ou une collègue.</div>
+    <div style="display:flex;gap:6px;margin-bottom:6px;">
+      <input type="text" id="friendNameInput" placeholder="Ajouter un prénom" maxlength="30" onkeydown="if(event.key==='Enter'){event.preventDefault();addFriendName();}" style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" />
+      <button type="button" onclick="addFriendName()" style="padding:8px 14px;border-radius:10px;border:none;background:var(--lavender);color:var(--on-accent);font-weight:600;cursor:pointer;font-family:inherit;font-size:13px;">Ajouter</button>
+    </div>
+    <div>${chips || '<span style="font-size:12px;color:var(--ink-softer);">Aucun prénom pour l\'instant.</span>'}</div>
+  </div>`;
+}
+function _friendNamesChanged() {
+  saveState(); renderPillars();
+  if (_pdCur) showPillarDetail(_pdCur.pillarId, _pdCur.idx);
+}
+function addFriendName() {
+  const inp = document.getElementById("friendNameInput");
+  const name = (inp?.value || "").trim(); if (!name) return;
+  const id = _normName(name);
+  if (!id) return;
+  if ((state.friendNames || []).some(f => f.id === id)) { showToast("Ce prénom est déjà dans la liste."); return; }
+  state.friendNames = (state.friendNames || []).concat([{ id, name }]);
+  _friendNamesChanged();
+}
+function removeFriendName(id) {
+  state.friendNames = (state.friendNames || []).filter(f => f.id !== id);
+  _friendNamesChanged();
 }
 let _pdBdDown = false;
 function closePillarDetail() { document.getElementById("pillarDetailModal").classList.remove("open"); }
