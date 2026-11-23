@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1376</title>
+<title>Mon Tableau de Vie 🌿 · v1377</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6933,7 +6933,15 @@ function onViewChange(view) {
   if (view === "health") { _healthMonthOffset = 0; _stepsMonthOffset = 0; _renderHealthMonthLabel(); _renderStepsMonthLabel(); _refreshHealthCharts(); }
   if (view === "money") { initTxDate(); renderPlanned(); renderBudgetGauge(); renderDailyExpenseChart(); renderBalanceEvolutionChart(); renderMoneyFlowChart(); renderMoneyCatChart(); renderMoneyIncomeCatChart(); renderMoneyCatAllChart(); renderMoneyIncomeAllChart(); renderSavingsChart(); renderBudgetFeedback(); renderForecast(); }
   if (view === "calendar") { renderCalendar(); autoSyncCalIfNeeded(); }
-  if (view === "pillars") renderPillars();
+  if (view === "pillars") { renderPillars(); _syncCalForPillars(); }
+}
+// Ouvrir les Piliers = on relit l'agenda Google (si la dernière synchro a plus de 2 min), puis les scores se recalculent
+// (syncGoogleCal redessine les piliers) : un événement ajouté à l'instant est compté sans manipulation.
+let _pillarsCalSyncAt = 0;
+function _syncCalForPillars() {
+  if (!state.googleCal?.url || Date.now() - _pillarsCalSyncAt < 2 * 60 * 1000) return;
+  _pillarsCalSyncAt = Date.now();
+  syncGoogleCal(true);
 }
 
 // Passage à un nouveau jour pendant que l'appli est ouverte (ou rouverte le matin depuis l'écran
@@ -19620,9 +19628,9 @@ const PILLAR_DEFS = [
   {
     id: "fun-social", name: "Loisirs & Social", emoji: "🎉", color: "#fbbf24", bg: "#fffbeb",
     metrics: [
-      { type: "cal-keywords-count", keywords: ["ami", "amie", "amis", "copain", "copine", "copines", "pote", "soirée", "apéro", "déjeuner", "dejeuner", "dîner", "diner", "brunch", "repas", "goûter", "gouter", "lunch"], target: 2, label: "Moments avec des amis (obj. 2/sem)" },
+      { type: "cal-keywords-count", keywords: ["\\bami(e|s|es)?\\b", "copain", "copine", "copines", "pote", "soirée", "apéro", "déjeuner", "dejeuner", "dîner", "diner", "brunch", "repas", "goûter", "gouter", "lunch", "west coast", "west-coast", "danse", "\\bbar\\b", "resto", "restau", "ciném", "cinema", "expo.*\\bavec\\b", "\\bavec\\b.*expo"], target: 2, label: "Moments avec des amis (obj. 2/sem)" },
       { type: "cal-keywords-count", keywords: ["famille", "maman", "papa", "parents", "frère", "sœur", "soeur", "frangine", "frangin", "mamie", "papi", "vacances", "week-end famille", "retrouvailles"], target: 1, label: "Moments en famille (obj. 1/sem)" },
-      { type: "activity-sessions", regex: "lecture|podcast|film|ciné|série|musique|guitare|piano|dessin|peinture|créat|art|photo|jeu|danse|concert|expo|musée|balade|promenade|jardinage|cuisine|bak|pâtiss|sortie", target: 3, label: "Activités plaisir (obj. 3/sem)", description: "ex : lecture, film, musique, dessin, jardinage, balade, cuisine, expo, concert…" },
+      { type: "activity-sessions", regex: "lecture|podcast|film|ciné|série|musique|guitare|piano|dessin|peinture|créat|art|photo|jeu|danse|concert|expo|musée|balade|promenade|jardinage|cuisine|bak|pâtiss|sortie", calKeywords: ["west coast", "west-coast", "danse", "ciném", "cinema", "concert", "expo", "musée", "balade", "promenade", "spectacle", "théâtr", "festival", "vernissage", "film"], target: 3, label: "Activités plaisir (obj. 3/sem)", description: "ex : lecture, film, musique, dessin, jardinage, balade, cuisine, expo, concert…" },
       { type: "cal-keywords-count", keywords: ["concert", "expo", "musée", "théâtr", "ciném", "spectacle", "festival", "vernissage"], target: 1, label: "Sortie culturelle (obj. 1/sem)" },
     ]
   },
@@ -19721,7 +19729,7 @@ const BASE_METRIC_CATALOGUE = [
   {_catId:"dom-meals",  group:"🏠 Domestique", type:"meal-plan-active", label:"Planning repas fait", target:3},
   {_catId:"dom-plants", group:"🏠 Domestique", type:"plants-uptodate", label:"Plantes arrosées"},
   // Social / Calendrier
-  {_catId:"cal-amis",   group:"🎉 Social", type:"cal-keywords-count", keywords:["ami","amie","amis","copain","copine","copines","soirée","apéro","dîner","brunch","repas","pote"], label:"Moments avec des amis", target:2},
+  {_catId:"cal-amis",   group:"🎉 Social", type:"cal-keywords-count", keywords:["\\bami(e|s|es)?\\b","copain","copine","copines","soirée","apéro","dîner","brunch","repas","pote", "west coast", "west-coast", "danse", "\\bbar\\b", "resto", "restau", "ciném", "cinema", "expo.*\\bavec\\b", "\\bavec\\b.*expo"], label:"Moments avec des amis", target:2},
   {_catId:"cal-fam",    group:"🎉 Social", type:"cal-keywords-count", keywords:["famille","maman","papa","parents","frère","sœur","soeur","mamie","papi"], label:"Moments en famille", target:1},
   {_catId:"cal-culture",group:"🎉 Social", type:"cal-keywords-count", keywords:["concert","expo","musée","théâtr","ciném","spectacle","festival","vernissage"], label:"Sorties culturelles", target:1},
   // Journal
@@ -19825,6 +19833,36 @@ function countHolidaysInWeek(weekDates) {
     return dow >= 1 && dow <= 5 && _isHoliday(todayKey(d));
   }).length;
 }
+// Événements du calendrier dont le titre contient un des mots-clés, sur les 7 derniers jours (même règle pour le score ET le détail).
+// Un événement compte s'il chevauche la fenêtre (fin >= il y a 7 jours ET début <= aujourd'hui). Les futurs ne comptent pas.
+// Les « mots-clés » sont joints par « | » dans une RegExp : on peut y mettre des motifs (\\bbar\\b = le mot bar entier).
+function _calKwEvents(keywords) {
+  const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
+  const k7 = todayKey(sevenAgo), kNow = todayKey(new Date());
+  const re = new RegExp((keywords || []).join("|"), "i");
+  return (state.calEvents || []).filter(e => {
+    if (!re.test(e.title || "")) return false;
+    const eStart = e.date || "", eEnd = e.endDate || e.date || "";
+    return eEnd >= k7 && eStart <= kNow;
+  });
+}
+// Séances « plaisir » : activités cochées + événements d'agenda (calKeywords), au plus une séance par jour et par source
+// (une danse cochée ET inscrite à l'agenda le même jour = 1 seule).
+function _pleasureSessions(m) {
+  const re = new RegExp(m.regex, "i");
+  const matchActs = state.activities.filter(a => re.test(a.name));
+  const calEv = m.calKeywords ? _calKwEvents(m.calKeywords) : [];
+  const rows = [];
+  for (const d of _last7Days()) {
+    const dk = todayKey(d);
+    const acts = state.history[dk]?.activities || {};
+    const aNames = matchActs.filter(a => acts[a.id]).map(a => a.name);
+    const cNames = calEv.filter(e => (e.date || "") === dk).map(e => e.title || "événement");
+    const n = Math.max(aNames.length, cNames.length);
+    for (let i = 0; i < n; i++) rows.push({ d, label: aNames[i] || cNames[i] });
+  }
+  return rows;
+}
 function computeMetric(m, override) {
   // Retourne un objet { score: 0-1, value: "...", label: m.label }
   if (override?.disabled) return { score: 0, value: "désactivé", label: m.label };
@@ -19878,13 +19916,7 @@ function computeMetric(m, override) {
     return { score: Math.min(1, avg / m.target), value: avg.toFixed(1), label: m.label };
   }
   if (m.type === "activity-sum" || m.type === "activity-sessions") {
-    const re = new RegExp(m.regex, "i");
-    const matchActs = state.activities.filter(a => re.test(a.name));
-    let total = 0;
-    for (const d of _last7Days()) {
-      const acts = state.history[todayKey(d)]?.activities || {};
-      for (const a of matchActs) total += acts[a.id] ? 1 : 0;
-    }
+    const total = _pleasureSessions(m).length;
     const unit = total !== 1 ? " séances" : " séance";
     return { score: Math.min(1, total / m.target), value: total + unit, label: m.label };
   }
@@ -20003,17 +20035,7 @@ function computeMetric(m, override) {
   }
   // Événements calendrier correspondant à des mots-clés (amis, famille…)
   if (m.type === "cal-keywords-count") {
-    const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
-    const k7 = todayKey(sevenAgo);
-    const kNow = todayKey(new Date());
-    const re = new RegExp((m.keywords || []).join("|"), "i");
-    // Un événement compte s'il chevauche la fenêtre (fin >= k7 ET début <= aujourd'hui)
-    const count = state.calEvents.filter(e => {
-      if (!re.test(e.title || "")) return false;
-      const eEnd = e.endDate || e.date || "";
-      const eStart = e.date || "";
-      return eEnd >= k7 && eStart <= kNow;
-    }).length;
+    const count = _calKwEvents(m.keywords).length;
     const unit = count > 1 ? " évén." : " évén.";
     return { score: Math.min(1, count / m.target), value: count === 0 ? "aucun" : count + unit, label: m.label };
   }
@@ -20028,10 +20050,7 @@ function computeMetricDetails(m) {
   const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
   const k7 = todayKey(sevenAgo);
   if (m.type === "activity-sum" || m.type === "activity-sessions") {
-    const re = new RegExp(m.regex, "i");
-    const matchActs = state.activities.filter(a => re.test(a.name));
-    for (const d of days) { const acts = state.history[todayKey(d)]?.activities || {};
-      for (const a of matchActs) if (acts[a.id]) lines.push(`${_fmtDayFr(d)} — ${a.name}`); }
+    _pleasureSessions(m).forEach(r => lines.push(`${_fmtDayFr(r.d)} — ${r.label}`));
   } else if (m.type === "any-activity-sessions") {
     for (const d of days) { const acts = state.history[todayKey(d)]?.activities || {};
       for (const a of state.activities) if (acts[a.id]) lines.push(`${_fmtDayFr(d)} — ${a.name}`); }
@@ -20058,8 +20077,7 @@ function computeMetricDetails(m) {
   } else if (m.type === "meal-events-count") {
     (state.domestique?.mealEvents || []).filter(e => (e.date || "") >= k7).forEach(e => lines.push(`${e.date} — ${e.title || e.name || "repas"}`));
   } else if (m.type === "cal-keywords-count") {
-    const re = new RegExp((m.keywords || []).join("|"), "i");
-    state.calEvents.filter(e => (e.date || "") >= k7 && re.test(e.title || "")).forEach(e => lines.push(`${e.date} — ${e.title || "événement"}`));
+    _calKwEvents(m.keywords).forEach(e => lines.push(`${e.date}${e.endDate && e.endDate !== e.date ? " → " + e.endDate : ""} — ${e.title || "événement"}`));
   } else if (m.type === "groceries-done" || m.type === "groceries-active") {
     const open = (state.domestique?.groceries || []).filter(g => !g.checked);
     if (!open.length) lines.push("Liste de courses à jour ✓");
@@ -21101,6 +21119,7 @@ async function syncGoogleCal(silent = false) {
     saveState();
     renderCalendar();
     renderGcalStatus();
+    try { renderPillars(); } catch (e) {} // le pilier Loisirs & Social lit l'agenda : il doit suivre tout de suite
     if (!silent) showToast(`✨ ${newEvts.length} événements Google Agenda synchronisés !`);
   } catch (err) {
     showToast("❌ Erreur de lecture ICS : " + err.message);
