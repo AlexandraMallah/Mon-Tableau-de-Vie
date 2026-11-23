@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1378</title>
+<title>Mon Tableau de Vie 🌿 · v1379</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23281,6 +23281,18 @@ function addRecipeIngredient(ing) {
       style="width:50px;flex-shrink:0;padding:7px 5px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
     <button onclick="this.parentElement.remove();updateRecipeTotals()" style="flex-shrink:0;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:transparent;cursor:pointer;color:var(--ink-softer);">✕</button>`;
   list.appendChild(row);
+  _recInitBaseFromSaved(row, ing);
+}
+// Une ligne d'ingrédient d'une recette ENREGISTRÉE n'a pas de « base » de calcul (poids de référence / kcal de référence) :
+// sans elle, changer les grammes donnait 0 kcal. La base = les valeurs enregistrées (le rapport kcal/g, kcal/pièce reste le même).
+function _recInitBaseFromSaved(row, ing) {
+  const num = v => parseFloat(String(v == null ? "" : v).replace(",", ".")) || 0;
+  const g = num(ing.quantity), u = num(ing.unit), k = Number(ing.kcal) || 0;
+  if (!(k > 0)) return;
+  if (g > 0) row.dataset.baseG = g;
+  if (u > 0) { row.dataset.baseUnits = u; row.dataset.hasUnits = "1"; }
+  row.dataset.baseKcal = k;
+  if (g > 0 || u > 0) { const local = ing.name ? _lookupLocalFood(ing.name) : null; if (local && local.name.trim().toLowerCase() === String(ing.name).trim().toLowerCase()) row.dataset.foodName = local.name; }
 }
 
 // Calories d'une recette : total (somme des ingrédients) + par portion
@@ -23390,11 +23402,11 @@ function _recScaleFromG(row) {
   const qtyInput  = row.querySelector('.rec-ing-qty');
   const unitInput = row.querySelector('.rec-ing-unit');
   const kcalInput = row.querySelector('.rec-ing-kcal');
-  const baseG     = parseFloat(row.dataset.baseG) || 100;
+  const baseG     = parseFloat(row.dataset.baseG) || 0;
   const baseKcal  = parseFloat(row.dataset.baseKcal) || 0;
   const baseUnits = parseFloat(row.dataset.baseUnits) || 1;
-  const newG = parseFloat(qtyInput?.value);
-  if (!newG || !baseG) return;
+  const newG = parseFloat(String(qtyInput?.value).replace(",", "."));
+  if (!newG || !baseG || !baseKcal) return; // pas de base connue : on ne touche JAMAIS aux kcal (avant : remis à 0)
   if (kcalInput) kcalInput.value = Math.round(baseKcal * newG / baseG);
   if (unitInput && row.dataset.hasUnits) unitInput.value = +(baseUnits * newG / baseG).toFixed(2);
   updateRecipeTotals();
@@ -23404,13 +23416,13 @@ function _recScaleFromUnit(row) {
   const qtyInput  = row.querySelector('.rec-ing-qty');
   const unitInput = row.querySelector('.rec-ing-unit');
   const kcalInput = row.querySelector('.rec-ing-kcal');
-  const baseG     = parseFloat(row.dataset.baseG) || 100;
+  const baseG     = parseFloat(row.dataset.baseG) || 0;
   const baseKcal  = parseFloat(row.dataset.baseKcal) || 0;
-  const baseUnits = parseFloat(row.dataset.baseUnits) || 1;
-  const newU = parseFloat(unitInput?.value);
-  if (!newU || !baseUnits) return;
+  const baseUnits = parseFloat(row.dataset.baseUnits) || 0;
+  const newU = parseFloat(String(unitInput?.value).replace(",", "."));
+  if (!newU || !baseUnits || !baseKcal) return;
   if (kcalInput) kcalInput.value = Math.round(baseKcal * newU / baseUnits);
-  if (qtyInput) qtyInput.value = +(baseG * newU / baseUnits).toFixed(1);
+  if (qtyInput && baseG) qtyInput.value = +(baseG * newU / baseUnits).toFixed(1);
   updateRecipeTotals();
 }
 
