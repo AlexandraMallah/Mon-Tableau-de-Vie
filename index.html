@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1381</title>
+<title>Mon Tableau de Vie 🌿 · v1382</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -673,11 +673,13 @@
   .pl-bar.late { box-shadow: inset 0 0 0 1.5px var(--red); }
   .pl-bar.chip { background: var(--rose-soft); border-left-color: var(--red); }
   .pl-bar.event { background: #e0f2fe; border-left-color: #0369a1; }
+  .pl-bar.waiting { background: repeating-linear-gradient(45deg, #e5e7eb 0 5px, #f4f5f7 5px 10px); border-left-color: #9ca3af; color: var(--ink-soft); }
   .pl-more { grid-column: 1 / -1; font-size: 10px; color: var(--ink-softer); padding: 0 6px; }
   .pl-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; font-size: 11px; color: var(--ink-soft); }
   .pl-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
   .pl-todo-wrap { margin-top: 12px; font-size: 12px; color: var(--ink-soft); }
   .pl-todo { display: inline-block; margin: 3px 4px 0 0; padding: 3px 9px; border-radius: 999px; border: 1px dashed var(--lavender); background: var(--lavender-soft); color: var(--ink); cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top; }
+  .pl-todo.waiting { border-color: var(--ink-softer); background: transparent; color: var(--ink-soft); }
   .cal-event.task-work { background: var(--lavender-soft); border-left-color: var(--lavender); }
   .cal-day-event-row.task-work { border-left-color: var(--lavender); }
   .deadline-cal-wrap { background: var(--bg-1); border-radius: 16px; padding: 14px; }
@@ -793,6 +795,14 @@
   .kind-toggle.active { border-color: #7dd3fc; background: #e0f2fe; color: #0369a1; font-weight: 600; }
   .kind-toggle.active.is-task { border-color: var(--lavender); background: var(--lavender-soft); color: var(--ink); }
   .task-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  /* Tâche « en attente » (bloquée par quelqu'un d'autre) : grisée, bord en pointillés, étiquette lisible */
+  .task-row.waiting { background: transparent !important; border: 1px dashed var(--ink-softer); border-left: 4px dashed var(--ink-softer) !important; }
+  .task-row.waiting::before { filter: grayscale(1); opacity: 0.45; }
+  .task-row.waiting .task-name { color: var(--ink-soft) !important; font-weight: 400; opacity: 0.75; }
+  .task-row.waiting .task-checkbox, .task-row.waiting .task-project-tag, .task-row.waiting .task-pct-badge, .task-row.waiting .task-progress-bar, .task-row.waiting .task-kind-badge { opacity: 0.45; filter: grayscale(1); }
+  .task-row.waiting .task-deadline { opacity: 0.8; }
+  .task-wait-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--line); color: var(--ink); max-width: 100%; overflow-wrap: anywhere; }
+  .task-wait-btn.on { opacity: 1; background: var(--line); }
   .task-progress-bar { height: 7px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 2px; }
   .task-progress-fill { height: 100%; border-radius: 4px; transition: width 0.4s, background 0.4s; }
   .task-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -5238,6 +5248,11 @@
       <input type="checkbox" id="taskEditForAI" style="width:16px;height:16px;cursor:pointer;margin:0;" />
       🤖 Tâche IA <span style="font-weight:400;color:var(--ink-softer);font-size:12px;">(à réaliser par une IA plutôt que par toi)</span>
     </label>
+    <label style="margin-top:2px;display:flex;align-items:center;gap:8px;cursor:pointer;">
+      <input type="checkbox" id="taskEditWaiting" style="width:16px;height:16px;cursor:pointer;margin:0;flex-shrink:0;" onchange="_syncTaskWaitingField()" />
+      <span>⏳ En attente <span style="font-weight:400;color:var(--ink-softer);font-size:12px;">(bloquée tant que je n'ai pas un retour)</span></span>
+    </label>
+    <input type="text" id="taskEditWaitingFor" placeholder="J'attends quoi, de qui ? (facultatif)" style="display:none;" />
     <div class="grid-2">
       <div>
         <label>Priorité</label>
@@ -8014,11 +8029,12 @@ function _renderProjFicheTasks(projId) {
       else if (diff <= 3) { dlText = `Dans ${diff}j (${t.deadline.slice(5).replace("-","/")})`; dlClass = "soon"; }
       else { dlText = t.deadline.slice(5).replace("-","/"); }
     }
-    return `<div class="task-row prio-${t.priority||"medium"} ${t.done?"done":""}">
+    return `<div class="task-row prio-${t.priority||"medium"} ${t.done?"done":""} ${_isWaiting(t)?"waiting":""}">
       <div class="task-checkbox" onclick="_toggleTaskFromProjTab('${t.id}',${!t.done})"></div>
       <div class="task-body">
         <div class="task-meta">
           <span class="task-name">${escapeHtml(t.name||"")}</span>
+          ${_waitingBadge(t)}
           ${pctBadge}
           ${dlText ? `<span class="task-deadline ${dlClass}">${dlText}</span>` : ""}
         </div>
@@ -8575,9 +8591,10 @@ function _renderProjectCardFeatured(targetId, projectFilter, gradientCss, defaul
         const dlClass = deadlineClass(t.deadline);
         const dlText = t.deadline ? `${t.kind === "event" ? "📅" : "⏰"} ${formatDeadline(t.deadline)}` : "";
         return `
-          <div class="task-row prio-${t.priority}">
+          <div class="task-row prio-${t.priority} ${_isWaiting(t) ? "waiting" : ""}" style="flex-wrap:wrap;">
             <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
             <div class="task-name">${escapeHtml(t.name)}</div>
+            ${_waitingBadge(t)}
             ${dlText ? `<span class="task-deadline ${dlClass}">${dlText}</span>` : ""}
             <button class="task-edit-btn" onclick="openTaskEditModal('${t.id}')" title="Modifier">✏️</button>
             <button class="task-del" onclick="deleteTask('${t.id}')" title="Supprimer">✕</button>
@@ -9711,9 +9728,10 @@ function renderAutreView() {
     ? openTasks.map(t => {
         const dlClass = deadlineClass(t.deadline);
         const dlText  = t.deadline ? `${t.kind === "event" ? "📅" : "⏰"} ${formatDeadline(t.deadline)}` : "";
-        return `<div class="task-row prio-${t.priority}">
+        return `<div class="task-row prio-${t.priority} ${_isWaiting(t) ? "waiting" : ""}" style="flex-wrap:wrap;">
           <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
           <div class="task-name">${escapeHtml(t.name)}</div>
+          ${_waitingBadge(t)}
           ${dlText ? `<span class="task-deadline ${dlClass}">${dlText}</span>` : ""}
           <button class="task-edit-btn" onclick="openTaskEditModal('${t.id}')" title="Modifier">✏️</button>
           <button class="task-del" onclick="deleteTask('${t.id}')" title="Supprimer">✕</button>
@@ -10063,10 +10081,31 @@ function renderCustomSectionChips() {
 }
 
 /* ========= WORK :: POSTDOC TASKS ========= */
+/* Tâche en attente : t.waiting (+ t.waitingFor, texte libre). Elle reste « à faire » mais passe après les tâches faisables. */
+function _isWaiting(t) { return !!(t && t.waiting && !t.done); }
+function _waitingBadge(t) {
+  return _isWaiting(t) ? `<span class="task-wait-badge">⏳ En attente${t.waitingFor ? " : " + escapeHtml(t.waitingFor) : ""}</span>` : "";
+}
+function _syncTaskWaitingField() {
+  const f = document.getElementById("taskEditWaitingFor");
+  if (f) f.style.display = document.getElementById("taskEditWaiting").checked ? "" : "none";
+}
+function toggleTaskWaiting(id) {
+  const t = state.work.postdocTasks.find(x => x.id === id);
+  if (!t) return;
+  t.waiting = !t.waiting;
+  if (!t.waiting) t.waitingFor = "";
+  saveState();
+  renderTasks(); renderProjects();
+  showToast(t.waiting ? "⏳ En attente : la tâche passe en bas. ✏️ pour noter ce que tu attends." : "▶️ La tâche redevient à faire.");
+}
 function renderTasks() {
   const tasks = state.work.postdocTasks;
   const open = tasks.filter(t => !t.done).length;
-  document.getElementById("taskCount").textContent = `(${open} en cours / ${tasks.length})`;
+  const waiting = tasks.filter(_isWaiting).length;
+  document.getElementById("taskCount").textContent = waiting
+    ? `(${open - waiting}\u00a0à\u00a0faire · ${waiting}\u00a0en\u00a0attente / ${tasks.length})`
+    : `(${open} en cours / ${tasks.length})`;
   renderCustomSectionChips();
   if (!tasks.length) {
     document.getElementById("taskList").innerHTML = `<p class="empty-state">Aucune tâche pour l'instant.</p>`;
@@ -10098,6 +10137,7 @@ function renderTasks() {
   }
   const sorted = [...filtered].sort((a, b) => {
     if (a.done !== b.done) return a.done ? 1 : -1;
+    if (_isWaiting(a) !== _isWaiting(b)) return _isWaiting(a) ? 1 : -1; // les tâches bloquées après les faisables
     const prio = { urgent: -1, high: 0, medium: 1, low: 2 };
     if (prio[a.priority] !== prio[b.priority]) return prio[a.priority] - prio[b.priority];
     if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
@@ -10122,19 +10162,21 @@ function renderTasks() {
     // La note (t.notes) n'est plus affichée dans la liste — visible seulement en ouvrant la tâche
     // (bouton ✏️), sur demande d'Alexandra qui trouvait le badge 📝 et l'aperçu trop visibles.
     return `
-      <div class="task-row prio-${t.priority} ${t.done ? "done" : ""} ${isEvent ? "is-event" : ""}">
+      <div class="task-row prio-${t.priority} ${t.done ? "done" : ""} ${isEvent ? "is-event" : ""} ${_isWaiting(t) ? "waiting" : ""}">
         <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
         <div class="task-body">
           <div class="task-meta">
             ${kindBadge}
             ${aiBadge}
             <span class="task-name">${escapeHtml(t.name)}</span>
+            ${_waitingBadge(t)}
             ${pctBadge}
             ${tagHtml}
             ${dlText ? `<span class="task-deadline ${dlClass}">${dlText}</span>` : ""}
           </div>
           ${progressHtml}
         </div>
+        ${t.done || isEvent ? "" : `<button class="task-edit-btn task-wait-btn${t.waiting ? " on" : ""}" onclick="toggleTaskWaiting('${t.id}')" title="${t.waiting ? "Ne plus attendre" : "Mettre en attente"}" aria-label="${t.waiting ? "Ne plus attendre" : "Mettre en attente"}" aria-pressed="${!!t.waiting}">⏳</button>`}
         <button class="task-edit-btn" onclick="openTaskEditModal('${t.id}')" title="Modifier">✏️</button>
         <button class="task-del" onclick="deleteTask('${t.id}')">✕</button>
       </div>`;
@@ -10226,13 +10268,13 @@ function renderTaskPlanner() {
     const hasBar = !isEv && t.workStart && t.workEnd;
     if (hasBar) {
       const late = !!t.deadline && t.workEnd > t.deadline;
-      items.push({ id: t.id, start: t.workStart, end: t.workEnd, cls: "p-" + (t.priority || "medium") + (late ? " late" : ""),
-        label: t.name + (t.deadline && t.workEnd === t.deadline ? " ⏰" : ""),
+      items.push({ id: t.id, start: t.workStart, end: t.workEnd, cls: "p-" + (t.priority || "medium") + (late ? " late" : "") + (_isWaiting(t) ? " waiting" : ""),
+        label: (_isWaiting(t) ? "⏳ " : "") + t.name + (t.deadline && t.workEnd === t.deadline ? " ⏰" : ""),
         tip: t.name + " — du " + t.workStart.split("-").reverse().join("/") + " au " + t.workEnd.split("-").reverse().join("/") +
           (t.deadline ? " · deadline " + t.deadline.split("-").reverse().join("/") : "") + (late ? " (dépasse la deadline !)" : "") });
     }
     if (t.deadline && !(hasBar && t.workEnd === t.deadline)) {
-      items.push({ id: t.id, start: t.deadline, end: t.deadline, cls: isEv ? "event" : "chip", label: (isEv ? "📅 " : "⏰ ") + t.name,
+      items.push({ id: t.id, start: t.deadline, end: t.deadline, cls: isEv ? "event" : _isWaiting(t) ? "chip waiting" : "chip", label: (isEv ? "📅 " : _isWaiting(t) ? "⏳ ⏰ " : "⏰ ") + t.name,
         tip: (isEv ? "Événement : " : "Deadline : ") + t.name + " — " + t.deadline.split("-").reverse().join("/") });
     }
   }
@@ -10282,15 +10324,15 @@ function renderTaskPlanner() {
   grid.innerHTML = html;
   document.getElementById("plannerLegend").innerHTML =
     `<span><i style="background:#dc2626"></i>Urgent</span><span><i style="background:#ea580c"></i>Haute</span><span><i style="background:#f59e0b"></i>Moyenne</span><span><i style="background:#94a3b8"></i>Faible</span>` +
-    `<span>⏰ deadline</span><span><i style="background:#0369a1"></i>Événement</span><span><i style="background:#dcdde3"></i>férié / congé</span><span style="color:var(--red);">▭ contour rouge = dépasse la deadline</span>`;
+    `<span>⏰ deadline</span><span><i style="background:#0369a1"></i>Événement</span><span><i style="background:#dcdde3"></i>férié / congé</span><span>⏳ en attente (hachuré)</span><span style="color:var(--red);">▭ contour rouge = dépasse la deadline</span>`;
   // Tâches pas encore placées
   const rank = { urgent: 0, high: 1, medium: 2, low: 3 };
   const todo = state.work.postdocTasks.filter(t => !t.done && t.kind !== "event" && !(t.workStart && t.workEnd))
-    .sort((a, b) => (rank[a.priority] ?? 2) - (rank[b.priority] ?? 2) || (a.deadline || "9999").localeCompare(b.deadline || "9999"));
+    .sort((a, b) => _isWaiting(a) - _isWaiting(b) || (rank[a.priority] ?? 2) - (rank[b.priority] ?? 2) || (a.deadline || "9999").localeCompare(b.deadline || "9999"));
   const todoEl = document.getElementById("plannerTodo");
   todoEl.innerHTML = todo.length
     ? `À placer sur le planning (touche pour choisir les dates) :<br>${todo.slice(0, 12).map(t =>
-        `<span class="pl-todo" onclick="openTaskEditModal('${t.id}')">${escapeHtml(t.name)}</span>`).join("")}${todo.length > 12 ? ` <span style="color:var(--ink-softer);">+ ${todo.length - 12} autres</span>` : ""}`
+        `<span class="pl-todo${_isWaiting(t) ? " waiting" : ""}" onclick="openTaskEditModal('${t.id}')">${_isWaiting(t) ? "⏳ " : ""}${escapeHtml(t.name)}</span>`).join("")}${todo.length > 12 ? ` <span style="color:var(--ink-softer);">+ ${todo.length - 12} autres</span>` : ""}`
     : "";
 }
 const PRIO_DOT_COLORS = { urgent: "#dc2626", high: "#ea580c", medium: "#f59e0b", low: "#94a3b8" };
@@ -10818,6 +10860,9 @@ function openTaskEditModal(id) {
   document.getElementById("taskEditId").value = id;
   document.getElementById("taskEditName").value = t.name || "";
   document.getElementById("taskEditForAI").checked = !!t.forAI;
+  document.getElementById("taskEditWaiting").checked = !!t.waiting;
+  document.getElementById("taskEditWaitingFor").value = t.waitingFor || "";
+  _syncTaskWaitingField();
   document.getElementById("taskEditPriority").value = t.priority || "medium";
   document.getElementById("taskEditDeadline").value = t.deadline || "";
   document.getElementById("taskEditWorkStart").value = t.workStart || "";
@@ -10873,6 +10918,8 @@ function saveTaskEdit() {
   t.workStart = ws; t.workEnd = we;
   t.name      = name;
   t.forAI     = document.getElementById("taskEditForAI").checked;
+  t.waiting   = document.getElementById("taskEditWaiting").checked;
+  t.waitingFor = t.waiting ? document.getElementById("taskEditWaitingFor").value.trim() : "";
   t.priority  = document.getElementById("taskEditPriority").value;
   t.projectId = document.getElementById("taskEditProject").value;
   t.deadline  = document.getElementById("taskEditDeadline").value || "";
@@ -10954,10 +11001,11 @@ function renderCandidatures() {
         const dlText = t.deadline ? (dlDays === 0 ? "Aujourd'hui !" : dlDays < 0 ? `Passée (${formatDeadline(t.deadline)})` : `J−${dlDays} · ${formatDeadline(t.deadline)}`) : "";
         const dlCls = !t.deadline ? "" : dlDays < 0 ? "style='color:var(--red);'" : dlDays <= 3 ? "style='color:#c08a4d;'" : "";
         return `
-          <div class="task-row${done ? " task-done" : ""}" style="border-left-color:${urgent ? "var(--red)" : "var(--lavender)"};">
+          <div class="task-row${done ? " task-done" : ""}${_isWaiting(t) ? " waiting" : ""}" style="border-left-color:${urgent ? "var(--red)" : "var(--lavender)"};">
             <input type="checkbox" ${done ? "checked" : ""} onchange="toggleCandTask('${t.id}',this.checked)" style="flex-shrink:0;accent-color:var(--green);width:16px;height:16px;cursor:pointer;" />
             <div class="task-info" style="flex:1;">
               <div class="task-name">${escapeHtml(t.name)}</div>
+              ${_waitingBadge(t)}
               ${dlText ? `<div class="task-meta" ${dlCls}>📅 ${dlText}</div>` : ""}
             </div>
             ${urgent ? `<span class="task-badge urgent">🚨</span>` : ""}
