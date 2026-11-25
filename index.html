@@ -25,7 +25,7 @@
     }
   }
 </script>
-<title>Mon Tableau de Vie 🌿 · v1380</title>
+<title>Mon Tableau de Vie 🌿 · v1381</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2133,6 +2133,11 @@
       min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center;
     }
   }
+  /* Journal alimentaire sur téléphone : nom de l'ingrédient sur toute la ligne, valeurs dessous */
+  @media (max-width: 640px) {
+    #foodIngredientsList > div { padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+    #foodIngredientsList .food-ing-name { flex-basis: 100% !important; }
+  }
 </style>
 <!-- PWA -->
 <link rel="manifest" href="manifest.json" />
@@ -2492,7 +2497,7 @@
         </div>
         <input type="hidden" id="foodEntryReason" />
         <div id="foodEntryPortionRow" style="margin-top:8px;">
-          <label>Nombre d'unités <span id="foodEntryPortionHint" style="font-size:11px;color:var(--ink-softer);font-weight:400;"></span></label>
+          <label><span id="foodEntryPortionLabel">Nombre d'unités</span> <span id="foodEntryPortionHint" style="font-size:11px;color:var(--ink-softer);font-weight:400;"></span></label>
           <input type="number" id="foodEntryPortion" placeholder="ex : 1, 2, 0.5…" min="0.25" step="0.25"
             oninput="_foodPortionChanged(this.value)"
             style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;" />
@@ -13081,10 +13086,12 @@ function _foodNameSelect(idx) {
   document.getElementById('foodEntryName').value = r.obj.name;
   dd.style.display = 'none';
   if (r.type === 'recipe') {
+    if ((r.obj.ingredients || []).length) { _foodLoadRecipe(r.obj, 1); return; }
     const cal = recipeKcal(r.obj).per || 0;
+    _foodSetScaled(false);
     _foodPortionBase = { baseKcal: cal, refPortion: '1' };
     document.getElementById('foodEntryPortion').value = '1';
-    _foodIngredients = (r.obj.ingredients || []).map(i => ({ ...i, fromRecipe: true }));
+    _foodIngredients = [];
     renderFoodIngredients();
     document.getElementById('foodEntryPortionHint').textContent = cal ? '— 1 portion = ' + cal + ' kcal' : '';
     if (cal) document.getElementById('foodEntryCalories').value = cal;
@@ -13130,19 +13137,23 @@ function openFoodEntry(id) {
     } else baseKcal = e.calories;
   }
   baseKcal = Math.round(baseKcal);
-  _foodPortionBase = baseKcal ? { baseKcal, refPortion } : null;
+  // Repas de recette : ingrédients = ce qui a été mangé. Un ancien repas (plat entier dans la liste) est converti ici.
+  const converted = e && !e.recipeScaled && (e.ingredients || []).some(i => i.fromRecipe) ? _foodConvertLegacy(e, baseKcal) : null;
+  const scaled = !!(e && (e.recipeScaled || converted));
+  _foodSetScaled(scaled, scaled ? (_parsePortionNum(e.portion) || 1) : 1);
+  _foodPortionBase = baseKcal && !scaled ? { baseKcal, refPortion } : null;
   document.getElementById('foodEntryPortion').value = e?.portion || refPortion; // avant renderFoodIngredients (updateIngTotal la lit)
   document.getElementById("foodEntryCalories").value = e?.calories > 0 ? e.calories : "";
   if (!id) { _foodIngredients = []; renderFoodIngredients(); }
   // Normaliser : anciens ingrédients utilisent {qty, unit} → convertir en {portion}
-  _foodIngredients = JSON.parse(JSON.stringify(e?.ingredients||[])).map(ing => ({
+  _foodIngredients = JSON.parse(JSON.stringify(converted || e?.ingredients || [])).map(ing => ({
     ...ing,
     portion: ing.portion || (ing.qty != null && ing.qty !== '' ? ing.qty + (ing.unit || 'g') : '')
   }));
   renderFoodIngredients();
   // Recalculer les calories avec les données locales (nom seul pour la lookup)
   _foodIngredients.forEach((ing, i) => {
-    if (!ing.name || ing.fromRecipe) return;
+    if (scaled || !ing.name || ing.fromRecipe) return; // repas de recette : les kcal enregistrées font foi
     const local = _lookupLocalFood(ing.name);
     if (local) {
       if (!ing.portion) ing.portion = local.portion;
@@ -13154,6 +13165,8 @@ function openFoodEntry(id) {
     }
   });
   renderFoodIngredients();
+  // À l'ouverture on garde les calories enregistrées ; elles ne sont recalculées qu'à la première modification
+  if (scaled && e.calories > 0) document.getElementById("foodEntryCalories").value = e.calories;
   document.getElementById("foodEntryReason").value = e?.reason || "";
   // Heure par défaut = maintenant
   const now = new Date();
@@ -13168,7 +13181,7 @@ function openFoodEntry(id) {
   if (del) del.style.display = e ? "inline-block" : "none";
   const recBtn = document.getElementById("foodFromRecipeBtn");
   if (recBtn) recBtn.style.display = e ? "none" : "block";
-  document.getElementById('foodEntryPortionHint').textContent = baseKcal ? refPortion + ' = ' + baseKcal + ' kcal' : '';
+  if (!scaled) document.getElementById('foodEntryPortionHint').textContent = baseKcal ? refPortion + ' = ' + baseKcal + ' kcal' : '';
   _syncFoodPortionRow();
   document.getElementById("foodEntryModal").classList.add("open");
   setTimeout(() => document.getElementById("foodEntryName").focus(), 50);
@@ -13188,7 +13201,101 @@ function _parsePortionNum(str) {
   const n = parseFloat(s); // parseFloat ignore les lettres après le nombre
   return isNaN(n) ? null : n;
 }
+/* Repas tiré d'une recette (25/11/2026, demande d'Alexandra) : la liste montre les grammes et les kcal de CE QUI EST MANGÉ
+   (recette ÷ portions de la recette × portions mangées). Chaque ligne se modifie ou se remplace librement ; changer le
+   nombre de portions multiplie toutes les lignes ; les calories du repas = total des ingrédients. */
+let _foodScaled = false;
+let _foodShownPortion = 1; // nombre de portions auquel correspondent les lignes affichées
+function _foodSetScaled(on, portions) {
+  _foodScaled = !!on;
+  _foodShownPortion = portions > 0 ? portions : 1;
+  const label = document.getElementById('foodEntryPortionLabel');
+  if (label) label.textContent = on ? 'Nombre de portions' : "Nombre d'unités";
+  const hint = document.getElementById('foodEntryPortionHint');
+  if (hint && on) hint.textContent = '— les ingrédients suivent';
+}
+function _fmtQty(v) { return String(v >= 10 ? Math.round(v) : Math.round(v * 10) / 10).replace('.', ','); }
+// Quantité d'une ligne de recette (grammes saisis, sinon nombre de pièces) → nombre + unité ; null si illisible (« 1/2 »)
+function _foodQty(quantity, units) {
+  const q = String(quantity == null ? '' : quantity).trim();
+  const m = q.match(/^(\d+(?:[.,]\d+)?)\s*([^\d\/]*)$/);
+  if (m) return { n: parseFloat(m[1].replace(',', '.')), suffix: m[2] || 'g' };
+  const u = parseFloat(String(units || '').replace(',', '.'));
+  return !q && u > 0 ? { n: u, suffix: ' u.' } : null;
+}
+// Ingrédients d'une recette ramenés à la fraction mangée
+function _foodRecipeIngredients(rec, portions) {
+  const f = portions / (rec.servings > 0 ? rec.servings : 1);
+  return (rec.ingredients || []).map(i => {
+    const q = _foodQty(i.quantity, i.unit);
+    const portion = q ? _fmtQty(q.n * f) + q.suffix : '';
+    const k = (Number(i.kcal) || 0) * f;
+    const ing = { id: 'fi' + Date.now() + Math.random().toString(36).slice(2, 5), name: i.name || '', portion, kcal: Math.round(k), portions: 1 };
+    // valeurs exactes pour 1 portion : changer le nombre de portions n'accumule pas d'arrondis
+    ing._pp = { k: k / portions, q: q ? q.n * f / portions : null, shownK: ing.kcal, shownP: portion };
+    return ing;
+  });
+}
+function _foodLoadRecipe(rec, portions) {
+  _foodPortionBase = null;
+  _foodSetScaled(true, portions);
+  document.getElementById('foodEntryPortion').value = String(portions);
+  _foodIngredients = _foodRecipeIngredients(rec, portions);
+  renderFoodIngredients();
+}
+// Ancien format : repas de recette dont la liste décrivait le plat entier (ou des kcal réduites avec les grammes du plat)
+function _foodConvertLegacy(e, baseKcal) {
+  const eaten = _parsePortionNum(e.portion) || 1;
+  const plain = String(e.name || '').replace(/\s*\([\d.,]+ portions?\)$/, '').trim().toLowerCase();
+  const rec = (state.domestique?.recipes || []).find(r => (r.name || '').trim().toLowerCase() === plain);
+  const list = e.ingredients || [];
+  const whole = list.filter(i => i.fromRecipe && i.quantity !== undefined); // kcal et grammes du plat entier
+  const sum = whole.reduce((s, i) => s + (Number(i.kcal) || 0), 0);
+  let f = null;
+  if (rec) f = eaten / (rec.servings > 0 ? rec.servings : 1);
+  else if (sum > 0 && baseKcal > 0) f = baseKcal * eaten / sum;
+  if (!f) return null;
+  const out = list.map(i => {
+    if (!i.fromRecipe) return i; // ajouté à la main : déjà « ce qui est mangé »
+    const isWhole = i.quantity !== undefined;
+    let quantity = i.quantity, units = i.unit;
+    if (!isWhole) { // « Choisir depuis mes recettes » (ancien) : texte « grammes pièces » collés
+      const raw = String(i.portion || '').trim();
+      const same = rec && (rec.ingredients || []).find(x => x.name === i.name && [x.quantity, x.unit].filter(Boolean).join(' ') === raw);
+      const two = raw.match(/^(.+?)\s+(\d+)$/);
+      quantity = same ? same.quantity : (two ? two[1] : raw);
+      units = same ? same.unit : (two ? two[2] : '');
+    }
+    const q = _foodQty(quantity, units);
+    return { id: i.id, name: i.name || '', portion: q ? _fmtQty(q.n * f) + q.suffix : '', kcal: Math.round((Number(i.kcal) || 0) * (isWhole ? f : 1)), portions: 1 };
+  });
+  return out.some(i => i.kcal > 0) ? out : null; // liste sans aucune calorie : on garde l'ancien calcul
+}
+function _foodScaleIng(ing, from, to) {
+  const re = /^(\d+(?:[.,]\d+)?)([^\d\/]*)$/;
+  const m = String(ing.portion || '').trim().match(re);
+  let pp = ing._pp;
+  // ligne modifiée à la main depuis le dernier calcul → elle devient la nouvelle référence
+  if (!pp || pp.shownK !== (ing.kcal || 0) || pp.shownP !== (ing.portion || ''))
+    pp = { k: (ing.kcal || 0) / from, q: m ? parseFloat(m[1].replace(',', '.')) / from : null };
+  ing.kcal = Math.round(pp.k * to);
+  if (m && pp.q !== null) ing.portion = _fmtQty(pp.q * to) + m[2];
+  ing._pp = { k: pp.k, q: pp.q, shownK: ing.kcal, shownP: ing.portion || '' };
+  if (ing._localRef && ing._baseKcal) ing.portions = Math.round((ing.portions || 1) * to / from * 100) / 100;
+  else { delete ing._basePortion; delete ing._baseKcal; delete ing._basePortions; ing.portions = 1; }
+  delete ing._propG; delete ing._propKcal;
+}
 function _foodPortionChanged(val) {
+  if (_foodScaled) {
+    const n = _parsePortionNum(val);
+    if (!(n > 0) || n === _foodShownPortion) return;
+    _foodIngredients.forEach(ing => _foodScaleIng(ing, _foodShownPortion, n));
+    _foodShownPortion = n;
+    renderFoodIngredients();
+    const name = document.getElementById('foodEntryName'); // « Recette (2 portions) » suit le nouveau nombre
+    if (name) name.value = name.value.replace(/\s*\([\d.,]+ portions?\)$/, n !== 1 ? ` (${String(n).replace('.', ',')} portion${n > 1 ? 's' : ''})` : '');
+    return;
+  }
   if (!_foodPortionBase || !_foodPortionBase.baseKcal) return;
   const entered = _parsePortionNum(val);
   const ref = _parsePortionNum(_foodPortionBase.refPortion) || 1;
@@ -13233,6 +13340,7 @@ function _updateIngByWeight(i, val) {
   if (!ing) return;
   const oldG = _gramsOf(ing.portion), oldKcal = ing.kcal || 0; // avant d'écraser le poids
   ing.portion = val;
+  delete ing._autoPortion; // poids saisi à la main
   const base = _ingBaseWeight(ing);
   if (!base || !base.val || !ing._baseKcal) {
     // Pas de « base » enregistrée dans l'ingrédient. On recalcule SUR PLACE, sans réseau (avant, chaque changement de poids
@@ -13345,7 +13453,7 @@ function renderFoodIngredients() {
   if (!list) return;
   list.innerHTML = _foodIngredients.map((ing, i) => `
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-      <input type="text" value="${escapeHtml(ing.name)}" placeholder="ex : lait, poulet…" list="foodKcalDatalist"
+      <input type="text" class="food-ing-name" value="${escapeHtml(ing.name)}" placeholder="ex : lait, poulet…" list="foodKcalDatalist"
         oninput="_foodIngredients[${i}].name=this.value;searchIngCalories(${i},this.value)"
         onchange="_foodIngredients[${i}].name=this.value;searchIngCalories(${i},this.value)"
         style="flex:3;min-width:100px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;" />
@@ -13418,7 +13526,9 @@ async function searchIngCalories(idx, query) {
   // 1. Chercher d'abord dans la base locale
   const local = _lookupLocalFood(query);
   if (local) {
-    if (!ing.portion) ing.portion = local.portion;
+    // Poids repris de la liste « Kcal aliments » : il suit le nom pendant la frappe (« riz » puis « Riz (cru) »)
+    const auto = !ing.portion || ing._autoPortion;
+    if (auto) { ing.portion = local.portion; ing._autoPortion = true; }
     ing.kcal = _prorateFoodKcal(local, ing.portion);
     ing._refUnit = local.refUnit;
     ing._unitLabel = local.unitLabel;
@@ -13435,7 +13545,7 @@ async function searchIngCalories(idx, query) {
     if (_row) {
       const _portionInput = _row.querySelectorAll('input[type="text"]')[1];
       const _kcalInput = _row.querySelector('input[type="number"]');
-      if (_portionInput && !_portionInput.value) _portionInput.value = ing.portion;
+      if (_portionInput && (auto || !_portionInput.value)) _portionInput.value = ing.portion;
       if (_kcalInput) _kcalInput.value = ing.kcal;
       const _portionsInput = _row.querySelector('input[data-portions]');
       if (_portionsInput) _portionsInput.value = ing.portions || 1;
@@ -13470,7 +13580,7 @@ function _syncFoodPortionRow() {
   const row = document.getElementById('foodEntryPortionRow');
   if (!row) return;
   const ings = _foodIngredients || [];
-  const show = !!(_foodPortionBase && _foodPortionBase.baseKcal) && (!ings.length || ings.some(i => i.fromRecipe));
+  const show = _foodScaled || (!!(_foodPortionBase && _foodPortionBase.baseKcal) && (!ings.length || ings.some(i => i.fromRecipe)));
   row.style.display = show ? '' : 'none';
 }
 function updateIngTotal() {
@@ -13485,8 +13595,8 @@ function updateIngTotal() {
   // recalculait le plat entier au lieu de la portion.
   const kc = _foodPortionKcal();
   if (kc !== null) { calEl.value = kc; return; }
-  // Sinon les ingrédients sont la source de vérité
-  if (total > 0) calEl.value = total;
+  // Sinon les ingrédients sont la source de vérité (repas de recette vidé de ses lignes → 0)
+  if (total > 0 || _foodScaled) calEl.value = total || '';
 }
 function _foodPortionKcal() {
   if (!_foodPortionBase || !_foodPortionBase.baseKcal || !_foodIngredients.some(i => i.fromRecipe)) return null;
@@ -13544,7 +13654,8 @@ function saveFoodEntry() {
     reason: document.getElementById("foodEntryReason").value,
     note: document.getElementById("foodEntryNote").value.trim(),
     calories: parseInt(document.getElementById("foodEntryCalories")?.value)||0,
-    portion: document.getElementById("foodEntryPortion")?.value.trim() || undefined,
+    portion: _foodScaled ? String(_foodShownPortion) : (document.getElementById("foodEntryPortion")?.value.trim() || undefined),
+    recipeScaled: _foodScaled || undefined, // les ingrédients sont ce qui a été mangé
     refPortion: _foodPortionBase?.refPortion || undefined,
     baseKcal: _foodPortionBase?.baseKcal || undefined, // kcal pour la portion de référence (sert à rouvrir le repas sans fausser le calcul)
     ingredients: JSON.parse(JSON.stringify(_foodIngredients)),
@@ -13620,25 +13731,14 @@ function addRecipeToFood() {
   const rec = _rpCurrentRecipe();
   if (!rec) return;
   const portions = parseFloat(document.getElementById("recipePickPortions").value) || 1;
-  const servings = rec.servings > 0 ? rec.servings : 1;
-  const factor = portions / servings; // fraction de la recette réellement mangée
   const cal = Math.round(recipeKcal(rec).per * portions);
-  // Ingrédients de la recette copiés automatiquement (kcal ajusté aux portions mangées)
-  const ingredients = (rec.ingredients || []).map(i => ({
-    id: "fi" + Date.now() + Math.random().toString(36).slice(2, 5),
-    name: i.name || "",
-    portion: [i.quantity, i.unit].filter(Boolean).join(" "),
-    kcal: Math.round((Number(i.kcal) || 0) * factor),
-    fromRecipe: true
-  }));
-  const label = rec.name + (portions !== 1 ? ` (${portions} portion${portions > 1 ? "s" : ""})` : "");
+  const label = rec.name + (portions !== 1 ? ` (${String(portions).replace('.', ',')} portion${portions > 1 ? "s" : ""})` : "");
   // Pré-remplir la fenêtre "Qu'est-ce que tu as mangé ?" pour compléter (raison, note) avant d'enregistrer
   closeRecipePick();
   openFoodEntry();
   document.getElementById("foodEntryName").value = label;
-  _foodIngredients = ingredients;
-  renderFoodIngredients();
-  document.getElementById("foodEntryCalories").value = cal; // calories de la recette (prioritaires)
+  if ((rec.ingredients || []).length) _foodLoadRecipe(rec, portions);
+  else document.getElementById("foodEntryCalories").value = cal;
 }
 
 function renderFoodLog() {
